@@ -69,13 +69,13 @@ export default function useMediaUpload() {
       return;
     }
 
-    if (attachments.length + files.length > 5) {
-      toast({
-        variant: "destructive",
-        description: "You can only upload up to 5 attachments per post.",
-      });
-      return;
-    }
+    // if (attachments.length + files.length > 5) {
+    //   toast({
+    //     variant: "destructive",
+    //     description: "You can only upload up to 5 attachments per post.",
+    //   });
+    //   return;
+    // }
 
     startUpload(files);
   }

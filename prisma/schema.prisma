@@ -5,6 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 //npx prisma db push to send new db model info to the db
+//npx prisma migrate dev --name init to create a new migration
 
 generator client {
   provider        = "prisma-client-js"
