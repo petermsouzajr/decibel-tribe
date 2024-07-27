@@ -43,7 +43,7 @@ export default function PostEditor() {
         italic: false,
       }),
       Placeholder.configure({
-        placeholder: "Hello fellow humans!",
+        placeholder: "Post it here!",
       }),
     ],
   });
