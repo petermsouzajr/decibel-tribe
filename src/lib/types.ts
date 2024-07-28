@@ -117,16 +117,6 @@ export interface FollowerInfo {
   isFollowedByUser: boolean;
 }
 
-export type InstrumentOption = {
-  value: string;
-  label: string;
-};
-
-export type SkillOption = {
-  value: string;
-  label: string;
-};
-
 export interface LikeInfo {
   likes: number;
   isLikedByUser: boolean;

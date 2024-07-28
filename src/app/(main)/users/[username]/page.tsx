@@ -104,15 +104,7 @@ async function UserProfile({ user, loggedInUserId }: UserProfileProps) {
             <div className="text-muted-foreground">@{user.username}</div>
           </div>
           <div>Member since {formatDate(user.createdAt, "MMM d, yyyy")}</div>
-          <div className="flex items-center gap-3">
-            {/* <span>
-              Posts:{" "}
-              <span className="font-semibold">
-                {formatNumber(user._count.posts)}
-              </span>
-            </span>
-            <FollowerCount userId={user.id} initialState={followerInfo} /> */}
-          </div>
+          <div className="flex items-center gap-3"></div>
         </div>
         {user.id === loggedInUserId ? (
           <EditProfileButton user={user} />
@@ -120,10 +112,6 @@ async function UserProfile({ user, loggedInUserId }: UserProfileProps) {
           <FollowButton userId={user.id} initialState={followerInfo} />
         )}
       </div>
-      {/* <div className="mx-auto flex size-full items-center justify-between">
-        <div className="h-full">hi</div>
-        <div className="h-full">hi</div>
-      </div> */}
       <div className="mx-auto flex size-full justify-between rounded-2xl border-2 bg-card p-5 shadow-sm">
         <div className="h-full">
           <h3 className="text-lg font-semibold">Instruments</h3>
