@@ -27,6 +27,8 @@ model User {
   googleId              String?        @unique
   avatarUrl             String?
   bio                   String?
+  instruments           String[]
+  skills                String[]
   sessions              Session[]
   posts                 Post[]
   following             Follow[]       @relation("Following")

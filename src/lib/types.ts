@@ -8,6 +8,8 @@ export function getUserDataSelect(loggedInUserId: string) {
     avatarUrl: true,
     bio: true,
     createdAt: true,
+    instruments: true,
+    skills: true,
     followers: {
       where: {
         followerId: loggedInUserId,
@@ -114,6 +116,16 @@ export interface FollowerInfo {
   followers: number;
   isFollowedByUser: boolean;
 }
+
+export type InstrumentOption = {
+  value: string;
+  label: string;
+};
+
+export type SkillOption = {
+  value: string;
+  label: string;
+};
 
 export interface LikeInfo {
   likes: number;

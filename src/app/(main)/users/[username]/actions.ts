@@ -19,7 +19,12 @@ export async function updateUserProfile(values: UpdateUserProfileValues) {
   const updatedUser = await prisma.$transaction(async (tx) => {
     const updatedUser = await tx.user.update({
       where: { id: user.id },
-      data: validatedValues,
+      data: {
+        displayName: validatedValues.displayName,
+        bio: validatedValues.bio,
+        instruments: validatedValues.instruments,
+        skills: validatedValues.skills,
+      },
       select: getUserDataSelect(user.id),
     });
     await streamServerClient.partialUpdateUser({
