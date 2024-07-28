@@ -41,6 +41,9 @@ export default function Post({ post }: PostProps) {
                 className="block font-medium hover:underline"
               >
                 {post.user.displayName}
+                <span className="max-w-1/3 pl-4 text-sm text-muted-foreground hover:underline">
+                  {post.user.bio}
+                </span>
               </Link>
             </UserTooltip>
             <Link

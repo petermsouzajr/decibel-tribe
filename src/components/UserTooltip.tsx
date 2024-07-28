@@ -58,7 +58,7 @@ export default function UserTooltip({ children, user }: UserTooltipProps) {
                 </div>
               </Linkify>
             )}
-            <FollowerCount userId={user.id} initialState={followerState} />
+            {/* <FollowerCount userId={user.id} initialState={followerState} /> */}
           </div>
         </TooltipContent>
       </Tooltip>
