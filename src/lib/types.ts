@@ -8,6 +8,8 @@ export function getUserDataSelect(loggedInUserId: string) {
     avatarUrl: true,
     bio: true,
     createdAt: true,
+    instruments: true,
+    skills: true,
     followers: {
       where: {
         followerId: loggedInUserId,

@@ -104,21 +104,35 @@ async function UserProfile({ user, loggedInUserId }: UserProfileProps) {
             <div className="text-muted-foreground">@{user.username}</div>
           </div>
           <div>Member since {formatDate(user.createdAt, "MMM d, yyyy")}</div>
-          <div className="flex items-center gap-3">
-            {/* <span>
-              Posts:{" "}
-              <span className="font-semibold">
-                {formatNumber(user._count.posts)}
-              </span>
-            </span>
-            <FollowerCount userId={user.id} initialState={followerInfo} /> */}
-          </div>
+          <div className="flex items-center gap-3"></div>
         </div>
         {user.id === loggedInUserId ? (
           <EditProfileButton user={user} />
         ) : (
           <FollowButton userId={user.id} initialState={followerInfo} />
         )}
+      </div>
+      <div className="mx-auto flex size-full justify-between rounded-2xl border-2 bg-card p-5 shadow-sm">
+        <div className="h-full">
+          <h3 className="text-lg font-semibold">Instruments</h3>
+          <ul className="list-inside list-disc">
+            {user.instruments.map((instrument, index) => (
+              <li key={index} className="text-sm">
+                {instrument}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="h-full">
+          <h3 className="text-lg font-semibold">Skills</h3>
+          <ul className="list-inside list-disc">
+            {user.skills.map((skill, index) => (
+              <li key={index} className="text-sm">
+                {skill}
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
       {user.bio && (
         <>
