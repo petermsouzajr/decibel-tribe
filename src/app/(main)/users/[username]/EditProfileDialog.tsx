@@ -33,7 +33,7 @@ import Resizer from "react-image-file-resizer";
 import { useUpdateProfileMutation } from "./mutations";
 import makeAnimated from "react-select/animated";
 import { Controller } from "react-hook-form";
-import Select from "react-select";
+import Select, { CSSObjectWithLabel } from "react-select";
 import { useTheme } from "next-themes";
 
 interface EditProfileDialogProps {
@@ -44,8 +44,8 @@ interface EditProfileDialogProps {
 
 const animatedComponents = makeAnimated();
 
-const getCustomStyles = (theme) => ({
-  control: (provided) => ({
+const getCustomStyles = (theme: string | undefined) => ({
+  control: (provided: CSSObjectWithLabel) => ({
     ...provided,
     fontSize: "16px",
     color: "hsl(var(--foreground))",
@@ -55,12 +55,15 @@ const getCustomStyles = (theme) => ({
       borderColor: "hsl(var(--ring))",
     },
   }),
-  menu: (provided) => ({
+  menu: (provided: CSSObjectWithLabel) => ({
     ...provided,
     backgroundColor: "hsl(var(--background))",
     color: "hsl(var(--foreground))",
   }),
-  option: (provided, state) => ({
+  option: (
+    provided: CSSObjectWithLabel,
+    state: { isSelected: boolean; isFocused: boolean },
+  ) => ({
     ...provided,
     fontSize: "16px",
     color: state.isSelected
@@ -75,16 +78,16 @@ const getCustomStyles = (theme) => ({
       backgroundColor: "hsl(var(--muted))",
     },
   }),
-  multiValue: (provided) => ({
+  multiValue: (provided: CSSObjectWithLabel) => ({
     ...provided,
     backgroundColor: "hsl(var(--primary))",
     color: "hsl(var(--primary-foreground))",
   }),
-  multiValueLabel: (provided) => ({
+  multiValueLabel: (provided: CSSObjectWithLabel) => ({
     ...provided,
     color: "hsl(var(--primary-foreground))",
   }),
-  multiValueRemove: (provided) => ({
+  multiValueRemove: (provided: CSSObjectWithLabel) => ({
     ...provided,
     color: "hsl(var(--primary-foreground))",
     "&:hover": {
@@ -255,7 +258,7 @@ const instruments = [
   "Zampoña",
   "Zither",
   "Zurna",
-].map((instrument: String) => ({ value: instrument, label: instrument }));
+].map((instrument: string) => ({ value: instrument, label: instrument }));
 
 const skills = [
   "A&R Representative",
@@ -472,7 +475,7 @@ const skills = [
   "Videographer",
   "Voice Artist",
   "Web Content Manager",
-].map((skill: String) => ({ value: skill, label: skill }));
+].map((skill: string) => ({ value: skill, label: skill }));
 
 export default function EditProfileDialog({
   user,
