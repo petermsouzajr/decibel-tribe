@@ -19,7 +19,7 @@ datasource db {
 }
 
 model User {
-  id                    String         @id
+  id                    String         @id @default(cuid())
   username              String         @unique
   displayName           String
   email                 String?        @unique
@@ -27,8 +27,6 @@ model User {
   googleId              String?        @unique
   avatarUrl             String?
   bio                   String?
-  instruments           String[]
-  skills                String[]
   sessions              Session[]
   posts                 Post[]
   following             Follow[]       @relation("Following")
@@ -38,10 +36,42 @@ model User {
   comments              Comment[]
   receivedNotifications Notification[] @relation("Recipient")
   issuedNotifications   Notification[] @relation("Issuer")
+  userInstruments       UserInstrument[]
+  userSkills            UserSkill[]
 
   createdAt DateTime @default(now())
 
   @@map("users")
+}
+
+model UserSkill {
+  userId  String
+  skillId String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill   Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([userId, skillId])
+}
+
+model UserInstrument {
+  userId       String
+  instrumentId String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instrument   Instrument @relation(fields: [instrumentId], references: [id], onDelete: Cascade)
+
+  @@id([userId, instrumentId])
+}
+
+model Skill {
+  id   String  @id @default(cuid())
+  name String  @unique
+  users UserSkill[]
+}
+
+model Instrument {
+  id   String  @id @default(cuid())
+  name String  @unique
+  users UserInstrument[]
 }
 
 model Session {

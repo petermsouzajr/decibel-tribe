@@ -118,8 +118,8 @@ export default function EditProfileDialog({
     defaultValues: {
       displayName: user.displayName,
       bio: user.bio || "",
-      instruments: user.instruments || [],
-      skills: user.skills || [],
+      skills: user.userSkills.map((us) => us.skill.id) || [],
+      instruments: user.userInstruments.map((ui) => ui.instrument.id) || [],
     },
   });
 
@@ -132,8 +132,8 @@ export default function EditProfileDialog({
     form.reset({
       displayName: user.displayName,
       bio: user.bio || "",
-      instruments: user.instruments || [],
-      skills: user.skills || [],
+      skills: user.userSkills.map((us) => us.skill.id) || [],
+      instruments: user.userInstruments.map((ui) => ui.instrument.id) || [],
     });
     onOpenChange(false);
   }

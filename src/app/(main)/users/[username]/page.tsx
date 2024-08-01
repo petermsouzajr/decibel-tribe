@@ -90,6 +90,10 @@ async function UserProfile({ user, loggedInUserId }: UserProfileProps) {
     ),
   };
 
+  const instruments = user.userInstruments.map((ui) => ui.instrument.name);
+
+  const skills = user.userSkills.map((us) => us.skill.name);
+
   return (
     <div className="h-fit w-full space-y-5 rounded-2xl bg-card p-5 shadow-sm">
       <UserAvatar
@@ -112,13 +116,13 @@ async function UserProfile({ user, loggedInUserId }: UserProfileProps) {
           <FollowButton userId={user.id} initialState={followerInfo} />
         )}
       </div>
-      {(user.instruments.length > 0 || user.skills.length > 0) && (
+      {(instruments.length > 0 || skills.length > 0) && (
         <div className="mx-auto flex size-full justify-between rounded-2xl border-2 bg-card p-5 shadow-sm">
-          {user.instruments.length > 0 && (
+          {instruments.length > 0 && (
             <div className="h-full">
               <h3 className="text-lg font-semibold">Instruments</h3>
               <ul className="list-inside list-disc">
-                {user.instruments.map((instrument, index) => (
+                {instruments.map((instrument, index) => (
                   <li key={index} className="text-sm">
                     {instrument}
                   </li>
@@ -126,11 +130,11 @@ async function UserProfile({ user, loggedInUserId }: UserProfileProps) {
               </ul>
             </div>
           )}
-          {user.skills.length > 0 && (
+          {skills.length > 0 && (
             <div className="h-full">
               <h3 className="text-lg font-semibold">Skills</h3>
               <ul className="list-inside list-disc">
-                {user.skills.map((skill, index) => (
+                {skills.map((skill, index) => (
                   <li key={index} className="text-sm">
                     {skill}
                   </li>

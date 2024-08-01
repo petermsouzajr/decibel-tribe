@@ -4,15 +4,15 @@ import InfiniteScrollContainer from "@/components/InfiniteScrollContainer";
 import Post from "@/components/posts/Post";
 import PostsLoadingSkeleton from "@/components/posts/PostsLoadingSkeleton";
 import kyInstance from "@/lib/ky";
-import { PostsPage } from "@/lib/types";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
 interface SearchResultsProps {
   query: string;
+  type: "posts" | "skills" | "instruments";
 }
 
-export default function SearchResults({ query }: SearchResultsProps) {
+export default function SearchResults({ query, type }: SearchResultsProps) {
   const {
     data,
     fetchNextPage,
@@ -21,7 +21,7 @@ export default function SearchResults({ query }: SearchResultsProps) {
     isFetchingNextPage,
     status,
   } = useInfiniteQuery({
-    queryKey: ["post-feed", "search", query],
+    queryKey: ["search-results", query, type],
     queryFn: ({ pageParam }) =>
       kyInstance
         .get("/api/search", {
@@ -30,19 +30,24 @@ export default function SearchResults({ query }: SearchResultsProps) {
             ...(pageParam ? { cursor: pageParam } : {}),
           },
         })
-        .json<PostsPage>(),
+        .json(),
     initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    getNextPageParam: (lastPage: any) => lastPage.nextCursor,
     gcTime: 0,
   });
 
-  const posts = data?.pages.flatMap((page) => page.posts) || [];
+  const results =
+    type === "posts"
+      ? data?.pages.flatMap((page: any) => page.posts) || []
+      : type === "skills"
+        ? data?.pages.flatMap((page: any) => page.usersWithSkills) || []
+        : data?.pages.flatMap((page: any) => page.usersWithInstruments) || [];
 
   if (status === "pending") {
     return <PostsLoadingSkeleton />;
   }
 
-  if (status === "success" && !posts.length && !hasNextPage) {
+  if (status === "success" && !results.length && !hasNextPage) {
     return (
       <p className="text-center text-muted-foreground">
         No results found for this search.
@@ -63,9 +68,32 @@ export default function SearchResults({ query }: SearchResultsProps) {
       className="space-y-5"
       onBottomReached={() => hasNextPage && !isFetching && fetchNextPage()}
     >
-      {posts.map((post) => (
-        <Post key={post.id} post={post} />
-      ))}
+      {type === "posts" &&
+        results.map((post: any) => <Post key={post.id} post={post} />)}
+      {type === "skills" &&
+        results.map((user: any) => (
+          <div key={user.id}>
+            <h3>{user.displayName}</h3>
+            <ul>
+              {user.userSkills ||
+                [].map((userSkill: any, index: number) => (
+                  <li key={index}>{userSkill.skill.name}</li>
+                ))}
+            </ul>
+          </div>
+        ))}
+      {type === "instruments" &&
+        results.map((user: any) => (
+          <div key={user.id}>
+            <h3>{user.displayName}</h3>
+            <ul>
+              {user.userInstruments ||
+                [].map((userInstrument: any, index: number) => (
+                  <li key={index}>{userInstrument.instrument.name}</li>
+                ))}
+            </ul>
+          </div>
+        ))}
       {isFetchingNextPage && <Loader2 className="mx-auto my-3 animate-spin" />}
     </InfiniteScrollContainer>
   );

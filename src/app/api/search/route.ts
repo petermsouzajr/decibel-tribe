@@ -1,14 +1,11 @@
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
-import { getPostDataInclude, PostsPage } from "@/lib/types";
+import { getPostDataInclude } from "@/lib/types";
 import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
   try {
     const q = req.nextUrl.searchParams.get("q") || "";
-    const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
-
-    const searchQuery = q.split(" ").join(" & ");
 
     const pageSize = 10;
 
@@ -17,26 +14,35 @@ export async function GET(req: NextRequest) {
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
+    if (typeof q !== "string") {
+      throw new Error("Invalid query");
+    }
 
+    const searchQuery = q.split(" ").join(" & ");
+
+    // Fetch posts
     const posts = await prisma.post.findMany({
       where: {
         OR: [
           {
             content: {
-              search: searchQuery,
+              contains: q,
+              mode: "insensitive",
             },
           },
           {
             user: {
               displayName: {
-                search: searchQuery,
+                contains: q,
+                mode: "insensitive",
               },
             },
           },
           {
             user: {
               username: {
-                search: searchQuery,
+                contains: q,
+                mode: "insensitive",
               },
             },
           },
@@ -45,17 +51,49 @@ export async function GET(req: NextRequest) {
       include: getPostDataInclude(user.id),
       orderBy: { createdAt: "desc" },
       take: pageSize + 1,
-      cursor: cursor ? { id: cursor } : undefined,
+    });
+
+    // Fetch users with skills
+    const usersWithSkills = await prisma.user.findMany({
+      where: {
+        userSkills: {
+          some: {
+            skill: {
+              name: {
+                contains: q,
+                mode: "insensitive",
+              },
+            },
+          },
+        },
+      },
+      take: pageSize + 1,
+    });
+
+    // Fetch users with instruments
+    const usersWithInstruments = await prisma.user.findMany({
+      where: {
+        userInstruments: {
+          some: {
+            instrument: {
+              name: {
+                contains: q,
+                mode: "insensitive",
+              },
+            },
+          },
+        },
+      },
+      take: pageSize + 1,
     });
 
     const nextCursor = posts.length > pageSize ? posts[pageSize].id : null;
-
-    const data: PostsPage = {
+    return Response.json({
       posts: posts.slice(0, pageSize),
+      usersWithSkills: usersWithSkills.slice(0, pageSize),
+      usersWithInstruments: usersWithInstruments.slice(0, pageSize),
       nextCursor,
-    };
-
-    return Response.json(data);
+    });
   } catch (error) {
     console.error(error);
     return Response.json({ error: "Internal server error" }, { status: 500 });
