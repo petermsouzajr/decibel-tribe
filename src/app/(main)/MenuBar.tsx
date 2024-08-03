@@ -66,13 +66,23 @@ export default async function MenuBar({ className }: MenuBarProps) {
       </Button>
       <Button
         variant="ghost"
-        className="flex items-center justify-start gap-3 bg-primary"
+        className="hidden items-center justify-start gap-3 bg-primary sm:flex" // Show on medium and larger screens
         title="Post"
         asChild
       >
         <Link href="/newpost">
           <Plus />
           <span className="hidden lg:inline">Post</span>
+        </Link>
+      </Button>
+      <Button
+        variant="ghost"
+        className="fixed bottom-20 right-5 flex h-[3rem] w-[3rem] items-center justify-center rounded-full bg-primary text-white shadow-2xl transition-all hover:scale-[1.15] active:scale-105 sm:hidden" // Hide on small and larger screens
+        title="Post"
+        asChild
+      >
+        <Link href="/newpost">
+          <Plus />
         </Link>
       </Button>
     </div>
