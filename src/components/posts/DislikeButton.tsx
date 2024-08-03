@@ -1,5 +1,5 @@
 import kyInstance from "@/lib/ky";
-import { LikeInfo } from "@/lib/types";
+import { DislikeInfo } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import {
   QueryKey,
@@ -7,43 +7,47 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { Heart, ThumbsUp } from "lucide-react";
+import { Heart, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useToast } from "../ui/use-toast";
 
-interface LikeButtonProps {
+interface DislikeButtonProps {
   postId: string;
-  initialState: LikeInfo;
+  initialState: DislikeInfo;
 }
 
-export default function LikeButton({ postId, initialState }: LikeButtonProps) {
+export default function DislikeButton({
+  postId,
+  initialState,
+}: DislikeButtonProps) {
   const { toast } = useToast();
 
   const queryClient = useQueryClient();
 
-  const queryKey: QueryKey = ["like-info", postId];
+  const queryKey: QueryKey = ["dislike-info", postId];
 
   const { data } = useQuery({
     queryKey,
     queryFn: () =>
-      kyInstance.get(`/api/posts/${postId}/likes`).json<LikeInfo>(),
+      kyInstance.get(`/api/posts/${postId}/dislikes`).json<DislikeInfo>(),
     initialData: initialState,
     staleTime: Infinity,
   });
 
   const { mutate } = useMutation({
     mutationFn: () =>
-      data.isLikedByUser
-        ? kyInstance.delete(`/api/posts/${postId}/likes`)
-        : kyInstance.post(`/api/posts/${postId}/likes`),
+      data.isDislikedByUser
+        ? kyInstance.delete(`/api/posts/${postId}/dislikes`)
+        : kyInstance.post(`/api/posts/${postId}/dislikes`),
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey });
 
-      const previousState = queryClient.getQueryData<LikeInfo>(queryKey);
+      const previousState = queryClient.getQueryData<DislikeInfo>(queryKey);
 
-      queryClient.setQueryData<LikeInfo>(queryKey, () => ({
-        likes:
-          (previousState?.likes || 0) + (previousState?.isLikedByUser ? -1 : 1),
-        isLikedByUser: !previousState?.isLikedByUser,
+      queryClient.setQueryData<DislikeInfo>(queryKey, () => ({
+        dislikes:
+          (previousState?.dislikes || 0) +
+          (previousState?.isDislikedByUser ? -1 : 1),
+        isDislikedByUser: !previousState?.isDislikedByUser,
       }));
 
       return { previousState };
@@ -60,13 +64,13 @@ export default function LikeButton({ postId, initialState }: LikeButtonProps) {
 
   return (
     <button onClick={() => mutate()} className="flex items-center gap-2">
-      <ThumbsUp
+      <ThumbsDown
         className={cn(
           "size-5",
-          data.isLikedByUser && "fill-primary text-primary",
+          data.isDislikedByUser && "fill-primary text-primary",
         )}
       />
-      <span className="text-sm font-medium tabular-nums">{data.likes}</span>
+      <span className="text-sm font-medium tabular-nums">{data.dislikes}</span>
     </button>
   );
 }

@@ -63,6 +63,14 @@ export function getPostDataInclude(loggedInUserId: string) {
         userId: true,
       },
     },
+    dislikes: {
+      where: {
+        userId: loggedInUserId,
+      },
+      select: {
+        userId: true,
+      },
+    },
     bookmarks: {
       where: {
         userId: loggedInUserId,
@@ -74,6 +82,7 @@ export function getPostDataInclude(loggedInUserId: string) {
     _count: {
       select: {
         likes: true,
+        dislikes: true,
         comments: true,
       },
     },
@@ -138,6 +147,11 @@ export interface FollowerInfo {
 export interface LikeInfo {
   likes: number;
   isLikedByUser: boolean;
+}
+
+export interface DislikeInfo {
+  dislikes: number;
+  isDislikedByUser: boolean;
 }
 
 export interface BookmarkInfo {

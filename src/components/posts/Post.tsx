@@ -7,7 +7,7 @@ import { Media } from "@prisma/client";
 import { MessageSquare } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Comments from "../comments/Comments";
 import Linkify from "../Linkify";
 import UserAvatar from "../UserAvatar";
@@ -15,6 +15,8 @@ import UserTooltip from "../UserTooltip";
 import BookmarkButton from "./BookmarkButton";
 import LikeButton from "./LikeButton";
 import PostMoreButton from "./PostMoreButton";
+import FollowButton from "../FollowButton";
+import DislikeButton from "./DislikeButton";
 
 interface PostProps {
   post: PostData;
@@ -24,6 +26,33 @@ export default function Post({ post }: PostProps) {
   const { user } = useSession();
 
   const [showComments, setShowComments] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showToggle, setShowToggle] = useState(false);
+  const contentRef = useRef(null);
+
+  const toggleExpand = () => {
+    setIsExpanded(!isExpanded);
+  };
+
+  const checkContentSize = () => {
+    if (contentRef.current) {
+      // Maximum allowable height (90% of the viewport height)
+      const maxHeight = window.innerHeight * 0.9;
+      // Set whether the "Show More" link should be displayed
+      setShowToggle(
+        (contentRef.current as HTMLElement).scrollHeight > maxHeight,
+      );
+    }
+  };
+
+  useEffect(() => {
+    // Check content size initially and on window resize
+    checkContentSize();
+    window.addEventListener("resize", checkContentSize);
+    return () => {
+      window.removeEventListener("resize", checkContentSize);
+    };
+  }, []);
 
   return (
     <article className="group/post space-y-3 rounded-2xl border-2 bg-card p-5 shadow-sm">
@@ -55,15 +84,41 @@ export default function Post({ post }: PostProps) {
             </Link>
           </div>
         </div>
-        {post.user.id === user.id && (
+        {post.user.id === user.id ? (
           <PostMoreButton
             post={post}
             className="opacity-0 transition-opacity group-hover/post:opacity-100"
           />
+        ) : (
+          <FollowButton
+            userId={post.user.id}
+            initialState={{
+              followers: post.user._count.followers,
+              isFollowedByUser: post.user.followers.some(
+                ({ followerId }) => followerId === user.id,
+              ),
+            }}
+          />
         )}
       </div>
       <Linkify>
-        <div className="whitespace-pre-line break-words">{post.content}</div>
+        <div
+          ref={contentRef}
+          className={`whitespace-pre-line break-words p-4 transition-all duration-300 ${
+            isExpanded ? "max-h-full" : "max-h-[70vh] overflow-hidden"
+          } cursor-pointer`}
+          onClick={toggleExpand}
+        >
+          {post.content}
+        </div>
+        {showToggle && (
+          <div
+            className="cursor-pointer text-center text-sm text-primary"
+            onClick={toggleExpand}
+          >
+            {isExpanded ? "Show Less" : "Show More"}
+          </div>
+        )}
       </Linkify>
       {!!post.attachments.length && (
         <MediaPreviews attachments={post.attachments} />
@@ -81,6 +136,15 @@ export default function Post({ post }: PostProps) {
           <CommentButton
             post={post}
             onClick={() => setShowComments(!showComments)}
+          />
+          <DislikeButton
+            postId={post.id}
+            initialState={{
+              dislikes: post._count.dislikes,
+              isDislikedByUser: post.dislikes.some(
+                (dislike) => dislike.userId === user.id,
+              ),
+            }}
           />
         </div>
         <BookmarkButton
@@ -159,7 +223,6 @@ function CommentButton({ post, onClick }: CommentButtonProps) {
       <MessageSquare className="size-5" />
       <span className="text-sm font-medium tabular-nums">
         {post._count.comments}{" "}
-        <span className="hidden sm:inline">comments</span>
       </span>
     </button>
   );
