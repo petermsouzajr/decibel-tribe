@@ -2,7 +2,13 @@ import UserAvatar from "@/components/UserAvatar";
 import { NotificationData } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { NotificationType } from "@prisma/client";
-import { Heart, MessageCircle, User2 } from "lucide-react";
+import {
+  Heart,
+  MessageCircle,
+  ThumbsDown,
+  ThumbsUp,
+  User2,
+} from "lucide-react";
 import Link from "next/link";
 
 interface NotificationProps {
@@ -26,7 +32,12 @@ export default function Notification({ notification }: NotificationProps) {
     },
     LIKE: {
       message: `${notification.issuer.displayName} liked your post`,
-      icon: <Heart className="size-7 fill-red-500 text-red-500" />,
+      icon: <ThumbsUp className="size-7 fill-primary text-primary" />,
+      href: `/posts/${notification.postId}`,
+    },
+    DISLIKE: {
+      message: `${notification.issuer.displayName} disliked your post`,
+      icon: <ThumbsDown className="size-7 fill-primary text-primary" />,
       href: `/posts/${notification.postId}`,
     },
   };
