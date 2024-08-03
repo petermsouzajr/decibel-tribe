@@ -48,9 +48,16 @@ export default function SearchResults({ query, type }: SearchResultsProps) {
   }
 
   if (status === "success" && !results.length && !hasNextPage) {
+    if (!query) {
+      return (
+        <p className="text-center text-muted-foreground">
+          Search for bands, musicians, and event labor.
+        </p>
+      );
+    }
     return (
       <p className="text-center text-muted-foreground">
-        No results found for this search.
+        No results found for {query}.
       </p>
     );
   }

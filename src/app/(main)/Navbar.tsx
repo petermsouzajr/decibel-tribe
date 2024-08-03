@@ -10,7 +10,7 @@ export default function Navbar() {
           Decibel Tribe
         </Link>
         <SearchField />
-        <UserButton className="sm:ms-auto" />
+        <UserButton className="ml-auto sm:ms-auto" />
       </div>
     </header>
   );

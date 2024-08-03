@@ -4,7 +4,12 @@ import { SearchIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Input } from "./ui/input";
 
-export default function SearchField() {
+interface SearchFieldProps {
+  className?: string;
+  [key: string]: any;
+}
+
+export default function SearchField({ className, ...props }: SearchFieldProps) {
   const router = useRouter();
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -17,7 +22,9 @@ export default function SearchField() {
 
   return (
     <form onSubmit={handleSubmit} method="GET" action="/search">
-      <div className="relative">
+      <div
+        className={`default-styles ${className || "relative hidden sm:inline-block lg:w-auto"}`}
+      >
         <Input name="q" placeholder="Search" className="pe-40" />
         <SearchIcon className="absolute right-3 top-1/2 size-5 -translate-y-1/2 transform text-muted-foreground" />
       </div>

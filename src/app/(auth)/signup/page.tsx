@@ -6,7 +6,8 @@ import SignUpForm from "./SignUpForm";
 import GoogleSignInButton from "../login/google/GoogleSignInButton";
 
 export const metadata: Metadata = {
-  title: "Sign Up",
+  title: "Sign Up to Decibel Tribe",
+  description: "Connect with musicians and fans. Stay Human.",
 };
 
 export default function Page() {
