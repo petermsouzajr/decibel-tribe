@@ -59,6 +59,14 @@ export default async function Page({ params: { postId } }: PageProps) {
   return (
     <main className="flex w-full min-w-0 gap-5">
       <div className="w-full min-w-0 space-y-5">
+        {/* Back button
+        <button
+          onClick={() => window.history.back()}
+          className="hover:bg-primary-dark mb-4 inline-block rounded-md bg-primary px-4 py-2 text-white"
+        >
+          Back
+        </button> */}
+
         <Post post={post} />
       </div>
       <div className="sticky top-[5.25rem] hidden h-fit w-80 flex-none lg:block">

@@ -57,22 +57,29 @@ export default function Post({ post }: PostProps) {
   return (
     <article className="group/post space-y-3 rounded-2xl border-2 bg-card p-5 shadow-sm">
       <div className="flex justify-between gap-3">
-        <div className="flex flex-wrap gap-3">
+        <div className="flex w-full flex-wrap gap-3">
           <UserTooltip user={post.user}>
             <Link href={`/users/${post.user.username}`}>
               <UserAvatar avatarUrl={post.user.avatarUrl} />
             </Link>
           </UserTooltip>
-          <div>
+          <div className="min-w-0 flex-1">
             <UserTooltip user={post.user}>
               <Link
                 href={`/users/${post.user.username}`}
                 className="block font-medium hover:underline"
               >
-                {post.user.displayName}
-                <span className="max-w-1/3 pl-4 text-sm text-muted-foreground hover:underline">
-                  {post.user.bio}
-                </span>
+                <div className="flex w-full flex-wrap items-center">
+                  <span className="max-w-[75%] flex-shrink truncate">
+                    {post.user.displayName}
+                  </span>
+                  <span className="max-w-[25%] flex-shrink truncate pl-2 text-muted-foreground">
+                    @{post.user.username}
+                  </span>
+                  <span className="truncate pl-2 text-sm hover:underline">
+                    {post.user.bio}
+                  </span>
+                </div>
               </Link>
             </UserTooltip>
             <Link
@@ -83,46 +90,57 @@ export default function Post({ post }: PostProps) {
               {formatRelativeDate(post.createdAt)}
             </Link>
           </div>
+          {post.user.id === user.id ? (
+            <PostMoreButton
+              post={post}
+              className="transition-opacity group-hover/post:opacity-100"
+            />
+          ) : (
+            <FollowButton
+              userId={post.user.id}
+              initialState={{
+                followers: post.user._count.followers,
+                isFollowedByUser: post.user.followers.some(
+                  ({ followerId }) => followerId === user.id,
+                ),
+              }}
+            />
+          )}
         </div>
-        {post.user.id === user.id ? (
-          <PostMoreButton
-            post={post}
-            className="opacity-0 transition-opacity group-hover/post:opacity-100"
-          />
-        ) : (
-          <FollowButton
-            userId={post.user.id}
-            initialState={{
-              followers: post.user._count.followers,
-              isFollowedByUser: post.user.followers.some(
-                ({ followerId }) => followerId === user.id,
-              ),
-            }}
-          />
-        )}
       </div>
-      <Linkify>
-        <div
-          ref={contentRef}
-          className={`whitespace-pre-line break-words p-4 transition-all duration-300 ${
-            isExpanded ? "max-h-full" : "max-h-[70vh] overflow-hidden"
-          } cursor-pointer`}
-          onClick={toggleExpand}
-        >
-          {post.content}
-        </div>
-        {showToggle && (
+
+      <div
+        className="cursor-pointer"
+        onClick={() => (window.location.href = `/posts/${post.id}`)}
+      >
+        <Linkify>
           <div
-            className="cursor-pointer text-center text-sm text-primary"
-            onClick={toggleExpand}
+            ref={contentRef}
+            className={`whitespace-pre-line break-words p-4 transition-all duration-300 ${
+              isExpanded ? "max-h-full" : "max-h-[70vh] overflow-hidden"
+            }`}
           >
-            {isExpanded ? "Show Less" : "Show More"}
+            {post.content}
           </div>
-        )}
-      </Linkify>
+        </Linkify>
+      </div>
+
+      {showToggle && (
+        <div
+          className="cursor-pointer gap-2 text-center text-sm text-primary"
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleExpand();
+          }}
+        >
+          {isExpanded ? "Show Less" : "Show More"}
+        </div>
+      )}
+
       {!!post.attachments.length && (
         <MediaPreviews attachments={post.attachments} />
       )}
+
       <hr className="text-muted-foreground" />
       <div className="flex justify-between gap-5">
         <div className="flex items-center gap-5">
@@ -156,6 +174,7 @@ export default function Post({ post }: PostProps) {
           }}
         />
       </div>
+
       {showComments && <Comments post={post} />}
     </article>
   );
