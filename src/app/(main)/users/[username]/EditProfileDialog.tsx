@@ -118,8 +118,8 @@ export default function EditProfileDialog({
     defaultValues: {
       displayName: user.displayName,
       bio: user.bio || "",
-      skills: user.userSkills.map((us) => us.skill.name) || [], // Use skill.name
-      instruments: user.userInstruments.map((ui) => ui.instrument.name) || [], // Use instrument.name
+      skills: user.userSkills.map((us) => us.skill.name) || [],
+      instruments: user.userInstruments.map((ui) => ui.instrument.name) || [],
     },
   });
 
