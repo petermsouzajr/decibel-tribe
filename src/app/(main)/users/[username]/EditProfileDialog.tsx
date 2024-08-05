@@ -98,12 +98,12 @@ const getCustomStyles = (theme: string | undefined) => ({
   }),
 });
 
-const instruments = instrumentList.map((instrument: string) => ({
+const instrumentOptions = instrumentList.map((instrument) => ({
   value: instrument,
   label: instrument,
 }));
 
-const skills = skillsList.map((skill: string) => ({
+const skillOptions = skillsList.map((skill) => ({
   value: skill,
   label: skill,
 }));
@@ -118,8 +118,8 @@ export default function EditProfileDialog({
     defaultValues: {
       displayName: user.displayName,
       bio: user.bio || "",
-      skills: user.userSkills.map((us) => us.skill.id) || [],
-      instruments: user.userInstruments.map((ui) => ui.instrument.id) || [],
+      skills: user.userSkills.map((us) => us.skill.name) || [], // Use skill.name
+      instruments: user.userInstruments.map((ui) => ui.instrument.name) || [], // Use instrument.name
     },
   });
 
@@ -220,12 +220,12 @@ export default function EditProfileDialog({
                         <Select
                           {...field}
                           isMulti
-                          options={instruments}
+                          options={instrumentOptions}
                           components={animatedComponents}
                           className="basic-multi-select"
                           classNamePrefix="select"
                           styles={getCustomStyles(theme)}
-                          value={instruments.filter((instrument) =>
+                          value={instrumentOptions.filter((instrument) =>
                             field.value.includes(instrument.value),
                           )}
                           onChange={(selectedOptions) => {
@@ -255,12 +255,12 @@ export default function EditProfileDialog({
                         <Select
                           {...field}
                           isMulti
-                          options={skills}
+                          options={skillOptions}
                           components={animatedComponents}
                           className="basic-multi-select"
                           classNamePrefix="select"
                           styles={getCustomStyles(theme)}
-                          value={skills.filter((skill) =>
+                          value={skillOptions.filter((skill) =>
                             field.value.includes(skill.value),
                           )}
                           onChange={(selectedOptions) => {
