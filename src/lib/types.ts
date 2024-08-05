@@ -117,11 +117,7 @@ export interface CommentsPage {
 
 export const notificationsInclude = {
   issuer: {
-    select: {
-      username: true,
-      displayName: true,
-      avatarUrl: true,
-    },
+    select: getUserDataSelect("issuerUserId"), // Assuming issuerUserId is how you can access the issuer's user ID contextually
   },
   post: {
     select: {
