@@ -66,7 +66,7 @@ export default async function Page({ params: { username } }: PageProps) {
       <div className="w-full min-w-0 space-y-5">
         <UserProfile user={user} loggedInUserId={loggedInUser.id} />
         <div className="rounded-2xl bg-card p-5 shadow-sm">
-          <h2 className="text-center text-2xl font-bold">
+          <h2 className="break-words text-center text-2xl font-bold">
             {user.displayName}&apos;s posts
           </h2>
         </div>
@@ -102,13 +102,19 @@ async function UserProfile({ user, loggedInUserId }: UserProfileProps) {
         className="mx-auto size-full max-h-60 max-w-60 rounded-full"
       />
       <div className="flex flex-wrap gap-3 sm:flex-nowrap">
-        <div className="me-auto space-y-3">
-          <div>
-            <h1 className="text-3xl font-bold">{user.displayName}</h1>
-            <div className="text-muted-foreground">@{user.username}</div>
+        <div className="min-w-0 flex-1">
+          <div className="space-y-3">
+            <div className="flex flex-col">
+              <h1 className="break-words text-3xl font-bold">
+                {user.displayName}
+              </h1>
+              <div className="break-words text-muted-foreground">
+                @{user.username}
+              </div>
+            </div>
+            <div>Member since {formatDate(user.createdAt, "MMM d, yyyy")}</div>
+            <div className="flex items-center gap-3"></div>
           </div>
-          <div>Member since {formatDate(user.createdAt, "MMM d, yyyy")}</div>
-          <div className="flex items-center gap-3"></div>
         </div>
         {user.id === loggedInUserId ? (
           <EditProfileButton user={user} />

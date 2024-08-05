@@ -62,11 +62,11 @@ export default function LikeButton({ postId, initialState }: LikeButtonProps) {
     <button onClick={() => mutate()} className="flex items-center gap-2">
       <ThumbsUp
         className={cn(
-          "size-5",
+          "size-4",
           data.isLikedByUser && "fill-primary text-primary",
         )}
       />
-      <span className="text-sm font-medium tabular-nums">{data.likes}</span>
+      <span className="text-xs font-medium tabular-nums">{data.likes}</span>
     </button>
   );
 }

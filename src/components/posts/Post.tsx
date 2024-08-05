@@ -55,7 +55,7 @@ export default function Post({ post }: PostProps) {
   }, []);
 
   return (
-    <article className="group/post space-y-3 rounded-2xl border-2 bg-card p-5 shadow-sm">
+    <article className="group/post space-y-3 rounded-2xl border-2 bg-card p-3 shadow-sm">
       <div className="flex justify-between gap-3">
         <div className="flex w-full flex-wrap gap-3">
           <UserTooltip user={post.user}>
@@ -116,18 +116,20 @@ export default function Post({ post }: PostProps) {
         <Linkify>
           <div
             ref={contentRef}
-            className={`whitespace-pre-line break-words p-4 transition-all duration-300 ${
-              isExpanded ? "max-h-full" : "max-h-[70vh] overflow-hidden"
+            className={`p- whitespace-pre-line break-words transition-all duration-300 ${
+              isExpanded ? "" : "overflow-hidden"
             }`}
           >
-            {post.content}
+            {isExpanded
+              ? post.content
+              : `${post.content.substring(0, 300)}${post.content.length > 300 ? "..." : ""}`}
           </div>
         </Linkify>
       </div>
 
-      {showToggle && (
+      {post.content.length > 300 && (
         <div
-          className="cursor-pointer gap-2 text-center text-sm text-primary"
+          className="cursor-pointer text-center text-sm text-primary"
           onClick={(e) => {
             e.stopPropagation();
             toggleExpand();
@@ -142,8 +144,8 @@ export default function Post({ post }: PostProps) {
       )}
 
       <hr className="text-muted-foreground" />
-      <div className="flex justify-between gap-5">
-        <div className="flex items-center gap-5">
+      <div className="flex justify-between">
+        <div className="size -2 flex items-center gap-5">
           <LikeButton
             postId={post.id}
             initialState={{
@@ -239,8 +241,8 @@ interface CommentButtonProps {
 function CommentButton({ post, onClick }: CommentButtonProps) {
   return (
     <button onClick={onClick} className="flex items-center gap-2">
-      <MessageSquare className="size-5" />
-      <span className="text-sm font-medium tabular-nums">
+      <MessageSquare className="size-4" />
+      <span className="text-xs font-medium tabular-nums">
         {post._count.comments}{" "}
       </span>
     </button>

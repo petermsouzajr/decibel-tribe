@@ -66,11 +66,11 @@ export default function DislikeButton({
     <button onClick={() => mutate()} className="flex items-center gap-2">
       <ThumbsDown
         className={cn(
-          "size-5",
+          "size-4",
           data.isDislikedByUser && "fill-primary text-primary",
         )}
       />
-      <span className="text-sm font-medium tabular-nums">{data.dislikes}</span>
+      <span className="text-xs font-medium tabular-nums">{data.dislikes}</span>
     </button>
   );
 }

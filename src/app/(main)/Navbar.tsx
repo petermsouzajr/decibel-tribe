@@ -8,8 +8,8 @@ export default function Navbar() {
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-5 px-5 py-3">
         <Link href="/" className="text-2xl text-primary">
           <span className="hidden font-bold lg:inline">Decibel Tribe </span>
-          <span className="hidden text-base font-bold lg:inline">
-            {"( Stay Human )"}
+          <span className="hidden pl-2 text-base font-bold lg:inline">
+            {"Stay Human"}
           </span>
           <span className="hidden font-bold md:inline lg:hidden">
             Decibel Tribe

@@ -3,20 +3,23 @@ import { z } from "zod";
 const requiredString = z.string().trim().min(1, "Required");
 
 export const signUpSchema = z.object({
-  email: requiredString.email("Invalid email address"),
-  username: requiredString.regex(
-    /^[a-zA-Z0-9_-]+$/,
-    "Only letters, numbers, - and _ allowed",
-  ),
-  password: requiredString.min(8, "Must be at least 8 characters"),
+  email: requiredString
+    .email("Invalid email address")
+    .max(20, "Must be less than 20 characters"),
+  username: requiredString
+    .regex(/^[a-zA-Z0-9_-]+$/, "Only letters, numbers, - and _ allowed")
+    .max(20, "Must be less than 20 characters"),
+  password: requiredString
+    .min(8, "Must be at least 8 characters")
+    .max(20, "Must be less than 20 characters"),
 });
 
 export type SignUpValues = z.infer<typeof signUpSchema>;
 
 export const loginSchema = z.object({
-  username: z.string().optional(),
-  email: z.string().optional(),
-  password: requiredString,
+  username: z.string().max(20, "Must be less than 20 characters").optional(),
+  email: z.string().max(25, "Must be less than 25 characters").optional(),
+  password: requiredString.max(20, "Must be less than 20 characters"),
 });
 
 export type LoginValues = z.infer<typeof loginSchema>;
@@ -28,8 +31,8 @@ export const createPostSchema = z.object({
 });
 
 export const updateUserProfileSchema = z.object({
-  displayName: requiredString,
-  bio: z.string().max(1000, "Must be at most 1000 characters"),
+  displayName: requiredString.max(50, "Must be less than 50 characters"),
+  bio: z.string().max(200, "Must be at most 200 characters"),
   instruments: z
     .array(z.string())
     .max(15, "You can select up to 15 instruments"),
