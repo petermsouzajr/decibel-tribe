@@ -4,7 +4,7 @@ import { useSession } from "@/app/(main)/SessionProvider";
 import { PostData } from "@/lib/types";
 import { cn, formatRelativeDate } from "@/lib/utils";
 import { Media } from "@prisma/client";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -206,15 +206,31 @@ interface MediaPreviewProps {
 }
 
 function MediaPreview({ media }: MediaPreviewProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleImageClick = () => {
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
   if (media.type === "IMAGE") {
     return (
-      <Image
-        src={media.url}
-        alt="Attachment"
-        width={500}
-        height={500}
-        className="mx-auto size-fit max-h-[30rem] rounded-2xl"
-      />
+      <div>
+        <Image
+          src={media.url}
+          alt="Attachment"
+          width={500}
+          height={500}
+          className="mx-auto size-fit max-h-[30rem] cursor-pointer rounded-2xl"
+          onClick={handleImageClick}
+        />
+        {isModalOpen && (
+          <ImageModal mediaUrl={media.url} onClose={closeModal} />
+        )}
+      </div>
     );
   }
 
@@ -224,13 +240,43 @@ function MediaPreview({ media }: MediaPreviewProps) {
         <video
           src={media.url}
           controls
-          className="mx-auto size-fit max-h-[30rem] rounded-2xl"
+          className="mx-auto size-fit max-h-[30rem] cursor-pointer rounded-2xl"
         />
+        {isModalOpen && (
+          <ImageModal mediaUrl={media.url} onClose={closeModal} />
+        )}
       </div>
     );
   }
 
   return <p className="text-destructive">Unsupported media type</p>;
+}
+
+interface ImageModalProps {
+  mediaUrl: string;
+  onClose: () => void;
+}
+
+function ImageModal({ mediaUrl, onClose }: ImageModalProps) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
+      onClick={onClose} // Close modal when the background is clicked
+    >
+      <button
+        className="absolute right-4 top-4 rounded-full bg-black bg-opacity-60 p-2 text-white hover:bg-opacity-80"
+        onClick={onClose}
+      >
+        <X size={24} />
+      </button>
+      <img
+        src={mediaUrl}
+        alt="Full View"
+        className="max-h-full max-w-full"
+        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on the image
+      />
+    </div>
+  );
 }
 
 interface CommentButtonProps {
