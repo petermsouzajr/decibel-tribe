@@ -109,23 +109,25 @@ export default function Post({ post }: PostProps) {
         </div>
       </div>
 
-      <div
-        className="cursor-pointer"
-        onClick={() => (window.location.href = `/posts/${post.id}`)}
-      >
-        <Linkify>
-          <div
-            ref={contentRef}
-            className={`p- whitespace-pre-line break-words transition-all duration-300 ${
-              isExpanded ? "" : "overflow-hidden"
-            }`}
-          >
-            {isExpanded
-              ? post.content
-              : `${post.content.substring(0, 300)}${post.content.length > 300 ? "..." : ""}`}
-          </div>
-        </Linkify>
-      </div>
+      {post.content && (
+        <div
+          className="cursor-pointer pb-3 pt-3"
+          onClick={() => (window.location.href = `/posts/${post.id}`)}
+        >
+          <Linkify>
+            <div
+              ref={contentRef}
+              className={`whitespace-pre-line break-words transition-all duration-300 ${
+                isExpanded ? "" : "overflow-hidden"
+              }`}
+            >
+              {isExpanded
+                ? post.content
+                : `${post.content.substring(0, 300)}${post.content.length > 300 ? "..." : ""}`}
+            </div>
+          </Linkify>
+        </div>
+      )}
 
       {post.content.length > 300 && (
         <div
@@ -140,7 +142,9 @@ export default function Post({ post }: PostProps) {
       )}
 
       {!!post.attachments.length && (
-        <MediaPreviews attachments={post.attachments} />
+        <div className="pb-3 pt-3">
+          <MediaPreviews attachments={post.attachments} />
+        </div>
       )}
 
       <hr className="text-muted-foreground" />
