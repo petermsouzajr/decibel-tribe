@@ -68,6 +68,12 @@
   }
 }
 
+@media (min-width: 768px) {
+  .scroll-hide {
+    transform: none !important; /* Disable transform on larger screens */
+  }
+}
+
 @layer base {
   * {
     @apply border-border;
