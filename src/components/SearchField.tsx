@@ -21,9 +21,14 @@ export default function SearchField({ className, ...props }: SearchFieldProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} method="GET" action="/search">
-      <div className="relative pl-5">
-        <Input name="q" placeholder="Search" className="pe-20" />
+    <form
+      onSubmit={handleSubmit}
+      method="GET"
+      action="/search"
+      className="max-w-md flex-grow"
+    >
+      <div className="relative">
+        <Input name="q" placeholder="Search" />
         <SearchIcon className="absolute right-3 top-1/2 size-5 -translate-y-1/2 transform text-muted-foreground" />
       </div>
     </form>
