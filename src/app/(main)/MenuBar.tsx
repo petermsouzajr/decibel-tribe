@@ -54,7 +54,7 @@ export default async function MenuBar({ className }: MenuBarProps) {
           <span className="hidden lg:inline">Bookmarks</span>
         </Link>
       </Button>
-      <Button
+      {/* <Button
         variant="ghost"
         className="relative sm:hidden"
         title="Search"
@@ -63,7 +63,7 @@ export default async function MenuBar({ className }: MenuBarProps) {
         <Link href="/search">
           <SearchIcon />
         </Link>
-      </Button>
+      </Button> */}
       <Button
         variant="ghost"
         className="hidden items-center justify-start gap-3 bg-primary sm:flex" // Show on medium and larger screens

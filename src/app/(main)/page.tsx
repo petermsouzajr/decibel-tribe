@@ -8,7 +8,7 @@ export default function Home() {
     <main className="flex w-full min-w-0 gap-5">
       <div className="w-full min-w-0 space-y-5">
         <Tabs defaultValue="for-you">
-          <TabsList>
+          <TabsList className="z-9 sticky top-0">
             <TabsTrigger value="for-you">For you</TabsTrigger>
             <TabsTrigger value="following">Following</TabsTrigger>
           </TabsList>

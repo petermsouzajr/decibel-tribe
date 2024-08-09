@@ -16,7 +16,7 @@ export default function Page({ searchParams: { q } }: PageProps) {
   return (
     <main className="flex w-full min-w-0 gap-5">
       <div className="w-full min-w-0 space-y-5">
-        <SearchField className="relative inline-block w-full sm:hidden" />
+        {/* <SearchField className="relative inline-block w-full sm:hidden" /> */}
         <Tabs defaultValue="users/posts">
           <TabsList>
             <TabsTrigger value="users/posts">Users/Posts</TabsTrigger>

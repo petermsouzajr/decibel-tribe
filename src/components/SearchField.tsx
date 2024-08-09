@@ -22,10 +22,8 @@ export default function SearchField({ className, ...props }: SearchFieldProps) {
 
   return (
     <form onSubmit={handleSubmit} method="GET" action="/search">
-      <div
-        className={`default-styles ${className || "relative hidden sm:inline-block lg:w-auto"}`}
-      >
-        <Input name="q" placeholder="Search" className="pe-40" />
+      <div className="relative pl-5">
+        <Input name="q" placeholder="Search" className="pe-20" />
         <SearchIcon className="absolute right-3 top-1/2 size-5 -translate-y-1/2 transform text-muted-foreground" />
       </div>
     </form>
