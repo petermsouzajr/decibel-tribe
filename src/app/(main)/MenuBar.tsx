@@ -2,7 +2,7 @@ import { validateRequest } from "@/auth";
 import { Button } from "@/components/ui/button";
 import prisma from "@/lib/prisma";
 import streamServerClient from "@/lib/stream";
-import { Bookmark, Home, Plus, SearchIcon } from "lucide-react";
+import { Bookmark, CalendarDays, Home, Plus, SearchIcon } from "lucide-react";
 import Link from "next/link";
 import MessagesButton from "./MessagesButton";
 import NotificationsButton from "./NotificationsButton";
@@ -54,19 +54,20 @@ export default async function MenuBar({ className }: MenuBarProps) {
           <span className="hidden lg:inline">Bookmarks</span>
         </Link>
       </Button>
-      {/* <Button
-        variant="ghost"
-        className="relative sm:hidden"
-        title="Search"
-        asChild
-      >
-        <Link href="/search">
-          <SearchIcon />
-        </Link>
-      </Button> */}
       <Button
         variant="ghost"
-        className="hidden items-center justify-start gap-3 bg-primary sm:flex" // Show on medium and larger screens
+        className="flex items-center justify-start gap-3"
+        title="Calendar"
+        asChild
+      >
+        <Link href="/calendar">
+          <CalendarDays />
+          <span className="hidden lg:inline">Calendar</span>
+        </Link>
+      </Button>
+      <Button
+        variant="ghost"
+        className="hidden items-center justify-start gap-3 bg-primary text-white sm:flex" // Show on medium and larger screens
         title="Post"
         asChild
       >

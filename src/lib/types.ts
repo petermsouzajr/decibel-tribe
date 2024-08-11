@@ -161,3 +161,42 @@ export interface NotificationCountInfo {
 export interface MessageCountInfo {
   unreadCount: number;
 }
+
+// Define Event type
+export interface EventDetail {
+  date: Date;
+  startTime: string;
+  endTime: string;
+}
+
+export interface Event {
+  title: string;
+  who: string;
+  where: string;
+  details: EventDetail[];
+}
+
+// Define Calendar Props type
+export interface CalendarProps {
+  events: Event[];
+  currentDate: Date;
+}
+
+export interface CalendarDayProps {
+  day: Date;
+  events: Event[];
+  onClick: (day: Date, events: Event[]) => void;
+}
+
+export interface Event {
+  title: string;
+  who: string;
+  where: string;
+  details: EventDetail[];
+}
+
+export interface PageProps {
+  searchParams: {
+    q?: string;
+  };
+}
