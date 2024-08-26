@@ -13,32 +13,34 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL") // uses connection pooling
   directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
 }
 
 model User {
-  id                    String         @id @default(cuid())
-  username              String         @unique
+  id                    String           @id @default(cuid())
+  username              String           @unique
   displayName           String
-  email                 String?        @unique
+  email                 String?          @unique
   passwordHash          String?
-  googleId              String?        @unique
+  googleId              String?          @unique
   avatarUrl             String?
   bio                   String?
   sessions              Session[]
   posts                 Post[]
-  following             Follow[]       @relation("Following")
-  followers             Follow[]       @relation("Followers")
+  following             Follow[]         @relation("Following")
+  followers             Follow[]         @relation("Followers")
   likes                 Like[]
   dislikes              Dislike[]
   bookmarks             Bookmark[]
   comments              Comment[]
-  receivedNotifications Notification[] @relation("Recipient")
-  issuedNotifications   Notification[] @relation("Issuer")
+  receivedNotifications Notification[]   @relation("Recipient")
+  issuedNotifications   Notification[]   @relation("Issuer")
   userInstruments       UserInstrument[]
   userSkills            UserSkill[]
+  events                Event[]          @relation("CreatedEvents")
+  EventAttendee         EventAttendee[]
 
   createdAt DateTime @default(now())
 
@@ -64,14 +66,14 @@ model UserInstrument {
 }
 
 model Skill {
-  id   String  @id @default(cuid())
-  name String  @unique
+  id    String      @id @default(cuid())
+  name  String      @unique
   users UserSkill[]
 }
 
 model Instrument {
-  id   String  @id @default(cuid())
-  name String  @unique
+  id    String           @id @default(cuid())
+  name  String           @unique
   users UserInstrument[]
 }
 
@@ -195,4 +197,40 @@ enum NotificationType {
   LIKE
   FOLLOW
   COMMENT
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  location    String
+  description String?
+  url         String?
+  when        String
+  startTime   String
+  endTime     String
+  performers  String[]
+
+  createdById String
+  createdBy   User            @relation("CreatedEvents", fields: [createdById], references: [id])
+  attendees   EventAttendee[]
+
+  isCancelled Boolean @default(false)
+  status      String  @default("DRAFT")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("events")
+}
+
+model EventAttendee {
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([userId, eventId])
+  @@map("event_attendees")
 }

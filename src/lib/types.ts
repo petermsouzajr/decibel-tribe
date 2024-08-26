@@ -49,6 +49,30 @@ export type UserData = Prisma.UserGetPayload<{
   select: ReturnType<typeof getUserDataSelect>;
 }>;
 
+export function getEventDataInclude(loggedInUserId: string) {
+  return {
+    createdBy: {
+      select: getUserDataSelect(loggedInUserId),
+    },
+    attendees: {
+      select: {
+        user: {
+          select: getUserDataSelect(loggedInUserId),
+        },
+      },
+    },
+    _count: {
+      select: {
+        attendees: true,
+      },
+    },
+  } satisfies Prisma.EventInclude;
+}
+
+export type EventData = Prisma.EventGetPayload<{
+  include: ReturnType<typeof getEventDataInclude>;
+}>;
+
 export function getPostDataInclude(loggedInUserId: string) {
   return {
     user: {
@@ -161,22 +185,23 @@ export interface NotificationCountInfo {
 export interface MessageCountInfo {
   unreadCount: number;
 }
-
-// Define Event type
-export interface EventDetail {
-  date: Date;
+export interface Event {
+  id: string;
+  title: string;
+  location: string;
+  when: string;
   startTime: string;
   endTime: string;
+  performers: string[];
+  description: string;
+  url: string;
+  createdById: string;
+  isCancelled: boolean;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface Event {
-  title: string;
-  who: string;
-  where: string;
-  details: EventDetail[];
-}
-
-// Define Calendar Props type
 export interface CalendarProps {
   events: Event[];
   currentDate: Date;
@@ -188,15 +213,39 @@ export interface CalendarDayProps {
   onClick: (day: Date, events: Event[]) => void;
 }
 
-export interface Event {
-  title: string;
-  who: string;
-  where: string;
-  details: EventDetail[];
-}
-
 export interface PageProps {
   searchParams: {
     q?: string;
   };
+}
+
+export interface CalendarGridProps {
+  currentDate: Date;
+  events: Event[];
+  onSelectDay: (day: Date, events: Event[]) => void;
+}
+
+export interface EventDetailsModalProps {
+  isOpen: boolean;
+  events: Event[];
+  onClose: () => void;
+  onDeleteEvent: (event: Event) => void;
+}
+
+export interface ConfirmDeletionModalProps {
+  isOpen: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+  title: string; // Optional: Add title for dynamic header content
+  message: string; // Optional: Add message to customize the displayed text
+}
+
+export interface EditState {
+  title: string;
+  startTime: string;
+  endTime: string;
+  isEditing: boolean;
+  editedTitle: string;
+  editedStartTime: string;
+  editedEndTime: string;
 }
