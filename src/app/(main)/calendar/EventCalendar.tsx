@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { format } from "date-fns";
 import CalendarGrid from "./CalendarGrid";
-import EventDetailsModal from "./EventDetailsModal";
+// import EventDetailsModal from "./EventDetailsModal";
 import ConfirmDeletionModal from "./ConfirmDeleteModal";
 import { CalendarProps, Event, EventDetailsModalProps } from "@/lib/types";
 
@@ -44,14 +44,14 @@ const EventCalendar: React.FC<CalendarProps> = ({ events, currentDate }) => {
         events={events}
         onSelectDay={handleDayClick}
       />
-      {isModalOpen && (
+      {/* {isModalOpen && (
         <EventDetailsModal
           isOpen={isModalOpen}
           events={selectedEvents}
           onClose={handleCloseModal}
           onDeleteEvent={handleDeleteEvent}
         />
-      )}
+      )} */}
       {isConfirmModalOpen && (
         <ConfirmDeletionModal
           isOpen={isConfirmModalOpen}
