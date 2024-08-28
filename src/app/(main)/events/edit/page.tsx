@@ -175,7 +175,7 @@ export default function EventFormPage({ event }: { event: Event }) {
           console.error("Failed to fetch event data:", error);
         });
     }
-  }, [eventId]);
+  }, [eventId, form]);
 
   const addPerformer = () => {
     if (performerCount < MAX_PERFORMERS) {
