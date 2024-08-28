@@ -25,12 +25,6 @@ import {
 } from "../../calendar/mutations";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
-import { GetServerSideProps } from "next";
-import { validateRequest } from "@/auth";
-import prisma from "@/lib/prisma";
-import { getEventDataInclude } from "@/lib/types";
-import { getEvent } from "@/lib/utils";
-import { set } from "date-fns";
 
 interface EventFormPageProps {
   event?: any;
@@ -48,8 +42,8 @@ export default function EventFormPage({ event }: EventFormPageProps) {
   const [eventData, setEventData] = useState<any>(null);
 
   const isEditing = Boolean(eventId);
-  const mutation = isEditing ? useEditEventMutation() : useAddEventMutation();
-  // const formSchema = status === "DRAFT" ? draftEventSchema : createEventSchema;
+  const editMutation = useEditEventMutation();
+  const addMutation = useAddEventMutation();
 
   const form = useForm<CreateEventValues>({
     resolver: zodResolver(
@@ -71,41 +65,11 @@ export default function EventFormPage({ event }: EventFormPageProps) {
     },
   });
 
-  // useEffect(() => {
-  //   if (isEditing) {
-  //     fetchEventData(eventId);
-  //   }
-  // }, [eventId]);
-
-  // const fetchEventData = async (eventId: string) => {
-  //   try {
-  //     const response = await fetch(`/api/events/${eventId}`, {
-  //       method: "GET",
-  //       credentials: "include",
-  //     });
-  //     if (!response.ok) throw new Error(`Fetch error: ${response.statusText}`);
-
-  //     const data = await response.json();
-  //     form.reset({
-  //       title: data.title || "",
-  //       location: data.location || "",
-  //       description: data.description || "",
-  //       url: data.url || "",
-  //       when: data.when || "",
-  //       startTime: data.startTime || "",
-  //       endTime: data.endTime || "",
-  //       performers: data.performers.length > 0 ? data.performers : [""],
-  //       status: data.status || "DRAFT",
-  //     });
-  //     setPerformerCount(data.performers.length || 1);
-  //   } catch (error) {
-  //     console.error("Failed to fetch event data:", error);
-  //   }
-  // };
-
   const onSubmit: SubmitHandler<CreateEventValues | EditEventValues> = async (
     data,
   ) => {
+    console.log("isediting", isEditing);
+    console.log("eventid", eventId);
     console.log("data in onSubmit:", data);
     if (isSubmitting) return;
     setIsSubmitting(true);
@@ -129,7 +93,7 @@ export default function EventFormPage({ event }: EventFormPageProps) {
     console.log("data in onSubmit:", data);
     console.log("eventId in onSubmit:", event);
     // event = data;
-    console.log("eventData in onSubmit after data:", eventData.id);
+    // console.log("eventData in onSubmit after data:", eventData.id);?
     const finalData = isEditing
       ? {
           ...data,
@@ -142,6 +106,8 @@ export default function EventFormPage({ event }: EventFormPageProps) {
           performers:
             sanitizedPerformers.length > 0 ? sanitizedPerformers : [""],
         };
+
+    const mutation = isEditing ? editMutation : addMutation;
 
     mutation.mutate(finalData, {
       onSuccess: (newEvent: { id: string }) => {

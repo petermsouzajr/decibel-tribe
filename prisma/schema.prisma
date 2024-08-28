@@ -41,10 +41,20 @@ model User {
   userSkills            UserSkill[]
   events                Event[]          @relation("CreatedEvents")
   EventAttendee         EventAttendee[]
+  userPreferences       UserPreferences?
 
   createdAt DateTime @default(now())
 
   @@map("users")
+}
+
+model UserPreferences {
+  id       String @id @default(cuid())
+  calendar String @default("Private")
+  userId   String @unique
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
 }
 
 model UserSkill {

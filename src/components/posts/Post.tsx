@@ -273,7 +273,7 @@ function ImageModal({ mediaUrl, onClose }: ImageModalProps) {
       >
         <X size={24} />
       </button>
-      <img
+      <Image
         src={mediaUrl}
         alt="Full View"
         className="max-h-full max-w-full"
