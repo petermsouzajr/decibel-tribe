@@ -26,11 +26,8 @@ import {
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 
-interface EventFormPageProps {
-  event?: any;
-}
 // let event = null;
-export default function EventFormPage({ event }: EventFormPageProps) {
+export default function EventFormPage({ event }: { event: any }) {
   const [status, setStatus] = useState<"DRAFT" | "PUBLISHED">("DRAFT");
   const [performerCount, setPerformerCount] = useState<number>(1);
   const [error, setError] = useState<string>();
