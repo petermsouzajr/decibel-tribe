@@ -200,6 +200,7 @@ export interface Event {
   status: string;
   createdAt: string;
   updatedAt: string;
+  visibility: string;
 }
 
 export interface CalendarProps {

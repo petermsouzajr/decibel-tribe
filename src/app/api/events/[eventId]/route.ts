@@ -65,6 +65,7 @@ export async function PATCH(req: NextRequest) {
       endTime,
       performers,
       status,
+      visibility,
     } = await req.json();
 
     const event = await prisma.event.findUnique({
@@ -91,6 +92,7 @@ export async function PATCH(req: NextRequest) {
         endTime,
         performers,
         status,
+        visibility,
       },
     });
 
@@ -203,6 +205,7 @@ export async function PUT(
       endTime,
       performers,
       status,
+      visibility,
     } = await req.json();
 
     // Update the event
@@ -218,6 +221,7 @@ export async function PUT(
         endTime,
         performers,
         status,
+        visibility,
       },
     });
 

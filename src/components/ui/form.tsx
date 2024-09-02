@@ -198,10 +198,10 @@ const FormSwitch = React.forwardRef<
   }
 >(({ className, value, onChange, values, ...props }, ref) => {
   const [firstValue, secondValue] = values;
-  const isFirstValue = value === firstValue;
+  const isFirstValue = value === secondValue;
 
   const handleClick = () => {
-    onChange(isFirstValue ? secondValue : firstValue);
+    onChange(isFirstValue ? firstValue : secondValue);
   };
 
   return (

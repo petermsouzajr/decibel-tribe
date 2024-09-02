@@ -65,6 +65,13 @@ export async function signUp(
           passwordHash,
         },
       });
+
+      await tx.userPreferences.create({
+        data: {
+          userId: userId,
+        },
+      });
+
       await streamServerClient.upsertUser({
         id: userId,
         username,

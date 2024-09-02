@@ -22,9 +22,13 @@ import {
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { validateRequest } from "@/auth";
+import PostsLoadingSkeleton from "@/components/posts/PostsLoadingSkeleton";
 
 export default function EventFormPage(event: any) {
   const [status, setStatus] = useState<"DRAFT" | "PUBLISHED">("DRAFT");
+  const [loadingStatus, setLoadingStatus] = useState<"pending" | "complete">(
+    "complete",
+  );
   const [performerCount, setPerformerCount] = useState<number>(1);
   const [error, setError] = useState<string>();
   const MAX_PERFORMERS = 15;
@@ -63,7 +67,7 @@ export default function EventFormPage(event: any) {
           ? event.performers
           : Array(performerCount).fill(""),
       status: event?.status,
-      visibility: event?.visibility || defaultVisibility,
+      visibility: event.visibility || defaultVisibility,
     },
   });
 
@@ -149,6 +153,7 @@ export default function EventFormPage(event: any) {
     fetchUserCalendarPreference();
 
     if (eventId) {
+      setLoadingStatus("pending"); // Start loading
       console.log("Fetching event data for eventId:", eventId);
       console.log("form in useEffect:", form);
       fetch(`/api/events/${eventId}`, {
@@ -176,12 +181,14 @@ export default function EventFormPage(event: any) {
             endTime: data.endTime || "",
             performers: data.performers.length > 0 ? data.performers : [""],
             status: data.status || "DRAFT",
-            visibility: event?.visibility || defaultVisibility,
+            visibility: data.visibility || defaultVisibility,
           });
           setPerformerCount(data.performers.length || 1);
+          setLoadingStatus("complete"); // Finish loading
         })
         .catch((error) => {
           console.error("Failed to fetch event data:", error);
+          setLoadingStatus("complete"); // Finish loading
         });
     }
   }, [eventId, form, defaultVisibility]);
@@ -204,13 +211,16 @@ export default function EventFormPage(event: any) {
     form.handleSubmit(onSubmit)();
   };
 
+  if (loadingStatus === "pending") {
+    return <PostsLoadingSkeleton />; // Render loading skeleton
+  }
   return (
     <div className="container max-w-xl p-4">
       <h1 className="mb-6 text-center text-2xl font-bold">
         {eventId ? "Edit Event" : "Create New Event"}
       </h1>
       {isEditing && eventData && (
-        <div className="mb-4 text-center text-sm text-muted-foreground">
+        <div className="text-md mb-4 text-center font-bold text-muted-foreground">
           Status: {eventData.status}
         </div>
       )}
@@ -224,19 +234,6 @@ export default function EventFormPage(event: any) {
                 <FormLabel>Visibility</FormLabel>
                 <FormControl>
                   <FormSwitch values={["PRIVATE", "PUBLIC"]} {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="title"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Title</FormLabel>
-                <FormControl>
-                  <Input placeholder="Event Title" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

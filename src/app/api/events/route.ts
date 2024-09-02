@@ -12,12 +12,21 @@ export async function GET(req: NextRequest) {
       where: {
         isCancelled: false, // You can filter out canceled events if needed
         OR: [
+          // Show public published events to everyone
           {
             status: "PUBLISHED",
+            visibility: "PUBLIC",
           },
+          // Show private published events only to their creators
+          {
+            status: "PUBLISHED",
+            visibility: "PRIVATE",
+            createdById: loggedInUser?.id,
+          },
+          // Show draft events only to their creators
           {
             status: "DRAFT",
-            createdById: loggedInUser?.id, // Show drafts only to their creators
+            createdById: loggedInUser?.id,
           },
         ],
       },
@@ -52,6 +61,7 @@ export async function POST(req: NextRequest) {
       endTime,
       performers,
       status,
+      visibility,
     } = await req.json();
     console.log("Event details:", {
       title,
@@ -63,6 +73,7 @@ export async function POST(req: NextRequest) {
       endTime,
       performers,
       status,
+      visibility,
     });
 
     const newEvent = await prisma.event.create({
@@ -76,6 +87,7 @@ export async function POST(req: NextRequest) {
         endTime,
         performers,
         status,
+        visibility,
         createdBy: {
           connect: { id: loggedInUser!.id },
         },
@@ -176,6 +188,7 @@ export async function PATCH(req: NextRequest) {
       endTime,
       performers,
       status,
+      visibility,
     } = await req.json();
 
     const event = await prisma.event.findUnique({
@@ -202,6 +215,7 @@ export async function PATCH(req: NextRequest) {
         endTime,
         performers,
         status,
+        visibility,
       },
     });
 
@@ -234,6 +248,7 @@ export async function PUT(req: NextRequest) {
       endTime,
       performers,
       status,
+      visibility,
     } = await req.json();
 
     const event = await prisma.event.findUnique({
@@ -260,6 +275,7 @@ export async function PUT(req: NextRequest) {
         endTime,
         performers,
         status,
+        visibility,
       },
     });
 

@@ -9,6 +9,8 @@ import { useEffect, useRef, useState } from "react";
 import UserAvatar from "../UserAvatar";
 import UserTooltip from "../UserTooltip";
 import FollowButton from "../FollowButton";
+import { format as formatDate, parse, isValid } from "date-fns";
+
 //http://localhost:3000/events/cm008i31b0001488hptjh2f7i
 //http://localhost:3000/events/cm009aq6b0001w17tx6l865sz
 //http://localhost:3000/events/cm009i0mr0003w17tq3qdf2hr
@@ -36,6 +38,11 @@ export default function EventDetails({ event }: EventDetailsProps) {
     }
   };
 
+  const formatTime = (time: string) => {
+    const parsedTime = parse(time, "HH:mm", new Date());
+    return isValid(parsedTime) ? formatDate(parsedTime, "hh:mm a") : "N/A";
+  };
+
   useEffect(() => {
     checkContentSize();
     window.addEventListener("resize", checkContentSize);
@@ -44,6 +51,7 @@ export default function EventDetails({ event }: EventDetailsProps) {
     };
   }, []);
 
+  console.log("EventDetailsProps", event);
   return (
     <article className="group/event space-y-3 rounded-2xl border-2 bg-card p-3 shadow-sm">
       <div className="flex justify-between gap-3">
@@ -69,21 +77,34 @@ export default function EventDetails({ event }: EventDetailsProps) {
                 </div>
               </Link>
             </UserTooltip>
-            <div className="block text-sm text-muted-foreground">
-              Status: {event.status}
-            </div>
+            {event.createdBy.id === user.id ? (
+              <>
+                <div className="text-md fotn-bold block text-muted-foreground">
+                  Status: {event.status}
+                </div>
+                <div className="text-md fotn-bold block text-muted-foreground">
+                  Visibility: {event.visibility}
+                </div>
+              </>
+            ) : (
+              ""
+            )}
+
             <div className="block text-sm text-muted-foreground">
               Attendees: {event._count.attendees}
             </div>
-            <Link
-              href={`/events/${event.id}`}
-              className="block text-sm text-muted-foreground hover:underline"
+            <div
+              className="block text-sm text-muted-foreground"
               suppressHydrationWarning
             >
               {formatRelativeDate(event.createdAt)}
-            </Link>
+            </div>
           </div>
-          {event.createdBy.id === user.id ? "Edit Event" : ""}
+          {event.createdBy.id === user.id ? (
+            <Link href={`/events/edit?id=${event.id}`}>Edit Event</Link>
+          ) : (
+            ""
+          )}
         </div>
       </div>
 
@@ -119,10 +140,12 @@ export default function EventDetails({ event }: EventDetailsProps) {
 
       <hr className="text-muted-foreground" />
       <div className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Event Details:</h3>
-        <div key={event.id} className="rounded-md bg-accent-foreground p-3">
+        <div key={event.id} className="rounded-md p-3">
+          <p className="text-lg">{event.title}</p>
+          <p>Location: {event.location}</p>
+          <p>Date: {event.when}</p>
           <p>
-            Date: {event.when} {event.startTime} - {event.endTime}
+            Time: {formatTime(event.startTime)} - {formatTime(event.endTime)}
           </p>
           <p>Performers:</p>
           <ul className="ml-4 list-disc">

@@ -2,6 +2,7 @@
 import { PageProps, Event } from "@/lib/types";
 import EventCalendar from "./CalendarActions";
 import { useEffect, useState } from "react";
+import PostsLoadingSkeleton from "@/components/posts/PostsLoadingSkeleton";
 
 const Page: React.FC<PageProps> = () => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -29,7 +30,7 @@ const Page: React.FC<PageProps> = () => {
   }, []);
 
   if (loading) {
-    return <p>Loading events...</p>;
+    return <PostsLoadingSkeleton />;
   }
 
   if (error) {

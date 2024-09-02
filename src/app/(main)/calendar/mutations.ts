@@ -66,6 +66,7 @@ export function useAddEventMutation() {
       console.log("endTime in useAddEventMutation:", endTime);
       console.log("performers in useAddEventMutation:", performers);
       console.log("status in useAddEventMutation:", status);
+      console.log("visibility in useAddEventMutation:", visibility);
       if (!response.ok) {
         throw new Error("Failed to create event");
       }
