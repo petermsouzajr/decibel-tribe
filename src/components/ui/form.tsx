@@ -189,6 +189,60 @@ const FormMessage = React.forwardRef<
 });
 FormMessage.displayName = "FormMessage";
 
+const FormSwitch = React.forwardRef<
+  HTMLButtonElement,
+  React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    value: string;
+    onChange: (value: string) => void;
+    values: [string, string];
+  }
+>(({ className, value, onChange, values, ...props }, ref) => {
+  const [firstValue, secondValue] = values;
+  const isFirstValue = value === firstValue;
+
+  const handleClick = () => {
+    onChange(isFirstValue ? secondValue : firstValue);
+  };
+
+  return (
+    <div className={`flex flex-col items-center ${className}`}>
+      <div className="flex w-full justify-around">
+        {/* Left Value Label */}
+        <span
+          className={`w-16 text-muted-foreground ${!isFirstValue ? "font-bold" : ""}`}
+        >
+          {firstValue}
+        </span>
+
+        {/* Toggle Button */}
+        <button
+          ref={ref}
+          type="button"
+          role="switch"
+          aria-checked={isFirstValue}
+          onClick={handleClick}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out ${isFirstValue ? "bg-primary" : "bg-muted-foreground"}`}
+          {...props}
+        >
+          <span className="sr-only">Toggle Visibility</span>
+          <span
+            className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${isFirstValue ? "translate-x-6" : "translate-x-1"}`}
+          />
+        </button>
+
+        {/* Right Value Label */}
+        <span
+          className={`w-16 text-primary ${isFirstValue ? "font-bold" : ""}`}
+        >
+          {secondValue}
+        </span>
+      </div>
+    </div>
+  );
+});
+
+FormSwitch.displayName = "FormSwitch";
+
 export {
   useFormField,
   Form,
@@ -199,4 +253,5 @@ export {
   FormMessage,
   FormField,
   FormButton,
+  FormSwitch,
 };

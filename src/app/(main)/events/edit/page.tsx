@@ -7,24 +7,21 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormSwitch,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  createEventSchema,
-  CreateEventValues,
-  draftEventSchema,
-  EditEventValues,
-} from "@/lib/validation";
+import { createEventSchema, CreateEventValues } from "@/lib/validation";
 import {
   useAddEventMutation,
   useEditEventMutation,
 } from "../../calendar/mutations";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
+import { validateRequest } from "@/auth";
 
 export default function EventFormPage(event: any) {
   const [status, setStatus] = useState<"DRAFT" | "PUBLISHED">("DRAFT");
@@ -36,21 +33,29 @@ export default function EventFormPage(event: any) {
   const searchParams = useSearchParams();
   const eventId = searchParams.get("id");
   const [eventData, setEventData] = useState<any>(null);
+  const [defaultVisibility, setDefaultVisibility] = useState<
+    "PUBLIC" | "PRIVATE"
+  >("PRIVATE");
 
   const isEditing = Boolean(eventId);
   const editMutation = useEditEventMutation();
   const addMutation = useAddEventMutation();
+  const dateParam = searchParams.get("date");
+  const parsedDate = dateParam ? new Date(dateParam) : null;
+  const formattedDate = parsedDate
+    ? parsedDate.toISOString().split("T")[0]
+    : "";
 
+  console.log("status in EventFormPage", status);
+  console.log("eventStatus in EventFormPage:", event.status);
   const form = useForm<CreateEventValues>({
-    resolver: zodResolver(
-      status === "DRAFT" ? draftEventSchema : createEventSchema,
-    ),
+    resolver: zodResolver(createEventSchema),
     defaultValues: {
       title: event?.title || "",
       location: event?.location || "",
       description: event?.description || "",
       url: event?.url || "",
-      when: event?.when || "",
+      when: event?.when || formattedDate,
       startTime: event?.startTime || "",
       endTime: event?.endTime || "",
       performers:
@@ -58,32 +63,28 @@ export default function EventFormPage(event: any) {
           ? event.performers
           : Array(performerCount).fill(""),
       status: event?.status,
+      visibility: event?.visibility || defaultVisibility,
     },
   });
 
-  const onSubmit: SubmitHandler<CreateEventValues | EditEventValues> = async (
-    data,
-  ) => {
+  const onSubmit: SubmitHandler<CreateEventValues> = async (data) => {
     console.log("isediting", isEditing);
     console.log("eventid", eventId);
     console.log("data in onSubmit:", data);
     if (isSubmitting) return;
     setIsSubmitting(true);
     console.log("currens status in onSubmit:", status);
-    const currentSchema =
-      status === "DRAFT" ? draftEventSchema : createEventSchema;
-    console.log("currens currentSchema in onSubmit:", currentSchema);
 
     // Validate using the correct schema
-    const parsedData = currentSchema.safeParse(data);
+    const parsedData = createEventSchema.safeParse(data);
     if (!parsedData.success) {
       setError("Validation error occurred");
       setIsSubmitting(false);
       return;
     }
 
-    let sanitizedPerformers = data.performers.filter(
-      (performer) => performer.trim() !== "",
+    let sanitizedPerformers = data.performers?.filter(
+      (performer) => performer?.trim() !== "",
     );
 
     console.log("data in onSubmit:", data);
@@ -93,14 +94,12 @@ export default function EventFormPage(event: any) {
     const finalData = isEditing
       ? {
           ...data,
-          performers:
-            sanitizedPerformers.length > 0 ? sanitizedPerformers : [""],
+          performers: sanitizedPerformers?.length ? sanitizedPerformers : [""],
           eventId: eventData.id,
         }
       : {
           ...data,
-          performers:
-            sanitizedPerformers.length > 0 ? sanitizedPerformers : [""],
+          performers: sanitizedPerformers?.length ? sanitizedPerformers : [""],
         };
 
     const mutation = isEditing ? editMutation : addMutation;
@@ -129,6 +128,26 @@ export default function EventFormPage(event: any) {
   };
 
   useEffect(() => {
+    const fetchUserCalendarPreference = async () => {
+      try {
+        const response = await fetch(`/api/users/preferences`, {
+          method: "GET",
+          credentials: "include", // Include cookies in the request
+        });
+        const data = await response.json();
+        if (data?.calendarPreference) {
+          setDefaultVisibility(data.calendarPreference);
+        } else {
+          setDefaultVisibility("PRIVATE");
+        }
+      } catch (error) {
+        console.error("Error fetching user calendar preference:", error);
+        setDefaultVisibility("PRIVATE");
+      }
+    };
+
+    fetchUserCalendarPreference();
+
     if (eventId) {
       console.log("Fetching event data for eventId:", eventId);
       console.log("form in useEffect:", form);
@@ -145,17 +164,19 @@ export default function EventFormPage(event: any) {
         })
         .then((data) => {
           console.log("Fetched event data:", data);
+          console.log("form in useEffect after fetch:", form);
           setEventData(data);
           form.reset({
             title: data.title || "",
             location: data.location || "",
             description: data.description || "",
             url: data.url || "",
-            when: data.when || "",
+            when: data.when || formattedDate,
             startTime: data.startTime || "",
             endTime: data.endTime || "",
             performers: data.performers.length > 0 ? data.performers : [""],
             status: data.status || "DRAFT",
+            visibility: event?.visibility || defaultVisibility,
           });
           setPerformerCount(data.performers.length || 1);
         })
@@ -163,7 +184,7 @@ export default function EventFormPage(event: any) {
           console.error("Failed to fetch event data:", error);
         });
     }
-  }, [eventId, form]);
+  }, [eventId, form, defaultVisibility]);
 
   const addPerformer = () => {
     if (performerCount < MAX_PERFORMERS) {
@@ -188,8 +209,39 @@ export default function EventFormPage(event: any) {
       <h1 className="mb-6 text-center text-2xl font-bold">
         {eventId ? "Edit Event" : "Create New Event"}
       </h1>
+      {isEditing && eventData && (
+        <div className="mb-4 text-center text-sm text-muted-foreground">
+          Status: {eventData.status}
+        </div>
+      )}
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form className="space-y-4">
+          <FormField
+            control={form.control}
+            name="visibility"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Visibility</FormLabel>
+                <FormControl>
+                  <FormSwitch values={["PRIVATE", "PUBLIC"]} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="title"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Title</FormLabel>
+                <FormControl>
+                  <Input placeholder="Event Title" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="title"
@@ -317,7 +369,7 @@ export default function EventFormPage(event: any) {
               onClick={handleSaveAsDraft}
               disabled={isSubmitting}
             >
-              Save as Draft
+              {isEditing ? "Update as Draft" : "Save as Draft"}
             </Button>
             <Button
               className="h-10 w-1/3"
@@ -325,7 +377,7 @@ export default function EventFormPage(event: any) {
               onClick={handlePublishEvent}
               disabled={isSubmitting}
             >
-              {isEditing ? "Update Event" : "Publish Event"}
+              {isEditing ? "Update as Published" : "Publish Event"}
             </Button>
           </div>
         </form>

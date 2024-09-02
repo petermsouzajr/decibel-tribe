@@ -23,7 +23,7 @@ const CalendarDay: React.FC<CalendarDayProps> = ({ day, events, onClick }) => {
         <div className="overflow-hidden">
           {dayEvents.map((event, index) => {
             const isDraft = event.status === "DRAFT";
-            const eventTitle = event.title ? event.title : "Draft";
+            const eventTitle = event.title ? event.title : event.location;
             const eventClass = isDraft
               ? "mt-1 line-clamp-1 overflow-hidden text-ellipsis break-all rounded-sm bg-muted-foreground p-1 text-background hover:bg-white transition-colors duration-300"
               : "mt-1 line-clamp-1 overflow-hidden text-ellipsis break-all rounded-sm bg-primary p-1 text-background hover:bg-white transition-colors duration-300";

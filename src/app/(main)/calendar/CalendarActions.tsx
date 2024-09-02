@@ -94,7 +94,7 @@ const EventCalendar: React.FC<CalendarProps> = ({ events, currentDate }) => {
                   No events.
                 </div>
               )}
-              <Link href="/events/edit" passHref>
+              <Link href={`/events/edit?date=${selectedDay}`} passHref>
                 <Button className="mt-4 h-10 w-full bg-primary text-foreground">
                   Create New Event
                 </Button>

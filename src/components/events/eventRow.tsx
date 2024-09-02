@@ -24,7 +24,7 @@ const EventRow: React.FC<EventRowProps> = ({
 
   const isDraft = event.status === "DRAFT";
   const { user } = useSession();
-  const eventTitle = event.title ? event.title : "Draft";
+  const eventTitle = event.title ? event.title : event.location;
   const eventClass = isDraft
     ? "rounded-md bg-muted-foreground p-2 text-background"
     : "rounded-md bg-accent-foreground p-2 text-background";

@@ -18,6 +18,7 @@ export function useAddEventMutation() {
       endTime,
       performers,
       status,
+      visibility,
     }: {
       title: string;
       location: string;
@@ -28,6 +29,7 @@ export function useAddEventMutation() {
       endTime: string;
       performers: string[];
       status: "DRAFT" | "PUBLISHED";
+      visibility: "PUBLIC" | "PRIVATE";
     }) => {
       let sanitizedPerformers = performers.filter(
         (performer) => typeof performer === "string" && performer.trim() !== "",
@@ -50,6 +52,7 @@ export function useAddEventMutation() {
           endTime: endTime || "",
           performers: sanitizedPerformers,
           status: status || "DRAFT",
+          visibility: visibility || "PUBLIC",
         }),
       });
 
@@ -106,6 +109,7 @@ export function useEditEventMutation() {
       endTime,
       performers,
       status,
+      visibility,
     }: {
       eventId: string;
       title: string;
@@ -117,6 +121,7 @@ export function useEditEventMutation() {
       endTime: string;
       performers: string[];
       status: "DRAFT" | "PUBLISHED";
+      visibility: "PUBLIC" | "PRIVATE";
     }) => {
       console.log("eventId in useEditEventMutation:", eventId);
       return fetch(`/api/events/${eventId}`, {
@@ -134,6 +139,7 @@ export function useEditEventMutation() {
           endTime,
           performers,
           status,
+          visibility,
         }),
       });
     },
