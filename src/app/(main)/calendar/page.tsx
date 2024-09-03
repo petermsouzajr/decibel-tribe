@@ -3,16 +3,20 @@ import { PageProps, Event } from "@/lib/types";
 import EventCalendar from "./CalendarActions";
 import { useEffect, useState } from "react";
 import PostsLoadingSkeleton from "@/components/posts/PostsLoadingSkeleton";
+import { useSearchParams } from "next/navigation";
 
 const Page: React.FC<PageProps> = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const username = searchParams.get("user");
 
   useEffect(() => {
     const fetchEvents = async () => {
+      const url = username ? `/api/events?user=${username}` : "/api/events";
       try {
-        const response = await fetch("/api/events");
+        const response = await fetch(url); // Pass the username to the API
         if (!response.ok) {
           throw new Error("Failed to fetch events");
         }
@@ -47,8 +51,3 @@ const Page: React.FC<PageProps> = () => {
 };
 
 export default Page;
-/*
-src/app/(main)/calendar/page.tsx
-src/app/(main)/calendar/CalendarActions.tsx
-
-*/

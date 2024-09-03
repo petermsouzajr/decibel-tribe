@@ -4,32 +4,79 @@ import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const username = searchParams.get("user") ?? undefined;
+  console.log("username", username);
+
   try {
     const { user: loggedInUser } = await validateRequest();
     console.log("User validated:", loggedInUser);
 
-    const events = await prisma.event.findMany({
-      where: {
-        isCancelled: false, // You can filter out canceled events if needed
-        OR: [
-          // Show public published events to everyone
+    let eventConditions: Prisma.EventWhereInput = {
+      isCancelled: false,
+    };
+    console.log("loggedInUser", loggedInUser);
+    if (username) {
+      const user = await prisma.user.findUnique({
+        where: { username },
+        select: { id: true },
+      });
+      console.log("user", user);
+      console.log("username", username);
+
+      if (loggedInUser && loggedInUser.id === user?.id) {
+        // If the logged-in user is the same as the user in the URL, show all events they created
+        eventConditions = {
+          ...eventConditions,
+          createdById: user.id,
+        };
+      } else {
+        // If no username is provided, show all events for the logged-in user, including private, public, draft, and published events
+        eventConditions = {
+          ...eventConditions,
+          createdById: user?.id,
+          status: "PUBLISHED",
+          visibility: "PUBLIC",
+        };
+      }
+    } else {
+      console.log("username", username);
+      // If no username is provided, show all events for the logged-in user, including private, public, draft, and published events
+      eventConditions = {
+        // createdById: loggedInUser?.id,
+        ...eventConditions,
+        AND: [
           {
-            status: "PUBLISHED",
-            visibility: "PUBLIC",
+            createdById: loggedInUser?.id, // Convert null to undefined if necessary
           },
-          // Show private published events only to their creators
           {
-            status: "PUBLISHED",
-            visibility: "PRIVATE",
-            createdById: loggedInUser?.id,
-          },
-          // Show draft events only to their creators
-          {
-            status: "DRAFT",
-            createdById: loggedInUser?.id,
+            attendees: {
+              some: {
+                userId: loggedInUser?.id, // Convert null to undefined if necessary
+              },
+            },
+            status: "PUBLISHED", // Ensure only published events where the user is an attendee are shown
+            AND: [
+              { createdById: loggedInUser?.id },
+              {
+                OR: [
+                  { status: "PUBLISHED", visibility: "PUBLIC" },
+                  {
+                    status: "PUBLISHED",
+                    visibility: "PRIVATE",
+                    createdById: loggedInUser?.id,
+                  },
+                  { status: "DRAFT", createdById: loggedInUser?.id },
+                ],
+              },
+            ],
           },
         ],
-      },
+      };
+    }
+
+    const events = await prisma.event.findMany({
+      where: eventConditions,
       orderBy: {
         when: "asc", // Order events by date
       },
