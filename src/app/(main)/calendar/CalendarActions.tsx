@@ -25,6 +25,7 @@ import { validateRequest } from "@/auth";
 import { User } from "@prisma/client";
 import { useSession } from "../SessionProvider";
 import { Input } from "@/components/ui/input";
+import PostsLoadingSkeleton from "@/components/posts/PostsLoadingSkeleton";
 
 type CalendarPropsWithUsername = CalendarProps & { username: string };
 
@@ -42,6 +43,7 @@ const EventCalendar: React.FC<CalendarPropsWithUsername> = ({
   const [userInfo, setUserInfo] = useState<UserState>(null);
   const [viewDate, setViewDate] = useState(currentDate); // New state to handle current displayed month
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false); // Control date picker modal
+  const [loading, setLoading] = useState(true);
 
   type User = {
     id: string;
@@ -76,6 +78,7 @@ const EventCalendar: React.FC<CalendarPropsWithUsername> = ({
     const fetchUserInfo = async () => {
       if (!username) {
         setUserInfo(null);
+        setLoading(false);
         return;
       }
 
@@ -89,6 +92,8 @@ const EventCalendar: React.FC<CalendarPropsWithUsername> = ({
       } catch (error) {
         console.error("Error fetching user info:", error);
         setUserInfo(null);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -149,6 +154,10 @@ const EventCalendar: React.FC<CalendarPropsWithUsername> = ({
     if (date) setViewDate(date);
     setIsDatePickerOpen(false);
   };
+
+  if (loading) {
+    return <PostsLoadingSkeleton />;
+  }
 
   console.log("userInfo", userInfo);
   return (
