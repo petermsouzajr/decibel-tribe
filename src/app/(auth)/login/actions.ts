@@ -39,6 +39,12 @@ export async function login(
       };
     }
 
+    if (!existingUser.isVerified) {
+      return {
+        error: "Please verify your account through the email link",
+      };
+    }
+
     const validPassword = await verify(existingUser.passwordHash, password, {
       memoryCost: 19456,
       timeCost: 2,

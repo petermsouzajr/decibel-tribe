@@ -24,6 +24,7 @@ model User {
   displayName           String
   email                 String?          @unique
   passwordHash          String?
+  isVerified            Boolean          @default(false)
   googleId              String?          @unique
   avatarUrl             String?
   bio                   String?
@@ -43,9 +44,18 @@ model User {
   EventAttendee         EventAttendee[]
   userPreferences       UserPreferences?
 
-  createdAt DateTime @default(now())
+  createdAt         DateTime            @default(now())
+  EmailVerification EmailVerification[]
 
   @@map("users")
+}
+
+model EmailVerification {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserPreferences {

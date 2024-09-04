@@ -9,10 +9,12 @@ import { generateIdFromEntropySize } from "lucia";
 import { isRedirectError } from "next/dist/client/components/redirect";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import sendVerificationEmail from "@/lib/sendEmail"; // A function to send emails
 
 export async function signUp(
   credentials: SignUpValues,
 ): Promise<{ error: string }> {
+  console.log("Signing up", credentials);
   try {
     const { username, email, password } = signUpSchema.parse(credentials);
 
@@ -55,6 +57,10 @@ export async function signUp(
       };
     }
 
+    // Generate verification token
+    const verificationToken = crypto.randomUUID();
+    const verificationTokenExpiry = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 hours
+
     await prisma.$transaction(async (tx) => {
       await tx.user.create({
         data: {
@@ -72,6 +78,14 @@ export async function signUp(
         },
       });
 
+      await tx.emailVerification.create({
+        data: {
+          userId,
+          token: verificationToken,
+          expiresAt: verificationTokenExpiry,
+        },
+      });
+
       await streamServerClient.upsertUser({
         id: userId,
         username,
@@ -79,13 +93,10 @@ export async function signUp(
       });
     });
 
-    const session = await lucia.createSession(userId, {});
-    const sessionCookie = lucia.createSessionCookie(session.id);
-    cookies().set(
-      sessionCookie.name,
-      sessionCookie.value,
-      sessionCookie.attributes,
-    );
+    // Send verification email with token
+    const verificationUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/verify-email?token=${verificationToken}`;
+    console.log("Verification URL in action", verificationUrl);
+    await sendVerificationEmail(email, verificationUrl);
 
     return redirect("/");
   } catch (error) {

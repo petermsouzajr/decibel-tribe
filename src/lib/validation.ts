@@ -5,21 +5,21 @@ const requiredString = z.string().trim().min(1, "Required");
 export const signUpSchema = z.object({
   email: requiredString
     .email("Invalid email address")
-    .max(20, "Must be less than 20 characters"),
+    .max(50, "Must be less than 50 characters"),
   username: requiredString
     .regex(/^[a-zA-Z0-9_-]+$/, "Only letters, numbers, - and _ allowed")
-    .max(20, "Must be less than 20 characters"),
+    .max(50, "Must be less than 50 characters"),
   password: requiredString
     .min(8, "Must be at least 8 characters")
-    .max(20, "Must be less than 20 characters"),
+    .max(50, "Must be less than 50 characters"),
 });
 
 export type SignUpValues = z.infer<typeof signUpSchema>;
 
 export const loginSchema = z.object({
-  username: z.string().max(20, "Must be less than 20 characters").optional(),
-  email: z.string().max(25, "Must be less than 25 characters").optional(),
-  password: requiredString.max(20, "Must be less than 20 characters"),
+  username: z.string().max(50, "Must be less than 50 characters").optional(),
+  email: z.string().max(50, "Must be less than 50 characters").optional(),
+  password: requiredString.max(50, "Must be less than 50 characters"),
 });
 
 export type LoginValues = z.infer<typeof loginSchema>;
