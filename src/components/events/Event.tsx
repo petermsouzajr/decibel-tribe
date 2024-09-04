@@ -10,6 +10,8 @@ import UserAvatar from "../UserAvatar";
 import UserTooltip from "../UserTooltip";
 import FollowButton from "../FollowButton";
 import { format as formatDate, parse, isValid } from "date-fns";
+import prisma from "@/lib/prisma";
+import { Button } from "../ui/button";
 
 //http://localhost:3000/events/cm008i31b0001488hptjh2f7i
 //http://localhost:3000/events/cm009aq6b0001w17tx6l865sz
@@ -24,6 +26,8 @@ export default function EventDetails({ event }: EventDetailsProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showToggle, setShowToggle] = useState(false);
   const contentRef = useRef(null);
+  const [isAttendee, setIsAttendee] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
@@ -45,13 +49,110 @@ export default function EventDetails({ event }: EventDetailsProps) {
 
   useEffect(() => {
     checkContentSize();
-    window.addEventListener("resize", checkContentSize);
-    return () => {
-      window.removeEventListener("resize", checkContentSize);
+    // window.addEventListener("resize", checkContentSize);
+    // return () => {
+    //   window.removeEventListener("resize", checkContentSize);
+    // };
+
+    const fetchAttendees = async () => {
+      try {
+        setLoading(true);
+
+        const response = await fetch(`/api/events/${event.id}/attendees`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch attendees");
+        }
+        const attendees = await response.json();
+
+        // Check if the logged-in user is an attendee
+        const isUserAttendee = attendees.some(
+          (attendee: { userId: string }) => attendee.userId === user.id,
+        );
+        setIsAttendee(isUserAttendee);
+      } catch (error) {
+        console.error("Error fetching attendees:", error);
+      }
+      setLoading(false); // Set to false once data is fetched
     };
-  }, []);
+
+    fetchAttendees();
+  }, [event.id, user.id]);
+
+  const handleAddAttendee = async () => {
+    console.log("Adding attendee to event", event.id);
+    try {
+      const response = await fetch(`/api/events/${event.id}/attendees`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to add attendee");
+      }
+
+      console.log("Attendee added successfully");
+      // Optionally refresh or redirect
+      // router.reload(); // or router.push("/some/path")
+      setIsAttendee(true);
+    } catch (error) {
+      console.error("Failed to add attendee:", error);
+    }
+  };
+
+  const handleRemoveAttendee = async () => {
+    try {
+      const response = await fetch(`/api/events/${event.id}/attendees`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to remove attendee");
+      }
+      setIsAttendee(false);
+    } catch (error) {
+      console.error("Failed to remove attendee:", error);
+    }
+  };
+
+  const isEventCreator = (eventCreatedById: string, userId: string) => {
+    return eventCreatedById === userId;
+  };
+
+  const shouldShowAddButton = (isAttendee: boolean) => {
+    return !isAttendee;
+  };
+
+  const shouldShowRemoveButton = (isAttendee: boolean) => {
+    return isAttendee;
+  };
+
+  const renderEventActionButton = () => {
+    if (loading) {
+      // Render a placeholder button while loading
+      return <Button className="bg-primary text-primary-foreground"></Button>;
+    }
+    if (isEventCreator(event.createdBy.id, user.id)) {
+      return <Link href={`/events/edit?id=${event.id}`}>Edit Event</Link>;
+    } else if (shouldShowAddButton(isAttendee)) {
+      return <Button onClick={handleAddAttendee}>Add to Calendar</Button>;
+    } else if (shouldShowRemoveButton(isAttendee)) {
+      return (
+        <Button onClick={handleRemoveAttendee}>Remove from Calendar</Button>
+      );
+    } else {
+      return null; // This should never happen, but just in case.
+    }
+  };
 
   console.log("EventDetailsProps", event);
+  console.log("attendees", event.attendees);
   return (
     <article className="group/event space-y-3 rounded-2xl border-2 bg-card p-3 shadow-sm">
       <div className="flex justify-between gap-3">
@@ -100,11 +201,7 @@ export default function EventDetails({ event }: EventDetailsProps) {
               {formatRelativeDate(event.createdAt)}
             </div>
           </div>
-          {event.createdBy.id === user.id ? (
-            <Link href={`/events/edit?id=${event.id}`}>Edit Event</Link>
-          ) : (
-            ""
-          )}
+          {renderEventActionButton()}
         </div>
       </div>
 

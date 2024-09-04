@@ -30,7 +30,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   return (
     <div className="grid grid-cols-7 gap-2">
       {WEEKDAYS.map((weekday) => (
-        <div key={weekday} className="text-center font-bold">
+        <div
+          key={weekday}
+          className="text-center font-bold text-muted-foreground"
+        >
           {weekday}
         </div>
       ))}

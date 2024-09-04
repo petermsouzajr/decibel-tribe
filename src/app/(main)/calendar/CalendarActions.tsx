@@ -1,6 +1,14 @@
 "use client";
-import React, { useState } from "react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
+import React, { useEffect, useState } from "react";
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  set,
+  addMonths,
+  subMonths,
+} from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -12,13 +20,80 @@ import CalendarGrid from "./CalendarGrid";
 import EventRow from "@/components/events/eventRow";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import UserAvatar from "@/components/UserAvatar";
+import { validateRequest } from "@/auth";
+import { User } from "@prisma/client";
+import { useSession } from "../SessionProvider";
+import { Input } from "@/components/ui/input";
 
-const EventCalendar: React.FC<CalendarProps> = ({ events, currentDate }) => {
+type CalendarPropsWithUsername = CalendarProps & { username: string };
+
+const EventCalendar: React.FC<CalendarPropsWithUsername> = ({
+  events,
+  currentDate,
+  username,
+}) => {
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [selectedEvents, setSelectedEvents] = useState(events);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editStates, setEditStates] = useState<Record<number, EditState>>({});
+  const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
+  const [userInfo, setUserInfo] = useState<UserState>(null);
+  const [viewDate, setViewDate] = useState(currentDate); // New state to handle current displayed month
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false); // Control date picker modal
+
+  type User = {
+    id: string;
+    username: string;
+    displayName: string;
+    googleId: string | null;
+    avatarUrl: string | null;
+  };
+
+  type UserState = {
+    id: string;
+    username: string;
+    displayName: string;
+    email: string | null;
+    passwordHash: string | null;
+    googleId: string | null;
+    avatarUrl: string | null;
+    bio: string | null;
+    createdAt: Date;
+  } | null;
+
+  const { user: loggedInUser } = useSession(); // Get the logged-in user info from context or custom hook
+
+  const handleDateInput = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedDate = new Date(event.target.value);
+    if (!isNaN(selectedDate.getTime())) {
+      setViewDate(selectedDate);
+    }
+  };
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      if (!username) {
+        setUserInfo(null);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/users/username/${username}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch user info");
+        }
+        const data = await response.json();
+        setUserInfo(data);
+      } catch (error) {
+        console.error("Error fetching user info:", error);
+        setUserInfo(null);
+      }
+    };
+
+    fetchUserInfo();
+  }, [username]);
 
   const daysInMonth = eachDayOfInterval({
     start: startOfMonth(currentDate),
@@ -64,13 +139,50 @@ const EventCalendar: React.FC<CalendarProps> = ({ events, currentDate }) => {
     setEditingIndex((prev) => (prev === index ? null : index));
   };
 
+  // Handlers for Next/Previous buttons
+  const handleNextMonth = () => setViewDate(addMonths(viewDate, 1));
+  const handlePreviousMonth = () => setViewDate(subMonths(viewDate, 1));
+
+  // Open/Close Date Picker
+  const handleOpenDatePicker = () => setIsDatePickerOpen(true);
+  const handleDateChange = (date: Date | null) => {
+    if (date) setViewDate(date);
+    setIsDatePickerOpen(false);
+  };
+
+  console.log("userInfo", userInfo);
   return (
     <div className="container mx-auto p-4">
-      <h2 className="m-3 mx-auto inline-flex h-12 w-full items-center justify-center gap-1 rounded-md bg-card p-1 text-muted-foreground shadow-sm">
-        {format(currentDate, "MMMM yyyy")}
+      <h2 className="justify-left mx-auto inline-flex h-12 w-full items-center gap-3 rounded-md bg-card p-4 text-xl font-bold text-muted-foreground shadow-sm">
+        {userInfo ? (
+          <>
+            <div className="flex items-center px-3">
+              <UserAvatar avatarUrl={userInfo.avatarUrl} />
+            </div>
+            <span>{userInfo.displayName}'s Events</span>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center px-3">
+              <UserAvatar avatarUrl={loggedInUser?.avatarUrl} />
+            </div>
+            <span>Your Events</span>
+          </>
+        )}
       </h2>
+      <div className="m-3 mx-auto flex items-center justify-center gap-8 rounded-md bg-card p-1 text-muted-foreground shadow-sm">
+        <Button onClick={handlePreviousMonth}>{"<"}</Button>
+        <Input
+          type="date"
+          value={format(viewDate, "yyyy-MM-dd")}
+          onChange={handleDateInput}
+          className="w-auto text-center"
+        />
+        <Button onClick={handleNextMonth}>{">"}</Button>
+      </div>
+
       <CalendarGrid
-        currentDate={currentDate}
+        currentDate={viewDate}
         events={events}
         onSelectDay={handleDayClick}
       />

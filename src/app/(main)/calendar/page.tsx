@@ -10,13 +10,18 @@ const Page: React.FC<PageProps> = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
-  const username = searchParams.get("user");
+  const username = searchParams.get("user") ?? "";
 
   useEffect(() => {
     const fetchEvents = async () => {
       const url = username ? `/api/events?user=${username}` : "/api/events";
       try {
-        const response = await fetch(url); // Pass the username to the API
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }); // Pass the username to the API
         if (!response.ok) {
           throw new Error("Failed to fetch events");
         }
@@ -45,7 +50,11 @@ const Page: React.FC<PageProps> = () => {
   console.log("Events in Page:", events);
   return (
     <main className="flex w-full min-w-0 gap-5">
-      <EventCalendar events={events} currentDate={currentDate} />
+      <EventCalendar
+        events={events}
+        currentDate={currentDate}
+        username={username}
+      />
     </main>
   );
 };

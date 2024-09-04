@@ -12,9 +12,7 @@ export async function GET(req: NextRequest) {
     const { user: loggedInUser } = await validateRequest();
     console.log("User validated:", loggedInUser);
 
-    let eventConditions: Prisma.EventWhereInput = {
-      isCancelled: false,
-    };
+    let eventConditions: Prisma.EventWhereInput = {};
     console.log("loggedInUser", loggedInUser);
     if (username) {
       const user = await prisma.user.findUnique({
@@ -24,52 +22,40 @@ export async function GET(req: NextRequest) {
       console.log("user", user);
       console.log("username", username);
 
+      if (!user) {
+        return NextResponse.json({ error: "User not found" }, { status: 404 });
+      }
+
       if (loggedInUser && loggedInUser.id === user?.id) {
         // If the logged-in user is the same as the user in the URL, show all events they created
         eventConditions = {
-          ...eventConditions,
           createdById: user.id,
         };
       } else {
         // If no username is provided, show all events for the logged-in user, including private, public, draft, and published events
         eventConditions = {
-          ...eventConditions,
-          createdById: user?.id,
-          status: "PUBLISHED",
-          visibility: "PUBLIC",
+          AND: [
+            { createdById: user?.id },
+            { status: "PUBLISHED" },
+            { visibility: "PUBLIC" },
+          ],
         };
       }
     } else {
       console.log("username", username);
       // If no username is provided, show all events for the logged-in user, including private, public, draft, and published events
       eventConditions = {
-        // createdById: loggedInUser?.id,
-        ...eventConditions,
-        AND: [
+        OR: [
           {
-            createdById: loggedInUser?.id, // Convert null to undefined if necessary
+            createdById: loggedInUser?.id,
           },
           {
             attendees: {
               some: {
-                userId: loggedInUser?.id, // Convert null to undefined if necessary
+                userId: loggedInUser?.id,
               },
             },
-            status: "PUBLISHED", // Ensure only published events where the user is an attendee are shown
-            AND: [
-              { createdById: loggedInUser?.id },
-              {
-                OR: [
-                  { status: "PUBLISHED", visibility: "PUBLIC" },
-                  {
-                    status: "PUBLISHED",
-                    visibility: "PRIVATE",
-                    createdById: loggedInUser?.id,
-                  },
-                  { status: "DRAFT", createdById: loggedInUser?.id },
-                ],
-              },
-            ],
+            status: "PUBLISHED",
           },
         ],
       };
@@ -78,7 +64,21 @@ export async function GET(req: NextRequest) {
     const events = await prisma.event.findMany({
       where: eventConditions,
       orderBy: {
-        when: "asc", // Order events by date
+        when: "asc",
+      },
+      include: {
+        attendees: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                displayName: true,
+                avatarUrl: true,
+              },
+            },
+          },
+        },
       },
     });
 
