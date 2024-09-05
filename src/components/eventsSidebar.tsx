@@ -8,7 +8,7 @@ import { Suspense } from "react";
 import UserAvatar from "./UserAvatar";
 import UserTooltip from "./UserTooltip";
 import { format } from "date-fns";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Button } from "./ui/button";
 
 export default function EventsSidebar({ user }: { user: UserData }) {
@@ -16,7 +16,7 @@ export default function EventsSidebar({ user }: { user: UserData }) {
     <div className="sticky top-[5.25rem] hidden h-fit w-72 flex-none space-y-5 md:block lg:w-80">
       <Suspense fallback={<Loader2 className="mx-auto animate-spin" />}>
         <EventsList user={user} />
-        <MostEngagedPosts />
+        <MostEngagedPosts user={user} />
       </Suspense>
     </div>
   );
@@ -111,6 +111,7 @@ const getMostEngagedPosts = unstable_cache(
           select: {
             likes: true,
             comments: true,
+            dislikes: true,
           },
         },
       },
@@ -122,6 +123,11 @@ const getMostEngagedPosts = unstable_cache(
         },
         {
           comments: {
+            _count: "desc",
+          },
+        },
+        {
+          dislikes: {
             _count: "desc",
           },
         },
@@ -137,12 +143,11 @@ const getMostEngagedPosts = unstable_cache(
   },
 );
 
-async function MostEngagedPosts() {
-  const { user } = await validateRequest();
-
+async function MostEngagedPosts({ user }: { user: any }) {
   if (!user) return null;
 
   const posts = await getMostEngagedPosts(user.id);
+  if (posts.length === 0) return null;
 
   return (
     <div className="space-y-5 rounded-2xl bg-card p-5 shadow-sm">
@@ -153,7 +158,8 @@ async function MostEngagedPosts() {
             {post.content}
           </p>
           <p className="text-sm text-muted-foreground">
-            {post._count.likes} likes, {post._count.comments} comments
+            {post._count.likes} likes, {post._count.comments} comments,{" "}
+            {post._count.dislikes} dislikes
           </p>
         </Link>
       ))}

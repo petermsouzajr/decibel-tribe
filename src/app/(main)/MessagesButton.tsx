@@ -17,7 +17,7 @@ export default function MessagesButton({ initialState }: MessagesButtonProps) {
     queryFn: () =>
       kyInstance.get("/api/messages/unread-count").json<MessageCountInfo>(),
     initialData: initialState,
-    refetchInterval: 60 * 1000,
+    refetchInterval: 24 * 60 * 60 * 1000,
   });
 
   return (
