@@ -2,30 +2,32 @@
 
 import { lucia } from "@/auth";
 import prisma from "@/lib/prisma";
+import sendVerificationEmail from "@/lib/sendEmail";
 import { loginSchema, LoginValues } from "@/lib/validation";
 import { verify } from "@node-rs/argon2";
 import { isRedirectError } from "next/dist/client/components/redirect";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { resendVerificationEmail } from "../sendVerification";
 
 export async function login(
   credentials: LoginValues,
 ): Promise<{ error: string }> {
   try {
-    const { username, email, password } = loginSchema.parse(credentials);
+    const { username, password } = loginSchema.parse(credentials);
 
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [
           {
-            username: {
+            email: {
               equals: username,
               mode: "insensitive",
             },
           },
           {
-            email: {
-              equals: email,
+            username: {
+              equals: username,
               mode: "insensitive",
             },
           },
@@ -40,8 +42,11 @@ export async function login(
     }
 
     if (!existingUser.isVerified) {
+      if (existingUser.email) {
+        await resendVerificationEmail(existingUser.email);
+      }
       return {
-        error: "Please verify your account through the email link",
+        error: `Your account is not verified. Please check your email at ${username} for a new verification link.`,
       };
     }
 

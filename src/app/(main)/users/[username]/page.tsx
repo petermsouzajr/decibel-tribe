@@ -13,7 +13,7 @@ import { notFound } from "next/navigation";
 import { cache } from "react";
 import EditProfileButton from "./EditProfileButton";
 import UserPosts from "./UserPosts";
-import EventsSidebar from "@/components/eventsSidebar";
+import EventsSidebar, { EventsList } from "@/components/eventsSidebar";
 
 interface PageProps {
   params: { username: string };
@@ -66,6 +66,9 @@ export default async function Page({ params: { username } }: PageProps) {
     <main className="flex w-full min-w-0 gap-5">
       <div className="w-full min-w-0 space-y-5">
         <UserProfile user={user} loggedInUserId={loggedInUser.id} />
+        <span className="m-8 md:hidden">
+          <EventsList user={user} />
+        </span>
         <UserPosts userId={user.id} />
       </div>
       <EventsSidebar user={user} />

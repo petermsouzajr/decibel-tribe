@@ -9,6 +9,7 @@ import UserAvatar from "./UserAvatar";
 import UserTooltip from "./UserTooltip";
 import { format } from "date-fns";
 import { usePathname } from "next/navigation";
+import { Button } from "./ui/button";
 
 export default function EventsSidebar({ user }: { user: UserData }) {
   return (
@@ -22,7 +23,7 @@ export default function EventsSidebar({ user }: { user: UserData }) {
 }
 
 // Function to fetch and display events
-async function EventsList({ user }: { user: UserData }) {
+export async function EventsList({ user }: { user: UserData }) {
   if (!user.id) return null;
 
   const events = await prisma.event.findMany({
@@ -87,13 +88,13 @@ async function EventsList({ user }: { user: UserData }) {
           </ul>
         </div>
       ))}
-      <Link
-        href={`/calendar?user=${user.username}`}
-        passHref
-        className="mt-4 block text-center text-primary hover:underline"
-      >
-        View Calendar
-      </Link>
+      <span className="flex justify-end">
+        <Button>
+          <Link href={`/calendar?user=${user.username}`} passHref>
+            View Calendar
+          </Link>
+        </Button>
+      </span>
     </div>
   );
 }
@@ -145,7 +146,7 @@ async function MostEngagedPosts() {
 
   return (
     <div className="space-y-5 rounded-2xl bg-card p-5 shadow-sm">
-      <div className="text-xl font-bold">Most Engaged Posts</div>
+      <div className="text-xl font-bold">Activity</div>
       {posts.map((post) => (
         <Link key={post.id} href={`/posts/${post.id}`} className="block">
           <p className="line-clamp-1 break-all font-semibold hover:underline">

@@ -10,6 +10,7 @@ import { isRedirectError } from "next/dist/client/components/redirect";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import sendVerificationEmail from "@/lib/sendEmail"; // A function to send emails
+import { generateAndSendVerification } from "../sendVerification";
 
 export async function signUp(
   credentials: SignUpValues,
@@ -57,46 +58,7 @@ export async function signUp(
       };
     }
 
-    // Generate verification token
-    const verificationToken = crypto.randomUUID();
-    const verificationTokenExpiry = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 hours
-
-    await prisma.$transaction(async (tx) => {
-      await tx.user.create({
-        data: {
-          id: userId,
-          username,
-          displayName: username,
-          email,
-          passwordHash,
-        },
-      });
-
-      await tx.userPreferences.create({
-        data: {
-          userId: userId,
-        },
-      });
-
-      await tx.emailVerification.create({
-        data: {
-          userId,
-          token: verificationToken,
-          expiresAt: verificationTokenExpiry,
-        },
-      });
-
-      await streamServerClient.upsertUser({
-        id: userId,
-        username,
-        name: username,
-      });
-    });
-
-    // Send verification email with token
-    const verificationUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/verify-email?token=${verificationToken}`;
-    console.log("Verification URL in action", verificationUrl);
-    await sendVerificationEmail(email, verificationUrl);
+    await generateAndSendVerification(userId, username, email, passwordHash);
 
     return redirect("/");
   } catch (error) {

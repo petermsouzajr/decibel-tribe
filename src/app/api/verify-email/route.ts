@@ -9,10 +9,7 @@ export async function GET(req: NextRequest) {
   const token = searchParams.get("token");
 
   if (!token) {
-    return NextResponse.json(
-      { error: "Invalid or expired token" },
-      { status: 400 },
-    );
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
   try {
@@ -27,10 +24,7 @@ export async function GET(req: NextRequest) {
     });
 
     if (!verificationRecord) {
-      return NextResponse.json(
-        { error: "Invalid or expired token" },
-        { status: 400 },
-      );
+      return NextResponse.redirect(new URL("/", req.url));
     }
 
     // Mark user as verified
@@ -58,9 +52,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/", req.url));
   } catch (error) {
     console.error("Verification failed", error);
-    return NextResponse.json(
-      { error: "Something went wrong. Please try again." },
-      { status: 500 },
-    );
+    return NextResponse.redirect(new URL("/", req.url));
   }
 }

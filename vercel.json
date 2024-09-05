@@ -3,6 +3,10 @@
     {
       "path": "/api/clear-uploads",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/clear-unverified-users",
+      "schedule": "0 1 * * *"
     }
   ]
 }
