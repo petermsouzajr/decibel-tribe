@@ -150,7 +150,7 @@ async function MostEngagedPosts() {
       {posts.map((post) => (
         <Link key={post.id} href={`/posts/${post.id}`} className="block">
           <p className="line-clamp-1 break-all font-semibold hover:underline">
-            {post.id}
+            {post.content}
           </p>
           <p className="text-sm text-muted-foreground">
             {post._count.likes} likes, {post._count.comments} comments
