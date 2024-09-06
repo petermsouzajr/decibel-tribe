@@ -16,11 +16,22 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { signUp } from "./actions";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { NextResponse } from "next/server";
+import { useRouter } from "next/navigation";
 
 export default function SignUpForm() {
   const [error, setError] = useState<string>();
+  const [isModalOpen, setIsModalOpen] = useState(false); // Modal state
 
   const [isPending, startTransition] = useTransition();
+  const router = useRouter(); // Initialize useRouter for client-side navigation
 
   const form = useForm<SignUpValues>({
     resolver: zodResolver(signUpSchema),
@@ -35,64 +46,96 @@ export default function SignUpForm() {
     setError(undefined);
     startTransition(async () => {
       const { error } = await signUp(values);
-      if (error) setError(error);
+      if (error) {
+        setError(error);
+      } else {
+        setIsModalOpen(true);
+      }
     });
   }
 
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    router.push("/"); // Redirect to home page after modal closes
+  };
+
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
-        {error && <p className="text-center text-destructive">{error}</p>}
-        <FormField
-          control={form.control}
-          name="username"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Username</FormLabel>
-              <FormControl>
-                <Input placeholder="Pick a username" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Email - We will send a verification code"
-                  type="email"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <PasswordInput
-                  placeholder="Password, 8 characters minimum"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <LoadingButton loading={isPending} type="submit" className="w-full">
-          Create account
-        </LoadingButton>
-      </form>
-    </Form>
+    <>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+          {error && <p className="text-center text-destructive">{error}</p>}
+          <FormField
+            control={form.control}
+            name="username"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Username</FormLabel>
+                <FormControl>
+                  <Input placeholder="Pick a username" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Email - We will send a verification code"
+                    type="email"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <PasswordInput
+                    placeholder="Password, 8 characters minimum"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <LoadingButton loading={isPending} type="submit" className="w-full">
+            Create account
+          </LoadingButton>
+        </form>
+      </Form>
+      {isModalOpen && (
+        <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
+          <DialogContent>
+            <div className="space-y-5">
+              <DialogTitle>Sign Up Complete</DialogTitle>
+              <span className="flex items-center justify-center text-center">
+                Signup complete! Please check your email for the account
+                verification link.
+              </span>
+              <DialogFooter className="pt-4">
+                <Button
+                  onClick={handleCloseModal}
+                  className="h-10 bg-primary text-foreground"
+                >
+                  Close
+                </Button>
+              </DialogFooter>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
   );
 }

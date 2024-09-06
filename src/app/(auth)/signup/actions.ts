@@ -14,7 +14,7 @@ import { generateAndSendVerification } from "../sendVerification";
 
 export async function signUp(
   credentials: SignUpValues,
-): Promise<{ error: string }> {
+): Promise<{ error?: string; success?: boolean }> {
   console.log("Signing up", credentials);
   try {
     const { username, email, password } = signUpSchema.parse(credentials);
@@ -60,7 +60,7 @@ export async function signUp(
 
     await generateAndSendVerification(userId, username, email, passwordHash);
 
-    return redirect("/");
+    return { success: true };
   } catch (error) {
     if (isRedirectError(error)) throw error;
     console.error(error);
