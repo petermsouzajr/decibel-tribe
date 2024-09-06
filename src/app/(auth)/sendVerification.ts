@@ -2,6 +2,7 @@ import crypto from "crypto";
 import prisma from "@/lib/prisma";
 import streamServerClient from "@/lib/stream"; // Assuming you're using this for another purpose like user streaming
 import sendVerificationEmail from "@/lib/sendEmail"; // Your existing email-sending module
+import { google } from "@/auth";
 
 // Generate a verification token with a 24-hour expiry
 export async function generateAndSendVerification(
@@ -64,7 +65,7 @@ export async function generateAndSendVerification(
 }
 
 // Resend verification email logic
-export async function resendVerificationEmail(email: string) {
+export async function resendVerificationEmail(credential: string) {
   const verificationToken = crypto.randomUUID(); // Generate a new token
   const verificationTokenExpiry = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 hours expiration
 
@@ -74,13 +75,13 @@ export async function resendVerificationEmail(email: string) {
         OR: [
           {
             email: {
-              equals: email,
+              equals: credential,
               mode: "insensitive",
             },
           },
           {
             username: {
-              equals: email,
+              equals: credential,
               mode: "insensitive",
             },
           },
@@ -93,7 +94,13 @@ export async function resendVerificationEmail(email: string) {
       return { error: "User not found." };
     }
 
-    const userId = existingUser.id; // Extract userId from the fetched user
+    // const userId = existingUser.id; // Extract userId from the fetched user
+    // const userEmail = existingUser.email; // Extract email from the fetched user
+    // const googleId = existingUser.googleId; // Extract Google ID from the fetched user
+    const { id: userId, email: userEmail, isVerified, googleId } = existingUser;
+
+    if (!userEmail && googleId)
+      return { error: "You didn't sign up with email and password." };
 
     // Delete any existing verification token for this user
     await prisma.emailVerification.deleteMany({
@@ -113,7 +120,11 @@ export async function resendVerificationEmail(email: string) {
     const verificationUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/verify-email?token=${verificationToken}`;
     console.log("Verification URL resent:", verificationUrl);
 
-    await sendVerificationEmail(email, verificationUrl);
+    if (userEmail) {
+      await sendVerificationEmail(userEmail, verificationUrl);
+    } else {
+      console.error("User did not sign up with email and password.");
+    }
     return { success: true };
   } catch (error) {
     console.error("Error resending verification email:", error);

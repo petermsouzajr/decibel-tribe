@@ -1,13 +1,22 @@
+import { useState, useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { resendVerificationEmail } from "../sendVerification";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { loginSchema, LoginValues } from "@/lib/validation";
 import loginImage from "@/assets/login-image.jpg";
-import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import GoogleSignInButton from "./google/GoogleSignInButton";
-import LoginForm from "./LoginForm";
-
-export const metadata: Metadata = {
-  title: "Login",
-};
+import LoadingButton from "@/components/LoadingButton";
+import ForgotPassForm from "./forgotPassForm";
 
 export default function Page() {
   return (
@@ -18,31 +27,23 @@ export default function Page() {
       </div>
       <div className="flex h-full max-h-[40rem] w-full max-w-[64rem] items-center justify-center overflow-hidden rounded-2xl bg-card shadow-2xl">
         <div className="w-full space-y-10 overflow-y-auto p-10 md:w-1/2">
-          <h1 className="text-center text-2xl font-bold">
-            Login with Google or Username/Email
-          </h1>
           <div className="space-y-5">
-            <GoogleSignInButton />
-            <div className="flex items-center gap-3">
-              <div className="h-px flex-1 bg-muted" />
-              <span>OR</span>
-              <div className="h-px flex-1 bg-muted" />
-            </div>
-            <LoginForm />
+            <h2 className="text-center text-xl font-semibold">
+              Resend Verification Email
+            </h2>
+            <ForgotPassForm />
+
             <Link href="/signup" className="block text-center hover:underline">
               Don&apos;t have an account? Sign up
             </Link>
-            <Link
-              href="/forgot-pass"
-              className="block text-center hover:underline"
-            >
-              Forgot Password?
+            <Link href="/login" className="block text-center hover:underline">
+              Back to Login
             </Link>
           </div>
         </div>
         <Image
           src={loginImage}
-          alt=""
+          alt="Login Illustration"
           className="hidden w-1/2 object-cover md:block"
         />
       </div>
