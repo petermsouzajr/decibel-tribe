@@ -64,7 +64,8 @@ export async function generateAndSendVerification(
 }
 
 // Resend verification email logic
-export async function resendVerificationEmail(email: string) {
+export async function resendVerificationEmail(credential: string) {
+  console.log("Resending verification email to:", credential);
   const verificationToken = crypto.randomUUID(); // Generate a new token
   const verificationTokenExpiry = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 hours expiration
 
@@ -74,13 +75,13 @@ export async function resendVerificationEmail(email: string) {
         OR: [
           {
             email: {
-              equals: email,
+              equals: credential,
               mode: "insensitive",
             },
           },
           {
             username: {
-              equals: email,
+              equals: credential,
               mode: "insensitive",
             },
           },
@@ -92,8 +93,10 @@ export async function resendVerificationEmail(email: string) {
     if (!existingUser) {
       return { error: "User not found." };
     }
-
+    console.log("existingUser", existingUser);
+    console.log("existingUser.id", existingUser.id);
     const userId = existingUser.id; // Extract userId from the fetched user
+    const email = existingUser.email; // Extract email from the fetched user
 
     // Delete any existing verification token for this user
     await prisma.emailVerification.deleteMany({

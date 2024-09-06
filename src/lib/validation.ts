@@ -16,6 +16,12 @@ export const signUpSchema = z.object({
 
 export type SignUpValues = z.infer<typeof signUpSchema>;
 
+export const resetPasswordSchema = z.object({
+  credential: z.string().max(50, "Must be less than 50 characters").optional(),
+});
+
+export type resetPasswordValues = z.infer<typeof resetPasswordSchema>;
+
 export const loginSchema = z.object({
   username: z.string().max(50, "Must be less than 50 characters").optional(),
   email: z.string().max(50, "Must be less than 50 characters").optional(),
