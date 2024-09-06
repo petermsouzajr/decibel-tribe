@@ -36,10 +36,46 @@ export async function GET(req: Request) {
       });
     }
 
-    // Return a success response
+    // // Return a success response
+    // return new Response(
+    //   JSON.stringify({
+    //     message: `${unverifiedUsers.length} unverified user(s) deleted.`,
+    //   }),
+    //   { status: 200 },
+    // );
+    ////////end cron1
+    // const authHeader = req.headers.get("Authorization");
+
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return new Response(JSON.stringify({ message: "Unauthorized" }), {
+        status: 401,
+      });
+    }
+
+    const expiredVerifications = await prisma.emailVerification.findMany({
+      where: {
+        expiresAt: {
+          lte: new Date(), // Expiration date is before the current date
+        },
+      },
+      select: {
+        id: true, // Only select what you need for deletion
+      },
+    });
+
+    if (expiredVerifications.length > 0) {
+      await prisma.emailVerification.deleteMany({
+        where: {
+          id: {
+            in: expiredVerifications.map((verifications) => verifications.id),
+          },
+        },
+      });
+    }
+
     return new Response(
       JSON.stringify({
-        message: `${unverifiedUsers.length} unverified user(s) deleted.`,
+        message: `${expiredVerifications.length} expired verification token(s) and ${unverifiedUsers.length} unverified user(s) deleted..`,
       }),
       { status: 200 },
     );

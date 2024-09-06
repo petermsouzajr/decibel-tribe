@@ -7,10 +7,6 @@
     {
       "path": "/api/clear-unverified-users",
       "schedule": "0 1 * * *"
-    },
-    {
-      "path": "/api/clear-expired-tokens",
-      "schedule": "0 3 * * *"
     }
   ]
 }
