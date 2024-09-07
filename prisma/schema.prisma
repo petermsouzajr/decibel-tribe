@@ -206,7 +206,9 @@ model Notification {
   post        Post?            @relation(fields: [postId], references: [id], onDelete: Cascade)
   type        NotificationType
   read        Boolean          @default(false)
+  eventId     String?
 
+  event     Event?   @relation(fields: [eventId], references: [id], onDelete: Cascade) // Relation to Event
   createdAt DateTime @default(now())
 
   @@map("notifications")
@@ -217,6 +219,7 @@ enum NotificationType {
   LIKE
   FOLLOW
   COMMENT
+  EVENT_ATTENDEE
 }
 
 model Event {
@@ -230,9 +233,10 @@ model Event {
   endTime     String
   performers  String[]
 
-  createdById String
-  createdBy   User            @relation("CreatedEvents", fields: [createdById], references: [id])
-  attendees   EventAttendee[]
+  createdById         String
+  createdBy           User            @relation("CreatedEvents", fields: [createdById], references: [id])
+  attendees           EventAttendee[]
+  linkedNotifications Notification[]
 
   isCancelled Boolean @default(false)
   status      String  @default("DRAFT")

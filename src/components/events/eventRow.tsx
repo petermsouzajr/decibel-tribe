@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { format as formatDate, parse, isValid } from "date-fns";
 import { Event } from "@/lib/types";
 import { Button } from "../ui/button";
@@ -28,6 +28,74 @@ const EventRow: React.FC<EventRowProps> = ({
   const eventClass = isDraft
     ? "rounded-md bg-muted-foreground p-2 text-background"
     : "rounded-md bg-accent-foreground p-2 text-background";
+  const [isAttendee, setIsAttendee] = useState(false);
+  const [loadingAttendee, setLoadingAttendee] = useState(true);
+
+  useEffect(() => {
+    const fetchAttendeeStatus = async () => {
+      try {
+        const response = await fetch(`/api/events/${event.id}/attendees`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch attendee status");
+        }
+
+        const attendees = await response.json();
+        const isUserAttendee = attendees.some(
+          (attendee: { userId: string }) => attendee.userId === user.id,
+        );
+        setIsAttendee(isUserAttendee);
+      } catch (error) {
+        console.error("Failed to fetch attendee status:", error);
+      } finally {
+        setLoadingAttendee(false);
+      }
+    };
+
+    fetchAttendeeStatus();
+  }, [event.id, user.id]);
+
+  const handleAddAttendee = async (event: Event) => {
+    console.log("Adding attendee to event", event.id);
+    try {
+      const response = await fetch(`/api/events/${event.id}/attendees`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to add attendee");
+      }
+
+      console.log("Attendee added successfully");
+      // Optionally refresh or redirect
+      // router.reload(); // or router.push("/some/path")
+      setIsAttendee(true);
+    } catch (error) {
+      console.error("Failed to add attendee:", error);
+    }
+  };
+
+  const handleRemoveAttendee = async (event: Event) => {
+    try {
+      const response = await fetch(`/api/events/${event.id}/attendees`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to remove attendee");
+      }
+      setIsAttendee(false);
+    } catch (error) {
+      console.error("Failed to remove attendee:", error);
+    }
+  };
 
   return (
     <div
@@ -62,6 +130,27 @@ const EventRow: React.FC<EventRowProps> = ({
             <Button className={cn("mt-4 h-10 bg-primary text-foreground")}>
               <Link href={`/events/${event.id}`}>Details</Link>
             </Button>
+            {!isAttendee ? (
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation(); // Suppress onRowClick for this button
+                  handleAddAttendee(event);
+                }}
+                className={cn("mt-4 h-10 bg-primary text-foreground")}
+              >
+                Add to Calendar
+              </Button>
+            ) : (
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation(); // Suppress onRowClick for this button
+                  handleRemoveAttendee(event);
+                }}
+                className={cn("mt-4 h-10 bg-primary text-foreground")}
+              >
+                Remove from Calendar
+              </Button>
+            )}
           </div>
         </>
       )}

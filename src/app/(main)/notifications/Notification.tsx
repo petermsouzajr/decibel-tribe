@@ -50,6 +50,12 @@ export default function Notification({ notification }: NotificationProps) {
       icon: <ThumbsDown className="size-7 fill-primary text-primary" />,
       href: `/posts/${notification.postId}`,
     },
+    EVENT_ATTENDEE: {
+      issuer: notification.issuer,
+      message: `is attending your event: ${notification.event?.title ? `"${notification.event.title}"` : notification.event?.location}`,
+      icon: <User2 className="size-7 text-primary" />,
+      href: `/events/${notification.event?.id}`,
+    },
   };
 
   const { message, icon, href } = notificationTypeMap[notification.type];

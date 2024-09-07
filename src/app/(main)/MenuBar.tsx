@@ -13,6 +13,7 @@ import {
 import Link from "next/link";
 import MessagesButton from "./MessagesButton";
 import NotificationsButton from "./NotificationsButton";
+import { useRouter } from "next/router";
 
 interface MenuBarProps {
   className?: string;
@@ -23,6 +24,9 @@ export default async function MenuBar({ className }: MenuBarProps) {
 
   if (!user) return null;
 
+  const pathname =
+    typeof window !== "undefined" ? window.location.pathname : "";
+  console.log("pathname", pathname);
   const [unreadNotificationsCount, unreadMessagesCount] = await Promise.all([
     prisma.notification.count({
       where: {
@@ -33,11 +37,14 @@ export default async function MenuBar({ className }: MenuBarProps) {
     (await streamServerClient.getUnreadCount(user.id)).total_unread_count,
   ]);
 
+  const isActive = (path: string) =>
+    pathname === path ? "bg-primary text-white" : "";
+
   return (
     <div className={className}>
       <Button
         variant="ghost"
-        className="flex items-center justify-start gap-3"
+        className={`flex items-center justify-start gap-3 ${isActive("/")}`} // Add the active class
         title="Home"
         asChild
       >
@@ -52,7 +59,7 @@ export default async function MenuBar({ className }: MenuBarProps) {
       <MessagesButton initialState={{ unreadCount: unreadMessagesCount }} />
       <Button
         variant="ghost"
-        className="flex items-center justify-start gap-3"
+        className={`flex items-center justify-start gap-3 ${isActive("/bookmarks")}`} // Add the active class
         title="Bookmarks"
         asChild
       >
@@ -63,7 +70,7 @@ export default async function MenuBar({ className }: MenuBarProps) {
       </Button>
       <Button
         variant="ghost"
-        className="flex items-center justify-start gap-3"
+        className={`flex items-center justify-start gap-3 ${isActive("/calendar")}`} // Add the active class
         title="Calendar"
         asChild
       >
@@ -74,7 +81,7 @@ export default async function MenuBar({ className }: MenuBarProps) {
       </Button>
       <Button
         variant="ghost"
-        className="items-center justify-start gap-3"
+        className={`items-center justify-start gap-3 ${isActive("/events")}`} // Add the active class
         title="Events"
         asChild
       >
