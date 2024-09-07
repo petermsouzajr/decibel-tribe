@@ -130,27 +130,28 @@ const EventRow: React.FC<EventRowProps> = ({
             <Button className={cn("mt-4 h-10 bg-primary text-foreground")}>
               <Link href={`/events/${event.id}`}>Details</Link>
             </Button>
-            {!isAttendee ? (
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation(); // Suppress onRowClick for this button
-                  handleAddAttendee(event);
-                }}
-                className={cn("mt-4 h-10 bg-primary text-foreground")}
-              >
-                Add to Calendar
-              </Button>
-            ) : (
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation(); // Suppress onRowClick for this button
-                  handleRemoveAttendee(event);
-                }}
-                className={cn("mt-4 h-10 bg-primary text-foreground")}
-              >
-                Remove from Calendar
-              </Button>
-            )}
+            {user.id !== event.createdById &&
+              (!isAttendee ? (
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation(); // Suppress onRowClick for this button
+                    handleAddAttendee(event);
+                  }}
+                  className={cn("mt-4 h-10 bg-primary text-foreground")}
+                >
+                  Add to Calendar
+                </Button>
+              ) : (
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation(); // Suppress onRowClick for this button
+                    handleRemoveAttendee(event);
+                  }}
+                  className={cn("mt-4 h-10 bg-primary text-foreground")}
+                >
+                  Remove from Calendar
+                </Button>
+              ))}
           </div>
         </>
       )}
