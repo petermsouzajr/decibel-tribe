@@ -65,7 +65,7 @@ export default function FollowingFeed() {
       onBottomReached={() => hasNextPage && !isFetching && fetchNextPage()}
     >
       {events.map((event) => (
-        <EventDetails event={event} />
+        <EventDetails key={event.id} event={event} />
       ))}
       {isFetchingNextPage && <Loader2 className="mx-auto my-3 animate-spin" />}
     </InfiniteScrollContainer>

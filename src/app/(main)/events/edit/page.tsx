@@ -191,7 +191,7 @@ export default function EventFormPage(event: any) {
           setLoadingStatus("complete"); // Finish loading
         });
     }
-  }, [eventId, form, defaultVisibility]);
+  }, [eventId, form, defaultVisibility, formattedDate]);
 
   const addPerformer = () => {
     if (performerCount < MAX_PERFORMERS) {

@@ -12,13 +12,15 @@ export async function GET(req: Request) {
       );
     }
 
+    const currentDate = new Date();
+
     const unusedMedia = await prisma.media.findMany({
       where: {
         postId: null,
         ...(process.env.NODE_ENV === "production"
           ? {
               createdAt: {
-                lte: new Date(Date.now() - 1000 * 60 * 60 * 24),
+                lte: new Date(currentDate.getTime() - 1000 * 60 * 60 * 24),
               },
             }
           : {}),

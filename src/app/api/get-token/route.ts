@@ -9,9 +9,11 @@ export async function GET() {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const expirationTime = Math.floor(Date.now() / 1000) + 60 * 60;
+    const currentDate = new Date();
 
-    const issuedAt = Math.floor(Date.now() / 1000) - 60;
+    const expirationTime = Math.floor(currentDate.getTime() / 1000) + 60 * 60; // 1 hour later
+
+    const issuedAt = Math.floor(currentDate.getTime() / 1000) - 60; // 1 minute before
 
     const token = streamServerClient.createToken(
       user.id,

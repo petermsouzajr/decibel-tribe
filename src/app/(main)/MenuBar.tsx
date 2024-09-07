@@ -24,8 +24,8 @@ export default async function MenuBar({ className }: MenuBarProps) {
 
   if (!user) return null;
 
-  const pathname =
-    typeof window !== "undefined" ? window.location.pathname : "";
+  const pathname = "";
+
   console.log("pathname", pathname);
   const [unreadNotificationsCount, unreadMessagesCount] = await Promise.all([
     prisma.notification.count({

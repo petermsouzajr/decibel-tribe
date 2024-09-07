@@ -12,7 +12,10 @@ export async function generateAndSendVerification(
   passwordHash: string,
 ) {
   const verificationToken = crypto.randomUUID(); // Generate secure token
-  const verificationTokenExpiry = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 hours expiration
+  const currentDate = new Date();
+  const verificationTokenExpiry = new Date(
+    currentDate.getTime() + 1000 * 60 * 60 * 24,
+  ); // 24 hours expiration
 
   try {
     // Wrap database operations in a transaction to ensure consistency
@@ -67,7 +70,10 @@ export async function generateAndSendVerification(
 // Resend verification email logic
 export async function resendVerificationEmail(credential: string) {
   const verificationToken = crypto.randomUUID(); // Generate a new token
-  const verificationTokenExpiry = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 hours expiration
+  const currentDate = new Date();
+  const verificationTokenExpiry = new Date(
+    currentDate.getTime() + 1000 * 60 * 60 * 24,
+  ); // 24 hours expiration
 
   try {
     const existingUser = await prisma.user.findFirst({

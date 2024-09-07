@@ -36,7 +36,7 @@ const Page: React.FC<PageProps> = () => {
     };
 
     fetchEvents();
-  }, []);
+  }, [username]);
 
   if (loading) {
     return <PostsLoadingSkeleton />;

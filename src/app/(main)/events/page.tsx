@@ -16,7 +16,7 @@ import EventsFollowingFeed from "../EventsFollowingFeed";
 import EventsForYouFeed from "../EventsForYouFeed";
 import EventCalendar from "../calendar/CalendarActions";
 
-export default async function Page() {
+export default function Page() {
   const [events, setEvents] = useState<Event[]>([]);
 
   useEffect(() => {

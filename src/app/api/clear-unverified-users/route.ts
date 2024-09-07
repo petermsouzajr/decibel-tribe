@@ -10,6 +10,7 @@ export async function GET(req: Request) {
         status: 401,
       });
     }
+    const currentDate = new Date();
 
     // Find users who are not verified and were created more than two weeks ago
     const unverifiedUsers = await prisma.user.findMany({
@@ -17,7 +18,7 @@ export async function GET(req: Request) {
         isVerified: false, // Assuming isVerified tracks email verification status
         googleId: null, // User has no Google ID
         createdAt: {
-          lte: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14), // Two weeks ago
+          lte: new Date(currentDate.getTime() - 1000 * 60 * 60 * 24 * 14), // Two weeks ago
         },
       },
       select: {
