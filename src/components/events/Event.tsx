@@ -12,6 +12,7 @@ import FollowButton from "../FollowButton";
 import { format as formatDate, parse, isValid } from "date-fns";
 import prisma from "@/lib/prisma";
 import { Button } from "../ui/button";
+import Linkify from "../Linkify";
 
 //http://localhost:3000/events/cm008i31b0001488hptjh2f7i
 //http://localhost:3000/events/cm009aq6b0001w17tx6l865sz
@@ -139,7 +140,12 @@ export default function EventDetails({ event }: EventDetailsProps) {
       return <Button className="bg-primary text-primary-foreground"></Button>;
     }
     if (isEventCreator(event.createdBy.id, user.id)) {
-      return <Link href={`/events/edit?id=${event.id}`}>Edit Event</Link>;
+      return (
+        <Button className="bg-muted-foreground text-background">
+          {" "}
+          <Link href={`/events/edit?id=${event.id}`}>Edit Event</Link>
+        </Button>
+      );
     } else if (shouldShowAddButton(isAttendee)) {
       return <Button onClick={handleAddAttendee}>Add to Calendar</Button>;
     } else if (shouldShowRemoveButton(isAttendee)) {
@@ -186,14 +192,13 @@ export default function EventDetails({ event }: EventDetailsProps) {
                 <div className="text-md fotn-bold block text-muted-foreground">
                   Visibility: {event.visibility}
                 </div>
+                <div className="block text-sm text-muted-foreground">
+                  Attendees: {event._count.attendees}
+                </div>
               </>
             ) : (
               ""
             )}
-
-            <div className="block text-sm text-muted-foreground">
-              Attendees: {event._count.attendees}
-            </div>
             <div
               className="block text-sm text-muted-foreground"
               suppressHydrationWarning
@@ -248,7 +253,7 @@ export default function EventDetails({ event }: EventDetailsProps) {
           <ul className="ml-4 list-disc">
             {event.performers.map((performer) => (
               <li key={performer}>
-                <Link href={`/users/${performer}`}>{performer}</Link>
+                <Linkify>{performer}</Linkify>
               </li>
             ))}
           </ul>

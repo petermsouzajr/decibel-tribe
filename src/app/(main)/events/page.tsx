@@ -1,66 +1,79 @@
+"use client";
 import { validateRequest } from "@/auth";
 import EventDetails from "@/components/events/Event";
 import Linkify from "@/components/Linkify";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UserAvatar from "@/components/UserAvatar";
 import UserTooltip from "@/components/UserTooltip";
 import prisma from "@/lib/prisma";
-import { getEventDataInclude } from "@/lib/types";
+import { Event, getEventDataInclude } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { cache, Suspense } from "react";
+import { cache, Suspense, useEffect, useState } from "react";
+import EventsFollowingFeed from "../EventsFollowingFeed";
+import EventsForYouFeed from "../EventsForYouFeed";
+import EventCalendar from "../calendar/CalendarActions";
 
-interface PageProps {
-  params: { eventId: string };
-}
+export default async function Page() {
+  const [events, setEvents] = useState<Event[]>([]);
 
-const getEvent = cache(async (eventId: string, loggedInUserId: string) => {
-  const event = await prisma.event.findUnique({
-    where: {
-      id: eventId,
-    },
-    include: getEventDataInclude(loggedInUserId),
-  });
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const response = await fetch("/api/events", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch events");
+        }
+        const data = await response.json();
+        console.log("fetched in Page:", data);
+        setEvents(data);
+      } catch (err) {
+        console.log("error in fetchEvents", err);
+      }
+    };
 
-  if (!event) notFound();
+    fetchEvents();
+  }, []);
 
-  return event;
-});
-
-export async function generateMetadata({
-  params: { eventId },
-}: PageProps): Promise<Metadata> {
-  const { user } = await validateRequest();
-
-  if (!user) return {};
-
-  // const event = await getEvent(eventId, user.id);
-
-  return {
-    // title: `${event.title} - ${event.details[0]?.date.toLocaleDateString()}`,
-  };
-}
-
-export default async function Page({ params: { eventId } }: PageProps) {
-  const { user } = await validateRequest();
-
-  if (!user) {
-    return (
-      <p className="text-destructive">
-        You&apos;re not authorized to view this page.
-      </p>
-    );
-  }
+  const currentDate = new Date();
 
   // const event = await getEvent(eventId, user.id);
-
+  console.log("events in page", events);
+  console.log("currentDate in page", currentDate);
+  // console.log("user in page", user.username);
   return (
     <main className="flex w-full min-w-0 gap-5">
       <div className="w-full min-w-0 space-y-5">
-        {/* <EventDetails event={event} /> */}
+        <div className="rounded-2xl bg-card p-5 shadow-sm">
+          <h1 className="text-center text-2xl font-bold">Events</h1>
+        </div>
+        <Tabs defaultValue="events-for-you">
+          <TabsList className="z-9 sticky top-0">
+            <TabsTrigger value="events-for-you">For you</TabsTrigger>
+            <TabsTrigger value="events-following">Following</TabsTrigger>
+          </TabsList>
+          <TabsContent value="events-for-you">
+            <EventsForYouFeed />
+          </TabsContent>
+          <TabsContent value="events-following">
+            <EventsFollowingFeed />
+          </TabsContent>
+        </Tabs>
       </div>
-      <div className="sticky top-[5.25rem] hidden h-fit w-80 flex-none lg:block"></div>
+      <div className="sticky top-[5.25rem] hidden h-fit w-72 flex-none space-y-5 md:block lg:w-80">
+        <EventCalendar
+          events={events}
+          currentDate={currentDate}
+          username={""}
+        />
+      </div>
     </main>
   );
 }

@@ -41,17 +41,29 @@ const EventRow: React.FC<EventRowProps> = ({
           {formatTime(event.startTime)} {" to "} {formatTime(event.endTime)}
         </div>
       </div>
+
       {isEditing && (
-        <div className="mt-8 flex w-full justify-between">
-          {user.id === event.createdById && (
+        <>
+          <div>
+            <ul className="ml-4 list-disc">
+              {event.performers.map((performer) => (
+                <li key={performer}>
+                  <Link href={`/users/${performer}`}>{performer}</Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="mt-8 flex w-full justify-between">
+            {user.id === event.createdById && (
+              <Button className={cn("mt-4 h-10 bg-primary text-foreground")}>
+                <Link href={`/events/edit?id=${event.id}`}>Edit Event</Link>
+              </Button>
+            )}
             <Button className={cn("mt-4 h-10 bg-primary text-foreground")}>
-              <Link href={`/events/edit?id=${event.id}`}>Edit Event</Link>
+              <Link href={`/events/${event.id}`}>Details</Link>
             </Button>
-          )}
-          <Button className={cn("mt-4 h-10 bg-primary text-foreground")}>
-            <Link href={`/events/${event.id}`}>Details</Link>
-          </Button>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

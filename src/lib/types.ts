@@ -203,6 +203,11 @@ export interface Event {
   visibility: string;
 }
 
+export interface EventsPage {
+  events: EventData[];
+  nextCursor: string | null;
+}
+
 export interface CalendarProps {
   events: Event[];
   currentDate: Date;

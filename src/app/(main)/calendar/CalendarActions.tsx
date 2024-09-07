@@ -168,14 +168,14 @@ const EventCalendar: React.FC<CalendarPropsWithUsername> = ({
             <div className="flex items-center px-3">
               <UserAvatar avatarUrl={userInfo.avatarUrl} />
             </div>
-            <span>{userInfo.displayName}&apos;s Events</span>
+            <span>{userInfo.displayName}&apos;s Calendar</span>
           </>
         ) : (
           <>
             <div className="flex items-center px-3">
               <UserAvatar avatarUrl={loggedInUser?.avatarUrl} />
             </div>
-            <span>Your Events</span>
+            <span>Your Calendar</span>
           </>
         )}
       </h2>
