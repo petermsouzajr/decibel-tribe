@@ -10,12 +10,19 @@ import UserTooltip from "./UserTooltip";
 import { format } from "date-fns";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Button } from "./ui/button";
+import { useSession } from "../app/(main)/SessionProvider";
 
-export default function EventsSidebar({ user }: { user: UserData }) {
+export default function EventsSidebar({
+  user,
+  loggedInUser,
+}: {
+  user: UserData;
+  loggedInUser: UserData;
+}) {
   return (
     <div className="sticky top-[5.25rem] hidden h-fit w-72 flex-none space-y-5 md:block lg:w-80">
       <Suspense fallback={<Loader2 className="mx-auto animate-spin" />}>
-        <EventsList user={user} />
+        <EventsList user={user} loggedInUser={loggedInUser} />
         <MostEngagedPosts user={user} />
       </Suspense>
     </div>
@@ -23,26 +30,31 @@ export default function EventsSidebar({ user }: { user: UserData }) {
 }
 
 // Function to fetch and display events
-export async function EventsList({ user }: { user: UserData }) {
+export async function EventsList({
+  user,
+  loggedInUser,
+}: {
+  user: UserData;
+  loggedInUser: UserData;
+}) {
+  console.log("EventsList USER", user);
+  console.log("EventsList LOGGED IN USER", loggedInUser);
   if (!user.id) return null;
 
   const events = await prisma.event.findMany({
     where: {
       isCancelled: false,
-      createdBy: {
-        id: user.id,
-      },
-      OR: [
-        {
-          status: "PUBLISHED",
-          visibility: "PUBLIC",
-        },
-        {
-          status: "PUBLISHED",
-          visibility: "PRIVATE",
-          createdById: user.id,
-        },
-      ],
+      // Case 1: If the loggedInUser is the event creator, show all events
+      ...(loggedInUser.id === user.id
+        ? {
+            createdById: user.id, // Show all events for the logged-in user
+          }
+        : {
+            // Case 2: If loggedInUser is NOT the event creator, show only PUBLIC and PUBLISHED events
+            createdById: user.id,
+            status: "PUBLISHED",
+            visibility: "PUBLIC",
+          }),
     },
     orderBy: {
       when: "asc", // Order events by date
@@ -70,6 +82,26 @@ export async function EventsList({ user }: { user: UserData }) {
 
   const months = Object.keys(groupedEvents);
 
+  const getStatusColor = (event: { status: string; visibility: string }) => {
+    if (event.status === "DRAFT")
+      return (
+        <span
+          className="inline-block h-3 w-3 rounded-full bg-gray-400"
+          title="Draft"
+        ></span>
+      ); // Grey circle for Draft    // if (event.status === "PUBLISHED" && event.visibility === "PUBLIC")
+    // return "bg-blue-500"; // Blue for Public and Published
+    // if (event.status === "PUBLISHED" && event.visibility === "PRIVATE")
+    // return "bg-green-500"; // Green for Published
+    if (event.visibility === "PRIVATE")
+      return (
+        <span
+          className="inline-block h-3 w-3 rounded-full bg-red-500"
+          title="Private"
+        ></span>
+      ); // Red circle for Private    // return "text-gray-400"; // Default to Grey if no status
+  };
+
   return (
     <div className="space-y-5 rounded-2xl bg-card p-5 shadow-sm">
       <div className="text-xl font-bold">Events</div>
@@ -80,6 +112,7 @@ export async function EventsList({ user }: { user: UserData }) {
             {groupedEvents[month].map((event) => (
               <li key={event.id} className="my-2">
                 <Link href={`/events/${event.id}`} className="hover:underline">
+                  {getStatusColor(event)}{" "}
                   {format(new Date(event.when), "MMMM d")} -{" "}
                   {event.title || event.location}
                 </Link>

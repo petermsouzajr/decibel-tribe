@@ -27,7 +27,14 @@ const getUser = cache(async (username: string, loggedInUserId: string) => {
         mode: "insensitive",
       },
     },
-    select: getUserDataSelect(loggedInUserId),
+    select: {
+      ...getUserDataSelect(loggedInUserId), // Get other user data
+      userPreferences: {
+        select: {
+          calendar: true, // Assuming you want to retrieve the calendar preference
+        },
+      },
+    },
   });
 
   if (!user) notFound();
@@ -67,17 +74,17 @@ export default async function Page({ params: { username } }: PageProps) {
       <div className="w-full min-w-0 space-y-5">
         <UserProfile user={user} loggedInUserId={loggedInUser.id} />
         <span className="m-8 md:hidden">
-          <EventsList user={user} />
+          <EventsList user={user} loggedInUser={loggedInUser} />
         </span>
         <UserPosts userId={user.id} />
       </div>
-      <EventsSidebar user={user} />
+      <EventsSidebar user={user} loggedInUser={loggedInUser} />
     </main>
   );
 }
 
 interface UserProfileProps {
-  user: UserData;
+  user: UserData & { userPreferences?: { calendar: string } | null };
   loggedInUserId: string;
 }
 
@@ -121,6 +128,22 @@ async function UserProfile({ user, loggedInUserId }: UserProfileProps) {
           <FollowButton userId={user.id} initialState={followerInfo} />
         )}
       </div>
+      {user.id === loggedInUserId && user.userPreferences && (
+        <div className="overflow-hidden whitespace-pre-line break-words">
+          <strong>Your Calendar Visibility: </strong>
+          {user.userPreferences.calendar === "PUBLIC" ? "Public" : "Private"}
+        </div>
+      )}
+      {user.bio && (
+        <>
+          <hr />
+          <Linkify>
+            <div className="overflow-hidden whitespace-pre-line break-words">
+              {user.bio}
+            </div>
+          </Linkify>
+        </>
+      )}
       {(instruments.length > 0 || skills.length > 0) && (
         <div className="mx-auto flex size-full justify-between rounded-2xl border-2 bg-card p-5 shadow-sm">
           {instruments.length > 0 && (
@@ -148,17 +171,6 @@ async function UserProfile({ user, loggedInUserId }: UserProfileProps) {
             </div>
           )}
         </div>
-      )}
-
-      {user.bio && (
-        <>
-          <hr />
-          <Linkify>
-            <div className="overflow-hidden whitespace-pre-line break-words">
-              {user.bio}
-            </div>
-          </Linkify>
-        </>
       )}
     </div>
   );

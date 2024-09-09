@@ -141,12 +141,14 @@ export default function EventFormPage(event: any) {
         const data = await response.json();
         if (data?.calendarPreference) {
           setDefaultVisibility(data.calendarPreference);
+          form.setValue("visibility", data.calendarPreference); // Set form value based on preference
         } else {
           setDefaultVisibility("PRIVATE");
         }
       } catch (error) {
         console.error("Error fetching user calendar preference:", error);
         setDefaultVisibility("PRIVATE");
+        form.setValue("visibility", "PRIVATE"); // Default to PRIVATE if error
       }
     };
 

@@ -15,6 +15,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormSwitch,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,7 +28,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Camera } from "lucide-react";
 import Image, { StaticImageData } from "next/image";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import Resizer from "react-image-file-resizer";
 import { useUpdateProfileMutation } from "./mutations";
@@ -37,8 +38,12 @@ import Select, { CSSObjectWithLabel } from "react-select";
 import { useTheme } from "next-themes";
 import skillsList from "../../../../data/skillsList.json";
 import instrumentList from "../../../../data/instrumentList.json";
+interface UserWithVisibility extends UserData {
+  visibility: "PUBLIC" | "PRIVATE";
+}
+
 interface EditProfileDialogProps {
-  user: UserData;
+  user: UserWithVisibility;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -113,11 +118,16 @@ export default function EditProfileDialog({
   open,
   onOpenChange,
 }: EditProfileDialogProps) {
+  const [defaultVisibility, setDefaultVisibility] = useState<
+    "PUBLIC" | "PRIVATE"
+  >("PRIVATE");
+
   const form = useForm<UpdateUserProfileValues>({
     resolver: zodResolver(updateUserProfileSchema),
     defaultValues: {
       displayName: user.displayName,
       bio: user.bio || "",
+      visibility: user.visibility || defaultVisibility,
       skills: user.userSkills.map((us) => us.skill.name) || [],
       instruments: user.userInstruments.map((ui) => ui.instrument.name) || [],
     },
@@ -128,10 +138,37 @@ export default function EditProfileDialog({
 
   const [croppedAvatar, setCroppedAvatar] = useState<Blob | null>(null);
 
+  useEffect(() => {
+    const fetchUserCalendarPreference = async () => {
+      try {
+        const response = await fetch(`/api/users/preferences`, {
+          method: "GET",
+          credentials: "include",
+        });
+        const data = await response.json();
+        console.log("data", data);
+
+        if (data?.calendarPreference) {
+          setDefaultVisibility(data.calendarPreference);
+          form.setValue("visibility", data.calendarPreference); // Set form visibility value
+        } else {
+          setDefaultVisibility("PRIVATE");
+        }
+      } catch (error) {
+        console.error("Error fetching user calendar preference:", error);
+        setDefaultVisibility("PRIVATE");
+        form.setValue("visibility", "PRIVATE"); // Default to PRIVATE if error
+      }
+    };
+
+    fetchUserCalendarPreference();
+  }, [form]);
+
   function handleClose() {
     form.reset({
       displayName: user.displayName,
       bio: user.bio || "",
+      visibility: user.visibility || defaultVisibility,
       skills: user.userSkills.map((us) => us.skill.id) || [],
       instruments: user.userInstruments.map((ui) => ui.instrument.id) || [],
     });
@@ -157,6 +194,10 @@ export default function EditProfileDialog({
     );
   }
 
+  console.log("user", user);
+  console.log("form", form);
+  console.log("mutation", mutation);
+  console.log("calendarPreference", defaultVisibility);
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
@@ -184,6 +225,19 @@ export default function EditProfileDialog({
                   <FormLabel>Display name</FormLabel>
                   <FormControl>
                     <Input placeholder="Your display name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="visibility"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Calendar Visibility</FormLabel>
+                  <FormControl>
+                    <FormSwitch values={["PRIVATE", "PUBLIC"]} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

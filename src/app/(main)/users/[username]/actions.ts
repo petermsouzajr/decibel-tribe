@@ -45,6 +45,12 @@ export async function updateUserProfile(values: UpdateUserProfileValues) {
       data: {
         displayName: validatedValues.displayName,
         bio: validatedValues.bio,
+        userPreferences: {
+          upsert: {
+            create: { calendar: validatedValues.visibility },
+            update: { calendar: validatedValues.visibility },
+          },
+        },
         userInstruments: {
           deleteMany: {},
           create: instrumentIds.map((id) => ({ instrumentId: id })),

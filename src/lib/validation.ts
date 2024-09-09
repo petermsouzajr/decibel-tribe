@@ -43,6 +43,7 @@ export const updateUserProfileSchema = z.object({
     .array(z.string())
     .max(15, "You can select up to 15 instruments"),
   skills: z.array(z.string()).max(15, "You can select up to 15 skills"),
+  visibility: z.enum(["PUBLIC", "PRIVATE"]),
 });
 
 export type UpdateUserProfileValues = z.infer<typeof updateUserProfileSchema>;
