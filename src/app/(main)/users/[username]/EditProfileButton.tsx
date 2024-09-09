@@ -18,6 +18,7 @@ export default function EditProfileButton({ user }: EditProfileButtonProps) {
         Edit profile
       </Button>
       <EditProfileDialog
+        //@ts-ignore
         user={user}
         open={showDialog}
         onOpenChange={setShowDialog}
