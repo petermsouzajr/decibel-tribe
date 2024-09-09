@@ -5,7 +5,12 @@ import Linkify from "@/components/Linkify";
 import TrendsSidebar from "@/components/TrendsSidebar";
 import UserAvatar from "@/components/UserAvatar";
 import prisma from "@/lib/prisma";
-import { FollowerInfo, getUserDataSelect, UserData } from "@/lib/types";
+import {
+  FollowerInfo,
+  getUserDataSelect,
+  UserData,
+  LoggedInUser,
+} from "@/lib/types";
 import { formatNumber } from "@/lib/utils";
 import { formatDate } from "date-fns";
 import { Metadata } from "next";
@@ -69,22 +74,39 @@ export default async function Page({ params: { username } }: PageProps) {
 
   const user = await getUser(username, loggedInUser.id);
 
+  const formattedLoggedInUser: UserData = {
+    ...loggedInUser,
+
+    followers: [],
+    userInstruments: [],
+    userSkills: [],
+    userPreferences: null,
+    _count: {
+      posts: 0,
+      followers: 0,
+    },
+    bio: null,
+    createdAt: new Date(),
+  };
+
+  console.log("user in page", user);
+  console.log("loggedInUser in page", loggedInUser);
   return (
     <main className="flex w-full min-w-0 gap-5">
       <div className="w-full min-w-0 space-y-5">
         <UserProfile user={user} loggedInUserId={loggedInUser.id} />
         <span className="m-8 md:hidden">
-          <EventsList user={user} loggedInUser={loggedInUser} />
+          <EventsList user={user} loggedInUser={formattedLoggedInUser} />
         </span>
         <UserPosts userId={user.id} />
       </div>
-      <EventsSidebar user={user} loggedInUser={loggedInUser} />
+      <EventsSidebar user={user} loggedInUser={formattedLoggedInUser} />
     </main>
   );
 }
 
 interface UserProfileProps {
-  user: UserData & { userPreferences?: { calendar: string } | null };
+  user: UserData;
   loggedInUserId: string;
 }
 

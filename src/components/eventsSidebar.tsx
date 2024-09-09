@@ -1,6 +1,6 @@
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
-import { getUserDataSelect, UserData } from "@/lib/types";
+import { getUserDataSelect, LoggedInUser, UserData } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 import { unstable_cache } from "next/cache";
 import Link from "next/link";
@@ -17,7 +17,7 @@ export default function EventsSidebar({
   loggedInUser,
 }: {
   user: UserData;
-  loggedInUser: UserData;
+  loggedInUser: LoggedInUser;
 }) {
   return (
     <div className="sticky top-[5.25rem] hidden h-fit w-72 flex-none space-y-5 md:block lg:w-80">
@@ -35,7 +35,7 @@ export async function EventsList({
   loggedInUser,
 }: {
   user: UserData;
-  loggedInUser: UserData;
+  loggedInUser: LoggedInUser;
 }) {
   console.log("EventsList USER", user);
   console.log("EventsList LOGGED IN USER", loggedInUser);

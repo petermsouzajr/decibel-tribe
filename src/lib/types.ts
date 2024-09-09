@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { string } from "zod";
 
 export function getUserDataSelect(loggedInUserId: string) {
   return {
@@ -8,6 +9,11 @@ export function getUserDataSelect(loggedInUserId: string) {
     avatarUrl: true,
     bio: true,
     createdAt: true,
+    userPreferences: {
+      select: {
+        calendar: true,
+      },
+    },
     userInstruments: {
       select: {
         instrument: {
@@ -48,6 +54,16 @@ export function getUserDataSelect(loggedInUserId: string) {
 export type UserData = Prisma.UserGetPayload<{
   select: ReturnType<typeof getUserDataSelect>;
 }>;
+
+export type LoggedInUser = {
+  id: string;
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+  bio: string | null;
+  createdAt: Date;
+  googleId?: string; // Example of additional fields
+};
 
 export function getEventDataInclude(loggedInUserId: string) {
   return {
