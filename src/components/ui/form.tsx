@@ -211,7 +211,7 @@ const FormSwitch = React.forwardRef<
       <div className="flex w-full justify-around">
         {/* Left Value Label */}
         <span
-          className={`w-16 cursor-pointer text-muted-foreground ${!isFirstValue ? "font-bold" : "opacity-50"}`}
+          className={`w-16 cursor-pointer text-muted-foreground ${!isFirstValue ? "font-bold underline" : "opacity-80"}`}
           onClick={handleClick}
         >
           {firstValue}
@@ -235,7 +235,7 @@ const FormSwitch = React.forwardRef<
 
         {/* Right Value Label */}
         <span
-          className={`w-16 cursor-pointer text-primary ${isFirstValue ? "font-bold" : "opacity-50"}`}
+          className={`w-16 cursor-pointer text-primary ${isFirstValue ? "font-bold underline" : "opacity-80"}`}
           onClick={handleClick}
         >
           {secondValue}

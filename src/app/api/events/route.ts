@@ -21,21 +21,52 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: "User not found" }, { status: 404 });
       }
 
+      const userPreferences = await prisma.userPreferences.findUnique({
+        where: { userId: user.id },
+        select: { calendar: true },
+      });
+
+      // If no preferences are found, assume the default is PUBLIC
+      const isCalendarPublic = userPreferences?.calendar === "PUBLIC";
+
       if (loggedInUser && loggedInUser.id === user?.id) {
         // If the logged-in user is the same as the user in the URL, show all events they created
         eventConditions = {
           createdById: user.id,
         };
-      } else {
+      } else if (isCalendarPublic) {
         // If no username is provided, show all events for the logged-in user, including private, public, draft, and published events
         eventConditions = {
-          AND: [
-            { createdById: user?.id },
-            { status: "PUBLISHED" },
-            { visibility: "PUBLIC" },
-            { isCancelled: false },
+          OR: [
+            // Show events that user A created
+            {
+              AND: [
+                { createdById: user.id }, // Events created by user A
+                { status: "PUBLISHED" }, // Only show published events
+                { visibility: "PUBLIC" }, // Only show public events
+                { isCancelled: false }, // Exclude cancelled events
+              ],
+            },
+            // Show events that user A is attending (but didn't create)
+            {
+              AND: [
+                {
+                  attendees: {
+                    some: {
+                      userId: user.id, // User A is an attendee
+                    },
+                  },
+                },
+                { status: "PUBLISHED" }, // Only show published events
+                { visibility: "PUBLIC" }, // Only show public events
+                { isCancelled: false }, // Exclude cancelled events
+              ],
+            },
           ],
         };
+      } else {
+        // If the calendar is private, return an empty response or appropriate error
+        return NextResponse.json([], { status: 200 });
       }
     } else {
       // If no username is provided, show all events for the logged-in user, including private, public, draft, and published events
