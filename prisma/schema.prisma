@@ -211,6 +211,7 @@ model Notification {
   event     Event?   @relation(fields: [eventId], references: [id], onDelete: Cascade) // Relation to Event
   createdAt DateTime @default(now())
 
+  @@unique([recipientId, eventId, type])
   @@map("notifications")
 }
 
@@ -220,6 +221,7 @@ enum NotificationType {
   FOLLOW
   COMMENT
   EVENT_ATTENDEE
+  EVENT_CANCELLED
 }
 
 model Event {
@@ -228,7 +230,7 @@ model Event {
   location    String
   description String?
   url         String?
-  when        String
+  when        DateTime
   startTime   String
   endTime     String
   performers  String[]

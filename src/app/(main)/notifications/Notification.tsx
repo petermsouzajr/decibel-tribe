@@ -5,10 +5,12 @@ import { NotificationData } from "@/lib/types";
 import { cn, formatRelativeDate } from "@/lib/utils";
 import { NotificationType } from "@prisma/client";
 import {
+  CalendarDays,
   Heart,
   MessageCircle,
   ThumbsDown,
   ThumbsUp,
+  TicketCheck,
   User2,
 } from "lucide-react";
 import Link from "next/link";
@@ -53,7 +55,13 @@ export default function Notification({ notification }: NotificationProps) {
     EVENT_ATTENDEE: {
       issuer: notification.issuer,
       message: `is attending your event: ${notification.event?.title ? `"${notification.event.title}"` : notification.event?.location}`,
-      icon: <User2 className="size-7 text-primary" />,
+      icon: <TicketCheck className="size-7 text-primary" />,
+      href: `/events/${notification.event?.id}`,
+    },
+    EVENT_CANCELLED: {
+      issuer: notification.issuer,
+      message: `an event on your calendar has been CANCELLED: ${notification.event?.title ? `"${notification.event.title}"` : notification.event?.location}`,
+      icon: <CalendarDays className="size-7 text-primary" />,
       href: `/events/${notification.event?.id}`,
     },
   };

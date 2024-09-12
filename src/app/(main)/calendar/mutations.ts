@@ -19,17 +19,19 @@ export function useAddEventMutation() {
       performers,
       status,
       visibility,
+      isCancelled,
     }: {
       title: string;
       location: string;
       description?: string;
       url?: string;
-      when: string;
+      when: Date;
       startTime: string;
       endTime: string;
       performers: string[];
       status: "DRAFT" | "PUBLISHED";
       visibility: "PUBLIC" | "PRIVATE";
+      isCancelled?: boolean;
     }) => {
       let sanitizedPerformers = performers.filter(
         (performer) => typeof performer === "string" && performer.trim() !== "",
@@ -37,6 +39,11 @@ export function useAddEventMutation() {
       if (sanitizedPerformers.length === 0) {
         sanitizedPerformers = [""];
       }
+      const formattedWhen =
+        when instanceof Date
+          ? when.toISOString()
+          : new Date(when).toISOString();
+
       const response = await fetch("/api/events", {
         method: "POST",
         headers: {
@@ -47,12 +54,13 @@ export function useAddEventMutation() {
           location: location || "",
           description: description || "",
           url: url || "",
-          when: when || "",
+          when: formattedWhen,
           startTime: startTime || "",
           endTime: endTime || "",
           performers: sanitizedPerformers,
           status: status || "DRAFT",
           visibility: visibility || "PUBLIC",
+          isCancelled: isCancelled || false,
         }),
       });
 
@@ -111,18 +119,20 @@ export function useEditEventMutation() {
       performers,
       status,
       visibility,
+      isCancelled,
     }: {
       eventId: string;
       title: string;
       location: string;
       description: string;
       url: string;
-      when: String;
+      when: Date;
       startTime: string;
       endTime: string;
       performers: string[];
       status: "DRAFT" | "PUBLISHED";
       visibility: "PUBLIC" | "PRIVATE";
+      isCancelled: boolean;
     }) => {
       console.log("eventId in useEditEventMutation:", eventId);
       return fetch(`/api/events/${eventId}`, {
@@ -141,6 +151,7 @@ export function useEditEventMutation() {
           performers,
           status,
           visibility,
+          isCancelled,
         }),
       });
     },

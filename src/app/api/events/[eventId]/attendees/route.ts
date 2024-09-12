@@ -108,21 +108,44 @@ export async function POST(
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
-    await prisma.$transaction([
-      // Create the notification for the event's creator, if the attendee isn't the creator
-      ...(user.id !== event.createdById
-        ? [
-            prisma.notification.create({
-              data: {
-                issuerId: user.id, // The user who attended the event
-                recipientId: event.createdById, // The event creator
-                eventId: eventId, // Event ID for the notification
-                type: "EVENT_ATTENDEE", // Notification type
-              },
-            }),
-          ]
-        : []),
-    ]);
+    // await prisma.$transaction([
+    //   // Create the notification for the event's creator, if the attendee isn't the creator
+    //   ...(user.id !== event.createdById
+    //     ? [
+    //         prisma.notification.create({
+    //           data: {
+    //             issuerId: user.id, // The user who attended the event
+    //             recipientId: event.createdById, // The event creator
+    //             eventId: eventId, // Event ID for the notification
+    //             type: "EVENT_ATTENDEE", // Notification type
+    //           },
+    //         }),
+    //       ]
+    //     : []),
+    // ]);
+
+    if (user.id !== event.createdById) {
+      const existingNotification = await prisma.notification.findFirst({
+        where: {
+          issuerId: user.id,
+          recipientId: event.createdById,
+          eventId: eventId,
+          type: "EVENT_ATTENDEE",
+        },
+      });
+
+      if (!existingNotification) {
+        // Create the notification if it doesn't exist
+        await prisma.notification.create({
+          data: {
+            issuerId: user.id, // The user who attended the event
+            recipientId: event.createdById, // The event creator
+            eventId: eventId, // Event ID for the notification
+            type: "EVENT_ATTENDEE", // Notification type
+          },
+        });
+      }
+    }
 
     console.log("Attendee added successfully:", attendee);
     return NextResponse.json(attendee, { status: 201 });

@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
       where: {
         status: "PUBLISHED",
         visibility: "PUBLIC",
+        isCancelled: false,
       },
       orderBy: { when: "asc" },
       take: pageSize + 1,

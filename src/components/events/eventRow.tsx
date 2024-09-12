@@ -104,13 +104,22 @@ const EventRow: React.FC<EventRowProps> = ({
       onClick={() => onRowClick(event)}
     >
       <div className="flex w-full items-center justify-between">
-        <div className="max-w-64 flex-1 text-left">{eventTitle}</div>
+        <div
+          className={`text-leftfont-bold max-w-64 flex-1 ${event.isCancelled ? "text-red-500" : ""}`}
+        >
+          <span className={event.isCancelled ? "line-through" : ""}>
+            {eventTitle}
+          </span>
+          {event.isCancelled && (
+            <span className="font-bold text-red-500"> Cancelled</span>
+          )}
+        </div>
         <div className="flex-shrink-0 text-right">
           {formatTime(event.startTime)} {" to "} {formatTime(event.endTime)}
         </div>
       </div>
 
-      {isEditing && (
+      {!isEditing && (
         <>
           <div>
             <ul className="ml-4 list-disc">

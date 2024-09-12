@@ -88,7 +88,7 @@ export default function NewChatDialog({
 
   return (
     <Dialog open onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card p-0">
+      <DialogContent className="mx-auto max-w-md overflow-hidden bg-card p-0">
         <DialogHeader className="px-6 pt-6">
           <DialogTitle>New chat</DialogTitle>
         </DialogHeader>

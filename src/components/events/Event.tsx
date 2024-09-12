@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import UserAvatar from "../UserAvatar";
 import UserTooltip from "../UserTooltip";
 import FollowButton from "../FollowButton";
-import { format as formatDate, parse, isValid } from "date-fns";
+import { format as formatDate, parse, isValid, format } from "date-fns";
 import prisma from "@/lib/prisma";
 import { Button } from "../ui/button";
 import Linkify from "../Linkify";
@@ -203,7 +203,8 @@ export default function EventDetails({ event }: EventDetailsProps) {
               className="block text-sm text-muted-foreground"
               suppressHydrationWarning
             >
-              {formatRelativeDate(event.createdAt)}
+              {" "}
+              Updated: {formatRelativeDate(event.updatedAt)}
             </div>
           </div>
           {renderEventActionButton()}
@@ -243,9 +244,14 @@ export default function EventDetails({ event }: EventDetailsProps) {
       <hr className="text-muted-foreground" />
       <div className="flex flex-col gap-3">
         <div key={event.id} className="rounded-md p-3">
+          {event.isCancelled && (
+            <p className="font-bold text-red-500">
+              This event has been Cancelled
+            </p>
+          )}
           <p className="text-lg">{event.title}</p>
           <p>Location: {event.location}</p>
-          <p>Date: {event.when}</p>
+          <p>Date: {format(event.when, "MMMM d, yyyy")}</p>
           <p>
             Time: {formatTime(event.startTime)} - {formatTime(event.endTime)}
           </p>

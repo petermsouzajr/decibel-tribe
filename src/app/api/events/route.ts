@@ -38,6 +38,7 @@ export async function GET(req: NextRequest) {
             { createdById: user?.id },
             { status: "PUBLISHED" },
             { visibility: "PUBLIC" },
+            { isCancelled: false },
           ],
         };
       }
@@ -109,6 +110,7 @@ export async function POST(req: NextRequest) {
       performers,
       status,
       visibility,
+      isCancelled,
     } = await req.json();
     console.log("Event details:", {
       title,
@@ -135,6 +137,7 @@ export async function POST(req: NextRequest) {
         performers,
         status,
         visibility,
+        isCancelled,
         createdBy: {
           connect: { id: loggedInUser!.id },
         },
@@ -236,6 +239,7 @@ export async function PATCH(req: NextRequest) {
       performers,
       status,
       visibility,
+      isCancelled,
     } = await req.json();
 
     const event = await prisma.event.findUnique({
@@ -263,6 +267,7 @@ export async function PATCH(req: NextRequest) {
         performers,
         status,
         visibility,
+        isCancelled,
       },
     });
 
@@ -296,6 +301,7 @@ export async function PUT(req: NextRequest) {
       performers,
       status,
       visibility,
+      isCancelled,
     } = await req.json();
 
     const event = await prisma.event.findUnique({
@@ -323,6 +329,7 @@ export async function PUT(req: NextRequest) {
         performers,
         status,
         visibility,
+        isCancelled,
       },
     });
 

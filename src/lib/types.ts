@@ -212,7 +212,7 @@ export interface Event {
   id: string;
   title: string;
   location: string;
-  when: string;
+  when: Date;
   startTime: string;
   endTime: string;
   performers: string[];

@@ -44,14 +44,6 @@ const EventCalendar: React.FC<CalendarProps> = ({ events, currentDate }) => {
         events={events}
         onSelectDay={handleDayClick}
       />
-      {/* {isModalOpen && (
-        <EventDetailsModal
-          isOpen={isModalOpen}
-          events={selectedEvents}
-          onClose={handleCloseModal}
-          onDeleteEvent={handleDeleteEvent}
-        />
-      )} */}
       {isConfirmModalOpen && (
         <ConfirmDeletionModal
           isOpen={isConfirmModalOpen}

@@ -63,18 +63,17 @@ export async function EventsList({
 
   if (events.length === 0) return null;
 
-  const currentDate = new Date();
+  const currentDate = new Date(new Date().setHours(0, 0, 0, 0));
   const groupedEvents = events.reduce(
     (acc, event) => {
       if (!event.when) return acc; // Skip events without a date
-      const eventDate = new Date(event.when);
-      if (isNaN(eventDate.getTime())) return acc; // Skip invalid dates
 
-      if (eventDate < currentDate) return acc;
+      if (event.when < currentDate) return acc; // Skip past events
 
-      const eventMonth = format(eventDate, "MMMM yyyy");
+      const eventMonth = format(event.when, "MMMM yyyy"); // Format the event date
       if (!acc[eventMonth]) acc[eventMonth] = [];
       acc[eventMonth].push(event);
+
       return acc;
     },
     {} as Record<string, typeof events>,
@@ -112,8 +111,8 @@ export async function EventsList({
             {groupedEvents[month].map((event) => (
               <li key={event.id} className="my-2">
                 <Link href={`/events/${event.id}`} className="hover:underline">
-                  {getStatusColor(event)}{" "}
-                  {format(new Date(event.when), "MMMM d")} -{" "}
+                  {getStatusColor(event)}
+                  {format(event.when, "MMMM d")} - {""}
                   {event.title || event.location}
                 </Link>
               </li>

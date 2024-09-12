@@ -1,17 +1,9 @@
 import { validateRequest } from "@/auth";
 import FollowButton from "@/components/FollowButton";
-import FollowerCount from "@/components/FollowerCount";
 import Linkify from "@/components/Linkify";
-import TrendsSidebar from "@/components/TrendsSidebar";
 import UserAvatar from "@/components/UserAvatar";
 import prisma from "@/lib/prisma";
-import {
-  FollowerInfo,
-  getUserDataSelect,
-  UserData,
-  LoggedInUser,
-} from "@/lib/types";
-import { formatNumber } from "@/lib/utils";
+import { FollowerInfo, getUserDataSelect, UserData } from "@/lib/types";
 import { formatDate } from "date-fns";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -33,10 +25,10 @@ const getUser = cache(async (username: string, loggedInUserId: string) => {
       },
     },
     select: {
-      ...getUserDataSelect(loggedInUserId), // Get other user data
+      ...getUserDataSelect(loggedInUserId),
       userPreferences: {
         select: {
-          calendar: true, // Assuming you want to retrieve the calendar preference
+          calendar: true,
         },
       },
     },

@@ -16,9 +16,9 @@ export function formatRelativeDate(from: Date) {
     return formatDistanceToNowStrict(from, { addSuffix: true });
   } else {
     if (currentDate.getFullYear() === from.getFullYear()) {
-      return formatDate(from, "MMM d");
+      return formatDate(from, "d MMM");
     } else {
-      return formatDate(from, "MMM d, yyyy");
+      return formatDate(from, "d MMM, yyyy");
     }
   }
 }

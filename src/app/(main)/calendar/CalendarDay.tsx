@@ -4,7 +4,7 @@ import { Event, CalendarDayProps } from "@/lib/types";
 
 const CalendarDay: React.FC<CalendarDayProps> = ({ day, events, onClick }) => {
   const dayEvents: Event[] = events.filter((event) =>
-    isSameDay(parse(event.when, "yyyy-MM-dd", new Date()), day),
+    isSameDay(event.when, day),
   );
 
   const formatTime = (time: string) => {
@@ -24,9 +24,12 @@ const CalendarDay: React.FC<CalendarDayProps> = ({ day, events, onClick }) => {
           {dayEvents.map((event, index) => {
             const isDraft = event.status === "DRAFT";
             const eventTitle = event.title ? event.title : event.location;
+            const cancelledClass = event.isCancelled
+              ? "line-through font-bold text-red-500"
+              : "";
             const eventClass = isDraft
               ? "mt-1 line-clamp-1 overflow-hidden text-ellipsis break-all rounded-sm bg-muted-foreground p-1 text-background hover:bg-white transition-colors duration-300"
-              : "mt-1 line-clamp-1 overflow-hidden text-ellipsis break-all rounded-sm bg-primary p-1 text-background hover:bg-white transition-colors duration-300";
+              : `mt-1 line-clamp-1 overflow-hidden text-ellipsis break-all rounded-sm bg-primary p-1 text-background hover:bg-white transition-colors duration-300 ${cancelledClass}`;
 
             return (
               <div key={index} className={eventClass} title={eventTitle}>

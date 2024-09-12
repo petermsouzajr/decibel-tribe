@@ -165,17 +165,28 @@ const EventCalendar: React.FC<CalendarPropsWithUsername> = ({
       <h2 className="justify-left mx-auto inline-flex h-12 w-full items-center gap-3 rounded-md bg-card p-4 text-xl font-bold text-muted-foreground shadow-sm">
         {userInfo ? (
           <>
-            <div className="flex items-center px-3">
-              <UserAvatar avatarUrl={userInfo.avatarUrl} />
-            </div>
-            <span>{userInfo.displayName}&apos;s Calendar</span>
+            <Link
+              href={`/users/${userInfo.username}`}
+              className="flex items-center gap-3"
+            >
+              <div className="flex items-center px-3">
+                <UserAvatar avatarUrl={userInfo.avatarUrl} />
+              </div>
+
+              <span>{userInfo.displayName}&apos;s Calendar</span>
+            </Link>
           </>
         ) : (
           <>
-            <div className="flex items-center px-3">
-              <UserAvatar avatarUrl={loggedInUser?.avatarUrl} />
-            </div>
-            <span>Your Calendar</span>
+            <Link
+              href={`/users/${loggedInUser.username}`}
+              className="flex items-center gap-3"
+            >
+              <div className="flex items-center px-3">
+                <UserAvatar avatarUrl={loggedInUser.avatarUrl} />
+              </div>
+              <span>Your Calendar</span>
+            </Link>
           </>
         )}
       </h2>

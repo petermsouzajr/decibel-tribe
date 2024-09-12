@@ -32,6 +32,7 @@ export async function GET(req: NextRequest) {
         },
         status: "PUBLISHED",
         visibility: "PUBLIC",
+        isCancelled: false,
       },
       take: pageSize + 1,
       cursor: cursor ? { id: cursor } : undefined,

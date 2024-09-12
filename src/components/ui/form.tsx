@@ -205,11 +205,14 @@ const FormSwitch = React.forwardRef<
   };
 
   return (
-    <div className={`flex flex-col items-center ${className}`}>
+    <div
+      className={`flex h-10 flex-col items-center justify-center rounded-md border`}
+    >
       <div className="flex w-full justify-around">
         {/* Left Value Label */}
         <span
-          className={`w-16 text-muted-foreground ${!isFirstValue ? "font-bold" : ""}`}
+          className={`w-16 cursor-pointer text-muted-foreground ${!isFirstValue ? "font-bold" : "opacity-50"}`}
+          onClick={handleClick}
         >
           {firstValue}
         </span>
@@ -232,7 +235,8 @@ const FormSwitch = React.forwardRef<
 
         {/* Right Value Label */}
         <span
-          className={`w-16 text-primary ${isFirstValue ? "font-bold" : ""}`}
+          className={`w-16 cursor-pointer text-primary ${isFirstValue ? "font-bold" : "opacity-50"}`}
+          onClick={handleClick}
         >
           {secondValue}
         </span>
@@ -240,8 +244,51 @@ const FormSwitch = React.forwardRef<
     </div>
   );
 });
-
 FormSwitch.displayName = "FormSwitch";
+
+interface FormCheckboxProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {
+  uncheckedLabel?: string;
+  checkedLabel?: string;
+}
+
+const FormCheckbox = React.forwardRef<HTMLInputElement, FormCheckboxProps>(
+  (
+    {
+      className,
+      uncheckedLabel = "Unchecked",
+      checkedLabel = "Checked",
+      checked,
+      ...props
+    },
+    ref,
+  ) => {
+    return (
+      <div className="flex items-center p-5">
+        <div className="flex items-center space-x-2">
+          <input
+            ref={ref}
+            type="checkbox"
+            checked={checked}
+            onChange={props.onChange}
+            className={cn("checkbox", className)}
+            {...props}
+          />
+          <FormLabel
+            htmlFor={props.id}
+            className={cn(
+              "leading-none",
+              checked ? "font-bold text-red-500" : "",
+            )}
+          >
+            {checked ? checkedLabel : uncheckedLabel}
+          </FormLabel>
+        </div>
+      </div>
+    );
+  },
+);
+FormCheckbox.displayName = "FormCheckbox";
 
 export {
   useFormField,
@@ -254,4 +301,5 @@ export {
   FormField,
   FormButton,
   FormSwitch,
+  FormCheckbox,
 };

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import {
   Form,
+  FormCheckbox,
   FormControl,
   FormField,
   FormItem,
@@ -46,9 +47,6 @@ export default function EventFormPage(event: any) {
   const addMutation = useAddEventMutation();
   const dateParam = searchParams.get("date");
   const parsedDate = dateParam ? new Date(dateParam) : null;
-  const formattedDate = parsedDate
-    ? parsedDate.toISOString().split("T")[0]
-    : "";
 
   console.log("status in EventFormPage", status);
   console.log("eventStatus in EventFormPage:", event.status);
@@ -59,7 +57,7 @@ export default function EventFormPage(event: any) {
       location: event?.location || "",
       description: event?.description || "",
       url: event?.url || "",
-      when: event?.when || formattedDate,
+      when: event?.when ? new Date(event.when) : parsedDate || new Date(),
       startTime: event?.startTime || "",
       endTime: event?.endTime || "",
       performers:
@@ -68,6 +66,7 @@ export default function EventFormPage(event: any) {
           : Array(performerCount).fill(""),
       status: event?.status,
       visibility: event.visibility || defaultVisibility,
+      isCancelled: event?.isCancelled || false,
     },
   });
 
@@ -178,12 +177,13 @@ export default function EventFormPage(event: any) {
             location: data.location || "",
             description: data.description || "",
             url: data.url || "",
-            when: data.when || formattedDate,
+            when: data.when ? new Date(data.when) : new Date(),
             startTime: data.startTime || "",
             endTime: data.endTime || "",
             performers: data.performers.length > 0 ? data.performers : [""],
             status: data.status || "DRAFT",
             visibility: data.visibility || defaultVisibility,
+            isCancelled: data.isCancelled || false,
           });
           setPerformerCount(data.performers.length || 1);
           setLoadingStatus("complete"); // Finish loading
@@ -193,7 +193,7 @@ export default function EventFormPage(event: any) {
           setLoadingStatus("complete"); // Finish loading
         });
     }
-  }, [eventId, form, defaultVisibility, formattedDate]);
+  }, [eventId, form, defaultVisibility]);
 
   const addPerformer = () => {
     if (performerCount < MAX_PERFORMERS) {
@@ -221,11 +221,7 @@ export default function EventFormPage(event: any) {
       <h1 className="mb-6 text-center text-2xl font-bold">
         {eventId ? "Edit Event" : "Create New Event"}
       </h1>
-      {isEditing && eventData && (
-        <div className="text-md mb-4 text-center font-bold text-muted-foreground">
-          Status: {eventData.status}
-        </div>
-      )}
+
       <Form {...form}>
         <form className="space-y-4">
           <FormField
@@ -300,7 +296,17 @@ export default function EventFormPage(event: any) {
               <FormItem>
                 <FormLabel>When</FormLabel>
                 <FormControl>
-                  <Input type="date" {...field} />
+                  <Input
+                    type="date"
+                    value={
+                      field.value
+                        ? new Date(field.value).toISOString().split("T")[0]
+                        : ""
+                    }
+                    onChange={(e) =>
+                      field.onChange(new Date(e.target.value + "T00:00:00"))
+                    }
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -360,7 +366,29 @@ export default function EventFormPage(event: any) {
               ? "Maximum number of performers is 15"
               : "+ Add Another Performer"}
           </Button>
-
+          <FormField
+            control={form.control}
+            name="isCancelled"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  {/* @ts-ignore */}
+                  <FormCheckbox
+                    {...field}
+                    checked={field.value}
+                    uncheckedLabel="Mark your event as Cancelled"
+                    checkedLabel="Your event is marked as Cancelled"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {isEditing && eventData && (
+            <div className="textlgd mb-4 text-left font-bold text-muted-foreground">
+              Your event Status is: {eventData.status}
+            </div>
+          )}
           <div className="flex justify-between pt-8">
             <Button
               className="h-10 w-1/3 bg-secondary-foreground"

@@ -65,12 +65,18 @@ export const createEventSchema = z.object({
     .string()
     .max(200, { message: "URL cannot exceed 200 characters" })
     .optional(),
-  when: z.string().min(1, { message: "Date is required" }),
+  when: z.preprocess(
+    (arg) => (typeof arg === "string" ? new Date(arg) : arg),
+    z.date().min(new Date(new Date().setHours(0, 0, 0, 0)), {
+      message: "Date must be today or in the future",
+    }),
+  ),
   startTime: z.string().min(1, { message: "Start time is required" }),
   endTime: z.string().min(1, { message: "End time is required" }),
   performers: z.array(z.string()).optional(),
   status: z.enum(["DRAFT", "PUBLISHED"]),
   visibility: z.enum(["PUBLIC", "PRIVATE"]),
+  isCancelled: z.boolean(),
 });
 
 export type CreateEventValues = z.infer<typeof createEventSchema>;
