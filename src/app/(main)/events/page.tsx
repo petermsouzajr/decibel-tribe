@@ -32,11 +32,8 @@ export default function Page() {
           throw new Error("Failed to fetch events");
         }
         const data = await response.json();
-        console.log("fetched in Page:", data);
         setEvents(data);
-      } catch (err) {
-        console.log("error in fetchEvents", err);
-      }
+      } catch (err) {}
     };
 
     fetchEvents();
@@ -44,10 +41,6 @@ export default function Page() {
 
   const currentDate = new Date();
 
-  // const event = await getEvent(eventId, user.id);
-  console.log("events in page", events);
-  console.log("currentDate in page", currentDate);
-  // console.log("user in page", user.username);
   return (
     <main className="flex w-full min-w-0 gap-5">
       <div className="w-full min-w-0 space-y-5">

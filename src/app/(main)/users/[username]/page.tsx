@@ -81,8 +81,6 @@ export default async function Page({ params: { username } }: PageProps) {
     createdAt: new Date(),
   };
 
-  console.log("user in page", user);
-  console.log("loggedInUser in page", loggedInUser);
   return (
     <main className="flex w-full min-w-0 gap-5">
       <div className="w-full min-w-0 space-y-5">

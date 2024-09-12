@@ -64,17 +64,6 @@ export function useAddEventMutation() {
         }),
       });
 
-      console.log("Response in useAddEventMutation:", response);
-      console.log("title in useAddEventMutation:", title);
-      console.log("location in useAddEventMutation:", location);
-      console.log("description in useAddEventMutation:", description);
-      console.log("url in useAddEventMutation:", url);
-      console.log("when in useAddEventMutation:", when);
-      console.log("startTime in useAddEventMutation:", startTime);
-      console.log("endTime in useAddEventMutation:", endTime);
-      console.log("performers in useAddEventMutation:", performers);
-      console.log("status in useAddEventMutation:", status);
-      console.log("visibility in useAddEventMutation:", visibility);
       if (!response.ok) {
         throw new Error("Failed to create event");
       }
@@ -134,7 +123,6 @@ export function useEditEventMutation() {
       visibility: "PUBLIC" | "PRIVATE";
       isCancelled: boolean;
     }) => {
-      console.log("eventId in useEditEventMutation:", eventId);
       return fetch(`/api/events/${eventId}`, {
         method: "PUT",
         headers: {

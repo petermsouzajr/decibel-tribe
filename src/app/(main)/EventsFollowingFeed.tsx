@@ -1,10 +1,8 @@
 "use client";
 
 import InfiniteScrollContainer from "@/components/InfiniteScrollContainer";
-import Event from "@/components/events/Event"; // Assuming you have an Event component
 import PostsLoadingSkeleton from "@/components/posts/PostsLoadingSkeleton";
 import kyInstance from "@/lib/ky";
-import { PostsPage } from "@/lib/types";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { EventsPage } from "@/lib/types"; // Define this type for event data
@@ -31,13 +29,7 @@ export default function FollowingFeed() {
     getNextPageParam: (lastPage) => lastPage.nextCursor,
   });
 
-  console.log("data", data);
-
   const events = data?.pages.flatMap((page) => page.events) || [];
-  console.log("events", events);
-  // if (!events.length) {
-  //   return <p className="text-center text-muted-foreground">No events found</p>;
-  // }
 
   if (status === "pending") {
     return <PostsLoadingSkeleton />;

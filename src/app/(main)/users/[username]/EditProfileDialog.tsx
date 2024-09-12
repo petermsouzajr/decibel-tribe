@@ -146,7 +146,6 @@ export default function EditProfileDialog({
           credentials: "include",
         });
         const data = await response.json();
-        console.log("data", data);
 
         if (data?.calendarPreference) {
           setDefaultVisibility(data.calendarPreference);
@@ -194,10 +193,6 @@ export default function EditProfileDialog({
     );
   }
 
-  console.log("user", user);
-  console.log("form", form);
-  console.log("mutation", mutation);
-  console.log("calendarPreference", defaultVisibility);
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>

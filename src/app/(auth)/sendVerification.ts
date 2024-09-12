@@ -2,7 +2,6 @@ import crypto from "crypto";
 import prisma from "@/lib/prisma";
 import streamServerClient from "@/lib/stream"; // Assuming you're using this for another purpose like user streaming
 import sendVerificationEmail from "@/lib/sendEmail"; // Your existing email-sending module
-import { google } from "@/auth";
 
 // Generate a verification token with a 24-hour expiry
 export async function generateAndSendVerification(
@@ -57,7 +56,6 @@ export async function generateAndSendVerification(
 
     // Send the verification email with the generated token
     const verificationUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/verify-email?token=${verificationToken}`;
-    console.log("Verification URL sent to email:", verificationUrl);
 
     await sendVerificationEmail(email, verificationUrl);
     return { success: true };
@@ -124,7 +122,6 @@ export async function resendVerificationEmail(credential: string) {
 
     // Send the verification email with the new token
     const verificationUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/verify-email?token=${verificationToken}`;
-    console.log("Verification URL resent:", verificationUrl);
 
     if (userEmail) {
       await sendVerificationEmail(userEmail, verificationUrl);

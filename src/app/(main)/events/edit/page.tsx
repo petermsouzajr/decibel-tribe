@@ -22,7 +22,6 @@ import {
 } from "../../calendar/mutations";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
-import { validateRequest } from "@/auth";
 import PostsLoadingSkeleton from "@/components/posts/PostsLoadingSkeleton";
 
 export default function EventFormPage(event: any) {
@@ -48,8 +47,6 @@ export default function EventFormPage(event: any) {
   const dateParam = searchParams.get("date");
   const parsedDate = dateParam ? new Date(dateParam) : null;
 
-  console.log("status in EventFormPage", status);
-  console.log("eventStatus in EventFormPage:", event.status);
   const form = useForm<CreateEventValues>({
     resolver: zodResolver(createEventSchema),
     defaultValues: {
@@ -71,12 +68,8 @@ export default function EventFormPage(event: any) {
   });
 
   const onSubmit: SubmitHandler<CreateEventValues> = async (data) => {
-    console.log("isediting", isEditing);
-    console.log("eventid", eventId);
-    console.log("data in onSubmit:", data);
     if (isSubmitting) return;
     setIsSubmitting(true);
-    console.log("currens status in onSubmit:", status);
 
     // Validate using the correct schema
     const parsedData = createEventSchema.safeParse(data);
@@ -90,10 +83,6 @@ export default function EventFormPage(event: any) {
       (performer) => performer?.trim() !== "",
     );
 
-    console.log("data in onSubmit:", data);
-    console.log("eventId in onSubmit:", event);
-    // event = data;
-    // console.log("eventData in onSubmit after data:", eventData.id);?
     const finalData = isEditing
       ? {
           ...data,
@@ -155,22 +144,18 @@ export default function EventFormPage(event: any) {
 
     if (eventId) {
       setLoadingStatus("pending"); // Start loading
-      console.log("Fetching event data for eventId:", eventId);
-      console.log("form in useEffect:", form);
+
       fetch(`/api/events/${eventId}`, {
         method: "GET",
         credentials: "include", // Include cookies in the request
       })
         .then((response) => {
-          console.log("Fetch response status:", response.status);
           if (!response.ok) {
             throw new Error(`Fetch error: ${response.statusText}`);
           }
           return response.json();
         })
         .then((data) => {
-          console.log("Fetched event data:", data);
-          console.log("form in useEffect after fetch:", form);
           setEventData(data);
           form.reset({
             title: data.title || "",

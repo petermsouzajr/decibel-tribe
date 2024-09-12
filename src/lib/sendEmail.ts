@@ -26,7 +26,5 @@ export default async function sendVerificationEmail(
     `,
   };
 
-  console.log("Sending email to", to);
-  console.log("Verification URL", verificationUrl);
   return transporter.sendMail(mailOptions);
 }

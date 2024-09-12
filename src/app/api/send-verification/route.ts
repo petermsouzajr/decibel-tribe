@@ -2,7 +2,6 @@ import prisma from "@/lib/prisma";
 import { lucia } from "@/auth"; // Import your authentication system
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers"; // To set the session cookie
-import { redirect } from "next/navigation";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);

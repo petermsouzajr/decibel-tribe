@@ -47,7 +47,6 @@ export const getEvent = cache(
     });
 
     if (!event) notFound();
-    console.log("Event found and user authorized:", event);
     return event;
   },
 );

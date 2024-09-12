@@ -8,13 +8,9 @@ export async function GET(
   { params }: { params: { eventId: string } },
 ) {
   try {
-    console.log("Received request to fetch event:", params.eventId);
-
     const { user: loggedInUser } = await validateRequest();
-    console.log("User validated:", loggedInUser);
 
     const eventId = params.eventId;
-    console.log("Looking for event with ID:", eventId);
 
     // Fetch the event using the ID
     const event = await prisma.event.findUnique({
@@ -25,17 +21,14 @@ export async function GET(
     });
 
     if (!event) {
-      console.log("Event not found with ID:", eventId);
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
     // Check if the user is authorized to view this event
     if (event.status === "DRAFT" && event.createdById !== loggedInUser?.id) {
-      console.log("User not authorized to view this draft event");
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    console.log("Event found and user authorized:", event);
     return NextResponse.json(event, { status: 200 });
   } catch (error) {
     console.error("Error fetching event:", error);
@@ -113,13 +106,9 @@ export async function PUT(
   { params }: { params: { eventId: string } },
 ) {
   try {
-    console.log("Received request to update event:", params.eventId);
-
     const { user: loggedInUser } = await validateRequest();
-    console.log("User validated:", loggedInUser);
 
     const eventId = params.eventId;
-    console.log("Looking for event with ID:", eventId);
 
     // Fetch the event using the ID
     const event = await prisma.event.findUnique({
@@ -129,13 +118,11 @@ export async function PUT(
     });
 
     if (!event) {
-      console.log("Event not found with ID:", eventId);
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
     // Check if the user is authorized to update this event
     if (event.createdById !== loggedInUser?.id) {
-      console.log("User not authorized to update this event");
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
@@ -174,8 +161,6 @@ export async function PUT(
         isCancelled,
       },
     });
-
-    console.log("Event updated successfully:", updatedEvent);
 
     if (!wasCancelled && isNowCancelled) {
       const eventAttendees = await prisma.eventAttendee.findMany({

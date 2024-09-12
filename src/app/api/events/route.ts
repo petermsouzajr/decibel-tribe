@@ -6,21 +6,16 @@ import { Prisma } from "@prisma/client";
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const username = searchParams.get("user") ?? undefined;
-  console.log("username", username);
 
   try {
     const { user: loggedInUser } = await validateRequest();
-    console.log("User validated:", loggedInUser);
 
     let eventConditions: Prisma.EventWhereInput = {};
-    console.log("loggedInUser", loggedInUser);
     if (username) {
       const user = await prisma.user.findUnique({
         where: { username },
         select: { id: true },
       });
-      console.log("user", user);
-      console.log("username", username);
 
       if (!user) {
         return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -43,7 +38,6 @@ export async function GET(req: NextRequest) {
         };
       }
     } else {
-      console.log("username", username);
       // If no username is provided, show all events for the logged-in user, including private, public, draft, and published events
       eventConditions = {
         OR: [
@@ -95,9 +89,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    console.log("Received request to create event");
     const { user: loggedInUser } = await validateRequest();
-    console.log("User validated:", loggedInUser);
 
     const {
       title,
@@ -112,18 +104,6 @@ export async function POST(req: NextRequest) {
       visibility,
       isCancelled,
     } = await req.json();
-    console.log("Event details:", {
-      title,
-      location,
-      description,
-      url,
-      when,
-      startTime,
-      endTime,
-      performers,
-      status,
-      visibility,
-    });
 
     const newEvent = await prisma.event.create({
       data: {
@@ -149,7 +129,6 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    console.log("Event created successfully:", newEvent);
     return NextResponse.json(newEvent, { status: 201 });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

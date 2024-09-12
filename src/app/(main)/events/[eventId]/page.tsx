@@ -24,7 +24,6 @@ export async function generateMetadata({
   if (!user) return {};
 
   const event = await getEvent(eventId, user.id);
-  console.log("Event found and user authorized:", event);
   return {
     title: `${event.title}`,
   };

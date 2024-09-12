@@ -26,7 +26,6 @@ const Page: React.FC<PageProps> = () => {
           throw new Error("Failed to fetch events");
         }
         const data = await response.json();
-        console.log("fetched in Page:", data);
         setEvents(data);
       } catch (err) {
         setError((err as Error).message);
@@ -47,7 +46,6 @@ const Page: React.FC<PageProps> = () => {
   }
 
   const currentDate = new Date();
-  console.log("Events in Page:", events);
   return (
     <main className="flex w-full min-w-0 gap-5">
       <EventCalendar

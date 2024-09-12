@@ -2,15 +2,12 @@
 
 import { useSession } from "@/app/(main)/SessionProvider";
 import { EventData } from "@/lib/types";
-import { cn, formatRelativeDate } from "@/lib/utils";
-import { X } from "lucide-react";
+import { formatRelativeDate } from "@/lib/utils";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import UserAvatar from "../UserAvatar";
 import UserTooltip from "../UserTooltip";
-import FollowButton from "../FollowButton";
 import { format as formatDate, parse, isValid, format } from "date-fns";
-import prisma from "@/lib/prisma";
 import { Button } from "../ui/button";
 import Linkify from "../Linkify";
 
@@ -86,7 +83,6 @@ export default function EventDetails({ event }: EventDetailsProps) {
   }, [event.id, user.id]);
 
   const handleAddAttendee = async () => {
-    console.log("Adding attendee to event", event.id);
     try {
       const response = await fetch(`/api/events/${event.id}/attendees`, {
         method: "POST",
@@ -99,9 +95,6 @@ export default function EventDetails({ event }: EventDetailsProps) {
         throw new Error("Failed to add attendee");
       }
 
-      console.log("Attendee added successfully");
-      // Optionally refresh or redirect
-      // router.reload(); // or router.push("/some/path")
       setIsAttendee(true);
     } catch (error) {
       console.error("Failed to add attendee:", error);
@@ -157,8 +150,6 @@ export default function EventDetails({ event }: EventDetailsProps) {
     }
   };
 
-  console.log("EventDetailsProps", event);
-  console.log("attendees", event.attendees);
   return (
     <article className="group/event space-y-3 rounded-2xl border-2 bg-card p-3 shadow-sm">
       <div className="flex justify-between gap-3">

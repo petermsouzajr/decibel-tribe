@@ -1,5 +1,4 @@
 import { Prisma } from "@prisma/client";
-import { string } from "zod";
 
 export function getUserDataSelect(loggedInUserId: string) {
   return {

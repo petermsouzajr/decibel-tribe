@@ -1,16 +1,11 @@
-import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
-import { getUserDataSelect, LoggedInUser, UserData } from "@/lib/types";
+import { LoggedInUser, UserData } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 import { unstable_cache } from "next/cache";
 import Link from "next/link";
 import { Suspense } from "react";
-import UserAvatar from "./UserAvatar";
-import UserTooltip from "./UserTooltip";
 import { format } from "date-fns";
-import { usePathname, useSearchParams } from "next/navigation";
 import { Button } from "./ui/button";
-import { useSession } from "../app/(main)/SessionProvider";
 
 export default function EventsSidebar({
   user,
@@ -37,8 +32,6 @@ export async function EventsList({
   user: UserData;
   loggedInUser: LoggedInUser;
 }) {
-  console.log("EventsList USER", user);
-  console.log("EventsList LOGGED IN USER", loggedInUser);
   if (!user.id) return null;
 
   const events = await prisma.event.findMany({

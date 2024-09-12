@@ -1,12 +1,6 @@
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
-import {
-  EventsPage,
-  getEventDataInclude,
-  getPostDataInclude,
-  getUserDataSelect,
-  PostsPage,
-} from "@/lib/types";
+import { EventsPage, getEventDataInclude } from "@/lib/types";
 import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -39,8 +33,7 @@ export async function GET(req: NextRequest) {
       orderBy: { when: "asc" },
       include: getEventDataInclude(user.id),
     });
-    console.log("events", events);
-    console.log("events.length", events.length);
+
     const nextCursor = events.length > pageSize ? events[pageSize].id : null;
 
     const data: EventsPage = {

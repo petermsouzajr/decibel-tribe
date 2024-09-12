@@ -23,7 +23,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { NextResponse } from "next/server";
 import { useRouter } from "next/navigation";
 
 export default function SignUpForm() {

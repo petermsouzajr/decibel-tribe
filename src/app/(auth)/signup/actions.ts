@@ -1,21 +1,15 @@
 "use server";
 
-import { lucia } from "@/auth";
 import prisma from "@/lib/prisma";
-import streamServerClient from "@/lib/stream";
 import { signUpSchema, SignUpValues } from "@/lib/validation";
 import { hash } from "@node-rs/argon2";
 import { generateIdFromEntropySize } from "lucia";
 import { isRedirectError } from "next/dist/client/components/redirect";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import sendVerificationEmail from "@/lib/sendEmail"; // A function to send emails
 import { generateAndSendVerification } from "../sendVerification";
 
 export async function signUp(
   credentials: SignUpValues,
 ): Promise<{ error?: string; success?: boolean }> {
-  console.log("Signing up", credentials);
   try {
     const { username, email, password } = signUpSchema.parse(credentials);
 

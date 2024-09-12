@@ -6,8 +6,6 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { eventId: string } },
 ) {
-  console.log("Received request to fetch attendees for event:", params.eventId);
-
   const { eventId } = params;
   if (!eventId) {
     return NextResponse.json(
@@ -18,7 +16,6 @@ export async function GET(
 
   const { user } = await validateRequest();
 
-  console.log("User validated:", user);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -48,7 +45,6 @@ export async function GET(
       );
     }
 
-    console.log("Attendees fetched successfully:", attendees);
     return NextResponse.json(attendees, { status: 200 });
   } catch (error) {
     console.error("Error fetching attendees:", error);
@@ -63,12 +59,9 @@ export async function POST(
   req: NextRequest,
   { params }: { params: { eventId: string } },
 ) {
-  console.log("Received request to add attendee to event:", params.eventId);
-
   const { eventId } = params;
   const { user } = await validateRequest();
 
-  console.log("User validated:", user);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -108,22 +101,6 @@ export async function POST(
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
-    // await prisma.$transaction([
-    //   // Create the notification for the event's creator, if the attendee isn't the creator
-    //   ...(user.id !== event.createdById
-    //     ? [
-    //         prisma.notification.create({
-    //           data: {
-    //             issuerId: user.id, // The user who attended the event
-    //             recipientId: event.createdById, // The event creator
-    //             eventId: eventId, // Event ID for the notification
-    //             type: "EVENT_ATTENDEE", // Notification type
-    //           },
-    //         }),
-    //       ]
-    //     : []),
-    // ]);
-
     if (user.id !== event.createdById) {
       const existingNotification = await prisma.notification.findFirst({
         where: {
@@ -147,7 +124,6 @@ export async function POST(
       }
     }
 
-    console.log("Attendee added successfully:", attendee);
     return NextResponse.json(attendee, { status: 201 });
   } catch (error) {
     console.error("Error adding attendee:", error);
@@ -162,15 +138,9 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: { eventId: string } },
 ) {
-  console.log(
-    "Received request to remove attendee from event:",
-    params.eventId,
-  );
-
   const { eventId } = params;
   const { user } = await validateRequest();
 
-  console.log("User validated:", user);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -203,7 +173,6 @@ export async function DELETE(
       },
     });
 
-    console.log("Attendee removed successfully");
     return NextResponse.json({ message: "Attendee removed" }, { status: 200 });
   } catch (error) {
     console.error("Error removing attendee:", error);

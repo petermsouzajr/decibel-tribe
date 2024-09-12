@@ -2,23 +2,16 @@
 
 import prisma from "@/lib/prisma";
 import { resendVerificationEmail } from "../sendVerification"; // The email sending logic
-import {
-  loginSchema,
-  LoginValues,
-  resetPasswordSchema,
-  resetPasswordValues,
-} from "@/lib/validation";
+import { resetPasswordSchema, resetPasswordValues } from "@/lib/validation";
 
 export async function resendVerification(
   credentials: resetPasswordValues,
 ): Promise<{ error: string }> {
-  console.log("credentials", credentials);
   try {
     const { credential } = resetPasswordSchema.parse(credentials);
 
     // Find the user by username or email
-    console.log("credentials", credentials);
-    console.log("credentials.id", credentials);
+
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [
@@ -40,8 +33,6 @@ export async function resendVerification(
 
     // If user doesn't exist
     if (!existingUser) {
-      console.log("credentials2", credentials);
-      console.log("credentials.id2", credentials);
       return { error: `User not found.` };
     }
 

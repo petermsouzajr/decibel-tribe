@@ -5,7 +5,6 @@ import {
   startOfMonth,
   endOfMonth,
   eachDayOfInterval,
-  set,
   addMonths,
   subMonths,
 } from "date-fns";
@@ -21,8 +20,6 @@ import EventRow from "@/components/events/eventRow";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import UserAvatar from "@/components/UserAvatar";
-import { validateRequest } from "@/auth";
-import { User } from "@prisma/client";
 import { useSession } from "../SessionProvider";
 import { Input } from "@/components/ui/input";
 import PostsLoadingSkeleton from "@/components/posts/PostsLoadingSkeleton";
@@ -159,7 +156,6 @@ const EventCalendar: React.FC<CalendarPropsWithUsername> = ({
     return <PostsLoadingSkeleton />;
   }
 
-  console.log("userInfo", userInfo);
   return (
     <div className="container mx-auto p-4">
       <h2 className="justify-left mx-auto inline-flex h-12 w-full items-center gap-3 rounded-md bg-card p-4 text-xl font-bold text-muted-foreground shadow-sm">

@@ -35,14 +35,11 @@ export default function ForgotPassForm() {
   });
 
   async function onSubmit(values: resetPasswordValues) {
-    console.log("Resending verification email", values);
     setError(undefined);
     setMessage(undefined);
 
     startTransition(async () => {
-      console.log("Resending verification email22222", values.credential);
       const { credential } = values;
-      console.log("Resending verification email33333", credential);
       const result = await resendVerification({ credential });
 
       if (result?.error) {

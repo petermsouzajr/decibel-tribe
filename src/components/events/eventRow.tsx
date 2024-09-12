@@ -61,7 +61,6 @@ const EventRow: React.FC<EventRowProps> = ({
   }, [event.id, user.id]);
 
   const handleAddAttendee = async (event: Event) => {
-    console.log("Adding attendee to event", event.id);
     try {
       const response = await fetch(`/api/events/${event.id}/attendees`, {
         method: "POST",
@@ -74,9 +73,6 @@ const EventRow: React.FC<EventRowProps> = ({
         throw new Error("Failed to add attendee");
       }
 
-      console.log("Attendee added successfully");
-      // Optionally refresh or redirect
-      // router.reload(); // or router.push("/some/path")
       setIsAttendee(true);
     } catch (error) {
       console.error("Failed to add attendee:", error);

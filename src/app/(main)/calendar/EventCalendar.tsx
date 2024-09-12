@@ -2,9 +2,8 @@
 import React, { useState } from "react";
 import { format } from "date-fns";
 import CalendarGrid from "./CalendarGrid";
-// import EventDetailsModal from "./EventDetailsModal";
 import ConfirmDeletionModal from "./ConfirmDeleteModal";
-import { CalendarProps, Event, EventDetailsModalProps } from "@/lib/types";
+import { CalendarProps, Event } from "@/lib/types";
 
 const EventCalendar: React.FC<CalendarProps> = ({ events, currentDate }) => {
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
@@ -31,7 +30,6 @@ const EventCalendar: React.FC<CalendarProps> = ({ events, currentDate }) => {
   const handleConfirmDelete = () => {
     // Implement delete logic here
     setIsConfirmModalOpen(false);
-    console.log("Event deleted:", eventToDelete);
   };
 
   return (
