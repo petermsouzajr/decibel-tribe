@@ -84,6 +84,12 @@ export async function resendVerificationEmail(credential: string) {
             },
           },
           {
+            pendingEmail: {
+              equals: credential,
+              mode: "insensitive",
+            },
+          },
+          {
             username: {
               equals: credential,
               mode: "insensitive",
@@ -101,7 +107,9 @@ export async function resendVerificationEmail(credential: string) {
     // const userId = existingUser.id; // Extract userId from the fetched user
     // const userEmail = existingUser.email; // Extract email from the fetched user
     // const googleId = existingUser.googleId; // Extract Google ID from the fetched user
-    const { id: userId, email: userEmail, isVerified, googleId } = existingUser;
+    let { id: userId, email: userEmail, isVerified, googleId } = existingUser;
+    // userEmail = isVerified === true = existingUser.pendingEmail;
+    userEmail = isVerified ? existingUser.pendingEmail : existingUser.email;
 
     if (!userEmail && googleId)
       return { error: "You didn't sign up with email and password." };
@@ -122,7 +130,6 @@ export async function resendVerificationEmail(credential: string) {
 
     // Send the verification email with the new token
     const verificationUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/verify-email?token=${verificationToken}`;
-
     if (userEmail) {
       await sendVerificationEmail(userEmail, verificationUrl);
     } else {

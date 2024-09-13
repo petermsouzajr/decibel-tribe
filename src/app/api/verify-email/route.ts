@@ -32,6 +32,17 @@ export async function GET(req: NextRequest) {
       data: { isVerified: true },
     });
 
+    if (user.pendingEmail) {
+      await prisma.user.update({
+        where: { id: verificationRecord.userId },
+        data: { email: user.pendingEmail },
+      });
+
+      await prisma.user.update({
+        where: { id: verificationRecord.userId },
+        data: { pendingEmail: null },
+      });
+    }
     // Delete the token after verification
     await prisma.emailVerification.delete({
       where: { id: verificationRecord.id },

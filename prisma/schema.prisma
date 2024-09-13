@@ -23,6 +23,7 @@ model User {
   username              String           @unique
   displayName           String
   email                 String?          @unique
+  pendingEmail          String?
   passwordHash          String?
   isVerified            Boolean          @default(false)
   googleId              String?          @unique

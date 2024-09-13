@@ -11,6 +11,8 @@ import { cache } from "react";
 import EditProfileButton from "./EditProfileButton";
 import UserPosts from "./UserPosts";
 import EventsSidebar, { EventsList } from "@/components/eventsSidebar";
+import UpdateEmailButton from "./UpdateEmailButton";
+import UpdatePasswordButton from "./UpdatePasswordButton";
 
 interface PageProps {
   params: { username: string };
@@ -73,6 +75,8 @@ export default async function Page({ params: { username } }: PageProps) {
     userInstruments: [],
     userSkills: [],
     userPreferences: null,
+    email: "",
+    passwordHash: "",
     _count: {
       posts: 0,
       followers: 0,
@@ -131,21 +135,38 @@ async function UserProfile({ user, loggedInUserId }: UserProfileProps) {
               </div>
             </div>
             <div>Member since {formatDate(user.createdAt, "MMM d, yyyy")}</div>
-            <div className="flex items-center gap-3"></div>
+            {user.id === loggedInUserId && user.userPreferences && (
+              <div className="flex items-center gap-3">
+                Your Calendar Visibility:
+                {user.userPreferences.calendar === "PUBLIC"
+                  ? " Public"
+                  : " Private"}
+              </div>
+            )}
+            {user.id === loggedInUserId && (
+              <div className="flex items-center gap-3">
+                Email on file: {user.email}
+              </div>
+            )}
           </div>
         </div>
         {user.id === loggedInUserId ? (
-          <EditProfileButton user={user} />
+          <div className="flex flex-col">
+            <div className="flex justify-end pt-6">
+              <EditProfileButton user={user} />
+            </div>
+            <div className="flex justify-end pt-6">
+              <UpdateEmailButton user={user} />
+            </div>
+            <div className="flex justify-end pt-6">
+              <UpdatePasswordButton user={user} />
+            </div>
+          </div>
         ) : (
           <FollowButton userId={user.id} initialState={followerInfo} />
         )}
       </div>
-      {user.id === loggedInUserId && user.userPreferences && (
-        <div className="overflow-hidden whitespace-pre-line break-words">
-          <strong>Your Calendar Visibility: </strong>
-          {user.userPreferences.calendar === "PUBLIC" ? "Public" : "Private"}
-        </div>
-      )}
+
       {user.bio && (
         <>
           <hr />

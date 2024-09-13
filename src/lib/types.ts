@@ -8,6 +8,8 @@ export function getUserDataSelect(loggedInUserId: string) {
     avatarUrl: true,
     bio: true,
     createdAt: true,
+    email: true,
+    passwordHash: true,
     userPreferences: {
       select: {
         calendar: true,

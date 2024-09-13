@@ -48,6 +48,28 @@ export const updateUserProfileSchema = z.object({
 
 export type UpdateUserProfileValues = z.infer<typeof updateUserProfileSchema>;
 
+export const updateEmailSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newEmail: z.string().email("Invalid email address"),
+});
+
+export type UpdateEmailValues = z.infer<typeof updateEmailSchema>;
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Current password is required"),
+    newPassword: z
+      .string()
+      .min(8, "Password must be at least 8 characters long"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"], // Field to display error for
+  });
+
+export type ChangePasswordValues = z.infer<typeof changePasswordSchema>;
+
 export const createEventSchema = z.object({
   title: z
     .string()

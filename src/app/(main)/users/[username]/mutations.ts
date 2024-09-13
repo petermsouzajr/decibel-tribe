@@ -9,7 +9,13 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { updateUserProfile } from "./actions";
+import {
+  updateUserPassword,
+  updateUserEmail,
+  updateUserProfile,
+} from "./actions";
+import { validateRequest } from "@/auth";
+import prisma from "@/lib/prisma";
 
 export function useUpdateProfileMutation() {
   const { toast } = useToast();
@@ -79,6 +85,95 @@ export function useUpdateProfileMutation() {
       toast({
         variant: "destructive",
         description: "Failed to update profile. Please try again.",
+      });
+    },
+  });
+
+  return mutation;
+}
+
+export function useUpdatePasswordMutation() {
+  const { toast } = useToast();
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async ({
+      currentPassword,
+      newPassword,
+    }: {
+      currentPassword: string;
+      newPassword: string;
+    }) => {
+      const response = await fetch("/api/users/update-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update password.");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      router.refresh();
+
+      toast({
+        description: "Password updated successfully",
+      });
+    },
+    onError: (error) => {
+      console.error(error);
+      toast({
+        variant: "destructive",
+        description: error.message || "Failed to update password.",
+      });
+    },
+  });
+
+  return mutation;
+}
+
+export function useUpdateEmailMutation() {
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const mutation = useMutation({
+    mutationFn: async ({
+      currentPassword,
+      newEmail,
+    }: {
+      currentPassword: string;
+      newEmail: string;
+    }) => {
+      const response = await fetch("/api/users/update-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newEmail }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update email.");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      router.refresh();
+
+      toast({
+        description: "Email updated successfully",
+      });
+    },
+    onError: (error) => {
+      console.error(error);
+      toast({
+        variant: "destructive",
+        description: error.message || "Failed to update email.",
       });
     },
   });

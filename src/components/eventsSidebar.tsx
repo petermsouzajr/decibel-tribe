@@ -104,8 +104,7 @@ export async function EventsList({
             {groupedEvents[month].map((event) => (
               <li key={event.id} className="my-2">
                 <Link href={`/events/${event.id}`} className="hover:underline">
-                  {getStatusColor(event)}
-                  {format(event.when, "MMMM d")} - {""}
+                  {getStatusColor(event)} {format(event.when, "MMMM d")} -{" "}
                   {event.title || event.location}
                 </Link>
               </li>

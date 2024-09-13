@@ -22,6 +22,12 @@ export async function resendVerification(
             },
           },
           {
+            pendingEmail: {
+              equals: credential,
+              mode: "insensitive",
+            },
+          },
+          {
             username: {
               equals: credential,
               mode: "insensitive",
