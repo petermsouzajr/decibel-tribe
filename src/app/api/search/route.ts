@@ -1,7 +1,170 @@
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
-import { getPostDataInclude } from "@/lib/types";
-import { NextRequest } from "next/server";
+import {
+  getEventDataInclude,
+  getPostDataInclude,
+  getUserDataSelect,
+} from "@/lib/types";
+import { NextRequest, NextResponse } from "next/server";
+import { parse, isValid, addDays } from "date-fns";
+import { Prisma } from "@prisma/client";
+
+// Function to fetch valid events
+async function fetchValidEvents(loggedInUserId: string, username?: string) {
+  let eventConditions: Prisma.EventWhereInput = {};
+
+  if (username) {
+    const user = await prisma.user.findUnique({
+      where: { username },
+      select: { id: true },
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const userPreferences = await prisma.userPreferences.findUnique({
+      where: { userId: user.id },
+      select: { calendar: true },
+    });
+
+    // If no preferences are found, assume the default is PUBLIC
+    const isCalendarPublic = userPreferences?.calendar === "PUBLIC";
+
+    if (loggedInUserId && loggedInUserId === user.id) {
+      // If the logged-in user is the same as the user in the URL, show all events they created
+      eventConditions = {
+        createdById: user.id,
+      };
+    } else if (isCalendarPublic) {
+      // Show public events created by the user or attended by the user
+      eventConditions = {
+        OR: [
+          {
+            AND: [
+              { createdById: user.id },
+              { status: "PUBLISHED" },
+              { visibility: "PUBLIC" },
+              { isCancelled: false },
+            ],
+          },
+          {
+            AND: [
+              {
+                attendees: {
+                  some: {
+                    userId: user.id,
+                  },
+                },
+              },
+              { status: "PUBLISHED" },
+              { visibility: "PUBLIC" },
+              { isCancelled: false },
+            ],
+          },
+        ],
+      };
+    } else {
+      // If the calendar is private, return an empty array
+      return [];
+    }
+  } else if (loggedInUserId) {
+    // If no username is provided, show all events for the logged-in user
+    eventConditions = {
+      OR: [
+        {
+          createdById: loggedInUserId,
+        },
+        {
+          attendees: {
+            some: {
+              userId: loggedInUserId,
+            },
+          },
+          status: "PUBLISHED",
+        },
+      ],
+    };
+  } else {
+    // If no logged-in user and no username, return public events
+    eventConditions = {
+      status: "PUBLISHED",
+      visibility: "PUBLIC",
+      isCancelled: false,
+    };
+  }
+
+  const events = await prisma.event.findMany({
+    where: eventConditions,
+    orderBy: {
+      when: "asc",
+    },
+    include: getEventDataInclude(loggedInUserId),
+  });
+
+  return events;
+}
+
+// Function to filter events based on the search query
+function filterEvents(events: any[], q: string) {
+  const qLower = q.toLowerCase();
+  const dateFormats = [
+    "MM/dd/yy",
+    "MMMM d yyyy",
+    "yyyy-MM-dd",
+    "M/d/yyyy",
+    "MMM d yyyy",
+  ];
+
+  let parsedDate: Date | null = null;
+  for (const format of dateFormats) {
+    const date = parse(q, format, new Date());
+    if (isValid(date)) {
+      parsedDate = date;
+      break;
+    }
+  }
+
+  // Filter the events based on the criteria
+  const filteredEvents = events.filter((event) => {
+    const matchesTitle = event.title.toLowerCase().includes(qLower);
+
+    const matchesDescription = event.description
+      ? event.description.toLowerCase().includes(qLower)
+      : false;
+
+    const matchesLocation = event.location.toLowerCase().includes(qLower);
+
+    // Performers is an array of strings
+    const matchesPerformers = event.performers?.some((performer: string) =>
+      performer.toLowerCase().includes(qLower),
+    );
+
+    // Date matching
+    let matchesDate = false;
+    if (parsedDate) {
+      const eventDate = new Date(event.when);
+      matchesDate =
+        eventDate >= parsedDate && eventDate < addDays(parsedDate, 1);
+    }
+
+    // Return true if any of the conditions match
+    return (
+      matchesTitle ||
+      matchesDescription ||
+      matchesLocation ||
+      matchesPerformers ||
+      matchesDate
+    );
+  });
+
+  // Optionally, sort the filtered events by date
+  filteredEvents.sort(
+    (a, b) => new Date(a.when).getTime() - new Date(b.when).getTime(),
+  );
+
+  return filteredEvents;
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,13 +175,13 @@ export async function GET(req: NextRequest) {
     const { user } = await validateRequest();
 
     if (!user) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     if (typeof q !== "string") {
       throw new Error("Invalid query");
     }
 
-    const searchQuery = q.split(" ").join(" & ");
+    const searchQuery = q.trim();
 
     // Fetch posts
     const posts = await prisma.post.findMany({
@@ -53,6 +216,45 @@ export async function GET(req: NextRequest) {
       take: pageSize + 1,
     });
 
+    // Fetch users
+    const users = await prisma.user.findMany({
+      where: {
+        OR: [
+          {
+            username: {
+              contains: q,
+              mode: "insensitive",
+            },
+          },
+          {
+            displayName: {
+              contains: q,
+              mode: "insensitive",
+            },
+          },
+          {
+            email: {
+              contains: q,
+              mode: "insensitive",
+            },
+          },
+          {
+            bio: {
+              contains: q,
+              mode: "insensitive",
+            },
+          },
+        ],
+      },
+      select: getUserDataSelect(user.id),
+      orderBy: { createdAt: "desc" },
+      take: pageSize + 1,
+    });
+
+    // Fetch and filter events
+    const allEvents = await fetchValidEvents(user.id);
+    const filteredEvents = filterEvents(allEvents, q);
+
     // Fetch users with skills
     const usersWithSkills = await prisma.user.findMany({
       where: {
@@ -67,6 +269,7 @@ export async function GET(req: NextRequest) {
           },
         },
       },
+      select: getUserDataSelect(user.id),
       take: pageSize + 1,
     });
 
@@ -84,18 +287,25 @@ export async function GET(req: NextRequest) {
           },
         },
       },
+      select: getUserDataSelect(user.id),
       take: pageSize + 1,
     });
 
     const nextCursor = posts.length > pageSize ? posts[pageSize].id : null;
-    return Response.json({
+
+    return NextResponse.json({
       posts: posts.slice(0, pageSize),
+      users: users.slice(0, pageSize),
+      events: filteredEvents.slice(0, pageSize),
       usersWithSkills: usersWithSkills.slice(0, pageSize),
       usersWithInstruments: usersWithInstruments.slice(0, pageSize),
       nextCursor,
     });
   } catch (error) {
     console.error(error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

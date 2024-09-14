@@ -26,7 +26,6 @@ export default function EventDetails({ event }: EventDetailsProps) {
   const contentRef = useRef(null);
   const [isAttendee, setIsAttendee] = useState(false);
   const [loading, setLoading] = useState(true);
-
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
   };

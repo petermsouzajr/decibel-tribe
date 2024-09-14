@@ -19,17 +19,19 @@ export default function Page({ searchParams: { q } }: PageProps) {
         <Tabs defaultValue="users/posts">
           <TabsList>
             <TabsTrigger value="users/posts">Users/Posts</TabsTrigger>
-            <TabsTrigger value="instruments">Instruments</TabsTrigger>
-            <TabsTrigger value="skills">Skills</TabsTrigger>
+            <TabsTrigger value="instruments/skills">
+              Instruments/Skills
+            </TabsTrigger>
+            <TabsTrigger value="events">Events</TabsTrigger>
           </TabsList>
           <TabsContent value="users/posts">
-            <SearchResults query={q} type="posts" />
+            <SearchResults query={q} type="users/posts" />
           </TabsContent>
-          <TabsContent value="instruments">
-            <SearchResults query={q} type="instruments" />
+          <TabsContent value="instruments/skills">
+            <SearchResults query={q} type="instruments/skills" />
           </TabsContent>
-          <TabsContent value="skills">
-            <SearchResults query={q} type="skills" />
+          <TabsContent value="events">
+            <SearchResults query={q} type="events" />
           </TabsContent>
         </Tabs>
       </div>
