@@ -16,7 +16,11 @@ import { useSubmitPostMutation } from "./mutations";
 import "./styles.css";
 import useMediaUpload, { Attachment } from "./useMediaUpload";
 
-export default function PostEditor() {
+interface PostEditorProps {
+  onOpenChange: (open: boolean) => void;
+}
+
+export default function PostEditor({ onOpenChange }: PostEditorProps) {
   const { user } = useSession();
 
   const mutation = useSubmitPostMutation();
@@ -63,6 +67,7 @@ export default function PostEditor() {
         onSuccess: () => {
           editor?.commands.clearContent();
           resetMediaUploads();
+          onOpenChange(false);
         },
       },
     );

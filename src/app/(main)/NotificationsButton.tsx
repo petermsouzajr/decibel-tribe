@@ -9,10 +9,12 @@ import Link from "next/link";
 
 interface NotificationsButtonProps {
   initialState: NotificationCountInfo;
+  isActive: (path: string) => string;
 }
 
 export default function NotificationsButton({
   initialState,
+  isActive: isActive,
 }: NotificationsButtonProps) {
   const { data } = useQuery({
     queryKey: ["unread-notification-count"],
@@ -27,7 +29,7 @@ export default function NotificationsButton({
   return (
     <Button
       variant="ghost"
-      className="flex items-center justify-start gap-3"
+      className={`flex items-center justify-start gap-3 ${isActive("/notifications")}`}
       title="Notifications"
       asChild
     >
