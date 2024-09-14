@@ -121,31 +121,8 @@ export default function SearchResults({ query, type }: SearchResultsProps) {
         } else if (type === "instruments/skills") {
           if (item._type === "skill") {
             return <User key={item.id} user={item} />;
-            // return (
-            //   <div key={item.id}>
-            //     <h3>{item.displayName}</h3>
-            //     <ul>
-            //       {item.userSkills.map((userSkill: any, index: number) => (
-            //         <li key={index}>{userSkill.skill.name}</li>
-            //       ))}
-            //     </ul>
-            //   </div>
-            // );
           } else if (item._type === "instrument") {
             return <User key={item.id} user={item} />;
-
-            // return (
-            //   <div key={item.id}>
-            //     <h3>{item.displayName}</h3>
-            //     <ul>
-            //       {item.userInstruments.map(
-            //         (userInstrument: any, index: number) => (
-            //           <li key={index}>{userInstrument.instrument.name}</li>
-            //         ),
-            //       )}
-            //     </ul>
-            //   </div>
-            // );
           }
         } else if (type === "events") {
           return <EventDetails key={item.id} event={item} />;

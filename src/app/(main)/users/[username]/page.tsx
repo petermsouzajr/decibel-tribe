@@ -13,6 +13,9 @@ import UserPosts from "./UserPosts";
 import EventsSidebar, { EventsList } from "@/components/eventsSidebar";
 import UpdateEmailButton from "./UpdateEmailButton";
 import UpdatePasswordButton from "./UpdatePasswordButton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import FollowingUsersFeed from "./FollowingUsersFeed";
+import FollowedByUsers from "./FollowedByUsers";
 
 interface PageProps {
   params: { username: string };
@@ -92,7 +95,26 @@ export default async function Page({ params: { username } }: PageProps) {
         <span className="m-8 md:hidden">
           <EventsList user={user} loggedInUser={formattedLoggedInUser} />
         </span>
-        <UserPosts userId={user.id} />
+        {user.id === loggedInUser.id ? (
+          <Tabs defaultValue="posts">
+            <TabsList className="z-9 sticky top-0">
+              <TabsTrigger value="posts">Posts</TabsTrigger>
+              <TabsTrigger value="following">Following</TabsTrigger>
+              <TabsTrigger value="followed-by">followed by</TabsTrigger>
+            </TabsList>
+            <TabsContent value="posts">
+              <UserPosts userId={user.id} />
+            </TabsContent>
+            <TabsContent value="following">
+              <FollowingUsersFeed />
+            </TabsContent>
+            <TabsContent value="followed-by">
+              <FollowedByUsers />
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <UserPosts userId={user.id} />
+        )}
       </div>
       <EventsSidebar user={user} loggedInUser={formattedLoggedInUser} />
     </main>

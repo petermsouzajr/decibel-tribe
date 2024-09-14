@@ -37,7 +37,7 @@ export default function MenuBarContent({
     <div className={className}>
       <Button
         variant="ghost"
-        className={`flex items-center justify-start gap-3 ${isActive("/")}`} // Add the active class
+        className={`flex items-center justify-start gap-3 ${isActive("/")}`}
         title="Home"
         asChild
       >
@@ -56,7 +56,7 @@ export default function MenuBarContent({
       />
       <Button
         variant="ghost"
-        className={`flex items-center justify-start gap-3 ${isActive("/bookmarks")}`} // Add the active class
+        className={`hidden w-full items-center justify-start gap-3 sm:flex ${isActive("/bookmarks")}`}
         title="Bookmarks"
         asChild
       >
@@ -67,7 +67,7 @@ export default function MenuBarContent({
       </Button>
       <Button
         variant="ghost"
-        className={`flex items-center justify-start gap-3 ${isActive("/calendar")}`} // Add the active class
+        className={`flex items-center justify-start gap-3 ${isActive("/calendar")}`}
         title="Calendar"
         asChild
       >
@@ -78,7 +78,7 @@ export default function MenuBarContent({
       </Button>
       <Button
         variant="ghost"
-        className={`flex items-center justify-start gap-3 ${isActive("/events")}`} // Add the active class
+        className={`flex items-center justify-start gap-3 ${isActive("/events")}`}
         title="Events"
         asChild
       >
