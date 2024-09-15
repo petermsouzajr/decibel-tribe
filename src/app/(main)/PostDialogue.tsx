@@ -6,6 +6,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import PostEditor from "@/components/posts/editor/PostEditor";
+import PostDialogueTitleDropdown from "./PostDialogueTitleDropdown";
 
 interface PostDialogProps {
   open: boolean;
@@ -13,13 +14,17 @@ interface PostDialogProps {
 }
 
 export default function PostDialog({ open, onOpenChange }: PostDialogProps) {
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Create a New Post</DialogTitle>
+          <DialogTitle>
+            <PostDialogueTitleDropdown setSelectedGroup={setSelectedGroup} />
+          </DialogTitle>
         </DialogHeader>
-        <PostEditor onOpenChange={onOpenChange} />
+        <PostEditor onOpenChange={onOpenChange} selectedGroup={selectedGroup} />
       </DialogContent>
     </Dialog>
   );

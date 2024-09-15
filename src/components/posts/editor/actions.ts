@@ -8,6 +8,7 @@ import { createPostSchema } from "@/lib/validation";
 export async function submitPost(input: {
   content: string;
   mediaIds: string[];
+  groupId?: string;
 }) {
   const { user } = await validateRequest();
 
@@ -22,6 +23,7 @@ export async function submitPost(input: {
       attachments: {
         connect: mediaIds.map((id) => ({ id })),
       },
+      ...(input.groupId && { groupId: input.groupId }), // Conditionally include groupId
     },
     include: getPostDataInclude(user.id),
   });

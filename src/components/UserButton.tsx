@@ -12,6 +12,8 @@ import {
   Moon,
   Sun,
   UserIcon,
+  Users,
+  Users2,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
@@ -60,6 +62,12 @@ export default function UserButton({ className }: UserButtonProps) {
           <DropdownMenuItem>
             <Bookmark className="mr-2 size-4" />
             Bookmarks
+          </DropdownMenuItem>
+        </Link>
+        <Link href="/groups" className="sm:hidden">
+          <DropdownMenuItem>
+            <Users className="mr-2 size-4" />
+            Groups
           </DropdownMenuItem>
         </Link>
         <DropdownMenuSub>

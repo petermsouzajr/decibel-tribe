@@ -30,11 +30,6 @@ export default function ForYouFeed() {
   });
 
   const events = data?.pages.flatMap((page) => page.events) || [];
-  // if (!events.length) {
-  //   return (
-  //     <p className="text-center text-muted-foreground">No events found.</p>
-  //   );
-  // }
 
   if (status === "pending") {
     return <PostsLoadingSkeleton />;

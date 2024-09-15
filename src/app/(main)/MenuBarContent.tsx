@@ -3,7 +3,14 @@ import { validateRequest } from "@/auth";
 import { Button } from "@/components/ui/button";
 import prisma from "@/lib/prisma";
 import streamServerClient from "@/lib/stream";
-import { Bookmark, CalendarDays, Home, Plus, TicketCheck } from "lucide-react";
+import {
+  Bookmark,
+  CalendarDays,
+  Home,
+  Plus,
+  TicketCheck,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import MessagesButton from "./MessagesButton";
 import NotificationsButton from "./NotificationsButton";
@@ -63,6 +70,17 @@ export default function MenuBarContent({
         <Link href="/bookmarks">
           <Bookmark />
           <span className="hidden lg:inline">Bookmarks</span>
+        </Link>
+      </Button>
+      <Button
+        variant="ghost"
+        className={`hidden w-full items-center justify-start gap-3 sm:flex ${isActive("/groups")}`}
+        title="Groups"
+        asChild
+      >
+        <Link href="/groups">
+          <Users />
+          <span className="hidden lg:inline">Groups</span>
         </Link>
       </Button>
       <Button

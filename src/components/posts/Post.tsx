@@ -111,7 +111,7 @@ export default function Post({ post }: PostProps) {
 
       {post.content && (
         <div
-          className="cursor-pointer pb-3 pt-3"
+          className="cursor-pointer"
           onClick={() => (window.location.href = `/posts/${post.id}`)}
         >
           <Linkify>

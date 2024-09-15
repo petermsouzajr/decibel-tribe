@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
             },
           },
         },
+        groupId: null,
       },
       orderBy: { createdAt: "desc" },
       take: pageSize + 1,

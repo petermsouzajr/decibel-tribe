@@ -127,6 +127,12 @@ export function getPostDataInclude(loggedInUserId: string) {
         comments: true,
       },
     },
+    Group: {
+      select: {
+        id: true,
+        name: true,
+      },
+    },
   } satisfies Prisma.PostInclude;
 }
 
@@ -138,6 +144,35 @@ export interface PostsPage {
   posts: PostData[];
   nextCursor: string | null;
 }
+
+export function getGroupMemberSelect() {
+  return {
+    userId: true,
+    groupId: true,
+    role: true,
+    joinedAt: true,
+    group: {
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        ownerId: true,
+      },
+    },
+    user: {
+      select: {
+        id: true,
+        username: true,
+        displayName: true,
+      },
+    },
+    acceptedInvite: true,
+  } satisfies Prisma.GroupMemberSelect;
+}
+
+export type GroupMembershipData = Prisma.GroupMemberGetPayload<{
+  include: ReturnType<typeof getGroupMemberSelect>;
+}>;
 
 export function getCommentDataInclude(loggedInUserId: string) {
   return {

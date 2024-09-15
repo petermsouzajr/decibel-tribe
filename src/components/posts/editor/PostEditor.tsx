@@ -18,9 +18,13 @@ import useMediaUpload, { Attachment } from "./useMediaUpload";
 
 interface PostEditorProps {
   onOpenChange: (open: boolean) => void;
+  selectedGroup: string | null; // New prop to receive the selected group
 }
 
-export default function PostEditor({ onOpenChange }: PostEditorProps) {
+export default function PostEditor({
+  onOpenChange,
+  selectedGroup,
+}: PostEditorProps) {
   const { user } = useSession();
 
   const mutation = useSubmitPostMutation();
@@ -62,7 +66,8 @@ export default function PostEditor({ onOpenChange }: PostEditorProps) {
       {
         content: input,
         mediaIds: attachments.map((a) => a.mediaId).filter(Boolean) as string[],
-      },
+        groupId: selectedGroup, // Pass the selected group ID here
+      } as { content: string; mediaIds: string[]; groupId: string | undefined },
       {
         onSuccess: () => {
           editor?.commands.clearContent();

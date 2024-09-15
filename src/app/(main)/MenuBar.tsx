@@ -7,7 +7,6 @@ import Link from "next/link";
 import MessagesButton from "./MessagesButton";
 import NotificationsButton from "./NotificationsButton";
 import { useState } from "react";
-import PostDialog from "./PostDialogue";
 import MenuBarContent from "./MenuBarContent";
 import { UserData } from "@/lib/types";
 
