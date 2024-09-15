@@ -51,7 +51,7 @@ export default function DeleteGroupModal({
           undone.
         </p>
         <p className="mt-2 text-sm">
-          Please type the group's name (<strong>{groupName}</strong>) to
+          Please type the group&apos;s name (<strong>{groupName}</strong>) to
           confirm:
         </p>
         <Input

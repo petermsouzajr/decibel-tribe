@@ -25,7 +25,10 @@ export default function GroupActivityFeed() {
       initialPageParam: null,
     });
 
-  const posts = data?.pages.flatMap((page) => page.posts) || [];
+  const posts = useMemo(
+    () => data?.pages.flatMap((page) => page.posts) || [],
+    [data],
+  );
 
   // Step 1: Group the posts by groupId (or "Public" if not part of any group)
   const groupedPosts = useMemo(() => {
