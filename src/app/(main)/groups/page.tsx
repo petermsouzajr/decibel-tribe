@@ -5,6 +5,7 @@ import GroupActivityFeed from "./GroupActivityFeed";
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import CreateGroupModal from "./CreateGroupModal";
+import { Button } from "@/components/ui/button";
 
 export default function Page() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -17,13 +18,20 @@ export default function Page() {
       <div className="w-full min-w-0 space-y-5">
         <div className="flex items-center justify-between rounded-2xl bg-card p-5 shadow-sm">
           <h1 className="text-2xl font-bold">Groups</h1>
-          <button
+          {/* <button
             onClick={openModal}
             className="flex items-center space-x-2 rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
           >
             <Plus className="h-4 w-4" />
             <span>Add</span>
-          </button>
+          </button> */}
+          <Button
+            onClick={openModal}
+            className="h-8 bg-primary text-foreground"
+          >
+            <Plus className="h-4 w-4" />
+            New Group
+          </Button>
         </div>
         <div className="m-8">
           <GroupList />
@@ -32,7 +40,9 @@ export default function Page() {
       <div className="sticky top-[5.25rem] hidden h-fit w-72 flex-none space-y-5 md:block lg:w-80">
         <GroupActivityFeed />
       </div>
-      {isModalOpen && <CreateGroupModal onClose={closeModal} />}
+      {/* {isModalOpen && ( */}
+      <CreateGroupModal open={isModalOpen} onClose={closeModal} />
+      {/* )} */}
     </main>
   );
 }

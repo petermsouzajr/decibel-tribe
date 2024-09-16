@@ -60,7 +60,7 @@ export default function DeleteGroupModal({
           onChange={(e) => setConfirmationText(e.target.value)}
           placeholder={`Type '${groupName}' to confirm`}
         />
-        <DialogFooter className="mt-4 flex justify-end space-x-2">
+        <DialogFooter className="flex-row justify-end space-x-4">
           <Button variant="secondary" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>

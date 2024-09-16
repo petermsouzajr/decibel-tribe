@@ -10,6 +10,7 @@ import UserTooltip from "../UserTooltip";
 import { format as formatDate, parse, isValid, format } from "date-fns";
 import { Button } from "../ui/button";
 import Linkify from "../Linkify";
+import { useToast } from "@/components/ui/use-toast";
 
 //http://localhost:3000/events/cm008i31b0001488hptjh2f7i
 //http://localhost:3000/events/cm009aq6b0001w17tx6l865sz
@@ -29,6 +30,7 @@ export default function EventDetails({ event }: EventDetailsProps) {
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
   };
+  const { toast } = useToast();
 
   const checkContentSize = () => {
     if (contentRef.current) {
@@ -94,6 +96,9 @@ export default function EventDetails({ event }: EventDetailsProps) {
         throw new Error("Failed to add attendee");
       }
 
+      toast({
+        description: "Event added to your Calendar",
+      });
       setIsAttendee(true);
     } catch (error) {
       console.error("Failed to add attendee:", error);
@@ -108,6 +113,9 @@ export default function EventDetails({ event }: EventDetailsProps) {
       if (!response.ok) {
         throw new Error("Failed to remove attendee");
       }
+      toast({
+        description: "Event removed from your Calendar",
+      });
       setIsAttendee(false);
     } catch (error) {
       console.error("Failed to remove attendee:", error);

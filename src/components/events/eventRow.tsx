@@ -5,6 +5,7 @@ import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useSession } from "@/app/(main)/SessionProvider";
+import { useToast } from "@/components/ui/use-toast";
 
 interface EventRowProps {
   event: Event;
@@ -26,10 +27,11 @@ const EventRow: React.FC<EventRowProps> = ({
   const { user } = useSession();
   const eventTitle = event.title ? event.title : event.location;
   const eventClass = isDraft
-    ? "rounded-md bg-muted-foreground p-2 text-background"
-    : "rounded-md bg-accent-foreground p-2 text-background";
+    ? "rounded-md bg-muted-foreground p-2 "
+    : "rounded-md p-2 outline";
   const [isAttendee, setIsAttendee] = useState(false);
   const [loadingAttendee, setLoadingAttendee] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchAttendeeStatus = async () => {
@@ -73,6 +75,9 @@ const EventRow: React.FC<EventRowProps> = ({
         throw new Error("Failed to add attendee");
       }
 
+      toast({
+        description: "Event added to your Calendar",
+      });
       setIsAttendee(true);
     } catch (error) {
       console.error("Failed to add attendee:", error);
@@ -87,6 +92,9 @@ const EventRow: React.FC<EventRowProps> = ({
       if (!response.ok) {
         throw new Error("Failed to remove attendee");
       }
+      toast({
+        description: "Event removed from your Calendar",
+      });
       setIsAttendee(false);
     } catch (error) {
       console.error("Failed to remove attendee:", error);

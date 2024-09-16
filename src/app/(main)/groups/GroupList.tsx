@@ -55,10 +55,14 @@ export default function GroupList() {
       onBottomReached={() => hasNextPage && fetchNextPage()}
     >
       {groups.map((group) => (
-        <div key={group.id} className="rounded-lg bg-card p-4 shadow">
-          <Link href={`/groups/${group.id}`}>{group.name}</Link>
+        <Link
+          key={group.id}
+          href={`/groups/${group.id}`}
+          className="block cursor-pointer rounded-lg bg-card p-4 shadow hover:bg-opacity-90"
+        >
+          <h2 className="text-lg font-bold">{group.name}</h2>
           {group.description && <p className="text-sm">{group.description}</p>}
-        </div>
+        </Link>
       ))}
       {isFetchingNextPage && <Loader2 className="mx-auto my-3 animate-spin" />}
     </InfiniteScrollContainer>

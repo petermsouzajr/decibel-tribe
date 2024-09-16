@@ -24,6 +24,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { SearchIcon } from "lucide-react";
 import kyInstance from "@/lib/ky";
 import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/components/ui/use-toast";
 
 interface AddUserModalProps {
   open: boolean;
@@ -58,6 +59,7 @@ export default function AddUserModal({
       query: "",
     },
   });
+  const { toast } = useToast();
 
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
@@ -91,7 +93,11 @@ export default function AddUserModal({
       });
 
       // Optionally, show a success message or update the UI accordingly
+      toast({
+        description: `User ${selectedUser.username} invited to the group.`,
+      });
       onOpenChange(false);
+      form.reset({ query: "" });
       // You might want to refresh the group members list here
     } catch (error) {
       console.error("Error adding user to group:", error);
@@ -164,15 +170,11 @@ export default function AddUserModal({
           </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="flex-row justify-end space-x-4">
           <Button variant="secondary" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button
-            onClick={handleAddUser}
-            disabled={!selectedUser}
-            className="ml-2"
-          >
+          <Button onClick={handleAddUser} disabled={!selectedUser}>
             Add User
           </Button>
         </DialogFooter>

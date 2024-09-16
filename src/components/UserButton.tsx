@@ -54,43 +54,43 @@ export default function UserButton({ className }: UserButtonProps) {
         <DropdownMenuSeparator />
         <Link href={`/users/${user.username}`}>
           <DropdownMenuItem>
-            <UserIcon className="mr-2 size-4" />
+            <UserIcon className="mr-2 size-6" />
             Profile
           </DropdownMenuItem>
         </Link>
         <Link href="/bookmarks" className="sm:hidden">
           <DropdownMenuItem>
-            <Bookmark className="mr-2 size-4" />
+            <Bookmark className="mr-2 size-6" />
             Bookmarks
           </DropdownMenuItem>
         </Link>
         <Link href="/groups" className="sm:hidden">
           <DropdownMenuItem>
-            <Users className="mr-2 size-4" />
+            <Users className="mr-2 size-6" />
             Groups
           </DropdownMenuItem>
         </Link>
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
-            <Monitor className="mr-2 size-4" />
+            <Monitor className="mr-2 size-6" />
             Theme
           </DropdownMenuSubTrigger>
           <DropdownMenuPortal>
             <DropdownMenuSubContent>
               <DropdownMenuItem onClick={() => setTheme("system")}>
-                <Monitor className="mr-2 size-4" />
+                <Monitor className="mr-2 size-6" />
                 System default
-                {theme === "system" && <Check className="ms-2 size-4" />}
+                {theme === "system" && <Check className="ms-2 size-6" />}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setTheme("light")}>
-                <Sun className="mr-2 size-4" />
+                <Sun className="mr-2 size-6" />
                 Light
-                {theme === "light" && <Check className="ms-2 size-4" />}
+                {theme === "light" && <Check className="ms-2 size-6" />}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setTheme("dark")}>
-                <Moon className="mr-2 size-4" />
+                <Moon className="mr-2 size-6" />
                 Dark
-                {theme === "dark" && <Check className="ms-2 size-4" />}
+                {theme === "dark" && <Check className="ms-2 size-6" />}
               </DropdownMenuItem>
             </DropdownMenuSubContent>
           </DropdownMenuPortal>
@@ -102,7 +102,7 @@ export default function UserButton({ className }: UserButtonProps) {
             logout();
           }}
         >
-          <LogOutIcon className="mr-2 size-4" />
+          <LogOutIcon className="mr-2 size-6" />
           Logout
         </DropdownMenuItem>
       </DropdownMenuContent>

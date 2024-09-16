@@ -120,12 +120,13 @@ export default function GroupPage({ params: { groupId } }: PageProps) {
   return (
     <main className="flex w-full min-w-0 gap-5">
       <div className="w-full min-w-0 space-y-5">
-        <div className="flex items-center space-x-2">
-          <Link href="/groups">← Back to Groups</Link>
-        </div>
+        {/* <div className="flex items-center space-x-2">
+          <Link href="/groups">← Back</Link>
+        </div> */}
         <div className="rounded-2xl bg-card p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">{groupData.name}</h1>
+            <Link href="/groups">←</Link>
+            <h1 className="px-2 text-2xl font-bold">{groupData.name}</h1>
             {isMember ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
