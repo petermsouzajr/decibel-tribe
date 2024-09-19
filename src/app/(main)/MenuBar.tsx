@@ -1,12 +1,6 @@
 import { validateRequest } from "@/auth";
-import { Button } from "@/components/ui/button";
 import prisma from "@/lib/prisma";
 import streamServerClient from "@/lib/stream";
-import { Bookmark, CalendarDays, Home, Plus, TicketCheck } from "lucide-react";
-import Link from "next/link";
-import MessagesButton from "./MessagesButton";
-import NotificationsButton from "./NotificationsButton";
-import { useState } from "react";
 import MenuBarContent from "./MenuBarContent";
 import { UserData } from "@/lib/types";
 

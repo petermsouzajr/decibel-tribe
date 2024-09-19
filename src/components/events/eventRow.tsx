@@ -118,8 +118,11 @@ const EventRow: React.FC<EventRowProps> = ({
             <span className="font-bold text-red-500"> Cancelled</span>
           )}
         </div>
-        <div className="flex-shrink-0 text-right">
-          {formatTime(event.startTime)} {" to "} {formatTime(event.endTime)}
+        <div>
+          <div className="flex-shrink-0 text-right">{event.location}</div>
+          <div className="flex-shrink-0 text-right">
+            {formatTime(event.startTime)} {" to "} {formatTime(event.endTime)}
+          </div>
         </div>
       </div>
 

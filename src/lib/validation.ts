@@ -90,7 +90,8 @@ export const createEventSchema = z.object({
   when: z.preprocess(
     (arg) => (typeof arg === "string" ? new Date(arg) : arg),
     z.date().min(new Date(new Date().setHours(0, 0, 0, 0)), {
-      message: "Date must be today or in the future",
+      message:
+        "Can not create events in the past, date must be today or in the future",
     }),
   ),
   startTime: z.string().min(1, { message: "Start time is required" }),

@@ -4,6 +4,7 @@ import LoadingButton from "@/components/LoadingButton";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -100,6 +101,10 @@ const getCustomStyles = (theme: string | undefined) => ({
       backgroundColor: "hsl(var(--primary))",
       color: "hsl(var(--primary-foreground))",
     },
+  }),
+  input: (provided: CSSObjectWithLabel) => ({
+    ...provided,
+    color: "hsl(var(--foreground))",
   }),
 });
 
@@ -199,6 +204,7 @@ export default function EditProfileDialog({
         <DialogHeader>
           <DialogTitle>Edit profile</DialogTitle>
         </DialogHeader>
+        <DialogDescription></DialogDescription>{" "}
         <div className="space-y-1.5">
           <Label>Avatar</Label>
           <AvatarInput

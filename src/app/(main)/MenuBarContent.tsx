@@ -1,8 +1,5 @@
 "use client";
-import { validateRequest } from "@/auth";
 import { Button } from "@/components/ui/button";
-import prisma from "@/lib/prisma";
-import streamServerClient from "@/lib/stream";
 import {
   Bookmark,
   CalendarDays,
@@ -14,9 +11,8 @@ import {
 import Link from "next/link";
 import MessagesButton from "./MessagesButton";
 import NotificationsButton from "./NotificationsButton";
-import { use, useState } from "react";
+import { useState } from "react";
 import PostDialog from "./PostDialogue";
-import { useRouter } from "next/navigation";
 import { UserData } from "@/lib/types";
 import { usePathname } from "next/navigation";
 

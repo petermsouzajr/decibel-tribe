@@ -11,7 +11,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { useDropzone } from "@uploadthing/react";
 import { ImageIcon, Loader2, X } from "lucide-react";
 import Image from "next/image";
-import { ClipboardEvent, useRef } from "react";
+import { ClipboardEvent, useEffect, useRef } from "react";
 import { useSubmitPostMutation } from "./mutations";
 import "./styles.css";
 import useMediaUpload, { Attachment } from "./useMediaUpload";
@@ -82,7 +82,10 @@ export default function PostEditor({
     const files = Array.from(e.clipboardData.items)
       .filter((item) => item.kind === "file")
       .map((item) => item.getAsFile()) as File[];
-    startUpload(files);
+
+    if (files.length > 0) {
+      startUpload(files);
+    }
   }
 
   return (
@@ -208,6 +211,10 @@ function AttachmentPreview({
   onRemoveClick,
 }: AttachmentPreviewProps) {
   const src = URL.createObjectURL(file);
+
+  useEffect(() => {
+    return () => URL.revokeObjectURL(src); // Cleanup after unmount
+  }, [src]);
 
   return (
     <div

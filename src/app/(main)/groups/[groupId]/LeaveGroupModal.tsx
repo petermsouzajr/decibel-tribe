@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input"; // Optional: For extra confirmation
@@ -49,10 +50,10 @@ export default function LeaveGroupModal({
         <DialogHeader>
           <DialogTitle>Leave Group</DialogTitle>
         </DialogHeader>
+        <DialogDescription></DialogDescription>{" "}
         <p className="text-sm text-muted-foreground">
           Are you sure you want to leave the group <strong>{groupName}</strong>?
         </p>
-
         <DialogFooter className="mt-4 flex justify-end space-x-2">
           <Button variant="secondary" onClick={() => onOpenChange(false)}>
             Cancel

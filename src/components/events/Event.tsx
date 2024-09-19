@@ -12,9 +12,6 @@ import { Button } from "../ui/button";
 import Linkify from "../Linkify";
 import { useToast } from "@/components/ui/use-toast";
 
-//http://localhost:3000/events/cm008i31b0001488hptjh2f7i
-//http://localhost:3000/events/cm009aq6b0001w17tx6l865sz
-//http://localhost:3000/events/cm009i0mr0003w17tq3qdf2hr
 interface EventDetailsProps {
   event: EventData;
 }
@@ -48,10 +45,6 @@ export default function EventDetails({ event }: EventDetailsProps) {
 
   useEffect(() => {
     checkContentSize();
-    // window.addEventListener("resize", checkContentSize);
-    // return () => {
-    //   window.removeEventListener("resize", checkContentSize);
-    // };
 
     const fetchAttendees = async () => {
       try {
@@ -247,13 +240,26 @@ export default function EventDetails({ event }: EventDetailsProps) {
               This event has been Cancelled
             </p>
           )}
-          <p className="text-lg">{event.title}</p>
-          <p>Location: {event.location}</p>
-          <p>Date: {format(event.when, "MMMM d, yyyy")}</p>
+          {event.title && <p className="pb-8 text-xl">{event.title}</p>}
           <p>
-            Time: {formatTime(event.startTime)} - {formatTime(event.endTime)}
+            <span className="text-lg underline">Location:</span>{" "}
+            {event.location}
           </p>
-          <p>Performers:</p>
+          <p>
+            <span className="text-lg underline"></span>
+            <Linkify>{event.url}</Linkify>
+          </p>
+          <p>
+            <span className="text-lg underline">Date:</span>{" "}
+            {format(event.when, "MMMM d, yyyy")}
+          </p>
+          <p>
+            <span className="text-lg underline">Time:</span>{" "}
+            {formatTime(event.startTime)} - {formatTime(event.endTime)}
+          </p>
+          <p>
+            <span className="text-lg underline">Performers:</span>
+          </p>
           <ul className="ml-4 list-disc">
             {event.performers.map((performer) => (
               <li key={performer}>

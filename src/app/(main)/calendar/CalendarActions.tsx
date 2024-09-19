@@ -13,6 +13,7 @@ import {
   DialogContent,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { CalendarProps, EditState, Event } from "@/lib/types";
 import CalendarGrid from "./CalendarGrid";
@@ -208,6 +209,7 @@ const EventCalendar: React.FC<CalendarPropsWithUsername> = ({
           <DialogContent>
             <div className="space-y-5">
               <DialogTitle>Events on {format(selectedDay!, "PP")}</DialogTitle>
+              <DialogDescription></DialogDescription>{" "}
               {selectedEvents.length > 0 ? (
                 selectedEvents.map((event, index) => (
                   <EventRow

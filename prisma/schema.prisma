@@ -6,6 +6,8 @@
 
 //npx prisma db push to send new db model info to the db
 //npx prisma migrate dev --name init to create a new migration
+//npx prisma studio
+//npx prisma migrate dev
 
 generator client {
   provider        = "prisma-client-js"
@@ -73,14 +75,14 @@ enum GroupRole {
 }
 
 model GroupMember {
-  id       String    @id @default(cuid())
-  userId   String
-  groupId  String
-  role     GroupRole @default(MEMBER)
+  id             String    @id @default(cuid())
+  userId         String
+  groupId        String
+  role           GroupRole @default(MEMBER)
   acceptedInvite Boolean   @default(false) // New field
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  group    Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  joinedAt DateTime  @default(now())
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group          Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  joinedAt       DateTime  @default(now())
 
   @@unique([userId, groupId])
 }

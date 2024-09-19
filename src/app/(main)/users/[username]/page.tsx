@@ -172,19 +172,7 @@ async function UserProfile({ user, loggedInUserId }: UserProfileProps) {
             )}
           </div>
         </div>
-        {user.id === loggedInUserId ? (
-          <div className="flex flex-col">
-            <div className="flex justify-end pt-6">
-              <EditProfileButton user={user} />
-            </div>
-            <div className="flex justify-end pt-6">
-              <UpdateEmailButton user={user} />
-            </div>
-            <div className="flex justify-end pt-6">
-              <UpdatePasswordButton user={user} />
-            </div>
-          </div>
-        ) : (
+        {user.id !== loggedInUserId && (
           <FollowButton userId={user.id} initialState={followerInfo} />
         )}
       </div>
@@ -198,6 +186,19 @@ async function UserProfile({ user, loggedInUserId }: UserProfileProps) {
             </div>
           </Linkify>
         </>
+      )}
+      {user.id === loggedInUserId && (
+        <div className="flex flex-wrap justify-around">
+          <div className="flex">
+            <EditProfileButton user={user} />
+          </div>
+          <div className="flex">
+            <UpdateEmailButton user={user} />
+          </div>
+          <div className="flex">
+            <UpdatePasswordButton user={user} />
+          </div>
+        </div>
       )}
       {(instruments.length > 0 || skills.length > 0) && (
         <div className="mx-auto flex size-full justify-between rounded-2xl border-2 bg-card p-5 shadow-sm">

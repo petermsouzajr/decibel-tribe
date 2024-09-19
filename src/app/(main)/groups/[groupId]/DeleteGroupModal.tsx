@@ -6,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -46,6 +47,7 @@ export default function DeleteGroupModal({
         <DialogHeader>
           <DialogTitle>Delete Group: {groupName}</DialogTitle>
         </DialogHeader>
+        <DialogDescription></DialogDescription>{" "}
         <p className="text-sm text-destructive">
           Are you sure you want to delete this group? This action cannot be
           undone.

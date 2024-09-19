@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -23,6 +24,7 @@ export default function PostDialog({ open, onOpenChange }: PostDialogProps) {
           <DialogTitle>
             <PostDialogueTitleDropdown setSelectedGroup={setSelectedGroup} />
           </DialogTitle>
+          <DialogDescription></DialogDescription>
         </DialogHeader>
         <PostEditor onOpenChange={onOpenChange} selectedGroup={selectedGroup} />
       </DialogContent>

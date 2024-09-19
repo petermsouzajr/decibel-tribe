@@ -58,9 +58,9 @@ export default function EventFormPage(event: any) {
       startTime: event?.startTime || "",
       endTime: event?.endTime || "",
       performers:
-        event?.performers?.length > 0
+        event?.performers && event?.performers.length > 0
           ? event.performers
-          : Array(performerCount).fill(""),
+          : [""],
       status: event?.status,
       visibility: event.visibility || defaultVisibility,
       isCancelled: event?.isCancelled || false,
@@ -333,7 +333,11 @@ export default function EventFormPage(event: any) {
                 <FormItem>
                   <FormLabel>Performer {index + 1}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Performer" {...field} />
+                    <Input
+                      placeholder="Performer"
+                      {...field}
+                      value={field.value || ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -111,6 +112,7 @@ export default function AddUserModal({
         <DialogHeader>
           <DialogTitle>Add User to Group</DialogTitle>
         </DialogHeader>
+        <DialogDescription></DialogDescription>{" "}
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
@@ -146,7 +148,6 @@ export default function AddUserModal({
             </div>
           </form>
         </Form>
-
         {/* Display search results */}
         {searchResults && searchResults.users.length > 0 && (
           <div className="mt-4 space-y-2">
@@ -169,7 +170,6 @@ export default function AddUserModal({
             ))}
           </div>
         )}
-
         <DialogFooter className="flex-row justify-end space-x-4">
           <Button variant="secondary" onClick={() => onOpenChange(false)}>
             Cancel

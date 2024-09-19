@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -106,6 +107,7 @@ export default function CreateGroupModal({
         <DialogHeader>
           <DialogTitle>Create New Group</DialogTitle>
         </DialogHeader>
+        <DialogDescription></DialogDescription>{" "}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
             {/* Group Name Field */}

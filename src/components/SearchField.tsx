@@ -29,7 +29,16 @@ export default function SearchField({ className, ...props }: SearchFieldProps) {
     >
       <div className="relative">
         <Input name="q" placeholder="Search" />
-        <SearchIcon className="absolute right-3 top-1/2 size-5 -translate-y-1/2 transform text-muted-foreground" />
+        <SearchIcon
+          onClick={() =>
+            document
+              .querySelector("form")
+              ?.dispatchEvent(
+                new Event("submit", { cancelable: true, bubbles: true }),
+              )
+          }
+          className="absolute right-3 top-1/2 size-5 -translate-y-1/2 transform cursor-pointer text-muted-foreground"
+        />
       </div>
     </form>
   );
