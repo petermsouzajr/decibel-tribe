@@ -1,12 +1,9 @@
-// components/users/UserCard.tsx
-
 "use client";
 
 import { useSession } from "@/app/(main)/SessionProvider";
 import { UserData } from "@/lib/types";
 import { formatRelativeDate } from "@/lib/utils";
 import Link from "next/link";
-import { useState } from "react";
 import Linkify from "../Linkify";
 import UserAvatar from "../UserAvatar";
 import UserTooltip from "../UserTooltip";

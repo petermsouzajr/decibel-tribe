@@ -4,13 +4,12 @@ import InfiniteScrollContainer from "@/components/InfiniteScrollContainer";
 import Post from "@/components/posts/Post";
 import PostsLoadingSkeleton from "@/components/posts/PostsLoadingSkeleton";
 import kyInstance from "@/lib/ky";
-import { PostData } from "@/lib/types"; // Import group data type if needed
+import { PostData } from "@/lib/types";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useMemo } from "react";
 import Link from "next/link";
 
-// Update the PostData type and GroupData if necessary to include group details
 export default function GroupActivityFeed() {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } =
     useInfiniteQuery({
@@ -30,7 +29,6 @@ export default function GroupActivityFeed() {
     [data],
   );
 
-  // Step 1: Group the posts by groupId (or "Public" if not part of any group)
   const groupedPosts = useMemo(() => {
     return posts.reduce(
       (acc, post) => {
@@ -42,7 +40,7 @@ export default function GroupActivityFeed() {
         return acc;
       },
       {} as Record<string, PostData[]>,
-    ); // The object to store grouped posts
+    );
   }, [posts]);
 
   if (status === "pending") {
@@ -70,10 +68,8 @@ export default function GroupActivityFeed() {
       className="space-y-5"
       onBottomReached={() => hasNextPage && fetchNextPage()}
     >
-      {/* Step 2: Render grouped posts with group headings */}
       {Object.keys(groupedPosts).map((groupId) => (
         <div key={groupId}>
-          {/* Group heading: show group name or "Public" if it's not part of any group */}
           <div className="rounded-lg bg-card p-4 shadow">
             {groupId === "Public" ? (
               <h2 className="text-lg font-bold">Public Posts</h2>
@@ -88,7 +84,6 @@ export default function GroupActivityFeed() {
             )}
           </div>
 
-          {/* Render posts under the group heading */}
           {groupedPosts[groupId].map((post) => (
             <div key={post.id} className="m-3">
               <Post key={post.id} post={post} />

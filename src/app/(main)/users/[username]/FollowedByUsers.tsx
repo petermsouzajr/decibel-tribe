@@ -25,7 +25,7 @@ export default function FollowersPage() {
           })
           .json<{ users: UserData[]; nextCursor: string | null }>(),
       getNextPageParam: (lastPage) => lastPage.nextCursor,
-      initialPageParam: null, // Add this line
+      initialPageParam: null,
     });
 
   const users = data?.pages.flatMap((page) => page.users) || [];

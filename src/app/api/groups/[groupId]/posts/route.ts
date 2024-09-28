@@ -1,5 +1,3 @@
-// src/app/api/groups/[groupId]/posts/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
@@ -20,7 +18,6 @@ export async function GET(
     const pageSize = 10;
     const cursor = req.nextUrl.searchParams.get("cursor");
 
-    // Check if the user is a member of the group
     const isMember = await prisma.groupMember.findUnique({
       where: {
         userId_groupId: {

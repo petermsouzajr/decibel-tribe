@@ -1,4 +1,3 @@
-// vitest.config.ts
 import { defineConfig } from "vitest/config";
 import path from "path";
 
@@ -10,7 +9,7 @@ export default defineConfig(async () => {
     test: {
       environment: "jsdom",
       globals: true,
-      setupFiles: "./setupTests.ts", // Add this line
+      setupFiles: "./setupTests.ts",
     },
     plugins: [tsconfigPaths()],
     resolve: {
@@ -19,10 +18,10 @@ export default defineConfig(async () => {
       },
     },
     esbuild: {
-      jsx: "automatic", // Use the new JSX transform in Esbuild
+      jsx: "automatic",
       jsxFactory: "React.createElement",
       jsxFragment: "React.Fragment",
-      loader: "tsx", // Ensure that .tsx files are processed correctly
+      loader: "tsx",
     },
   };
 });

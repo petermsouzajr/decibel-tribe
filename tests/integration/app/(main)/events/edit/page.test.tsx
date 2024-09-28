@@ -15,22 +15,22 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-describe("EventFormPage Integration Test", () => {
+describe("Edit Event Page", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
     queryClient = new QueryClient();
   });
 
-  const renderComponent = () =>
+  const renderPage = () =>
     render(
       <QueryClientProvider client={queryClient}>
         <EventFormPage />
       </QueryClientProvider>,
     );
 
-  it("renders the form heading", async () => {
-    renderComponent();
+  it("should render the form heading", async () => {
+    renderPage();
 
     const pageTitle = await screen.findByRole("heading", {
       name: /Create New Event/i,
@@ -39,13 +39,18 @@ describe("EventFormPage Integration Test", () => {
     expect(pageTitle).toBeInTheDocument();
   });
 
-  it("renders the event form", async () => {
-    renderComponent();
+  it("should render the event form", async () => {
+    renderPage();
 
     const titleLabel = await screen.findByLabelText(/Title/i);
     const startTimeLabel = await screen.findByLabelText(/Start Time/i);
 
     expect(titleLabel).toBeInTheDocument();
     expect(startTimeLabel).toBeInTheDocument();
+  });
+
+  it("should match snapshot", () => {
+    renderPage();
+    expect(document.body).toMatchSnapshot();
   });
 });

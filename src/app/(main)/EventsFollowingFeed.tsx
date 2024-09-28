@@ -5,7 +5,7 @@ import PostsLoadingSkeleton from "@/components/posts/PostsLoadingSkeleton";
 import kyInstance from "@/lib/ky";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { EventsPage } from "@/lib/types"; // Define this type for event data
+import { EventsPage } from "@/lib/types";
 import EventDetails from "@/components/events/Event";
 
 export default function FollowingFeed() {

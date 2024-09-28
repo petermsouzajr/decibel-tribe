@@ -2,7 +2,7 @@
 import Post from "@/components/posts/Post";
 import kyInstance from "@/lib/ky";
 import { GroupMembershipData, PostData } from "@/lib/types";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -75,7 +75,7 @@ export default function GroupPage({ params: { groupId } }: PageProps) {
       kyInstance
         .get(`/api/groups/${groupId}/member`)
         .json<GroupMembershipData | null>(),
-    enabled: !!groupId, // Ensure this runs only when `groupId` is available
+    enabled: !!groupId,
   });
 
   useEffect(() => {

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import kyInstance from "@/lib/ky";
 import { Button } from "@/components/ui/button";
@@ -26,7 +25,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/components/ui/use-toast";
 
-// Define a schema for form validation using Zod
 const createGroupSchema = z.object({
   name: z.string().min(1, "Group name is required"),
   description: z.string().optional(),

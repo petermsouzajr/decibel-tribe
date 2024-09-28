@@ -1,10 +1,9 @@
 import React from "react";
 import { it, expect, beforeEach, describe } from "vitest";
 import { render, screen, within } from "@testing-library/react";
-import { Presentation } from "lucide-react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"; // Import react-query
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-const queryClient = new QueryClient(); // Create a new query client
+const queryClient = new QueryClient();
 
 type PageProps = Record<string, any>;
 
@@ -36,10 +35,9 @@ export function testNavigation(
       expect(bookmarkLink).toBeInTheDocument();
       expect(groupLink).toBeInTheDocument();
 
-      // Verify that the home link contains the Presentation icon and text
       const homeIcon = within(homeLink).getByTestId("icon");
       expect(homeIcon).toBeInTheDocument();
-      expect(homeIcon).toContainHTML("<svg"); // Assuming the icon renders as an SVG
+      expect(homeIcon).toContainHTML("<svg");
 
       const homeText = within(homeLink).getByText(/Home/i);
       expect(homeText).toBeInTheDocument();
@@ -52,7 +50,6 @@ export function testNavigation(
       const navigation = screen.getByTestId("navigation");
       expect(navigation).toBeInTheDocument();
 
-      // Verify that text labels are hidden
       const homeText = screen.queryByText(/Home/i);
       expect(homeText).not.toBeInTheDocument();
     });

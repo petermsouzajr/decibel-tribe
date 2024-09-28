@@ -21,7 +21,6 @@ export async function GET(
   }
 
   try {
-    // Fetch attendees for the specified event
     const attendees = await prisma.eventAttendee.findMany({
       where: {
         eventId: eventId,
@@ -32,7 +31,7 @@ export async function GET(
             id: true,
             username: true,
             displayName: true,
-            avatarUrl: true, // Add any other fields you want to include
+            avatarUrl: true,
           },
         },
       },
@@ -67,7 +66,6 @@ export async function POST(
   }
 
   try {
-    // Check if the attendee already exists
     const existingAttendee = await prisma.eventAttendee.findUnique({
       where: {
         userId_eventId: {
@@ -84,7 +82,6 @@ export async function POST(
       );
     }
 
-    // Add the attendee if they don't already exist
     const attendee = await prisma.eventAttendee.create({
       data: {
         eventId: eventId,
@@ -94,7 +91,7 @@ export async function POST(
 
     const event = await prisma.event.findUnique({
       where: { id: eventId },
-      select: { createdById: true }, // Get the event creator's ID
+      select: { createdById: true },
     });
 
     if (!event) {
@@ -112,13 +109,12 @@ export async function POST(
       });
 
       if (!existingNotification) {
-        // Create the notification if it doesn't exist
         await prisma.notification.create({
           data: {
-            issuerId: user.id, // The user who attended the event
-            recipientId: event.createdById, // The event creator
-            eventId: eventId, // Event ID for the notification
-            type: "EVENT_ATTENDEE", // Notification type
+            issuerId: user.id,
+            recipientId: event.createdById,
+            eventId: eventId,
+            type: "EVENT_ATTENDEE",
           },
         });
       }
@@ -146,7 +142,6 @@ export async function DELETE(
   }
 
   try {
-    // Check if the attendee exists
     const existingAttendee = await prisma.eventAttendee.findUnique({
       where: {
         userId_eventId: {
@@ -163,7 +158,6 @@ export async function DELETE(
       );
     }
 
-    // Remove the attendee
     await prisma.eventAttendee.delete({
       where: {
         userId_eventId: {

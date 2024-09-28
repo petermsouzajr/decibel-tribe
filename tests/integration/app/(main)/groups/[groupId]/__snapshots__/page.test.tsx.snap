@@ -1,0 +1,11 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Group Details Page > should match snapshot 1`] = `
+<body>
+  <div>
+    <p>
+      Loading group...
+    </p>
+  </div>
+</body>
+`;

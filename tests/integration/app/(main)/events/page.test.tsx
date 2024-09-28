@@ -10,7 +10,7 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-describe("Events Page Integration Test", () => {
+describe("Events Page", () => {
   let queryClient: QueryClient;
 
   const mockSession = {
@@ -50,7 +50,7 @@ describe("Events Page Integration Test", () => {
     global.fetch = vi.fn();
   });
 
-  it("renders the events page heading", async () => {
+  it("should render the events page heading", async () => {
     //@ts-ignore
     global.fetch.mockImplementationOnce(() =>
       Promise.resolve({
@@ -67,7 +67,7 @@ describe("Events Page Integration Test", () => {
     expect(heading).toBeInTheDocument();
   });
 
-  it("renders tab 'For you' events", async () => {
+  it("should render the events tab 'For you'", async () => {
     renderPage();
 
     const forYouTab = screen.getByRole("tab", { name: /For you/i });
@@ -75,7 +75,7 @@ describe("Events Page Integration Test", () => {
     expect(forYouTab).toBeInTheDocument();
   });
 
-  it("renders tab 'Following' events", async () => {
+  it("should render th events tab 'Following'", async () => {
     renderPage();
 
     const followingTab = screen.getByRole("tab", { name: /Following/i });
@@ -83,7 +83,7 @@ describe("Events Page Integration Test", () => {
     expect(followingTab).toBeInTheDocument();
   });
 
-  it("renders the event calendar with no events", async () => {
+  it("should render the event calendar", async () => {
     //@ts-ignore
     global.fetch.mockImplementationOnce(() =>
       Promise.resolve({
@@ -97,12 +97,15 @@ describe("Events Page Integration Test", () => {
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
 
     const yourCalendarHeading = await screen.findByText(/Your Calendar/i);
-    const sundayName = await screen.findByText(/Sun/i);
-    const wednesdayName = await screen.findByText(/Wed/i);
     const saturdayName = await screen.findByText(/Sat/i);
+    const dayNumber = await screen.findByText(/15/i);
     expect(yourCalendarHeading).toBeInTheDocument();
-    expect(sundayName).toBeInTheDocument();
-    expect(wednesdayName).toBeInTheDocument();
     expect(saturdayName).toBeInTheDocument();
+    expect(dayNumber).toBeInTheDocument();
+  });
+
+  it("should match snapshot", () => {
+    renderPage();
+    expect(document.body).toMatchSnapshot();
   });
 });

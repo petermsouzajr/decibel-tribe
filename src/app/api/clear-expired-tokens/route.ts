@@ -2,7 +2,6 @@ import prisma from "@/lib/prisma";
 
 export async function GET(req: Request) {
   try {
-    // Ensure authorization header is correct
     const authHeader = req.headers.get("Authorization");
 
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -14,11 +13,11 @@ export async function GET(req: Request) {
     const expiredVerifications = await prisma.emailVerification.findMany({
       where: {
         expiresAt: {
-          lte: new Date(), // Expiration date is before the current date
+          lte: new Date(),
         },
       },
       select: {
-        id: true, // Only select what you need for deletion
+        id: true,
       },
     });
 

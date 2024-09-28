@@ -10,7 +10,7 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-describe("Calendar Page Integration Test", () => {
+describe("Calendar Page", () => {
   let queryClient: QueryClient;
 
   const mockSession = {
@@ -56,7 +56,7 @@ describe("Calendar Page Integration Test", () => {
     console.error = vi.fn();
   });
 
-  it("renders the calendar even if no events are returned", async () => {
+  it("should render the calendar even if no events are returned", async () => {
     //@ts-ignore
     global.fetch.mockImplementationOnce(() =>
       Promise.resolve({
@@ -75,7 +75,7 @@ describe("Calendar Page Integration Test", () => {
     expect(dayNumber).toBeInTheDocument();
   });
 
-  it("displays an error message when the API call fails", async () => {
+  it("should display an error message when the API call fails", async () => {
     //@ts-ignore
     global.fetch.mockImplementationOnce(() =>
       Promise.resolve({
@@ -87,5 +87,10 @@ describe("Calendar Page Integration Test", () => {
 
     const errorMessage = await screen.findByText(/Failed to fetch events/i);
     expect(errorMessage).toBeInTheDocument();
+  });
+
+  it("should match snapshot", () => {
+    renderPage();
+    expect(document.body).toMatchSnapshot();
   });
 });

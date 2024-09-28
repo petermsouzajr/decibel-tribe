@@ -26,50 +26,43 @@ export async function GET(req: NextRequest) {
         select: { calendar: true },
       });
 
-      // If no preferences are found, assume the default is PUBLIC
       const isCalendarPublic = userPreferences?.calendar === "PUBLIC";
 
       if (loggedInUser && loggedInUser.id === user?.id) {
-        // If the logged-in user is the same as the user in the URL, show all events they created
         eventConditions = {
           createdById: user.id,
         };
       } else if (isCalendarPublic) {
-        // If no username is provided, show all events for the logged-in user, including private, public, draft, and published events
         eventConditions = {
           OR: [
-            // Show events that user A created
             {
               AND: [
-                { createdById: user.id }, // Events created by user A
-                { status: "PUBLISHED" }, // Only show published events
-                { visibility: "PUBLIC" }, // Only show public events
-                { isCancelled: false }, // Exclude cancelled events
+                { createdById: user.id },
+                { status: "PUBLISHED" },
+                { visibility: "PUBLIC" },
+                { isCancelled: false },
               ],
             },
-            // Show events that user A is attending (but didn't create)
             {
               AND: [
                 {
                   attendees: {
                     some: {
-                      userId: user.id, // User A is an attendee
+                      userId: user.id,
                     },
                   },
                 },
-                { status: "PUBLISHED" }, // Only show published events
-                { visibility: "PUBLIC" }, // Only show public events
-                { isCancelled: false }, // Exclude cancelled events
+                { status: "PUBLISHED" },
+                { visibility: "PUBLIC" },
+                { isCancelled: false },
               ],
             },
           ],
         };
       } else {
-        // If the calendar is private, return an empty response or appropriate error
         return NextResponse.json([], { status: 200 });
       }
     } else {
-      // If no username is provided, show all events for the logged-in user, including private, public, draft, and published events
       eventConditions = {
         OR: [
           {
@@ -204,12 +197,10 @@ export async function DELETE(req: NextRequest) {
     }
 
     if (event.createdById === loggedInUser.id) {
-      // User is the owner, delete the event
       await prisma.event.delete({
         where: { id: eventId },
       });
     } else {
-      // User is not the owner, just remove from their calendar
       await prisma.eventAttendee.delete({
         where: {
           userId_eventId: {

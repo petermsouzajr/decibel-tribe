@@ -62,7 +62,6 @@ export default function EventDetails({ event }: EventDetailsProps) {
         }
         const attendees = await response.json();
 
-        // Check if the logged-in user is an attendee
         const isUserAttendee = attendees.some(
           (attendee: { userId: string }) => attendee.userId === user.id,
         );
@@ -70,7 +69,7 @@ export default function EventDetails({ event }: EventDetailsProps) {
       } catch (error) {
         console.error("Error fetching attendees:", error);
       }
-      setLoading(false); // Set to false once data is fetched
+      setLoading(false);
     };
 
     fetchAttendees();
@@ -129,7 +128,6 @@ export default function EventDetails({ event }: EventDetailsProps) {
 
   const renderEventActionButton = () => {
     if (loading) {
-      // Render a placeholder button while loading
       return <Button className="bg-primary text-primary-foreground"></Button>;
     }
     if (isEventCreator(event.createdBy.id, user.id)) {
@@ -146,7 +144,7 @@ export default function EventDetails({ event }: EventDetailsProps) {
         <Button onClick={handleRemoveAttendee}>Remove from Calendar</Button>
       );
     } else {
-      return null; // This should never happen, but just in case.
+      return null;
     }
   };
 

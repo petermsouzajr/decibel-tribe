@@ -15,11 +15,11 @@ vi.mock("next/navigation", () => ({
 
 import GroupPage from "@/app/(main)/groups/[groupId]/page";
 
-describe("GroupPage Component", () => {
+describe("Group Details Page", () => {
   const queryClient = new QueryClient();
   const mockGroupId = "mock-group-id";
 
-  const renderComponent = () =>
+  const renderPage = () =>
     render(
       <QueryClientProvider client={queryClient}>
         <GroupPage params={{ groupId: mockGroupId }} />
@@ -30,10 +30,15 @@ describe("GroupPage Component", () => {
     vi.clearAllMocks();
   });
 
-  it("displays loading text when group data is loading", () => {
-    renderComponent();
+  it("should display loading text when group data is loading", () => {
+    renderPage();
 
     const loadingText = screen.getByText("Loading group...");
     expect(loadingText).toBeInTheDocument();
+  });
+
+  it("should match snapshot", () => {
+    renderPage();
+    expect(document.body).toMatchSnapshot();
   });
 });

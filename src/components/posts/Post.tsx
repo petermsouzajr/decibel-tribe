@@ -36,9 +36,7 @@ export default function Post({ post }: PostProps) {
 
   const checkContentSize = () => {
     if (contentRef.current) {
-      // Maximum allowable height (90% of the viewport height)
       const maxHeight = window.innerHeight * 0.9;
-      // Set whether the "Show More" link should be displayed
       setShowToggle(
         (contentRef.current as HTMLElement).scrollHeight > maxHeight,
       );
@@ -46,7 +44,6 @@ export default function Post({ post }: PostProps) {
   };
 
   useEffect(() => {
-    // Check content size initially and on window resize
     checkContentSize();
     window.addEventListener("resize", checkContentSize);
     return () => {
@@ -265,7 +262,7 @@ function ImageModal({ mediaUrl, onClose }: ImageModalProps) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
-      onClick={onClose} // Close modal when the background is clicked
+      onClick={onClose}
     >
       <button
         className="absolute right-4 top-4 rounded-full bg-black bg-opacity-60 p-2 text-white hover:bg-opacity-80"
@@ -277,7 +274,7 @@ function ImageModal({ mediaUrl, onClose }: ImageModalProps) {
         src={mediaUrl}
         alt="Full View"
         className="max-h-full max-w-full"
-        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on the image
+        onClick={(e) => e.stopPropagation()}
       />
     </div>
   );

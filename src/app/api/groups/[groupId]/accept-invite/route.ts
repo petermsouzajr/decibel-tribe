@@ -15,7 +15,6 @@ export async function POST(
 
     const { groupId } = params;
 
-    // Find the group member entry
     const groupMember = await prisma.groupMember.findUnique({
       where: { userId_groupId: { userId: user.id, groupId } },
     });
@@ -34,7 +33,6 @@ export async function POST(
       );
     }
 
-    // Update acceptedInvite to true
     await prisma.groupMember.update({
       where: { userId_groupId: { userId: user.id, groupId } },
       data: { acceptedInvite: true },

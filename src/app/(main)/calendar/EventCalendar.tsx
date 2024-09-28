@@ -28,7 +28,6 @@ const EventCalendar: React.FC<CalendarProps> = ({ events, currentDate }) => {
   };
 
   const handleConfirmDelete = () => {
-    // Implement delete logic here
     setIsConfirmModalOpen(false);
   };
 

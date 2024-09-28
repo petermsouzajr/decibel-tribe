@@ -4,7 +4,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import SessionProvider from "@/app/(main)/SessionProvider";
 
-describe("Home Page Integration Test", () => {
+describe("Home Page", () => {
   let queryClient: QueryClient;
 
   const mockSession = {
@@ -27,7 +27,7 @@ describe("Home Page Integration Test", () => {
   };
 
   beforeEach(() => {
-    vi.clearAllMocks(); // Clear all mocks
+    vi.clearAllMocks();
     queryClient = new QueryClient();
     //@ts-ignore
     global.fetch = vi.fn(() =>
@@ -47,7 +47,7 @@ describe("Home Page Integration Test", () => {
       </SessionProvider>,
     );
 
-  it("renders tab 'For you'", () => {
+  it("should render the 'For you' tab", () => {
     renderPage();
 
     const forYouTab = screen.getByRole("tab", { name: /For you/i });
@@ -55,11 +55,16 @@ describe("Home Page Integration Test", () => {
     expect(forYouTab).toBeInTheDocument();
   });
 
-  it("renders tab 'Following'", () => {
+  it("should render the 'Following' tab", () => {
     renderPage();
 
     const followingTab = screen.getByRole("tab", { name: /Following/i });
 
     expect(followingTab).toBeInTheDocument();
+  });
+
+  it("should match snapshot", () => {
+    renderPage();
+    expect(document.body).toMatchSnapshot();
   });
 });

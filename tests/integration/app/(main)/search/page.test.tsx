@@ -10,7 +10,7 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-describe("Search Page Integration Test", () => {
+describe("Search Page", () => {
   let queryClient: QueryClient;
 
   const mockSession = {
@@ -54,7 +54,7 @@ describe("Search Page Integration Test", () => {
     global.fetch = vi.fn();
   });
 
-  it("renders the Users/Posts tab", async () => {
+  it("should render the Users/Posts tab", async () => {
     renderPage();
 
     const usersPostsTab = screen.getByRole("tab", { name: /Users\/Posts/i });
@@ -62,7 +62,7 @@ describe("Search Page Integration Test", () => {
     expect(usersPostsTab).toBeInTheDocument();
   });
 
-  it("renders the Instruments/Skills tab", async () => {
+  it("should render the Instruments/Skills tab", async () => {
     renderPage();
 
     const instrumentsSkillsTab = screen.getByRole("tab", {
@@ -72,11 +72,16 @@ describe("Search Page Integration Test", () => {
     expect(instrumentsSkillsTab).toBeInTheDocument();
   });
 
-  it("renders the Events tab", async () => {
+  it("should render the Events tab", async () => {
     renderPage();
 
     const eventsTab = screen.getByRole("tab", { name: /Events/i });
 
     expect(eventsTab).toBeInTheDocument();
+  });
+
+  it("should match snapshot", () => {
+    renderPage();
+    expect(document.body).toMatchSnapshot();
   });
 });

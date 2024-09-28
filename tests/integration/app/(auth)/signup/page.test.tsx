@@ -11,7 +11,7 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-describe("Sign Up page", () => {
+describe("Sign Up Page", () => {
   beforeEach(() => {
     render(<Page />);
     global.innerWidth = 1024;

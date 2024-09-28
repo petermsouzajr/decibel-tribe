@@ -1,6 +1,5 @@
 "use server";
 
-import { resendVerification } from "@/app/(auth)/forgot-pass/actions";
 import { resendVerificationEmail } from "@/app/(auth)/sendVerification";
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
@@ -31,7 +30,6 @@ export async function updateUserProfile(values: UpdateUserProfileValues) {
       }),
     );
 
-    // Find or create skills based on names
     const skillIds = await Promise.all(
       validatedValues.skills.map(async (skillName) => {
         const skill = await tx.skill.upsert({
@@ -88,7 +86,6 @@ export async function updateUserPassword({
 
   if (!user) throw new Error("Unauthorized");
 
-  // Fetch the user and verify the current password
   const userRecord = await prisma.user.findUnique({
     where: { id: user.id },
     select: { passwordHash: true },
@@ -106,7 +103,6 @@ export async function updateUserPassword({
     throw new Error("Current password is incorrect.");
   }
 
-  // Hash the new password and update
   const hashedNewPassword = await hash(newPassword, {
     memoryCost: 19456,
     timeCost: 2,
@@ -133,7 +129,6 @@ export async function updateUserEmail({
 
   if (!user) throw new Error("Unauthorized");
 
-  // Fetch the user and verify the current password
   const userRecord = await prisma.user.findUnique({
     where: { id: user.id },
     select: { passwordHash: true, email: true },
@@ -143,7 +138,6 @@ export async function updateUserEmail({
     throw new Error("Password not set for this user.");
   }
 
-  // Compare the provided password with the stored hash
   const isPasswordValid = await verify(
     userRecord.passwordHash,
     currentPassword,
@@ -152,7 +146,6 @@ export async function updateUserEmail({
     throw new Error("Current password is incorrect.");
   }
 
-  // Check if the new email is already taken
   const emailExists = await prisma.user.findUnique({
     where: { email: newEmail },
   });
@@ -161,15 +154,11 @@ export async function updateUserEmail({
     throw new Error("Email is already taken.");
   }
 
-  // Update the email
   await prisma.user.update({
     where: { id: user.id },
-    data: { pendingEmail: newEmail } as any, // Add 'as any' to bypass the type checking
+    data: { pendingEmail: newEmail } as any,
   });
   await resendVerificationEmail(newEmail);
-
-  // Optionally, revalidate any paths that display the email
-  // await revalidatePath("/profile");
 
   return { message: "Verification email sent to new email address." };
 }

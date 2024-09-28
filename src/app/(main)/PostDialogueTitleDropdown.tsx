@@ -10,8 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import DeletePostDialog from "@/components/posts/DeletePostDialog";
-import { MoreHorizontal, Trash2 } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Group {
@@ -32,7 +31,6 @@ export default function PostModalGroupDropdown({
   const [selectedGroup, setSelectedGroupState] = useState<string>("Public");
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Fetch groups when the user is available
   useEffect(() => {
     const fetchGroups = async () => {
       try {
@@ -58,16 +56,16 @@ export default function PostModalGroupDropdown({
       const currentGroup = groups.find((group) => group.id === groupIdFromPath);
       if (currentGroup) {
         setSelectedGroupState(currentGroup.name);
-        setSelectedGroup(currentGroup.id); // Set the selected group ID
+        setSelectedGroup(currentGroup.id);
       }
     } else {
       setSelectedGroupState("Public");
-      setSelectedGroup(null); // No group, set to null
+      setSelectedGroup(null);
     }
   }, [pathname, groups, setSelectedGroup]);
 
   if (loading) {
-    return <p>Loading groups...</p>; // Or show a loading spinner
+    return <p>Loading groups...</p>;
   }
 
   return (

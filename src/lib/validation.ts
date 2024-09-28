@@ -33,7 +33,6 @@ export type LoginValues = z.infer<typeof loginSchema>;
 export const createPostSchema = z.object({
   content: z.string().min(0),
   mediaIds: z.array(z.string()),
-  // mediaIds: z.array(z.string()).max(5, "Cannot have more than 5 attachments"),
 });
 
 export const updateUserProfileSchema = z.object({
@@ -65,7 +64,7 @@ export const changePasswordSchema = z
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
     message: "Passwords do not match",
-    path: ["confirmPassword"], // Field to display error for
+    path: ["confirmPassword"],
   });
 
 export type ChangePasswordValues = z.infer<typeof changePasswordSchema>;

@@ -3,7 +3,7 @@ import { it, expect, describe, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import Page from "@/app/(auth)/login/page";
 
-describe("login page", () => {
+describe("Login Page", () => {
   beforeEach(() => {
     render(<Page />);
     global.innerWidth = 1024;

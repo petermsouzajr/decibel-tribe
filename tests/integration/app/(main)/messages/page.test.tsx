@@ -20,18 +20,23 @@ const mockSessionContext: SessionContextType = {
   setUser: () => {},
 };
 
-describe("Messages Page Integration Test", () => {
-  const renderComponent = () =>
+describe("Messages Page", () => {
+  const renderPage = () =>
     render(
       <SessionProvider value={mockSessionContext}>
         <Page />
       </SessionProvider>,
     );
 
-  it("renders a page body", async () => {
-    renderComponent();
+  it("should render a page body", async () => {
+    renderPage();
 
     const bodyElement = document.body;
     expect(bodyElement).toBeInTheDocument();
+  });
+
+  it("should match snapshot", () => {
+    renderPage();
+    expect(document.body).toMatchSnapshot();
   });
 });

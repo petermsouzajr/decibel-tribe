@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { Input } from "@/components/ui/input"; // Import input component
+import { Input } from "@/components/ui/input";
 import kyInstance from "@/lib/ky";
 import { useState } from "react";
 
@@ -18,26 +18,25 @@ interface DeleteGroupModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   groupId: string;
-  groupName: string; // Pass the group name for confirmation
+  groupName: string;
 }
 
 export default function DeleteGroupModal({
   open,
   onOpenChange,
   groupId,
-  groupName, // Use group name in the modal
+  groupName,
 }: DeleteGroupModalProps) {
   const router = useRouter();
-  const [confirmationText, setConfirmationText] = useState(""); // Track input for group name
+  const [confirmationText, setConfirmationText] = useState("");
 
   const handleDelete = async () => {
     try {
       await kyInstance.delete(`/api/groups/${groupId}`);
       onOpenChange(false);
-      router.push("/groups"); // Redirect to groups page after deletion
+      router.push("/groups");
     } catch (error) {
       console.error("Error deleting group:", error);
-      // Optionally, show an error message to the user
     }
   };
 

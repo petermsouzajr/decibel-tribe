@@ -24,7 +24,6 @@ export default function EventsSidebar({
   );
 }
 
-// Function to fetch and display events
 export async function EventsList({
   user,
   loggedInUser,
@@ -37,20 +36,18 @@ export async function EventsList({
   const events = await prisma.event.findMany({
     where: {
       isCancelled: false,
-      // Case 1: If the loggedInUser is the event creator, show all events
       ...(loggedInUser.id === user.id
         ? {
-            createdById: user.id, // Show all events for the logged-in user
+            createdById: user.id,
           }
         : {
-            // Case 2: If loggedInUser is NOT the event creator, show only PUBLIC and PUBLISHED events
             createdById: user.id,
             status: "PUBLISHED",
             visibility: "PUBLIC",
           }),
     },
     orderBy: {
-      when: "asc", // Order events by date
+      when: "asc",
     },
   });
 
@@ -59,11 +56,11 @@ export async function EventsList({
   const currentDate = new Date(new Date().setHours(0, 0, 0, 0));
   const groupedEvents = events.reduce(
     (acc, event) => {
-      if (!event.when) return acc; // Skip events without a date
+      if (!event.when) return acc;
 
-      if (event.when < currentDate) return acc; // Skip past events
+      if (event.when < currentDate) return acc;
 
-      const eventMonth = format(event.when, "MMMM yyyy"); // Format the event date
+      const eventMonth = format(event.when, "MMMM yyyy");
       if (!acc[eventMonth]) acc[eventMonth] = [];
       acc[eventMonth].push(event);
 
@@ -81,17 +78,14 @@ export async function EventsList({
           className="inline-block h-3 w-3 rounded-full bg-gray-400"
           title="Draft"
         ></span>
-      ); // Grey circle for Draft    // if (event.status === "PUBLISHED" && event.visibility === "PUBLIC")
-    // return "bg-blue-500"; // Blue for Public and Published
-    // if (event.status === "PUBLISHED" && event.visibility === "PRIVATE")
-    // return "bg-green-500"; // Green for Published
+      );
     if (event.visibility === "PRIVATE")
       return (
         <span
           className="inline-block h-3 w-3 rounded-full bg-red-500"
           title="Private"
         ></span>
-      ); // Red circle for Private    // return "text-gray-400"; // Default to Grey if no status
+      );
   };
 
   return (
@@ -123,7 +117,6 @@ export async function EventsList({
   );
 }
 
-// Function to fetch and display the user's most engaged posts
 const getMostEngagedPosts = unstable_cache(
   async (userId: string) => {
     const posts = await prisma.post.findMany({

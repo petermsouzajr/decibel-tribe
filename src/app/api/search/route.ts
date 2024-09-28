@@ -9,7 +9,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { parse, isValid, addDays } from "date-fns";
 import { Prisma } from "@prisma/client";
 
-// Function to fetch valid events
 async function fetchValidEvents(loggedInUserId: string, username?: string) {
   let eventConditions: Prisma.EventWhereInput = {};
 
@@ -28,16 +27,13 @@ async function fetchValidEvents(loggedInUserId: string, username?: string) {
       select: { calendar: true },
     });
 
-    // If no preferences are found, assume the default is PUBLIC
     const isCalendarPublic = userPreferences?.calendar === "PUBLIC";
 
     if (loggedInUserId && loggedInUserId === user.id) {
-      // If the logged-in user is the same as the user in the URL, show all events they created
       eventConditions = {
         createdById: user.id,
       };
     } else if (isCalendarPublic) {
-      // Show public events created by the user or attended by the user
       eventConditions = {
         OR: [
           {
@@ -65,11 +61,9 @@ async function fetchValidEvents(loggedInUserId: string, username?: string) {
         ],
       };
     } else {
-      // If the calendar is private, return an empty array
       return [];
     }
   } else if (loggedInUserId) {
-    // If no username is provided, show all events for the logged-in user
     eventConditions = {
       OR: [
         {
@@ -86,7 +80,6 @@ async function fetchValidEvents(loggedInUserId: string, username?: string) {
       ],
     };
   } else {
-    // If no logged-in user and no username, return public events
     eventConditions = {
       status: "PUBLISHED",
       visibility: "PUBLIC",
@@ -105,7 +98,6 @@ async function fetchValidEvents(loggedInUserId: string, username?: string) {
   return events;
 }
 
-// Function to filter events based on the search query
 function filterEvents(events: any[], q: string) {
   const qLower = q.toLowerCase();
   const dateFormats = [
@@ -125,7 +117,6 @@ function filterEvents(events: any[], q: string) {
     }
   }
 
-  // Filter the events based on the criteria
   const filteredEvents = events.filter((event) => {
     const matchesTitle = event.title.toLowerCase().includes(qLower);
 
@@ -135,12 +126,10 @@ function filterEvents(events: any[], q: string) {
 
     const matchesLocation = event.location.toLowerCase().includes(qLower);
 
-    // Performers is an array of strings
     const matchesPerformers = event.performers?.some((performer: string) =>
       performer.toLowerCase().includes(qLower),
     );
 
-    // Date matching
     let matchesDate = false;
     if (parsedDate) {
       const eventDate = new Date(event.when);
@@ -148,7 +137,6 @@ function filterEvents(events: any[], q: string) {
         eventDate >= parsedDate && eventDate < addDays(parsedDate, 1);
     }
 
-    // Return true if any of the conditions match
     return (
       matchesTitle ||
       matchesDescription ||
@@ -158,7 +146,6 @@ function filterEvents(events: any[], q: string) {
     );
   });
 
-  // Optionally, sort the filtered events by date
   filteredEvents.sort(
     (a, b) => new Date(a.when).getTime() - new Date(b.when).getTime(),
   );
@@ -183,7 +170,6 @@ export async function GET(req: NextRequest) {
 
     const searchQuery = q.trim();
 
-    // Fetch posts
     const posts = await prisma.post.findMany({
       where: {
         OR: [
@@ -216,7 +202,6 @@ export async function GET(req: NextRequest) {
       take: pageSize + 1,
     });
 
-    // Fetch users
     const users = await prisma.user.findMany({
       where: {
         OR: [
@@ -251,11 +236,9 @@ export async function GET(req: NextRequest) {
       take: pageSize + 1,
     });
 
-    // Fetch and filter events
     const allEvents = await fetchValidEvents(user.id);
     const filteredEvents = filterEvents(allEvents, q);
 
-    // Fetch users with skills
     const usersWithSkills = await prisma.user.findMany({
       where: {
         userSkills: {
@@ -273,7 +256,6 @@ export async function GET(req: NextRequest) {
       take: pageSize + 1,
     });
 
-    // Fetch users with instruments
     const usersWithInstruments = await prisma.user.findMany({
       where: {
         userInstruments: {

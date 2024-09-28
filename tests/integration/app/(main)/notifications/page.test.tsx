@@ -10,7 +10,7 @@ vi.mock("@/lib/ky", () => ({
   },
 }));
 
-describe("Notifications Page Integration Test", () => {
+describe("Notifications Page", () => {
   let queryClient: QueryClient;
 
   const renderPage = () =>
@@ -33,7 +33,7 @@ describe("Notifications Page Integration Test", () => {
     }));
   });
 
-  it("renders the Notifications component as part of the page", () => {
+  it("should render the Notifications component as part of the page", () => {
     renderPage();
     expect(
       screen.getByRole("heading", { name: /Notifications/i }),

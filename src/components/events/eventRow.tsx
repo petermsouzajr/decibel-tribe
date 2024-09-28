@@ -150,7 +150,7 @@ const EventRow: React.FC<EventRowProps> = ({
               (!isAttendee ? (
                 <Button
                   onClick={(e) => {
-                    e.stopPropagation(); // Suppress onRowClick for this button
+                    e.stopPropagation();
                     handleAddAttendee(event);
                   }}
                   className={cn("mt-4 h-10 bg-primary text-foreground")}
@@ -160,7 +160,7 @@ const EventRow: React.FC<EventRowProps> = ({
               ) : (
                 <Button
                   onClick={(e) => {
-                    e.stopPropagation(); // Suppress onRowClick for this button
+                    e.stopPropagation();
                     handleRemoveAttendee(event);
                   }}
                   className={cn("mt-4 h-10 bg-primary text-foreground")}

@@ -1,5 +1,3 @@
-// src/app/api/groups/[groupId]/add-user/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
@@ -17,7 +15,6 @@ export async function POST(
 
     const { groupId } = params;
 
-    // Parse the request body
     const body = await req.json();
     const { userId } = body;
 
@@ -28,7 +25,6 @@ export async function POST(
       );
     }
 
-    // Check if the requester is the group owner or an admin
     const group = await prisma.group.findUnique({
       where: { id: groupId },
       include: { owner: true },
@@ -39,11 +35,9 @@ export async function POST(
     }
 
     if (group.ownerId !== user.id) {
-      // Optionally, implement admin roles
       return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     }
 
-    // Check if the user is already a member
     const existingMember = await prisma.groupMember.findUnique({
       where: { userId_groupId: { userId, groupId } },
     });
@@ -55,7 +49,6 @@ export async function POST(
       );
     }
 
-    // Add the user to the group
     await prisma.groupMember.create({
       data: {
         userId,

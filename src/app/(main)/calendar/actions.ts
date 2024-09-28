@@ -1,5 +1,3 @@
-// actions.ts
-
 export async function createEvent({
   title,
   where,
@@ -36,5 +34,5 @@ export async function createEvent({
     throw new Error("Failed to create event");
   }
 
-  return response.json(); // This will return the newly created event, including its ID
+  return response.json();
 }
