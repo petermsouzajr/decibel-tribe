@@ -1,16 +1,12 @@
 import React from "react";
-import { it, expect, describe, beforeEach, afterEach } from "vitest";
+import { it, expect, describe, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
-import Page from "../../../../src/app/(auth)/login/page";
+import Page from "@/app/(auth)/login/page";
 
 describe("login page", () => {
   beforeEach(() => {
     render(<Page />);
-  });
-
-  afterEach(() => {
     global.innerWidth = 1024;
-    window.dispatchEvent(new Event("resize"));
   });
 
   it("should render the main heading", () => {

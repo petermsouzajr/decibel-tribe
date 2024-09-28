@@ -21,7 +21,7 @@ const Page: React.FC<PageProps> = () => {
           headers: {
             "Content-Type": "application/json",
           },
-        }); // Pass the username to the API
+        });
         if (!response.ok) {
           throw new Error("Failed to fetch events");
         }
@@ -37,12 +37,12 @@ const Page: React.FC<PageProps> = () => {
     fetchEvents();
   }, [username]);
 
-  if (loading) {
-    return <PostsLoadingSkeleton />;
-  }
-
   if (error) {
     return <p>Error: {error}</p>;
+  }
+
+  if (loading) {
+    return <PostsLoadingSkeleton />;
   }
 
   const currentDate = new Date();

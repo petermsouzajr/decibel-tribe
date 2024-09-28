@@ -39,6 +39,8 @@ export default function Page() {
           src={signupImage}
           alt=""
           className="hidden w-1/2 object-cover md:block"
+          width={1024}
+          height={1792}
         />
       </div>
     </main>

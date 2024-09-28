@@ -35,18 +35,18 @@ export default function Bookmarks() {
     return <PostsLoadingSkeleton />;
   }
 
-  if (status === "success" && !posts.length && !hasNextPage) {
-    return (
-      <p className="text-center text-muted-foreground">
-        You don&apos;t have any bookmarks yet.
-      </p>
-    );
-  }
-
   if (status === "error") {
     return (
       <p className="text-center text-destructive">
         An error occurred while loading bookmarks.
+      </p>
+    );
+  }
+
+  if (status === "success" && !posts.length && !hasNextPage) {
+    return (
+      <p className="text-center text-muted-foreground">
+        You don&apos;t have any bookmarks yet.
       </p>
     );
   }

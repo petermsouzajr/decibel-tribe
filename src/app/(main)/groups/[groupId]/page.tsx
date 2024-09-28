@@ -1,14 +1,9 @@
 "use client";
-import { validateRequest } from "@/auth";
 import Post from "@/components/posts/Post";
 import kyInstance from "@/lib/ky";
 import { GroupMembershipData, PostData } from "@/lib/types";
-import { notFound, redirect, useRouter } from "next/navigation";
-import {
-  useInfiniteQuery,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { redirect, useRouter } from "next/navigation";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import InfiniteScrollContainer from "@/components/InfiniteScrollContainer";
@@ -30,12 +25,6 @@ import {
 import AddUserModal from "./AddUserModal";
 import DeleteGroupModal from "./DeleteGroupModal";
 import LeaveGroupModal from "./LeaveGroupModal";
-
-interface Group {
-  id: string;
-  name: string;
-  description?: string;
-}
 
 interface PageProps {
   params: { groupId: string };
@@ -91,7 +80,7 @@ export default function GroupPage({ params: { groupId } }: PageProps) {
 
   useEffect(() => {
     if (groupStatus === "error") {
-      redirect("/groups");
+      router.push("/groups");
     }
   }, [groupStatus]);
 

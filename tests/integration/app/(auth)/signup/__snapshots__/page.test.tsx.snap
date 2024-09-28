@@ -1,0 +1,207 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Sign Up page > should match the snapshot 1`] = `
+<body>
+  <div>
+    <main
+      class="flex h-screen flex-col items-center justify-center space-y-5 p-5"
+    >
+      <div
+        class="w-full text-center"
+      >
+        <h1
+          class="text-6xl font-bold"
+        >
+          Decibel Tribe
+        </h1>
+        <span
+          class="text-3xl"
+        >
+          Stay Human
+        </span>
+      </div>
+      <div
+        class="flex h-full max-h-[40rem] w-full max-w-[64rem] overflow-hidden rounded-2xl bg-card shadow-2xl"
+      >
+        <div
+          class="w-full space-y-10 overflow-y-auto p-10 md:w-1/2"
+        >
+          <div
+            class="space-y-1 text-center"
+          >
+            <h1
+              class="text-3xl font-bold"
+            >
+              Sign up
+            </h1>
+          </div>
+          <div
+            class="space-y-5"
+          >
+            <a
+              class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input h-8 px-4 py-2 bg-white text-black hover:bg-gray-100 hover:text-black flex w-full items-center gap-2"
+              href="/login/google"
+            >
+              <svg
+                height="1.2em"
+                viewBox="0 0 256 262"
+                width="1.2em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.244 1.622l38.755 30.023l2.685.268c24.659-22.774 38.875-56.282 38.875-96.027"
+                  fill="#4285f4"
+                />
+                <path
+                  d="M130.55 261.1c35.248 0 64.839-11.605 86.453-31.622l-41.196-31.913c-11.024 7.688-25.82 13.055-45.257 13.055c-34.523 0-63.824-22.773-74.269-54.25l-1.531.13l-40.298 31.187l-.527 1.465C35.393 231.798 79.49 261.1 130.55 261.1"
+                  fill="#34a853"
+                />
+                <path
+                  d="M56.281 156.37c-2.756-8.123-4.351-16.827-4.351-25.82c0-8.994 1.595-17.697 4.206-25.82l-.073-1.73L15.26 71.312l-1.335.635C5.077 89.644 0 109.517 0 130.55s5.077 40.905 13.925 58.602z"
+                  fill="#fbbc05"
+                />
+                <path
+                  d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0C79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251"
+                  fill="#eb4335"
+                />
+              </svg>
+              Use Google
+            </a>
+            <div
+              class="flex items-center gap-3"
+            >
+              <div
+                class="h-px flex-1 bg-muted"
+              />
+              <span>
+                OR
+              </span>
+              <div
+                class="h-px flex-1 bg-muted"
+              />
+            </div>
+            <form
+              class="space-y-3"
+            >
+              <div
+                class="space-y-2"
+              >
+                <label
+                  class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  for=":rl:-form-item"
+                >
+                  Username
+                </label>
+                <input
+                  aria-describedby=":rl:-form-item-description"
+                  aria-invalid="false"
+                  class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  id=":rl:-form-item"
+                  name="username"
+                  placeholder="Pick a username"
+                  value=""
+                />
+              </div>
+              <div
+                class="space-y-2"
+              >
+                <label
+                  class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  for=":rm:-form-item"
+                >
+                  Email
+                </label>
+                <input
+                  aria-describedby=":rm:-form-item-description"
+                  aria-invalid="false"
+                  class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  id=":rm:-form-item"
+                  name="email"
+                  placeholder="Email - We will send a verification code"
+                  type="email"
+                  value=""
+                />
+              </div>
+              <div
+                class="space-y-2"
+              >
+                <label
+                  class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  for=":rn:-form-item"
+                >
+                  Password
+                </label>
+                <div
+                  class="relative"
+                >
+                  <input
+                    aria-describedby=":rn:-form-item-description"
+                    aria-invalid="false"
+                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pe-10"
+                    id=":rn:-form-item"
+                    name="password"
+                    placeholder="Password, 8 characters minimum"
+                    type="password"
+                    value=""
+                  />
+                  <button
+                    class="absolute right-3 top-1/2 -translate-y-1/2 transform text-muted-foreground"
+                    title="Show password"
+                    type="button"
+                  >
+                    <svg
+                      class="lucide lucide-eye size-5"
+                      fill="none"
+                      height="24"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                      width="24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"
+                      />
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="3"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <button
+                class="justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-8 px-4 py-2 flex items-center gap-2 w-full"
+                type="submit"
+              >
+                Create account
+              </button>
+            </form>
+            <a
+              class="block text-center hover:underline"
+              href="/login"
+            >
+              Already have an account? Log in
+            </a>
+          </div>
+        </div>
+        <img
+          alt=""
+          class="hidden w-1/2 object-cover md:block"
+          data-nimg="1"
+          decoding="async"
+          height="1792"
+          loading="lazy"
+          src="/_next/image?url=%2Fsrc%2Fassets%2Fsignup-image.jpg&w=2048&q=75"
+          srcset="/_next/image?url=%2Fsrc%2Fassets%2Fsignup-image.jpg&w=1080&q=75 1x, /_next/image?url=%2Fsrc%2Fassets%2Fsignup-image.jpg&w=2048&q=75 2x"
+          style="color: transparent;"
+          width="1024"
+        />
+      </div>
+    </main>
+  </div>
+</body>
+`;

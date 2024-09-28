@@ -1,17 +1,8 @@
 "use client";
-import { validateRequest } from "@/auth";
-import EventDetails from "@/components/events/Event";
-import Linkify from "@/components/Linkify";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import UserAvatar from "@/components/UserAvatar";
-import UserTooltip from "@/components/UserTooltip";
-import prisma from "@/lib/prisma";
-import { Event, getEventDataInclude } from "@/lib/types";
-import { Loader2 } from "lucide-react";
-import { Metadata } from "next";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { cache, Suspense, useEffect, useState } from "react";
+import { Event } from "@/lib/types";
+import { useEffect, useState } from "react";
 import EventsFollowingFeed from "../EventsFollowingFeed";
 import EventsForYouFeed from "../EventsForYouFeed";
 import EventCalendar from "../calendar/CalendarActions";
