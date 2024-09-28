@@ -1,12 +1,9 @@
-import React from "react";
-import { it, expect, describe, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import Page from "@/app/(auth)/login/page";
 
 describe("Login Page", () => {
   beforeEach(() => {
     render(<Page />);
-    global.innerWidth = 1024;
   });
 
   it("should render the main heading", () => {
@@ -47,7 +44,6 @@ describe("Login Page", () => {
     window.dispatchEvent(new Event("resize"));
 
     const image = screen.getByAltText("");
-
     expect(image).toHaveClass("hidden");
   });
 

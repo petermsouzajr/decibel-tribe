@@ -1,5 +1,4 @@
 import { render } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Page from "@/app/(main)/events/[eventId]/page";
 

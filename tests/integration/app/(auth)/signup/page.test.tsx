@@ -1,5 +1,3 @@
-import React from "react";
-import { it, expect, describe, beforeEach, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import Page from "@/app/(auth)/signup/page";
 
@@ -14,7 +12,6 @@ vi.mock("next/navigation", () => ({
 describe("Sign Up Page", () => {
   beforeEach(() => {
     render(<Page />);
-    global.innerWidth = 1024;
   });
 
   it("should render the main heading", () => {

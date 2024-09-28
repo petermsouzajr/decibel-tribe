@@ -73,7 +73,6 @@ export default function ChangePasswordDialog({
         <DialogDescription></DialogDescription>{" "}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
-            {/* Current Password Field */}
             <FormField
               control={form.control}
               name="currentPassword"
@@ -92,7 +91,6 @@ export default function ChangePasswordDialog({
               )}
             />
 
-            {/* New Password Field */}
             <FormField
               control={form.control}
               name="newPassword"
@@ -111,7 +109,6 @@ export default function ChangePasswordDialog({
               )}
             />
 
-            {/* Confirm New Password Field */}
             <FormField
               control={form.control}
               name="confirmPassword"
@@ -130,7 +127,6 @@ export default function ChangePasswordDialog({
               )}
             />
 
-            {/* Submit Button */}
             <DialogFooter>
               <LoadingButton type="submit" loading={false}>
                 Change Password

@@ -209,7 +209,6 @@ const FormSwitch = React.forwardRef<
       className={`flex h-10 flex-col items-center justify-center rounded-md border`}
     >
       <div className="flex w-full justify-around">
-        {/* Left Value Label */}
         <span
           className={`w-16 cursor-pointer text-muted-foreground ${!isFirstValue ? "font-bold underline" : "opacity-80"}`}
           onClick={handleClick}
@@ -217,7 +216,6 @@ const FormSwitch = React.forwardRef<
           {firstValue}
         </span>
 
-        {/* Toggle Button */}
         <button
           ref={ref}
           type="button"
@@ -233,7 +231,6 @@ const FormSwitch = React.forwardRef<
           />
         </button>
 
-        {/* Right Value Label */}
         <span
           className={`w-16 cursor-pointer text-primary ${isFirstValue ? "font-bold underline" : "opacity-80"}`}
           onClick={handleClick}

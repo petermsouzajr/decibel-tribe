@@ -1,6 +1,5 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { describe, it, expect, beforeEach, vi } from "vitest";
 import SessionProvider from "@/app/(main)/SessionProvider";
 import Page from "@/app/(main)/search/page";
 
@@ -47,36 +46,28 @@ describe("Search Page", () => {
 
   beforeEach(() => {
     queryClient = new QueryClient();
-
     global.innerWidth = 1024;
     window.dispatchEvent(new Event("resize"));
-
     global.fetch = vi.fn();
   });
 
   it("should render the Users/Posts tab", async () => {
     renderPage();
-
     const usersPostsTab = screen.getByRole("tab", { name: /Users\/Posts/i });
-
     expect(usersPostsTab).toBeInTheDocument();
   });
 
   it("should render the Instruments/Skills tab", async () => {
     renderPage();
-
     const instrumentsSkillsTab = screen.getByRole("tab", {
       name: /Instruments\/Skills/i,
     });
-
     expect(instrumentsSkillsTab).toBeInTheDocument();
   });
 
   it("should render the Events tab", async () => {
     renderPage();
-
     const eventsTab = screen.getByRole("tab", { name: /Events/i });
-
     expect(eventsTab).toBeInTheDocument();
   });
 

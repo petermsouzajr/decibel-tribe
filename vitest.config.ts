@@ -9,7 +9,7 @@ export default defineConfig(async () => {
     test: {
       environment: "jsdom",
       globals: true,
-      setupFiles: "./setupTests.ts",
+      setupFiles: "tests/setupTests.ts",
     },
     plugins: [tsconfigPaths()],
     resolve: {

@@ -1,7 +1,6 @@
 import Page from "@/app/(main)/messages/page";
 import SessionProvider from "@/app/(main)/SessionProvider";
 import { render } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
 
 const mockUser: any = {
   id: "1",
@@ -27,13 +26,6 @@ describe("Messages Page", () => {
         <Page />
       </SessionProvider>,
     );
-
-  it("should render a page body", async () => {
-    renderPage();
-
-    const bodyElement = document.body;
-    expect(bodyElement).toBeInTheDocument();
-  });
 
   it("should match snapshot", () => {
     renderPage();

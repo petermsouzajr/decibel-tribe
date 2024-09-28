@@ -108,7 +108,6 @@ export default function CreateGroupModal({
         <DialogDescription></DialogDescription>{" "}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
-            {/* Group Name Field */}
             <FormField
               control={form.control}
               name="name"
@@ -123,7 +122,6 @@ export default function CreateGroupModal({
               )}
             />
 
-            {/* Group Description Field */}
             <FormField
               control={form.control}
               name="description"
@@ -138,7 +136,6 @@ export default function CreateGroupModal({
               )}
             />
 
-            {/* Submit Button */}
             <DialogFooter>
               <Button
                 type="submit"

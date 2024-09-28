@@ -109,9 +109,6 @@ export default function GroupPage({ params: { groupId } }: PageProps) {
   return (
     <main className="flex w-full min-w-0 gap-5">
       <div className="w-full min-w-0 space-y-5">
-        {/* <div className="flex items-center space-x-2">
-          <Link href="/groups">← Back</Link>
-        </div> */}
         <div className="rounded-2xl bg-card p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <Link href="/groups">←</Link>
@@ -190,14 +187,12 @@ export default function GroupPage({ params: { groupId } }: PageProps) {
       <div className="sticky top-[5.25rem] hidden h-fit w-72 flex-none space-y-5 md:block lg:w-80">
         <GroupList />
       </div>
-      {/* AddUserModal */}
       <AddUserModal
         open={showAddUserModal}
         onOpenChange={setShowAddUserModal}
         groupId={groupId}
       />
 
-      {/* DeleteGroupModal */}
       <DeleteGroupModal
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
@@ -205,7 +200,6 @@ export default function GroupPage({ params: { groupId } }: PageProps) {
         groupName={groupData.name}
       />
 
-      {/* LeaveGroupModal */}
       <LeaveGroupModal
         open={showLeaveDialog}
         onOpenChange={setShowLeaveDialog}

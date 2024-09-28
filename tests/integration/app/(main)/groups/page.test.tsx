@@ -1,7 +1,6 @@
 import Page from "@/app/(main)/groups/page";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
 
 describe("Groups Summary Page", () => {
   const queryClient = new QueryClient();
@@ -12,6 +11,7 @@ describe("Groups Summary Page", () => {
         <Page />
       </QueryClientProvider>,
     );
+
   it("should render the Groups header", () => {
     renderPage();
 

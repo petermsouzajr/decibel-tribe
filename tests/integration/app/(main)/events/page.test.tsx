@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { describe, it, expect, beforeEach, vi } from "vitest";
 import Page from "@/app/(main)/events/page";
 import SessionProvider from "@/app/(main)/SessionProvider";
 
@@ -43,10 +42,8 @@ describe("Events Page", () => {
 
   beforeEach(() => {
     queryClient = new QueryClient();
-
     global.innerWidth = 1024;
     window.dispatchEvent(new Event("resize"));
-
     global.fetch = vi.fn();
   });
 
@@ -71,7 +68,6 @@ describe("Events Page", () => {
     renderPage();
 
     const forYouTab = screen.getByRole("tab", { name: /For you/i });
-
     expect(forYouTab).toBeInTheDocument();
   });
 
@@ -79,7 +75,6 @@ describe("Events Page", () => {
     renderPage();
 
     const followingTab = screen.getByRole("tab", { name: /Following/i });
-
     expect(followingTab).toBeInTheDocument();
   });
 

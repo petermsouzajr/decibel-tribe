@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect, beforeEach, vi, Mock } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import EventFormPage from "@/app/(main)/events/edit/page";
 

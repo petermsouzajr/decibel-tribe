@@ -1,6 +1,5 @@
 import Home from "@/app/(main)/page";
-import { render, screen, waitFor } from "@testing-library/react";
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import SessionProvider from "@/app/(main)/SessionProvider";
 
@@ -49,17 +48,13 @@ describe("Home Page", () => {
 
   it("should render the 'For you' tab", () => {
     renderPage();
-
     const forYouTab = screen.getByRole("tab", { name: /For you/i });
-
     expect(forYouTab).toBeInTheDocument();
   });
 
   it("should render the 'Following' tab", () => {
     renderPage();
-
     const followingTab = screen.getByRole("tab", { name: /Following/i });
-
     expect(followingTab).toBeInTheDocument();
   });
 

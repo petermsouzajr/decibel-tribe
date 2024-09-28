@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import GroupPage from "@/app/(main)/groups/[groupId]/page";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -12,8 +12,6 @@ vi.mock("next/navigation", () => ({
     refresh: vi.fn(),
   }),
 }));
-
-import GroupPage from "@/app/(main)/groups/[groupId]/page";
 
 describe("Group Details Page", () => {
   const queryClient = new QueryClient();

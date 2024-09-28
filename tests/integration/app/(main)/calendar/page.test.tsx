@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { describe, it, expect, beforeEach, vi } from "vitest";
 import Page from "@/app/(main)/calendar/page";
 import SessionProvider from "@/app/(main)/SessionProvider";
 
@@ -47,13 +46,7 @@ describe("Calendar Page", () => {
 
   beforeEach(() => {
     queryClient = new QueryClient();
-
-    global.innerWidth = 1024;
-    window.dispatchEvent(new Event("resize"));
-
     global.fetch = vi.fn();
-
-    console.error = vi.fn();
   });
 
   it("should render the calendar even if no events are returned", async () => {
