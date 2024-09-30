@@ -16,13 +16,6 @@ describe("Event Details Page", () => {
       </QueryClientProvider>,
     );
 
-  it("should render a page body", async () => {
-    renderPage();
-
-    const bodyElement = document.body;
-    expect(bodyElement).toBeInTheDocument();
-  });
-
   it("should match snapshot", () => {
     renderPage();
     expect(document.body).toMatchSnapshot();

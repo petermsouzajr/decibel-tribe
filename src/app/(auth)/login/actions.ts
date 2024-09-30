@@ -2,7 +2,6 @@
 
 import { lucia } from "@/auth";
 import prisma from "@/lib/prisma";
-import sendVerificationEmail from "@/lib/sendEmail";
 import { loginSchema, LoginValues } from "@/lib/validation";
 import { verify } from "@node-rs/argon2";
 import { isRedirectError } from "next/dist/client/components/redirect";

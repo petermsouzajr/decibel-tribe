@@ -79,7 +79,7 @@ model GroupMember {
   userId         String
   groupId        String
   role           GroupRole @default(MEMBER)
-  acceptedInvite Boolean   @default(false) // New field
+  acceptedInvite Boolean   @default(false)
   user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   group          Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
   joinedAt       DateTime  @default(now())
