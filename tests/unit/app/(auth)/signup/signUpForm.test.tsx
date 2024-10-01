@@ -23,11 +23,15 @@ describe("SignUpForm", () => {
   });
 
   it("should render the form correctly", () => {
+    //@ts-ignore
     expect(screen.getByLabelText(/Username/i)).toBeInTheDocument();
+    //@ts-ignore
     expect(screen.getByLabelText(/Email/i)).toBeInTheDocument();
+    //@ts-ignore
     expect(screen.getByLabelText(/Password/i)).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Create account/i }),
+      //@ts-ignore
     ).toBeInTheDocument();
   });
 
@@ -35,9 +39,13 @@ describe("SignUpForm", () => {
     fireEvent.click(screen.getByRole("button", { name: /Create account/i }));
 
     await waitFor(() => {
+      //@ts-ignore
       expect(screen.getAllByText(/Required/i)).toHaveLength(3);
+      //@ts-ignore
       expect(screen.getByText(/Username/i)).toBeInTheDocument();
+      //@ts-ignore
       expect(screen.getByText(/Email/i)).toBeInTheDocument();
+      //@ts-ignore
       expect(screen.getByText(/Password/i)).toBeInTheDocument();
     });
   });
@@ -59,6 +67,7 @@ describe("SignUpForm", () => {
     fireEvent.click(screen.getByRole("button", { name: /Create account/i }));
 
     await waitFor(() => {
+      //@ts-ignore
       expect(mockSignUp).toHaveBeenCalledWith({
         username: "testuser",
         email: "testuser@example.com",
@@ -68,6 +77,7 @@ describe("SignUpForm", () => {
         screen.getByText(
           /Signup complete! Please check your email for the account verification link./i,
         ),
+        //@ts-ignore
       ).toBeInTheDocument();
     });
   });
@@ -89,11 +99,13 @@ describe("SignUpForm", () => {
     fireEvent.click(screen.getByRole("button", { name: /Create account/i }));
 
     await waitFor(() => {
+      //@ts-ignore
       expect(mockSignUp).toHaveBeenCalledWith({
         username: "testuser",
         email: "testuser@example.com",
         password: "password123",
       });
+      //@ts-ignore
       expect(screen.getByText(/Sign-up failed/i)).toBeInTheDocument();
     });
   });
@@ -110,6 +122,7 @@ describe("SignUpForm", () => {
     const submitButton = await screen.findByText(/Create account/i);
 
     await waitFor(() => {
+      //@ts-ignore
       expect(submitButton).not.toBeDisabled();
     });
 
@@ -126,9 +139,11 @@ describe("SignUpForm", () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
+      //@ts-ignore
       expect(submitButton).toBeDisabled();
     });
 
+    //@ts-ignore
     expect(submitButton.getAttribute("disabled")).toBe("");
   });
 
@@ -153,6 +168,7 @@ describe("SignUpForm", () => {
         screen.getByText(
           /Signup complete! Please check your email for the account verification link./i,
         ),
+        //@ts-ignore
       ).toBeInTheDocument();
     });
 
@@ -164,6 +180,7 @@ describe("SignUpForm", () => {
     fireEvent.click(closeModalButton!);
 
     await waitFor(() => {
+      //@ts-ignore
       expect(mockRouterPush).toHaveBeenCalledWith("/");
     });
   });

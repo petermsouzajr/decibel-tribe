@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Group {
@@ -30,6 +30,7 @@ export default function PostModalGroupDropdown({
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroup, setSelectedGroupState] = useState<string>("Public");
   const [loading, setLoading] = useState<boolean>(true);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     const fetchGroups = async () => {
@@ -71,7 +72,7 @@ export default function PostModalGroupDropdown({
   return (
     <div className="flex items-center justify-start">
       <span className="mr-2 text-lg font-medium">New Post in:</span>
-      <DropdownMenu>
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <Button
             size="sm"
@@ -79,15 +80,31 @@ export default function PostModalGroupDropdown({
             className="flex items-center justify-between space-x-2"
           >
             <span className="text-base">{selectedGroup}</span>
-            <MoreHorizontal className="h-4 w-4" />
+            {isOpen ? "" : <ChevronDown />}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-48">
-          <DropdownMenuItem onClick={() => setSelectedGroupState("Public")}>
+        <DropdownMenuContent className="text-md w-48">
+          {/* Public option */}
+          <DropdownMenuItem
+            className="text-md cursor-pointer"
+            onClick={() => {
+              setSelectedGroupState("Public");
+              setSelectedGroup(null);
+            }}
+          >
             Public
           </DropdownMenuItem>
+          {/* Section header */}
+          {groups.length > 0 && (
+            <div className="flex justify-center px-2 py-1 text-muted-foreground">
+              Your Groups
+            </div>
+          )}
+
+          {/* Group options */}
           {groups.map((group) => (
             <DropdownMenuItem
+              className="text-md cursor-pointer"
               key={group.id}
               onClick={() => {
                 setSelectedGroupState(group.name);

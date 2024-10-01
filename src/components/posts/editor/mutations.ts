@@ -18,46 +18,97 @@ export function useSubmitPostMutation() {
 
   const mutation = useMutation({
     mutationFn: submitPost,
-    onSuccess: async (newPost) => {
-      const queryFilter = {
-        queryKey: ["post-feed"],
-        predicate(query) {
-          return (
-            query.queryKey.includes("for-you") ||
-            (query.queryKey.includes("user-posts") &&
-              query.queryKey.includes(user.id))
-          );
-        },
-      } satisfies QueryFilters;
+    onSuccess: async (newPost, variables) => {
+      const isPublicPost = !variables.groupId;
 
-      await queryClient.cancelQueries(queryFilter);
+      if (isPublicPost) {
+        const queryFilter = {
+          queryKey: ["post-feed"],
+          predicate(query) {
+            return (
+              query.queryKey.includes("for-you") ||
+              (query.queryKey.includes("user-posts") &&
+                query.queryKey.includes(user.id))
+            );
+          },
+        } satisfies QueryFilters;
 
-      queryClient.setQueriesData<InfiniteData<PostsPage, string | null>>(
-        queryFilter,
-        (oldData) => {
-          const firstPage = oldData?.pages[0];
+        await queryClient.cancelQueries(queryFilter);
 
-          if (firstPage) {
-            return {
-              pageParams: oldData.pageParams,
-              pages: [
-                {
-                  posts: [newPost, ...firstPage.posts],
-                  nextCursor: firstPage.nextCursor,
-                },
-                ...oldData.pages.slice(1),
-              ],
-            };
-          }
-        },
-      );
+        queryClient.setQueriesData<InfiniteData<PostsPage, string | null>>(
+          queryFilter,
+          (oldData) => {
+            const firstPage = oldData?.pages[0];
 
-      queryClient.invalidateQueries({
-        queryKey: queryFilter.queryKey,
-        predicate(query) {
-          return queryFilter.predicate(query) && !query.state.data;
-        },
-      });
+            if (firstPage) {
+              return {
+                pageParams: oldData.pageParams,
+                pages: [
+                  {
+                    posts: [newPost, ...firstPage.posts],
+                    nextCursor: firstPage.nextCursor,
+                  },
+                  ...oldData.pages.slice(1),
+                ],
+              };
+            } else {
+              return {
+                pageParams: [],
+                pages: [
+                  {
+                    posts: [newPost],
+                    nextCursor: null,
+                  },
+                ],
+              };
+            }
+          },
+        );
+
+        queryClient.invalidateQueries({
+          queryKey: queryFilter.queryKey,
+          predicate(query) {
+            return queryFilter.predicate(query) && !query.state.data;
+          },
+        });
+      } else {
+        const groupId = variables.groupId;
+        const queryKey = ["group-posts", groupId];
+
+        await queryClient.cancelQueries({ queryKey });
+
+        queryClient.setQueryData<InfiniteData<PostsPage>>(
+          queryKey,
+          (oldData) => {
+            const firstPage = oldData?.pages[0];
+
+            if (firstPage) {
+              return {
+                pageParams: oldData.pageParams,
+                pages: [
+                  {
+                    posts: [newPost, ...firstPage.posts],
+                    nextCursor: firstPage.nextCursor,
+                  },
+                  ...oldData.pages.slice(1),
+                ],
+              };
+            } else {
+              return {
+                pageParams: [],
+                pages: [
+                  {
+                    posts: [newPost],
+                    nextCursor: null,
+                  },
+                ],
+              };
+            }
+          },
+        );
+
+        queryClient.invalidateQueries({ queryKey });
+      }
 
       toast({
         description: "Post created",
