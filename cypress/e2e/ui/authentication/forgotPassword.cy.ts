@@ -1,38 +1,40 @@
 describe("Forgot Password Page Functionality", () => {
-  const username = Cypress.env("username");
-  const userEmail = Cypress.env("userEmail");
+  const validUsername = Cypress.env("username");
+  const validUserEmail = Cypress.env("userEmail");
+  const invalidCredential = "invalidUser";
   const errorMessage = "User not found";
+  const successMessage = "Verification email resent! Check your inbox at";
 
   beforeEach(() => {
     cy.visit("/forgot-pass");
   });
 
   context("When Entering Valid Credentials", () => {
-    const testCases = [
-      {
-        credential: userEmail,
-        message: `Verification email resent! Check your inbox at ${userEmail}.`,
-      },
-      {
-        credential: username,
-        message: `Verification email resent! Check your inbox at ${username}.`,
-      },
-    ];
+    it("displays success message when using valid email", () => {
+      cy.get('input[name="credential"]').type(validUserEmail);
+      cy.get('button[type="submit"]').click();
 
-    testCases.forEach(({ credential, message }) => {
-      it(`displays success message when using valid ${credential.includes("@") ? "email" : "username"}`, () => {
-        cy.get('input[name="credential"]').type(credential);
-        cy.get('button[type="submit"]').click();
-        cy.get("p").contains(message).should("be.visible");
-      });
+      cy.get("p")
+        .contains(`${successMessage} ${validUserEmail}`)
+        .should("be.visible");
+    });
+
+    it("displays success message when using valid username", () => {
+      cy.get('input[name="credential"]').type(validUsername);
+      cy.get('button[type="submit"]').click();
+
+      cy.get("p")
+        .contains(`${successMessage} ${validUsername}`)
+        .should("be.visible");
     });
   });
 
   context("When Entering Invalid Credentials", () => {
-    it("displays an error message for invalid email/username", () => {
-      cy.get('input[name="credential"]').type("invalidEmail");
+    it("displays an error message when using invalid credentials", () => {
+      cy.get('input[name="credential"]').type(invalidCredential);
       cy.get('button[type="submit"]').click();
-      cy.get("p").contains(errorMessage).should("be.visible");
+
+      cy.get("div").contains(errorMessage).should("be.visible");
     });
   });
 });
