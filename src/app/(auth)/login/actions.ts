@@ -11,10 +11,12 @@ import { resendVerificationEmail } from "../sendVerification";
 
 export async function login(
   credentials: LoginValues,
-): Promise<{ error: string }> {
+  isTestEnvironment: boolean = false,
+): Promise<{ error?: string; sessionCookie?: any }> {
   try {
     const { username, password } = loginSchema.parse(credentials);
-
+    console.log("username", username);
+    console.log("password", password);
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [
@@ -69,6 +71,10 @@ export async function login(
       sessionCookie.value,
       sessionCookie.attributes,
     );
+
+    if (isTestEnvironment) {
+      return { sessionCookie };
+    }
 
     return redirect("/");
   } catch (error) {

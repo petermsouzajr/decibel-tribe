@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Group {
@@ -84,7 +84,6 @@ export default function PostModalGroupDropdown({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="text-md w-48">
-          {/* Public option */}
           <DropdownMenuItem
             className="text-md cursor-pointer"
             onClick={() => {
@@ -94,14 +93,12 @@ export default function PostModalGroupDropdown({
           >
             Public
           </DropdownMenuItem>
-          {/* Section header */}
           {groups.length > 0 && (
             <div className="flex justify-center px-2 py-1 text-muted-foreground">
               Your Groups
             </div>
           )}
 
-          {/* Group options */}
           {groups.map((group) => (
             <DropdownMenuItem
               className="text-md cursor-pointer"

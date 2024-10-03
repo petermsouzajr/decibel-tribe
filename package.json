@@ -10,7 +10,7 @@
     "postinstall": "prisma generate",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "cypress:open": "cypress open"
+    "cypress": "cypress open"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

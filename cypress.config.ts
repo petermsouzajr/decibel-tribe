@@ -2,6 +2,9 @@ import { defineConfig } from "cypress";
 
 export default defineConfig({
   e2e: {
-    baseUrl: "http://stage.decibeltribe.com",
+    supportFile: "cypress/support/e2e.ts",
+    baseUrl: "https://www.stage.decibeltribe.com/",
+    defaultCommandTimeout: 10000,
+    pageLoadTimeout: 60000,
   },
 });
