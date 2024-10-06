@@ -79,7 +79,7 @@ export async function updateUserPassword({
   currentPassword,
   newPassword,
 }: {
-  currentPassword: string;
+  currentPassword?: string;
   newPassword: string;
 }) {
   const { user } = await validateRequest();
@@ -91,16 +91,32 @@ export async function updateUserPassword({
     select: { passwordHash: true },
   });
 
-  if (!userRecord || !userRecord.passwordHash) {
-    throw new Error("Password not set for this user.");
+  if (!userRecord?.passwordHash) {
+    const hashedNewPassword = await hash(newPassword, {
+      memoryCost: 19456,
+      timeCost: 2,
+      outputLen: 32,
+      parallelism: 1,
+    });
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: hashedNewPassword },
+    });
+
+    return { message: "Password set successfully" };
   }
 
-  const isPasswordValid = await verify(
-    userRecord.passwordHash,
-    currentPassword,
-  );
-  if (!isPasswordValid) {
-    throw new Error("Current password is incorrect.");
+  if (currentPassword) {
+    const isPasswordValid = await verify(
+      userRecord.passwordHash,
+      currentPassword,
+    );
+    if (!isPasswordValid) {
+      throw new Error("Current password is incorrect.");
+    }
+  } else {
+    throw new Error("Current password is required to update the password.");
   }
 
   const hashedNewPassword = await hash(newPassword, {

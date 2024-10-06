@@ -43,6 +43,12 @@ export async function resendVerification(
 
     if (userEmail) {
       await resendVerificationEmail(userEmail);
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          passwordHash: null,
+        },
+      });
       return { error: "" };
     }
     return { error: "" };

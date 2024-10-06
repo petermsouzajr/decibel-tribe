@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
           Authorization: `Bearer ${tokens.accessToken}`,
         },
       })
-      .json<{ id: string; name: string }>();
+      .json<{ id: string; name: string; email: string }>();
 
     const existingUser = await prisma.user.findUnique({
       where: {
@@ -62,8 +62,7 @@ export async function GET(req: NextRequest) {
     }
 
     const userId = generateIdFromEntropySize(10);
-
-    const username = slugify(googleUser.name) + "-" + userId.slice(0, 4);
+    const username = slugify(googleUser.name);
 
     await prisma.$transaction(async (tx) => {
       await tx.user.create({
@@ -72,6 +71,8 @@ export async function GET(req: NextRequest) {
           username,
           displayName: googleUser.name,
           googleId: googleUser.id,
+          email: googleUser.email,
+          isVerified: true,
         },
       });
       await streamServerClient.upsertUser({

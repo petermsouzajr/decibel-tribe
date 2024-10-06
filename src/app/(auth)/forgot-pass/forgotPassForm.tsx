@@ -46,7 +46,7 @@ export default function ForgotPassForm() {
         setError(result.error);
       } else {
         setMessage(
-          `Verification email resent! Check your inbox at ${credential}.`,
+          `Verification email sent! Check your inbox at ${credential}.`,
         );
       }
     });

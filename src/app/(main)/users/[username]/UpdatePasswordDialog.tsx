@@ -1,3 +1,4 @@
+"use client";
 import LoadingButton from "@/components/LoadingButton";
 import {
   Dialog,
@@ -19,17 +20,18 @@ import { Input } from "@/components/ui/input";
 import { changePasswordSchema, ChangePasswordValues } from "@/lib/validation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { useUpdatePasswordMutation } from "./mutations";
 
 interface ChangePasswordDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  isSettingPassword?: boolean;
 }
 
 export default function ChangePasswordDialog({
   open,
   onOpenChange,
+  isSettingPassword = false,
 }: ChangePasswordDialogProps) {
   const form = useForm<ChangePasswordValues>({
     resolver: zodResolver(changePasswordSchema),
@@ -37,6 +39,7 @@ export default function ChangePasswordDialog({
       currentPassword: "",
       newPassword: "",
       confirmPassword: "",
+      isSettingPassword,
     },
   });
   const mutation = useUpdatePasswordMutation();
@@ -51,46 +54,46 @@ export default function ChangePasswordDialog({
   }
 
   const onSubmit = (values: ChangePasswordValues) => {
-    mutation.mutate(
-      {
-        currentPassword: values.currentPassword,
-        newPassword: values.newPassword,
-      },
-      {
-        onSuccess: () => {
-          onOpenChange(false);
-        },
-      },
-    );
+    const { currentPassword, newPassword, isSettingPassword } = values;
+
+    mutation.mutate({
+      currentPassword: currentPassword || "",
+      newPassword: newPassword,
+      isSettingPassword,
+    });
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Change Password</DialogTitle>
+          <DialogTitle>
+            {isSettingPassword ? "Set Password" : "Change Password"}
+          </DialogTitle>
         </DialogHeader>
-        <DialogDescription></DialogDescription>{" "}
+        <DialogDescription></DialogDescription>
+        {isSettingPassword && "Set a password to protect your account details"}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
-            <FormField
-              control={form.control}
-              name="currentPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Current Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="Enter current password"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
+            {!isSettingPassword && (
+              <FormField
+                control={form.control}
+                name="currentPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Current Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="Enter current password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <FormField
               control={form.control}
               name="newPassword"
@@ -129,7 +132,7 @@ export default function ChangePasswordDialog({
 
             <DialogFooter>
               <LoadingButton type="submit" loading={false}>
-                Change Password
+                {isSettingPassword ? "Set Password" : "Change Password"}
               </LoadingButton>
             </DialogFooter>
           </form>
