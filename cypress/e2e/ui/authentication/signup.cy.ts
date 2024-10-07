@@ -1,100 +1,87 @@
-describe("Signup Page Functionality", () => {
-  const newUsername = "newUser";
-  const newUserEmail = "newUser@example.com";
-  const newUserPassword = "ValidPassword123!";
-  const registeredUserEmail = Cypress.env("userEmail");
-  const signUpCompleteHeading = "Sign Up Complete";
-  const signUpCompleteMessage =
-    "Signup complete! Please check your email for the account verification link.";
-  const unusedUsername = "unusedusername";
-  const emailAlreadyRegistered = "Email already registered";
-  const passwordLengthError = "Must be at least 8 characters";
+import {
+  SignupMessages,
+  SignupPage,
+} from "../../../pages/authentication/signupPage";
 
-  const usernameInput = 'input[name="username"]';
-  const emailInput = 'input[name="email"]';
-  const passwordInput = 'input[name="password"]';
-  const submitButton = 'button[type="submit"]';
-  const successDialogueHeading = "h2";
-  const successDialogueContent = "span";
-  const destructiveText = "p.text-destructive";
-  const requiredText = "Required";
-  const passwordVisibilityToggle = 'button[title="Show password"]';
+const pageElements = SignupPage.elements;
+
+describe("Signup Page Functionality", () => {
+  let messages: SignupMessages;
+
+  const newUserData = {
+    username: "newUser",
+    email: "newUser@example.com",
+    password: "ValidPassword123!",
+  };
+
+  const duplicateEmailUserData = {
+    username: "unusedusername",
+    email: newUserData.email,
+    password: newUserData.password,
+  };
+
+  const shortPasswordData = {
+    username: duplicateEmailUserData.username,
+    email: newUserData.email,
+    password: "pass",
+  };
+
+  before(() => {
+    cy.fixture("signup/uiMessages").then((loadedMessages) => {
+      messages = loadedMessages.signup;
+    });
+  });
 
   beforeEach(() => {
     // @ts-ignore
     cy.logoutByApi();
-    cy.visit("/signup");
+    SignupPage.visit();
   });
 
   context("When Signing Up with Valid Credentials", () => {
     it("creates a new account with valid data", () => {
-      cy.get(usernameInput).type(newUsername);
-      cy.get(emailInput).type(newUserEmail);
-      cy.get(passwordInput).type(newUserPassword);
-      cy.get(submitButton).click();
+      SignupPage.fillForm(newUserData);
+      SignupPage.submitForm();
 
-      cy.get(successDialogueHeading)
-        .contains(signUpCompleteHeading)
-        .should("be.visible");
-      cy.get(successDialogueContent)
-        .contains(signUpCompleteMessage)
-        .should("be.visible");
+      pageElements.successDialogueHeading(messages).should("be.visible");
+      pageElements.successDialogueContent(messages).should("be.visible");
 
       cy.get("button").contains("Close").click({ force: true });
-
       cy.url().should("contain", "/login");
     });
   });
 
   context("Form Validations and Errors", () => {
     it("displays errors for missing required fields", () => {
-      cy.get(submitButton).click();
+      SignupPage.submitForm();
 
-      cy.get(usernameInput)
-        .parent()
-        .find(destructiveText)
-        .should("have.text", requiredText);
-
-      cy.get(emailInput)
-        .parent()
-        .find(destructiveText)
-        .should("have.text", requiredText);
-
-      cy.get(passwordInput)
-        .parent()
-        .parent()
-        .find(destructiveText)
-        .should("have.text", requiredText);
+      SignupPage.usernameRequired(messages).should("exist");
+      SignupPage.emailRequired(messages).should("exist");
+      SignupPage.passwordRequired(messages).should("exist");
     });
 
     it("shows error for duplicate email", () => {
-      cy.get(usernameInput).type(unusedUsername);
-      cy.get(emailInput).type(registeredUserEmail);
-      cy.get(passwordInput).type(newUserPassword);
-      cy.get(submitButton).click();
+      SignupPage.fillForm(duplicateEmailUserData);
+      SignupPage.submitForm();
 
-      cy.get("div").contains(emailAlreadyRegistered).should("be.visible");
+      SignupPage.emailExists(messages).should("be.visible");
     });
 
     it("enforces password strength requirements", () => {
-      cy.get(passwordInput).type("pass");
-      cy.get(submitButton).click();
+      SignupPage.fillForm(shortPasswordData);
+      SignupPage.submitForm();
 
-      cy.get(passwordInput)
-        .parent()
-        .parent()
-        .find(destructiveText)
-        .should("have.text", passwordLengthError);
+      SignupPage.shortPasswordError(messages).should("be.visible");
     });
   });
 
   context("Input Field Behavior", () => {
     it("shows password visibility toggle", () => {
-      cy.get(passwordInput).should("have.attr", "type", "password");
-
-      cy.get(passwordVisibilityToggle).click();
-
-      cy.get(passwordInput).should("have.attr", "type", "text");
+      pageElements.passwordInput().should("have.attr", "type", "password");
+      SignupPage.togglePasswordVisibility();
+      pageElements.passwordInput().should("have.attr", "type", "text");
+      SignupPage.togglePasswordVisibility();
+      pageElements.passwordInput().should("have.attr", "type", "password");
     });
   });
 });

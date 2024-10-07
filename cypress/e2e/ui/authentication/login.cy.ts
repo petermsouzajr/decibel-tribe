@@ -1,10 +1,33 @@
+import {
+  LoginPage,
+  LoginMessages,
+} from "../../../pages/authentication/loginPage";
+
+const pageElements = LoginPage.elements;
+
 describe("Login Page Functionality", () => {
-  const validUsername = Cypress.env("username");
-  const validPassword = Cypress.env("password");
-  const invalidUsername = "invalidUser";
-  const invalidPassword = "invalidPass";
-  const errorMessage = "Incorrect username or password";
-  const headerTitle = "Tribe";
+  let messages: LoginMessages;
+
+  const validUserData = {
+    username: Cypress.env("username"),
+    password: Cypress.env("password"),
+  };
+
+  const invalidUsernameData = {
+    username: "invalidUsername",
+    password: validUserData.password,
+  };
+
+  const invalidPasswordData = {
+    username: validUserData.username,
+    password: "invalidPassword",
+  };
+
+  before(() => {
+    cy.fixture("login/uiMessages").then((loadedMessages) => {
+      messages = loadedMessages.login;
+    });
+  });
 
   beforeEach(() => {
     // @ts-ignore
@@ -14,22 +37,27 @@ describe("Login Page Functionality", () => {
 
   context("When Logging In With Valid Credentials", () => {
     it("logs in successfully with valid credentials", () => {
-      cy.get('input[name="username"]').type(validUsername);
-      cy.get('input[name="password"]').type(validPassword);
-      cy.get('button[type="submit"]').click();
+      LoginPage.fillForm(validUserData);
+      LoginPage.submitForm();
 
-      cy.get("a").contains(headerTitle).should("be.visible");
+      pageElements.headerTitle(messages).should("be.visible");
       cy.url().should("eq", Cypress.config("baseUrl"));
     });
   });
 
   context("When Logging In With Invalid Credentials", () => {
-    it("displays an error message when using invalid credentials", () => {
-      cy.get('input[name="username"]').type(invalidUsername);
-      cy.get('input[name="password"]').type(invalidPassword);
-      cy.get('button[type="submit"]').click();
+    it("displays an error message when using unregistered username", () => {
+      LoginPage.fillForm(invalidUsernameData);
+      LoginPage.submitForm();
 
-      cy.get("div").contains(errorMessage).should("be.visible");
+      pageElements.errorMessage(messages).should("be.visible");
+    });
+
+    it("displays an error message when using incorrect password", () => {
+      LoginPage.fillForm(invalidPasswordData);
+      LoginPage.submitForm();
+
+      pageElements.errorMessage(messages).should("be.visible");
     });
   });
 });
