@@ -1,3 +1,6 @@
+import { LogoutPage } from "../../../pages/authentication/logoutPage";
+import { LoginPage } from "../../../pages/authentication/loginPage";
+
 describe("The Logout Functionality", () => {
   beforeEach(() => {
     // @ts-ignore
@@ -6,8 +9,8 @@ describe("The Logout Functionality", () => {
   });
 
   it("should logout successfully", () => {
-    cy.get("button[aria-haspopup='menu']").click();
-    cy.get("div").contains("Logout").click();
-    cy.url().should("include", "/login");
+    LogoutPage.openMenu();
+    LogoutPage.clickLogout();
+    cy.url().should("include", LoginPage.url);
   });
 });

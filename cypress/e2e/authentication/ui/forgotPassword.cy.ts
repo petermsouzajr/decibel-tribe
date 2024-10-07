@@ -1,40 +1,55 @@
+import {
+  ForgotPasswordMessages,
+  ForgotPasswordPage,
+} from "../../../pages/authentication/forgotPasswordPage";
+
+const pageElements = ForgotPasswordPage.elements;
+
 describe("Forgot Password Page Functionality", () => {
-  const validUsername = Cypress.env("username");
-  const validUserEmail = Cypress.env("userEmail");
+  let messages: ForgotPasswordMessages;
+
+  const validUserEmail = Cypress.env("username");
+  const validUsername = Cypress.env("userEmail");
   const invalidCredential = "invalidUser";
-  const errorMessage = "User not found";
-  const successMessage = "Verification email sent! Check your inbox at";
+
+  before(() => {
+    cy.fixture("authentication/forgotPasswordMessages").then(
+      (loadedMessages) => {
+        messages = loadedMessages.forgotPassword;
+      },
+    );
+  });
 
   beforeEach(() => {
-    cy.visit("/forgot-pass");
+    // @ts-ignore
+    cy.logoutByApi();
+    ForgotPasswordPage.visit();
   });
 
   context("When Entering Valid Credentials", () => {
     it("displays success message when using valid email", () => {
-      cy.get('input[name="credential"]').type(validUserEmail);
-      cy.get('button[type="submit"]').click();
+      ForgotPasswordPage.fillForm(validUserEmail);
+      ForgotPasswordPage.submitForm();
 
-      cy.get("p")
-        .contains(`${successMessage} ${validUserEmail}`)
+      pageElements
+        .successMessage(messages, validUserEmail)
         .should("be.visible");
     });
 
     it("displays success message when using valid username", () => {
-      cy.get('input[name="credential"]').type(validUsername);
-      cy.get('button[type="submit"]').click();
+      ForgotPasswordPage.fillForm(validUsername);
+      ForgotPasswordPage.submitForm();
 
-      cy.get("p")
-        .contains(`${successMessage} ${validUsername}`)
-        .should("be.visible");
+      pageElements.successMessage(messages, validUsername).should("be.visible");
     });
   });
 
   context("When Entering Invalid Credentials", () => {
     it("displays an error message when using invalid credentials", () => {
-      cy.get('input[name="credential"]').type(invalidCredential);
-      cy.get('button[type="submit"]').click();
+      ForgotPasswordPage.fillForm(invalidCredential);
+      ForgotPasswordPage.submitForm();
 
-      cy.get("div").contains(errorMessage).should("be.visible");
+      pageElements.errorMessage(messages).should("be.visible");
     });
   });
 });

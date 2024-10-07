@@ -47,7 +47,7 @@ describe("Signup Page Functionality", () => {
       pageElements.successDialogueContent(messages).should("be.visible");
 
       cy.get("button").contains("Close").click({ force: true });
-      cy.url().should("contain", "/login");
+      cy.url().should("contain", SignupPage.url);
     });
   });
 

@@ -15,6 +15,7 @@ export interface SignupMessages {
 }
 
 export const SignupPage = {
+  url: "/signup",
   elements: {
     usernameInput: () => cy.get('input[name="username"]'),
     emailInput: () => cy.get('input[name="email"]'),
@@ -31,7 +32,7 @@ export const SignupPage = {
   },
 
   visit(): void {
-    cy.visit("/signup");
+    cy.visit(this.url);
   },
 
   fillForm(data: { username: string; email: string; password: string }): void {

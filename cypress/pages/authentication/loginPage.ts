@@ -12,6 +12,8 @@ export interface LoginMessages {
 }
 
 export const LoginPage = {
+  url: "/login",
+
   elements: {
     usernameInput: () => cy.get('input[name="username"]'),
     passwordInput: () => cy.get('input[name="password"]'),
@@ -23,7 +25,7 @@ export const LoginPage = {
   },
 
   visit(): void {
-    cy.visit("/login");
+    cy.visit(this.url);
   },
 
   fillForm(data: { username: string; password: string }): void {
