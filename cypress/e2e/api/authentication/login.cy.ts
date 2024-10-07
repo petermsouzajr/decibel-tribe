@@ -1,5 +1,7 @@
 cy.request("POST", "/api/auth/login", {
+  // @ts-ignore
   username: validUsername,
+  // @ts-ignore
   password: validPassword,
 }).then((response) => {
   expect(response.status).to.eq(200);
@@ -9,6 +11,7 @@ cy.request("POST", "/api/auth/login", {
 cy.request({
   method: "POST",
   url: "/api/auth/login",
+  // @ts-ignore
   body: { username: invalidUsername, password: invalidPassword },
   failOnStatusCode: false,
 }).then((response) => {
@@ -19,6 +22,7 @@ cy.request({
 cy.request({
   method: "POST",
   url: "/api/auth/login",
+  // @ts-ignore
   body: { username: invalidUsername, password: invalidPassword },
   failOnStatusCode: false,
 }).then((response) => {

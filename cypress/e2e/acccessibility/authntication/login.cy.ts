@@ -29,8 +29,11 @@ describe("Login Page Accessibility", () => {
     });
 
     it("tab navigates through input fields and button", () => {
+      // @ts-ignore
       cy.get('input[name="username"]').tab();
+      // @ts-ignore
       cy.get('input[name="password"]').tab();
+      // @ts-ignore
       cy.get('button[type="submit"]').tab().click();
     });
 
