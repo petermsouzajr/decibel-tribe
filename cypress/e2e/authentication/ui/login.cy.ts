@@ -24,7 +24,7 @@ describe("Login Page Functionality", () => {
   };
 
   before(() => {
-    cy.fixture("login/uiMessages").then((loadedMessages) => {
+    cy.fixture("authentication/loginMessages").then((loadedMessages) => {
       messages = loadedMessages.login;
     });
   });

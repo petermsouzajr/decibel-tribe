@@ -27,7 +27,7 @@ describe("Signup Page Functionality", () => {
   };
 
   before(() => {
-    cy.fixture("signup/uiMessages").then((loadedMessages) => {
+    cy.fixture("authentication/signupMessages").then((loadedMessages) => {
       messages = loadedMessages.signup;
     });
   });

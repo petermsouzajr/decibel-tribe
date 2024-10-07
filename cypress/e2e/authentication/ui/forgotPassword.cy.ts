@@ -3,7 +3,7 @@ describe("Forgot Password Page Functionality", () => {
   const validUserEmail = Cypress.env("userEmail");
   const invalidCredential = "invalidUser";
   const errorMessage = "User not found";
-  const successMessage = "Verification email resent! Check your inbox at";
+  const successMessage = "Verification email sent! Check your inbox at";
 
   beforeEach(() => {
     cy.visit("/forgot-pass");
