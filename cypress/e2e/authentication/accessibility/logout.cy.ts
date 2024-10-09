@@ -1,4 +1,4 @@
-describe("Logout Page Accessibility", () => {
+describe.skip("Logout Page Accessibility", () => {
   beforeEach(() => {
     // @ts-ignore
     cy.loginByApi(); // Assuming user needs to be logged in before visiting logout

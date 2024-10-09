@@ -1,3 +1,7 @@
+Cypress.Commands.add("logoutByApi", () => {
+  cy.clearCookie("session");
+});
+
 Cypress.Commands.add(
   "loginByApi",
   (username = Cypress.env("username"), password = Cypress.env("password")) => {
@@ -19,7 +23,3 @@ Cypress.Commands.add(
     });
   },
 );
-
-Cypress.Commands.add("logoutByApi", () => {
-  cy.clearCookie("session");
-});

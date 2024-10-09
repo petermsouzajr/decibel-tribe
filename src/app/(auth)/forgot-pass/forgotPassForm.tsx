@@ -12,15 +12,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  loginSchema,
-  LoginValues,
-  resetPasswordSchema,
-  resetPasswordValues,
-} from "@/lib/validation";
+import { resetPasswordSchema, resetPasswordValues } from "@/lib/validation";
 import LoadingButton from "@/components/LoadingButton";
 import { resendVerification } from "./actions";
-import { clear } from "console";
 
 export default function ForgotPassForm() {
   const [error, setError] = useState<string>();

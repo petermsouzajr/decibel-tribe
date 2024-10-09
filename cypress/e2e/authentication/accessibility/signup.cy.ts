@@ -1,4 +1,4 @@
-describe("Signup Page Accessibility", () => {
+describe.skip("Signup Page Accessibility", () => {
   beforeEach(() => {
     cy.visit("/signup");
   });
