@@ -16,7 +16,9 @@
     "report:merge": "mochawesome-merge cypress/results/*.json > cypress/results/output.json && npm run report:generate",
     "report:generate": "qa-shadow-report cypress",
     "cypress": "npm run cypress:run",
-    "cypress:open": "cypress open"
+    "cypress:open": "cypress open",
+    "cypress:smoke": "cypress open --env grep=smoke,grepFilterSpecs=true",
+    "cypress:smoke:headless": "cypress run --env grep=smoke,grepFilterSpecs=true"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -68,6 +70,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@cypress/grep": "^4.1.0",
     "@testing-library/jest-dom": "^6.5.0",
     "@testing-library/react": "^14.2.0",
     "@types/node": "^20",

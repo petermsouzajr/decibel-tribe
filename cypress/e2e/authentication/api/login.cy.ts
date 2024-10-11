@@ -1,6 +1,6 @@
 import { LoginMessages } from "../../../pages/authentication/loginPage";
 
-describe("Login API Functionality", () => {
+describe.only("Login API Functionality", () => {
   let messages: LoginMessages;
 
   const validUsername = Cypress.env("username");

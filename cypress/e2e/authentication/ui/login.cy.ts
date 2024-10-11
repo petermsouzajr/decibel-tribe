@@ -4,8 +4,8 @@ import {
 } from "../../../pages/authentication/loginPage";
 
 const pageElements = LoginPage.elements;
-
-describe("Login Page Functionality", () => {
+// @ts-ignore
+describe("[Baron] Login Page Functionality [smoke]", () => {
   let messages: LoginMessages;
 
   const validUserData = {
