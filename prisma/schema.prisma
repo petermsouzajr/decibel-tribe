@@ -21,38 +21,138 @@ datasource db {
 }
 
 model User {
-  id                    String           @id @default(cuid())
-  username              String           @unique
+  id                    String                 @id @default(cuid())
+  username              String                 @unique
   displayName           String
-  email                 String?          @unique
+  email                 String?                @unique
   pendingEmail          String?
   passwordHash          String?
-  isVerified            Boolean          @default(false)
-  googleId              String?          @unique
+  isVerified            Boolean                @default(false)
+  googleId              String?                @unique
   avatarUrl             String?
   bio                   String?
+  age                   Int?
+  height                Float?
+  gender                Gender?
+  sexualOrientation     SexualOrientation?
+  latitude              Float?
+  longitude             Float?
+  datingPreferences     UserDatingPreferences?
+  photos                UserPhoto[]
+  swipesGiven           Swipe[]                @relation("SwipesGiven")
+  swipesReceived        Swipe[]                @relation("SwipesReceived")
+  matchesInitiated      Match[]                @relation("MatchesInitiated")
+  matchesReceived       Match[]                @relation("MatchesReceived")
   sessions              Session[]
   posts                 Post[]
-  following             Follow[]         @relation("Following")
-  followers             Follow[]         @relation("Followers")
+  following             Follow[]               @relation("Following")
+  followers             Follow[]               @relation("Followers")
   likes                 Like[]
   dislikes              Dislike[]
   bookmarks             Bookmark[]
   comments              Comment[]
-  receivedNotifications Notification[]   @relation("Recipient")
-  issuedNotifications   Notification[]   @relation("Issuer")
+  receivedNotifications Notification[]         @relation("Recipient")
+  issuedNotifications   Notification[]         @relation("Issuer")
   userInstruments       UserInstrument[]
   userSkills            UserSkill[]
-  events                Event[]          @relation("CreatedEvents")
+  events                Event[]                @relation("CreatedEvents")
   EventAttendee         EventAttendee[]
   userPreferences       UserPreferences?
   groups                GroupMember[]
-  ownedGroups           Group[]          @relation("GroupOwner")
+  ownedGroups           Group[]                @relation("GroupOwner")
+  EmailVerification     EmailVerification[]
 
-  createdAt         DateTime            @default(now())
-  EmailVerification EmailVerification[]
+  createdAt DateTime  @default(now())
+  Message   Message[]
 
   @@map("users")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  NON_BINARY
+  OTHER
+}
+
+enum SexualOrientation {
+  HETEROSEXUAL
+  HOMOSEXUAL
+  BISEXUAL
+  ASEXUAL
+  PANSEXUAL
+  OTHER
+}
+
+model UserDatingPreferences {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preferredGenders Gender[]
+  minAge           Int
+  maxAge           Int
+  maxDistanceKm    Int
+  minHeight        Float?
+  maxHeight        Float?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("user_dating_preferences")
+}
+
+model UserPhoto {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  url       String
+  isPrimary Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@map("user_photos")
+}
+
+model Swipe {
+  id         String         @id @default(cuid())
+  fromUserId String
+  toUserId   String
+  fromUser   User           @relation("SwipesGiven", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser     User           @relation("SwipesReceived", fields: [toUserId], references: [id], onDelete: Cascade)
+  direction  SwipeDirection
+  createdAt  DateTime       @default(now())
+
+  @@unique([fromUserId, toUserId])
+  @@map("swipes")
+}
+
+enum SwipeDirection {
+  LIKE
+  DISLIKE
+}
+
+model Match {
+  id        String    @id @default(cuid())
+  user1Id   String
+  user2Id   String
+  user1     User      @relation("MatchesInitiated", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2     User      @relation("MatchesReceived", fields: [user2Id], references: [id], onDelete: Cascade)
+  messages  Message[]
+  createdAt DateTime  @default(now())
+
+  @@unique([user1Id, user2Id])
+  @@map("matches")
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  matchId   String
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content   String
+  createdAt DateTime @default(now())
+
+  @@map("messages")
 }
 
 model Group {
