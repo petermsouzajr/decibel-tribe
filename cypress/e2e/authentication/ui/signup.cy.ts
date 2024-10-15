@@ -1,3 +1,4 @@
+import { LoginPage } from "../../../pages/authentication/loginPage";
 import {
   SignupMessages,
   SignupPage,
@@ -7,10 +8,11 @@ const pageElements = SignupPage.elements;
 
 describe("Signup Page Functionality", () => {
   let messages: SignupMessages;
+  const randomNumber = Math.floor(Math.random() * 1000000);
 
   const newUserData = {
-    username: "newUser",
-    email: "newUser@example.com",
+    username: `newUser${randomNumber}`,
+    email: `newUser${randomNumber}@example.com`,
     password: "ValidPassword123!",
   };
 
@@ -47,7 +49,7 @@ describe("Signup Page Functionality", () => {
       pageElements.successDialogueContent(messages).should("be.visible");
 
       cy.get("button").contains("Close").click({ force: true });
-      cy.url().should("contain", SignupPage.url);
+      cy.url().should("contain", LoginPage.url);
     });
   });
 

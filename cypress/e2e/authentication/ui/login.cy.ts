@@ -46,7 +46,7 @@ describe("[Baron] Login Page Functionality [smoke]", () => {
   });
 
   context("When Logging In With Invalid Credentials", () => {
-    it("displays an error message when using unregistered username", () => {
+    it("displays an error message when using unregistered username [C313433]", () => {
       LoginPage.fillForm(invalidUsernameData);
       LoginPage.submitForm();
 
