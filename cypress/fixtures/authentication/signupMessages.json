@@ -1,0 +1,19 @@
+{
+  "signup": {
+    "validationMessages": {
+      "required": "Required",
+      "emailAlreadyRegistered": "Email already registered",
+      "passwordLengthError": "Must be at least 8 characters"
+    },
+    "helperTexts": {
+      "passwordHelper": "Your password must be at least 8 characters long."
+    },
+    "successMessages": {
+      "signUpCompleteHeading": "Sign Up Complete",
+      "signUpCompleteMessage": "Signup complete! Please check your email for the account verification link."
+    },
+    "modalTexts": {
+      "closeButton": "Close"
+    }
+  }
+}

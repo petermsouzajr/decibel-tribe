@@ -27,7 +27,6 @@ export async function GET(
       return NextResponse.json({ error: "Group not found" }, { status: 404 });
     }
 
-    // Check if the user is a member of the group
     const isMember = await prisma.groupMember.findUnique({
       where: {
         userId_groupId: {
@@ -78,7 +77,6 @@ export async function DELETE(
       return NextResponse.json({ error: "Group not found" }, { status: 404 });
     }
 
-    // Ensure only the owner of the group can delete it
     if (group.ownerId !== user.id) {
       return NextResponse.json(
         { error: "Access denied. Only the group owner can delete this group." },
@@ -86,7 +84,6 @@ export async function DELETE(
       );
     }
 
-    // Delete group and associated members, posts, etc.
     await prisma.group.delete({
       where: { id: params.groupId },
     });

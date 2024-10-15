@@ -118,8 +118,11 @@ const EventRow: React.FC<EventRowProps> = ({
             <span className="font-bold text-red-500"> Cancelled</span>
           )}
         </div>
-        <div className="flex-shrink-0 text-right">
-          {formatTime(event.startTime)} {" to "} {formatTime(event.endTime)}
+        <div>
+          <div className="flex-shrink-0 text-right">{event.location}</div>
+          <div className="flex-shrink-0 text-right">
+            {formatTime(event.startTime)} {" to "} {formatTime(event.endTime)}
+          </div>
         </div>
       </div>
 
@@ -147,7 +150,7 @@ const EventRow: React.FC<EventRowProps> = ({
               (!isAttendee ? (
                 <Button
                   onClick={(e) => {
-                    e.stopPropagation(); // Suppress onRowClick for this button
+                    e.stopPropagation();
                     handleAddAttendee(event);
                   }}
                   className={cn("mt-4 h-10 bg-primary text-foreground")}
@@ -157,7 +160,7 @@ const EventRow: React.FC<EventRowProps> = ({
               ) : (
                 <Button
                   onClick={(e) => {
-                    e.stopPropagation(); // Suppress onRowClick for this button
+                    e.stopPropagation();
                     handleRemoveAttendee(event);
                   }}
                   className={cn("mt-4 h-10 bg-primary text-foreground")}

@@ -11,14 +11,14 @@ import StarterKit from "@tiptap/starter-kit";
 import { useDropzone } from "@uploadthing/react";
 import { ImageIcon, Loader2, X } from "lucide-react";
 import Image from "next/image";
-import { ClipboardEvent, useRef } from "react";
+import { ClipboardEvent, useEffect, useRef } from "react";
 import { useSubmitPostMutation } from "./mutations";
 import "./styles.css";
 import useMediaUpload, { Attachment } from "./useMediaUpload";
 
 interface PostEditorProps {
   onOpenChange: (open: boolean) => void;
-  selectedGroup: string | null; // New prop to receive the selected group
+  selectedGroup: string | null;
 }
 
 export default function PostEditor({
@@ -66,7 +66,7 @@ export default function PostEditor({
       {
         content: input,
         mediaIds: attachments.map((a) => a.mediaId).filter(Boolean) as string[],
-        groupId: selectedGroup, // Pass the selected group ID here
+        groupId: selectedGroup,
       } as { content: string; mediaIds: string[]; groupId: string | undefined },
       {
         onSuccess: () => {
@@ -82,7 +82,10 @@ export default function PostEditor({
     const files = Array.from(e.clipboardData.items)
       .filter((item) => item.kind === "file")
       .map((item) => item.getAsFile()) as File[];
-    startUpload(files);
+
+    if (files.length > 0) {
+      startUpload(files);
+    }
   }
 
   return (
@@ -208,6 +211,10 @@ function AttachmentPreview({
   onRemoveClick,
 }: AttachmentPreviewProps) {
   const src = URL.createObjectURL(file);
+
+  useEffect(() => {
+    return () => URL.revokeObjectURL(src);
+  }, [src]);
 
   return (
     <div

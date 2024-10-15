@@ -101,14 +101,20 @@ export function useUpdatePasswordMutation() {
     mutationFn: async ({
       currentPassword,
       newPassword,
+      isSettingPassword,
     }: {
       currentPassword: string;
       newPassword: string;
+      isSettingPassword: boolean;
     }) => {
+      const payload = isSettingPassword
+        ? { newPassword }
+        : { currentPassword, newPassword };
+
       const response = await fetch("/api/users/update-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPassword, newPassword }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {

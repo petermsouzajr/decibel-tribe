@@ -13,6 +13,7 @@ import {
   DialogContent,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { CalendarProps, EditState, Event } from "@/lib/types";
 import CalendarGrid from "./CalendarGrid";
@@ -38,8 +39,8 @@ const EventCalendar: React.FC<CalendarPropsWithUsername> = ({
   const [editStates, setEditStates] = useState<Record<number, EditState>>({});
   const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
   const [userInfo, setUserInfo] = useState<UserState>(null);
-  const [viewDate, setViewDate] = useState(currentDate); // New state to handle current displayed month
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false); // Control date picker modal
+  const [viewDate, setViewDate] = useState(currentDate);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   type User = {
@@ -62,7 +63,7 @@ const EventCalendar: React.FC<CalendarPropsWithUsername> = ({
     createdAt: Date;
   } | null;
 
-  const { user: loggedInUser } = useSession(); // Get the logged-in user info from context or custom hook
+  const { user: loggedInUser } = useSession();
 
   const handleDateInput = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedDate = new Date(event.target.value);
@@ -141,11 +142,9 @@ const EventCalendar: React.FC<CalendarPropsWithUsername> = ({
     setEditingIndex((prev) => (prev === index ? null : index));
   };
 
-  // Handlers for Next/Previous buttons
   const handleNextMonth = () => setViewDate(addMonths(viewDate, 1));
   const handlePreviousMonth = () => setViewDate(subMonths(viewDate, 1));
 
-  // Open/Close Date Picker
   const handleOpenDatePicker = () => setIsDatePickerOpen(true);
   const handleDateChange = (date: Date | null) => {
     if (date) setViewDate(date);
@@ -208,6 +207,7 @@ const EventCalendar: React.FC<CalendarPropsWithUsername> = ({
           <DialogContent>
             <div className="space-y-5">
               <DialogTitle>Events on {format(selectedDay!, "PP")}</DialogTitle>
+              <DialogDescription></DialogDescription>{" "}
               {selectedEvents.length > 0 ? (
                 selectedEvents.map((event, index) => (
                   <EventRow

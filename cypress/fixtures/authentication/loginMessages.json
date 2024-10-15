@@ -1,0 +1,10 @@
+{
+  "login": {
+    "validationMessages": {
+      "invalidCredentials": "Incorrect username or password"
+    },
+    "uiTexts": {
+      "headerTitle": "Tribe"
+    }
+  }
+}

@@ -2,6 +2,7 @@ import LoadingButton from "@/components/LoadingButton";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -62,9 +63,9 @@ export default function UpdateEmailDialog({
         <DialogHeader>
           <DialogTitle>Update Email</DialogTitle>
         </DialogHeader>
+        <DialogDescription></DialogDescription>{" "}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
-            {/* Current Password Field */}
             <FormField
               control={form.control}
               name="currentPassword"
@@ -83,7 +84,6 @@ export default function UpdateEmailDialog({
               )}
             />
 
-            {/* New Email Field */}
             <FormField
               control={form.control}
               name="newEmail"
@@ -102,7 +102,6 @@ export default function UpdateEmailDialog({
               )}
             />
 
-            {/* Submit Button */}
             <DialogFooter>
               <LoadingButton type="submit" loading={false}>
                 Update Email

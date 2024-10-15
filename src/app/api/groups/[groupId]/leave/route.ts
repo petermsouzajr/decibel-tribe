@@ -15,7 +15,6 @@ export async function DELETE(
 
     const { groupId } = params;
 
-    // Check if the user is a member
     const groupMember = await prisma.groupMember.findUnique({
       where: { userId_groupId: { userId: user.id, groupId } },
     });
@@ -27,7 +26,6 @@ export async function DELETE(
       );
     }
 
-    // Prevent the owner from leaving the group
     const group = await prisma.group.findUnique({
       where: { id: groupId },
       select: { ownerId: true },
@@ -43,7 +41,6 @@ export async function DELETE(
       );
     }
 
-    // Remove the user from the group
     await prisma.groupMember.delete({
       where: { userId_groupId: { userId: user.id, groupId } },
     });

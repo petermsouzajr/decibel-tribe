@@ -10,7 +10,7 @@ interface Group {
   id: string;
   name: string;
   description?: string;
-  acceptedInvite: boolean; // Ensure this field is returned from the API
+  acceptedInvite: boolean;
 }
 
 export default function GroupList() {

@@ -21,10 +21,10 @@ export default function ForYouFeed() {
     queryFn: ({ pageParam }) =>
       kyInstance
         .get(
-          "/api/events/for-you", // Adjust API endpoint accordingly
+          "/api/events/for-you",
           pageParam ? { searchParams: { cursor: pageParam } } : {},
         )
-        .json<EventsPage>(), // Define the EventsPage type
+        .json<EventsPage>(),
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
   });

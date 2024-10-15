@@ -10,8 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import DeletePostDialog from "@/components/posts/DeletePostDialog";
-import { MoreHorizontal, Trash2 } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Group {
@@ -31,8 +30,8 @@ export default function PostModalGroupDropdown({
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroup, setSelectedGroupState] = useState<string>("Public");
   const [loading, setLoading] = useState<boolean>(true);
+  const [isOpen, setIsOpen] = useState(false);
 
-  // Fetch groups when the user is available
   useEffect(() => {
     const fetchGroups = async () => {
       try {
@@ -58,22 +57,22 @@ export default function PostModalGroupDropdown({
       const currentGroup = groups.find((group) => group.id === groupIdFromPath);
       if (currentGroup) {
         setSelectedGroupState(currentGroup.name);
-        setSelectedGroup(currentGroup.id); // Set the selected group ID
+        setSelectedGroup(currentGroup.id);
       }
     } else {
       setSelectedGroupState("Public");
-      setSelectedGroup(null); // No group, set to null
+      setSelectedGroup(null);
     }
   }, [pathname, groups, setSelectedGroup]);
 
   if (loading) {
-    return <p>Loading groups...</p>; // Or show a loading spinner
+    return <p>Loading groups...</p>;
   }
 
   return (
     <div className="flex items-center justify-start">
       <span className="mr-2 text-lg font-medium">New Post in:</span>
-      <DropdownMenu>
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <Button
             size="sm"
@@ -81,15 +80,28 @@ export default function PostModalGroupDropdown({
             className="flex items-center justify-between space-x-2"
           >
             <span className="text-base">{selectedGroup}</span>
-            <MoreHorizontal className="h-4 w-4" />
+            {isOpen ? "" : <ChevronDown />}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-48">
-          <DropdownMenuItem onClick={() => setSelectedGroupState("Public")}>
+        <DropdownMenuContent className="text-md w-48">
+          <DropdownMenuItem
+            className="text-md cursor-pointer"
+            onClick={() => {
+              setSelectedGroupState("Public");
+              setSelectedGroup(null);
+            }}
+          >
             Public
           </DropdownMenuItem>
+          {groups.length > 0 && (
+            <div className="flex justify-center px-2 py-1 text-muted-foreground">
+              Your Groups
+            </div>
+          )}
+
           {groups.map((group) => (
             <DropdownMenuItem
+              className="text-md cursor-pointer"
               key={group.id}
               onClick={() => {
                 setSelectedGroupState(group.name);

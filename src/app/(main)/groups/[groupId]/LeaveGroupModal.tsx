@@ -1,5 +1,3 @@
-// src/components/groups/LeaveGroupModal.tsx
-
 "use client";
 
 import { useState } from "react";
@@ -9,9 +7,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input"; // Optional: For extra confirmation
 import { useRouter } from "next/navigation";
 import kyInstance from "@/lib/ky";
 
@@ -34,12 +32,10 @@ export default function LeaveGroupModal({
   const handleLeave = async () => {
     try {
       await kyInstance.delete(`/api/groups/${groupId}/leave`);
-      // toast.success("You have left the group.");
       onOpenChange(false);
-      router.push("/groups"); // Redirect to groups page after leaving
+      router.push("/groups");
     } catch (error) {
       console.error("Error leaving group:", error);
-      // toast.error("Failed to leave the group.");
     }
   };
 
@@ -49,10 +45,10 @@ export default function LeaveGroupModal({
         <DialogHeader>
           <DialogTitle>Leave Group</DialogTitle>
         </DialogHeader>
+        <DialogDescription></DialogDescription>{" "}
         <p className="text-sm text-muted-foreground">
           Are you sure you want to leave the group <strong>{groupName}</strong>?
         </p>
-
         <DialogFooter className="mt-4 flex justify-end space-x-2">
           <Button variant="secondary" onClick={() => onOpenChange(false)}>
             Cancel

@@ -2,7 +2,6 @@
 
 import { lucia } from "@/auth";
 import prisma from "@/lib/prisma";
-import sendVerificationEmail from "@/lib/sendEmail";
 import { loginSchema, LoginValues } from "@/lib/validation";
 import { verify } from "@node-rs/argon2";
 import { isRedirectError } from "next/dist/client/components/redirect";
@@ -12,10 +11,12 @@ import { resendVerificationEmail } from "../sendVerification";
 
 export async function login(
   credentials: LoginValues,
-): Promise<{ error: string }> {
+  isTestEnvironment: boolean = false,
+): Promise<{ error?: string; sessionCookie?: any }> {
   try {
     const { username, password } = loginSchema.parse(credentials);
-
+    console.log("username", username);
+    console.log("password", password);
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [
@@ -70,6 +71,10 @@ export async function login(
       sessionCookie.value,
       sessionCookie.attributes,
     );
+
+    if (isTestEnvironment) {
+      return { sessionCookie };
+    }
 
     return redirect("/");
   } catch (error) {

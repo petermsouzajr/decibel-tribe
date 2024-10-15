@@ -23,7 +23,7 @@ export async function submitPost(input: {
       attachments: {
         connect: mediaIds.map((id) => ({ id })),
       },
-      ...(input.groupId && { groupId: input.groupId }), // Conditionally include groupId
+      ...(input.groupId && { groupId: input.groupId }),
     },
     include: getPostDataInclude(user.id),
   });

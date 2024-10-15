@@ -5,6 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogClose,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { ConfirmDeletionModalProps } from "@/lib/types";
 import { FormButton } from "@/components/ui/form";
@@ -23,6 +24,7 @@ const ConfirmDeletionModal: React.FC<ConfirmDeletionModalProps> = ({
           <DialogTitle>{title}</DialogTitle>
           <DialogClose onClick={onCancel} />
         </DialogHeader>
+        <DialogDescription></DialogDescription>{" "}
         <div className="p-4 text-center">{message}</div>
         <div className="flex justify-end space-x-4">
           <FormButton onClick={onCancel} variant="secondary">

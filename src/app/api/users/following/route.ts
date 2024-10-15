@@ -18,7 +18,6 @@ export async function GET(req: NextRequest) {
     let userIdToFetch = loggedInUser.id;
 
     if (usernameParam) {
-      // Find user by username
       const user = await prisma.user.findUnique({
         where: { username: usernameParam },
         select: { id: true },

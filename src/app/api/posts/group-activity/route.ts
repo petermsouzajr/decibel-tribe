@@ -1,5 +1,3 @@
-// src/app/api/posts/group-activity/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
@@ -16,14 +14,12 @@ export async function GET(req: NextRequest) {
     const pageSize = 10;
     const cursor = req.nextUrl.searchParams.get("cursor");
 
-    // Fetch group IDs the user belongs to
     const groupMemberships = await prisma.groupMember.findMany({
       where: { userId: user.id, acceptedInvite: true },
       select: { groupId: true },
     });
     const groupIds = groupMemberships.map((membership) => membership.groupId);
 
-    // Fetch posts from these groups
     const posts = await prisma.post.findMany({
       where: {
         groupId: { in: groupIds },
@@ -33,7 +29,7 @@ export async function GET(req: NextRequest) {
         Group: {
           select: {
             id: true,
-            name: true, // Include the group name
+            name: true,
           },
         },
       },

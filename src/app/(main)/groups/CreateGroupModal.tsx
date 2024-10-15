@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import kyInstance from "@/lib/ky";
 import { Button } from "@/components/ui/button";
@@ -16,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -25,7 +25,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/components/ui/use-toast";
 
-// Define a schema for form validation using Zod
 const createGroupSchema = z.object({
   name: z.string().min(1, "Group name is required"),
   description: z.string().optional(),
@@ -106,9 +105,9 @@ export default function CreateGroupModal({
         <DialogHeader>
           <DialogTitle>Create New Group</DialogTitle>
         </DialogHeader>
+        <DialogDescription></DialogDescription>{" "}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
-            {/* Group Name Field */}
             <FormField
               control={form.control}
               name="name"
@@ -123,7 +122,6 @@ export default function CreateGroupModal({
               )}
             />
 
-            {/* Group Description Field */}
             <FormField
               control={form.control}
               name="description"
@@ -138,7 +136,6 @@ export default function CreateGroupModal({
               )}
             />
 
-            {/* Submit Button */}
             <DialogFooter>
               <Button
                 type="submit"

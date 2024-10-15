@@ -2,7 +2,6 @@ import prisma from "@/lib/prisma";
 
 export async function GET(req: Request) {
   try {
-    // Ensure authorization header is correct
     const authHeader = req.headers.get("Authorization");
 
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -12,21 +11,19 @@ export async function GET(req: Request) {
     }
     const currentDate = new Date();
 
-    // Find users who are not verified and were created more than two weeks ago
     const unverifiedUsers = await prisma.user.findMany({
       where: {
-        isVerified: false, // Assuming isVerified tracks email verification status
-        googleId: null, // User has no Google ID
+        isVerified: false,
+        googleId: null,
         createdAt: {
-          lte: new Date(currentDate.getTime() - 1000 * 60 * 60 * 24 * 14), // Two weeks ago
+          lte: new Date(currentDate.getTime() - 1000 * 60 * 60 * 24 * 14),
         },
       },
       select: {
-        id: true, // Only select what you need for deletion
+        id: true,
       },
     });
 
-    // Delete unverified users
     if (unverifiedUsers.length > 0) {
       await prisma.user.deleteMany({
         where: {
@@ -37,16 +34,6 @@ export async function GET(req: Request) {
       });
     }
 
-    // // Return a success response
-    // return new Response(
-    //   JSON.stringify({
-    //     message: `${unverifiedUsers.length} unverified user(s) deleted.`,
-    //   }),
-    //   { status: 200 },
-    // );
-    ////////end cron1
-    // const authHeader = req.headers.get("Authorization");
-
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
       return new Response(JSON.stringify({ message: "Unauthorized" }), {
         status: 401,
@@ -56,11 +43,11 @@ export async function GET(req: Request) {
     const expiredVerifications = await prisma.emailVerification.findMany({
       where: {
         expiresAt: {
-          lte: new Date(), // Expiration date is before the current date
+          lte: new Date(),
         },
       },
       select: {
-        id: true, // Only select what you need for deletion
+        id: true,
       },
     });
 

@@ -5,9 +5,11 @@ export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
 
-    const { currentPassword, newPassword } = data;
+    const { currentPassword, newPassword, isSettingPassword } = data;
 
-    const result = await updateUserPassword({ currentPassword, newPassword });
+    const result = isSettingPassword
+      ? await updateUserPassword({ newPassword })
+      : await updateUserPassword({ currentPassword, newPassword });
 
     return NextResponse.json(result);
   } catch (error) {

@@ -1,5 +1,3 @@
-// src/app/api/groups/my-groups/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";

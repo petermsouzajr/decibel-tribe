@@ -27,10 +27,10 @@ import { useRouter } from "next/navigation";
 
 export default function SignUpForm() {
   const [error, setError] = useState<string>();
-  const [isModalOpen, setIsModalOpen] = useState(false); // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [isPending, startTransition] = useTransition();
-  const router = useRouter(); // Initialize useRouter for client-side navigation
+  const router = useRouter();
 
   const form = useForm<SignUpValues>({
     resolver: zodResolver(signUpSchema),
@@ -55,7 +55,7 @@ export default function SignUpForm() {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    router.push("/"); // Redirect to home page after modal closes
+    router.push("/");
   };
 
   return (

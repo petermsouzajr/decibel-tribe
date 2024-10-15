@@ -4,6 +4,7 @@ import LoadingButton from "@/components/LoadingButton";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -101,6 +102,10 @@ const getCustomStyles = (theme: string | undefined) => ({
       color: "hsl(var(--primary-foreground))",
     },
   }),
+  input: (provided: CSSObjectWithLabel) => ({
+    ...provided,
+    color: "hsl(var(--foreground))",
+  }),
 });
 
 const instrumentOptions = instrumentList.map((instrument) => ({
@@ -149,14 +154,14 @@ export default function EditProfileDialog({
 
         if (data?.calendarPreference) {
           setDefaultVisibility(data.calendarPreference);
-          form.setValue("visibility", data.calendarPreference); // Set form visibility value
+          form.setValue("visibility", data.calendarPreference);
         } else {
           setDefaultVisibility("PRIVATE");
         }
       } catch (error) {
         console.error("Error fetching user calendar preference:", error);
         setDefaultVisibility("PRIVATE");
-        form.setValue("visibility", "PRIVATE"); // Default to PRIVATE if error
+        form.setValue("visibility", "PRIVATE");
       }
     };
 
@@ -199,6 +204,7 @@ export default function EditProfileDialog({
         <DialogHeader>
           <DialogTitle>Edit profile</DialogTitle>
         </DialogHeader>
+        <DialogDescription></DialogDescription>{" "}
         <div className="space-y-1.5">
           <Label>Avatar</Label>
           <AvatarInput

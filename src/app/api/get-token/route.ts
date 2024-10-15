@@ -11,9 +11,9 @@ export async function GET() {
 
     const currentDate = new Date();
 
-    const expirationTime = Math.floor(currentDate.getTime() / 1000) + 60 * 60; // 1 hour later
+    const expirationTime = Math.floor(currentDate.getTime() / 1000) + 60 * 60;
 
-    const issuedAt = Math.floor(currentDate.getTime() / 1000) - 60; // 1 minute before
+    const issuedAt = Math.floor(currentDate.getTime() / 1000) - 60;
 
     const token = streamServerClient.createToken(
       user.id,

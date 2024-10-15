@@ -58,9 +58,9 @@ export default function EventFormPage(event: any) {
       startTime: event?.startTime || "",
       endTime: event?.endTime || "",
       performers:
-        event?.performers?.length > 0
+        event?.performers && event?.performers.length > 0
           ? event.performers
-          : Array(performerCount).fill(""),
+          : [""],
       status: event?.status,
       visibility: event.visibility || defaultVisibility,
       isCancelled: event?.isCancelled || false,
@@ -71,7 +71,6 @@ export default function EventFormPage(event: any) {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
-    // Validate using the correct schema
     const parsedData = createEventSchema.safeParse(data);
     if (!parsedData.success) {
       setError("Validation error occurred");
@@ -124,30 +123,30 @@ export default function EventFormPage(event: any) {
       try {
         const response = await fetch(`/api/users/preferences`, {
           method: "GET",
-          credentials: "include", // Include cookies in the request
+          credentials: "include",
         });
         const data = await response.json();
         if (data?.calendarPreference) {
           setDefaultVisibility(data.calendarPreference);
-          form.setValue("visibility", data.calendarPreference); // Set form value based on preference
+          form.setValue("visibility", data.calendarPreference);
         } else {
           setDefaultVisibility("PRIVATE");
         }
       } catch (error) {
         console.error("Error fetching user calendar preference:", error);
         setDefaultVisibility("PRIVATE");
-        form.setValue("visibility", "PRIVATE"); // Default to PRIVATE if error
+        form.setValue("visibility", "PRIVATE");
       }
     };
 
     fetchUserCalendarPreference();
 
     if (eventId) {
-      setLoadingStatus("pending"); // Start loading
+      setLoadingStatus("pending");
 
       fetch(`/api/events/${eventId}`, {
         method: "GET",
-        credentials: "include", // Include cookies in the request
+        credentials: "include",
       })
         .then((response) => {
           if (!response.ok) {
@@ -171,11 +170,11 @@ export default function EventFormPage(event: any) {
             isCancelled: data.isCancelled || false,
           });
           setPerformerCount(data.performers.length || 1);
-          setLoadingStatus("complete"); // Finish loading
+          setLoadingStatus("complete");
         })
         .catch((error) => {
           console.error("Failed to fetch event data:", error);
-          setLoadingStatus("complete"); // Finish loading
+          setLoadingStatus("complete");
         });
     }
   }, [eventId, form, defaultVisibility]);
@@ -199,7 +198,7 @@ export default function EventFormPage(event: any) {
   };
 
   if (loadingStatus === "pending") {
-    return <PostsLoadingSkeleton />; // Render loading skeleton
+    return <PostsLoadingSkeleton />;
   }
   return (
     <div className="container max-w-xl p-4">
@@ -333,7 +332,11 @@ export default function EventFormPage(event: any) {
                 <FormItem>
                   <FormLabel>Performer {index + 1}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Performer" {...field} />
+                    <Input
+                      placeholder="Performer"
+                      {...field}
+                      value={field.value || ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

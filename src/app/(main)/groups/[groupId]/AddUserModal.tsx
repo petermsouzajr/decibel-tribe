@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -80,7 +81,6 @@ export default function AddUserModal({
   });
 
   const handleSubmit = async (values: SearchUserForm) => {
-    // Fetch users based on the search query
     await refetch();
   };
 
@@ -92,16 +92,13 @@ export default function AddUserModal({
         json: { userId: selectedUser.id },
       });
 
-      // Optionally, show a success message or update the UI accordingly
       toast({
         description: `User ${selectedUser.username} invited to the group.`,
       });
       onOpenChange(false);
       form.reset({ query: "" });
-      // You might want to refresh the group members list here
     } catch (error) {
       console.error("Error adding user to group:", error);
-      // Optionally, show an error message to the user
     }
   };
 
@@ -111,6 +108,7 @@ export default function AddUserModal({
         <DialogHeader>
           <DialogTitle>Add User to Group</DialogTitle>
         </DialogHeader>
+        <DialogDescription></DialogDescription>{" "}
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
@@ -129,7 +127,7 @@ export default function AddUserModal({
                         {...field}
                         onChange={(e) => {
                           field.onChange(e);
-                          setSelectedUser(null); // Reset selected user on new search
+                          setSelectedUser(null);
                         }}
                       />
                       <SearchIcon className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -146,8 +144,6 @@ export default function AddUserModal({
             </div>
           </form>
         </Form>
-
-        {/* Display search results */}
         {searchResults && searchResults.users.length > 0 && (
           <div className="mt-4 space-y-2">
             {searchResults.users.map((user) => (
@@ -169,7 +165,6 @@ export default function AddUserModal({
             ))}
           </div>
         )}
-
         <DialogFooter className="flex-row justify-end space-x-4">
           <Button variant="secondary" onClick={() => onOpenChange(false)}>
             Cancel

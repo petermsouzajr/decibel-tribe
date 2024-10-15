@@ -33,7 +33,6 @@ export type LoginValues = z.infer<typeof loginSchema>;
 export const createPostSchema = z.object({
   content: z.string().min(0),
   mediaIds: z.array(z.string()),
-  // mediaIds: z.array(z.string()).max(5, "Cannot have more than 5 attachments"),
 });
 
 export const updateUserProfileSchema = z.object({
@@ -57,15 +56,16 @@ export type UpdateEmailValues = z.infer<typeof updateEmailSchema>;
 
 export const changePasswordSchema = z
   .object({
-    currentPassword: z.string().min(1, "Current password is required"),
+    currentPassword: z.string().optional(),
     newPassword: z
       .string()
       .min(8, "Password must be at least 8 characters long"),
     confirmPassword: z.string(),
+    isSettingPassword: z.boolean(),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
     message: "Passwords do not match",
-    path: ["confirmPassword"], // Field to display error for
+    path: ["confirmPassword"],
   });
 
 export type ChangePasswordValues = z.infer<typeof changePasswordSchema>;
@@ -90,7 +90,8 @@ export const createEventSchema = z.object({
   when: z.preprocess(
     (arg) => (typeof arg === "string" ? new Date(arg) : arg),
     z.date().min(new Date(new Date().setHours(0, 0, 0, 0)), {
-      message: "Date must be today or in the future",
+      message:
+        "Can not create events in the past, date must be today or in the future",
     }),
   ),
   startTime: z.string().min(1, { message: "Start time is required" }),

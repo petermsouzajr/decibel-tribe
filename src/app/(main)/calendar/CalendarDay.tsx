@@ -7,10 +7,6 @@ const CalendarDay: React.FC<CalendarDayProps> = ({ day, events, onClick }) => {
     isSameDay(event.when, day),
   );
 
-  const formatTime = (time: string) => {
-    return time ? format(parse(time, "HH:mm", new Date()), "hh:mm a") : "N/A";
-  };
-
   return (
     <div
       className={`cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground ${

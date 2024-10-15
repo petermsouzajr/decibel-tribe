@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,7 +12,6 @@ export async function POST(req: NextRequest) {
 
     const { name, description } = await req.json();
 
-    // Validate group name (e.g., uniqueness, length)
     if (!name || name.trim().length < 3) {
       return NextResponse.json(
         { error: "Group name must be at least 3 characters long." },
@@ -21,7 +19,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create the new group
     const newGroup = await prisma.group.create({
       data: {
         name,
@@ -30,7 +27,7 @@ export async function POST(req: NextRequest) {
         members: {
           create: {
             userId: loggedInUser.id,
-            role: "ADMIN", // Owner is also an admin
+            role: "ADMIN",
             acceptedInvite: true,
           },
         },

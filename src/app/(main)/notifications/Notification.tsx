@@ -1,12 +1,10 @@
 import FollowButton from "@/components/FollowButton";
-import Linkify from "@/components/Linkify";
 import UserAvatar from "@/components/UserAvatar";
 import { NotificationData } from "@/lib/types";
-import { cn, formatRelativeDate } from "@/lib/utils";
+import { formatRelativeDate } from "@/lib/utils";
 import { NotificationType } from "@prisma/client";
 import {
   CalendarDays,
-  Heart,
   MessageCircle,
   ThumbsDown,
   ThumbsUp,

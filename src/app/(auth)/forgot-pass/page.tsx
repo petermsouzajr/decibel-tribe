@@ -1,21 +1,6 @@
-import { useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { resendVerificationEmail } from "../sendVerification";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { loginSchema, LoginValues } from "@/lib/validation";
 import loginImage from "@/assets/login-image.jpg";
 import Image from "next/image";
 import Link from "next/link";
-import LoadingButton from "@/components/LoadingButton";
 import ForgotPassForm from "./forgotPassForm";
 
 export default function Page() {

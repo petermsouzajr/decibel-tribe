@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
         createdBy: {
           followers: {
             some: {
-              followerId: user.id, // Only events from users followed by logged-in user
+              followerId: user.id,
             },
           },
         },

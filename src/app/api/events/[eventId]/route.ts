@@ -12,7 +12,6 @@ export async function GET(
 
     const eventId = params.eventId;
 
-    // Fetch the event using the ID
     const event = await prisma.event.findUnique({
       where: {
         id: eventId,
@@ -24,7 +23,6 @@ export async function GET(
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
-    // Check if the user is authorized to view this event
     if (event.status === "DRAFT" && event.createdById !== loggedInUser?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
@@ -110,7 +108,6 @@ export async function PUT(
 
     const eventId = params.eventId;
 
-    // Fetch the event using the ID
     const event = await prisma.event.findUnique({
       where: {
         id: eventId,
@@ -121,12 +118,10 @@ export async function PUT(
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
-    // Check if the user is authorized to update this event
     if (event.createdById !== loggedInUser?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    // Extract data from the request body
     const {
       title,
       location,
@@ -144,7 +139,6 @@ export async function PUT(
     const wasCancelled = event.isCancelled;
     const isNowCancelled = isCancelled;
 
-    // Update the event
     const updatedEvent = await prisma.event.update({
       where: { id: eventId },
       data: {
@@ -167,13 +161,11 @@ export async function PUT(
         where: { eventId },
       });
 
-      // Prepare notifications for all attendees except the event creator
       const notifications = eventAttendees
         .filter((attendee) => attendee.userId !== event.createdById)
         .map((attendee) =>
           prisma.notification.upsert({
             where: {
-              // Use a compound unique key (you'll need a unique constraint in the schema) or a surrogate ID
               recipientId_eventId_type: {
                 recipientId: attendee.userId,
                 eventId: event.id,
@@ -181,16 +173,15 @@ export async function PUT(
               },
             },
             create: {
-              issuerId: event.createdById, // The event creator
-              recipientId: attendee.userId, // Attendee being notified
-              eventId: event.id, // Event ID for the notification
-              type: "EVENT_CANCELLED", // Notification type
+              issuerId: event.createdById,
+              recipientId: attendee.userId,
+              eventId: event.id,
+              type: "EVENT_CANCELLED",
             },
-            update: {}, // If the notification already exists, no changes needed (you can also set a new field like `read: false`)
+            update: {},
           }),
         );
 
-      // Run the upsert notifications in a single transaction
       await prisma.$transaction(notifications);
     }
 

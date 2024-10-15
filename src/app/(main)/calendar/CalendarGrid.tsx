@@ -14,7 +14,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleDayClick = (day: Date, events: Event[]) => {
-    onSelectDay(day, events); // This will be passed down to CalendarDay
+    onSelectDay(day, events);
   };
 
   const firstDayOfMonth = startOfMonth(currentDate);

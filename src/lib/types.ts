@@ -63,7 +63,7 @@ export type LoggedInUser = {
   avatarUrl: string | null;
   bio: string | null;
   createdAt: Date;
-  googleId?: string; // Example of additional fields
+  googleId?: string;
 };
 
 export function getEventDataInclude(loggedInUserId: string) {
@@ -193,7 +193,7 @@ export interface CommentsPage {
 
 export const notificationsInclude = {
   issuer: {
-    select: getUserDataSelect("issuerUserId"), // Assuming issuerUserId is how you can access the issuer's user ID contextually
+    select: getUserDataSelect("issuerUserId"),
   },
   post: {
     select: {
@@ -301,8 +301,8 @@ export interface ConfirmDeletionModalProps {
   isOpen: boolean;
   onConfirm: () => void;
   onCancel: () => void;
-  title: string; // Optional: Add title for dynamic header content
-  message: string; // Optional: Add message to customize the displayed text
+  title: string;
+  message: string;
 }
 
 export interface EditState {

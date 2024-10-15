@@ -1,10 +1,25 @@
 "use server";
 
-import { lucia, validateRequest } from "@/auth";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import {
+  lucia as defaultLucia,
+  validateRequest as defaultValidateRequest,
+} from "@/auth";
+import { cookies as defaultCookies } from "next/headers";
+import { redirect as defaultRedirect } from "next/navigation";
 
-export async function logout() {
+export async function logout(dependencies?: {
+  lucia?: typeof defaultLucia;
+  validateRequest?: typeof defaultValidateRequest;
+  cookies?: typeof defaultCookies;
+  redirect?: typeof defaultRedirect;
+}) {
+  const {
+    lucia = defaultLucia,
+    validateRequest = defaultValidateRequest,
+    cookies = defaultCookies,
+    redirect = defaultRedirect,
+  } = dependencies || {};
+
   const { session } = await validateRequest();
 
   if (!session) {
