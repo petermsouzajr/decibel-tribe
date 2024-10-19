@@ -1,4 +1,5 @@
 const { PrismaClient, GroupRole, NotificationType } = require("@prisma/client");
+const dotenv = require("dotenv");
 const prisma = new PrismaClient();
 const faker = require("@faker-js/faker").faker;
 const yargs = require("yargs/yargs");
@@ -11,10 +12,13 @@ const { StreamChat } = require("stream-chat");
 
 const cypressEnvPath = path.resolve(__dirname, "../cypress.env.json");
 const cypressEnv = JSON.parse(fs.readFileSync(cypressEnvPath, "utf-8"));
+const envPath = path.resolve(__dirname, "../.env");
+dotenv.config({ path: envPath });
+
+const streamKey = process.env.NEXT_PUBLIC_STREAM_KEY;
+const streamSecret = process.env.STREAM_SECRET;
 
 const userQuantity = 1;
-const password = "Password1!";
-const mediaTypes = ["IMAGE", "VIDEO"];
 
 const random = (min: number, max: number) => faker.number.int({ min, max });
 
@@ -46,10 +50,7 @@ const accountDataGenerator = (
 const deleteNonExistentUsersFromStreamChat = async () => {
   try {
     // Initialize StreamChat client
-    const client = StreamChat.getInstance(
-      "uc9cbnbm2pug",
-      "svh5e63mqqkq9gwp9zdd5gnmcyqtgrhkxejmbr6sgrraph9v56v2n8pdh5yds4nx",
-    );
+    const client = StreamChat.getInstance(streamKey, streamSecret);
 
     // Fetch all users from the database
     const dbUsers = await prisma.user.findMany({ select: { id: true } });
@@ -88,10 +89,7 @@ const deleteNonExistentUsersFromStreamChat = async () => {
   }
 };
 
-const streamChatClient = StreamChat.getInstance(
-  "uc9cbnbm2pug",
-  "svh5e63mqqkq9gwp9zdd5gnmcyqtgrhkxejmbr6sgrraph9v56v2n8pdh5yds4nx",
-);
+const streamChatClient = StreamChat.getInstance(streamKey, streamSecret);
 
 interface TestUserData {
   quantityOfEachUser: number;
