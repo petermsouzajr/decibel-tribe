@@ -1,47 +1,18 @@
 const { PrismaClient, GroupRole, NotificationType } = require("@prisma/client");
+const prisma = new PrismaClient();
 const faker = require("@faker-js/faker").faker;
 const yargs = require("yargs/yargs");
 const { hideBin } = require("yargs/helpers");
 const { hash } = require("argon2");
 const Prisma = require("@prisma/client");
-const prisma = new PrismaClient();
+const fs = require("fs");
+const path = require("path");
+const { StreamChat } = require("stream-chat");
 
-// prettier-ignore
-const userPermissions: any = {
-  userVerified:               { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userUnverified:             { canPost: false, canComment: false, canLike: false, canDislike: false, canBookmark: false, canFollow: false },
-  userGroupOwner:             { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userGroupInviteSent:        { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userEventNotifications:     { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userNoPosts:                { canPost: false, canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userNoComments:             { canPost: true,  canComment: false, canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userManyPosts:              { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userManyComments:           { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userManyLikes:              { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userManyDislikes:           { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userManyBookmarks:          { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userManyFollowers:          { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userManyFollowing:          { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userManyNotifications:      { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userNoFollowers:            { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: false },
-  userNoFollowing:            { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: false, canFollow: true  },
-  userEventAttendee:          { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userManyEventAttendees:     { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userEventCreator:           { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userEventCancelled:         { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userManyGroupMemberships:   { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userNoGroupMemberships:     { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userGroupAdmin:             { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userPendingInvite:          { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userGoogleLogin:            { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userWithPendingEmail:       { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userWithEmailVerification:  { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userAfollowingUserB:        { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userBfollowingUserA:        { canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-  userAandBfollowingEachOther:{ canPost: true,  canComment: true,  canLike: true,  canDislike: true,  canBookmark: true,  canFollow: true  },
-};
+const cypressEnvPath = path.resolve(__dirname, "../cypress.env.json");
+const cypressEnv = JSON.parse(fs.readFileSync(cypressEnvPath, "utf-8"));
 
-const userQuantity = 2;
+const userQuantity = 1;
 const password = "Password1!";
 const mediaTypes = ["IMAGE", "VIDEO"];
 
@@ -72,97 +43,80 @@ const accountDataGenerator = (
   return Number(value);
 };
 
-// SeedOptions Interface
-interface SeedOptions {
-  userTypes: Record<string, number>;
-  accountData: Record<string, number | string>;
+const deleteNonExistentUsersFromStreamChat = async () => {
+  try {
+    // Initialize StreamChat client
+    const client = StreamChat.getInstance(
+      "uc9cbnbm2pug",
+      "svh5e63mqqkq9gwp9zdd5gnmcyqtgrhkxejmbr6sgrraph9v56v2n8pdh5yds4nx",
+    );
+
+    // Fetch all users from the database
+    const dbUsers = await prisma.user.findMany({ select: { id: true } });
+    const dbUserIds = dbUsers.map((user: { id: any }) => user.id);
+
+    // Fetch all users from StreamChat
+    const streamUsers = await client.queryUsers({ limit: 1000 });
+    const streamUserIds = streamUsers.users.map((user: { id: any }) => user.id);
+
+    // Find users that are in StreamChat but not in the database
+    const usersToDelete = streamUserIds.filter(
+      (userId: any) => !dbUserIds.includes(userId),
+    );
+
+    // Delete users from StreamChat
+    for (const userId of usersToDelete) {
+      try {
+        await client.deleteUser(userId, {
+          hardDelete: true, // Permanently deletes the user
+        });
+        // console.log(`Deleted user from StreamChat: ${userId}`);
+      } catch (error) {
+        if (error instanceof Error) {
+          console.error(`Failed to delete user ${userId}:`, error.message);
+        } else {
+          console.error(`Failed to delete user ${userId}:`, error);
+        }
+      }
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("Error during user synchronization:", error.message);
+    } else {
+      console.error("Error during user synchronization:", error);
+    }
+  }
+};
+
+const streamChatClient = StreamChat.getInstance(
+  "uc9cbnbm2pug",
+  "svh5e63mqqkq9gwp9zdd5gnmcyqtgrhkxejmbr6sgrraph9v56v2n8pdh5yds4nx",
+);
+
+interface TestUserData {
+  quantityOfEachUser: number;
+  password: string;
+  userTypes: string[];
 }
 
-// Generating options
 // prettier-ignore
-const options: SeedOptions = {
-  userTypes: {
-    userVerified: userQuantity,
-    userUnverified: userQuantity,
-    userGroupOwner: userQuantity,
-    userGroupInviteSent: userQuantity,
-    userEventNotifications: userQuantity,
-    userNoComments: userQuantity,
-    userNoPosts: userQuantity,
-    userManyPosts: userQuantity,
-    userManyComments: userQuantity,
-    userManyLikes: userQuantity,
-    userManyDislikes: userQuantity,
-    userManyBookmarks: userQuantity,
-    userManyFollowers: userQuantity,
-    userManyFollowing: userQuantity,
-    userManyNotifications: userQuantity,
-    userNoFollowers: userQuantity,
-    userNoFollowing: userQuantity,
-    userEventAttendee: userQuantity,
-    userManyEventAttendees: userQuantity,
-    userEventCreator: userQuantity,
-    userEventCancelled: userQuantity,
-    userManyGroupMemberships: userQuantity,
-    userNoGroupMemberships: userQuantity,
-    userGroupAdmin: userQuantity,
-    userPendingInvite: userQuantity,
-    userGoogleLogin: userQuantity,
-    userWithPendingEmail: userQuantity,
-    userWithEmailVerification: userQuantity,
-    userAfollowingUserB: userQuantity,
-    userBfollowingUserA: userQuantity,
-    userAandBfollowingEachOther: userQuantity,
-  },
-  accountData: {
-    comments:                        accountDataGenerator("random", userQuantity, 24),  // ~24 comments per user
-    posts:                           accountDataGenerator("random", userQuantity, 8),   // ~8 posts per user
-    groups:                          accountDataGenerator("random", userQuantity, 3),   // ~3 groups per user
-    groupComments:                   accountDataGenerator("random", userQuantity, 8),   // ~8 comments per group member
-    events:                          accountDataGenerator("random", userQuantity, 2),   // ~2 events per user
-    eventAttendees:                  accountDataGenerator("random", userQuantity, 5),   // ~5 attendees per event
-    groupMembers:                    accountDataGenerator("random", userQuantity, 8),   // ~8 group members per group
-    groupCommentLikes:               accountDataGenerator("random", userQuantity, 28),  // ~28 likes per group comment
-    groupCommentDislikes:            accountDataGenerator("random", userQuantity, 12),  // ~12 dislike per group comment
-    // groupCommentBookmarks:           accountDataGenerator("random", userQuantity, 0.5), // ~0.5 bookmarks per comment
-    // groupCommentNotifications:       accountDataGenerator("random", userQuantity, 3),   // ~3 notifications per group comment
-    // groupCommentMedia:               accountDataGenerator("random", userQuantity, 1),   // ~1 media per group comment
-    // groupNotifications:              accountDataGenerator("random", userQuantity, 2),   // ~2 notifications per group
-    // groupMedia:                      accountDataGenerator("random", userQuantity, 0.7), // ~0.7 media per group
-    groupPosts:                      accountDataGenerator("random", userQuantity, 50),  // ~50 posts per group
-    groupPostLikes:                  accountDataGenerator("random", userQuantity, 18),  // ~18 likes per group post
-    groupPostDislikes:               accountDataGenerator("random", userQuantity, 6),   // ~6 dislike per group post
-    groupPostBookmarks:              accountDataGenerator("random", userQuantity, 0.5), // ~0.5 bookmarks per group post
-    // groupPostNotifications:          accountDataGenerator("random", userQuantity, 2),   // ~2 notifications per group post
-    groupPostMedia:                  accountDataGenerator("random", userQuantity, 0.7), // ~0.7 media per group post
-    groupPostComments:               accountDataGenerator("random", userQuantity, 25),  // ~25 comments per group post
-    // groupPostCommentLikes:           accountDataGenerator("random", userQuantity, 4),   // ~4 likes per comment
-    // groupPostCommentDislikes:        accountDataGenerator("random", userQuantity, 1),   // ~1 dislike per comment
-    groupPostCommentBookmarks:       accountDataGenerator("random", userQuantity, 0.5), // ~0.5 bookmarks per comment
-    // groupPostCommentNotifications:   accountDataGenerator("random", userQuantity, 3),   // ~3 notifications per comment
-    // groupPostCommentMedia:           accountDataGenerator("random", userQuantity, 1),   // ~1 media per comment
-  },
+const testUserData: TestUserData = {
+  quantityOfEachUser: userQuantity,
+  password: cypressEnv.password,
+  userTypes: Object.keys(cypressEnv).filter(key => key.endsWith('Username')).map(key => key.replace('Username', '')),
 };
-
-// Helper function to filter users by capability
-const filterUsersByCapability = (
-  usersCreated: Record<string, any[]>,
-  capability: string,
-) => {
-  return Object.keys(usersCreated)
-    .filter((userType) => userPermissions[userType]?.[capability])
-    .flatMap((userType) => usersCreated[userType]);
-};
-// Filter users who are allowed to create posts
-// const postUsers = filterUsersByCapability(usersCreated, "canPost");
-//////////
 
 // 1. Helper function to create users
-const createUsers = async (options: SeedOptions) => {
-  console.log(`Creating ${userQuantity * 2} users...`);
+const createUsers = async (testUserData: TestUserData) => {
+  const quantity = testUserData.quantityOfEachUser;
+  const userTypes = testUserData.userTypes;
+  const password = testUserData.password;
 
-  const { userTypes } = options;
-  const usersCreated: Record<string, any[]> = {}; // Store users by type
+  console.log(
+    `Creating ${userQuantity * Object.keys(userTypes).length} users...`,
+  );
+
+  const usersCreated: Record<string, any[]> = {};
   const passwordHash = await hash(password, {
     memoryCost: 19456,
     timeCost: 2,
@@ -170,62 +124,141 @@ const createUsers = async (options: SeedOptions) => {
     parallelism: 1,
   });
 
-  for (const [userType, count] of Object.entries(userTypes)) {
+  const allUsers = [];
+
+  for (const userType of userTypes) {
     const users = [];
 
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < quantity; i++) {
       // Format username as `testUserType1`, `testUserType2`, etc.
-      const username = `test${userType.charAt(0).toUpperCase() + userType.slice(1)}${i + 1}`;
+      const username = `testUser${userType.charAt(0).toUpperCase() + userType.slice(1)}${quantity > 1 ? i + 1 : ""}`;
       const email = `${username.toLowerCase()}@example.com`;
+      const isGoogleLoginUser = username.includes("GoogleLogin");
+      const googleId = isGoogleLoginUser
+        ? `${faker.string.numeric(10)}${faker.string.alphanumeric(10)}`
+        : null;
 
-      // Set user as verified if the type includes "Verified"
-      const isVerified = userType.includes("Verified");
+      const userPasswordHash = isGoogleLoginUser ? null : passwordHash;
 
-      console.log("Creating user:", username);
+      // Set user as verified if the type does not include "unverified"
+      const isVerified = !userType.includes("unverified");
+      const hasAvatar = !userType.includes("noAvatar") && Math.random() < 0.8; // 80% chance of having an avatar
 
-      const user = await prisma.user.create({
-        data: {
-          username,
-          email,
-          displayName: username,
-          passwordHash: passwordHash,
-          isVerified,
-          avatarUrl: faker.image.avatar(),
-          bio: faker.lorem.sentence(),
-        },
+      let avatarUrl = hasAvatar
+        ? `https://i.pravatar.cc/150?img=${faker.number.int({ min: 1, max: 70 })}`
+        : null;
+
+      const isNoBioUser = username.includes("NoBio");
+      const bio = isNoBioUser ? null : faker.lorem.sentence();
+      const randomDate = faker.date.between({
+        from: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000), // 1 year ago
+        to: new Date(),
       });
 
-      users.push(user);
+      users.push({
+        username,
+        email,
+        displayName: username,
+        passwordHash: userPasswordHash,
+        isVerified,
+        avatarUrl,
+        googleId,
+        bio,
+        createdAt: randomDate,
+      });
     }
-    usersCreated[userType] = users;
+
+    await prisma.user.createMany({
+      data: users,
+      skipDuplicates: true,
+    });
+
+    // Fetch the created users to get their IDs
+    const fetchedUsers = await prisma.user.findMany({
+      where: {
+        username: {
+          in: users.map((user) => user.username),
+        },
+      },
+    });
+
+    usersCreated[userType] = fetchedUsers;
+    allUsers.push(...fetchedUsers);
+  }
+
+  console.log(`Adding ${allUsers.length} users to StreamChat...`);
+
+  // Add users to StreamChat in bulk
+  const streamChatUsers = allUsers.map((user) => ({
+    id: user.id,
+    name: user.displayName,
+    image: user.avatarUrl,
+    email: user.email,
+  }));
+
+  try {
+    await streamChatClient.upsertUsers(streamChatUsers);
+    console.log(`...${allUsers.length} new users added to StreamChat!`);
+  } catch (error) {
+    console.error(
+      `Failed to add users to StreamChat:`,
+      (error as Error).message,
+    );
   }
 
   return usersCreated;
 };
 
 // 2. Helper function to create groups
-const createGroups = async (
-  options: SeedOptions,
-  usersCreated: Record<string, any[]>,
-) => {
-  console.log(`Creating ${options.accountData.groups} groups...`);
-
+const createGroups = async (usersCreated: Record<string, any[]>) => {
+  console.log(`Creating groups...`);
   const groupsCreated = [];
 
-  for (let i = 0; i < Number(options.accountData.groups); i++) {
-    // Randomly pick a user as the group owner
-    const groupOwner = faker.helpers.arrayElement(usersCreated.userGroupOwner);
+  // Gather all users except those in the "noGroupMemberships" category
+  const eligibleUsers = Object.keys(usersCreated)
+    .filter((userType) => userType !== "noGroupMemberships")
+    .flatMap((userType) => usersCreated[userType]);
 
-    const group = await prisma.group.create({
-      data: {
+  const groupsData = [];
+
+  for (const user of eligibleUsers) {
+    const numberOfGroups = accountDataGenerator("random", userQuantity, 2);
+    // console.log(
+    //   `Creating ${numberOfGroups} groups for user ${user.username}...`,
+    // );
+
+    for (let i = 0; i < numberOfGroups; i++) {
+      const randomDate = faker.date.between({
+        from: new Date(user.createdAt),
+        to: new Date(),
+      });
+
+      groupsData.push({
         name: faker.company.name(),
         description: faker.lorem.sentence(),
-        ownerId: groupOwner.id,
-      },
-    });
-
-    groupsCreated.push(group);
+        ownerId: user.id,
+        createdAt: randomDate,
+      });
+    }
   }
+
+  await prisma.group.createMany({
+    data: groupsData,
+    skipDuplicates: true,
+  });
+
+  // Fetch the created groups to get their IDs
+  const fetchedGroups = await prisma.group.findMany({
+    where: {
+      ownerId: {
+        in: eligibleUsers.map((user) => user.id),
+      },
+    },
+  });
+
+  groupsCreated.push(...fetchedGroups);
+
+  console.log(`...${groupsCreated.length} groups created!`);
 
   return groupsCreated;
 };
@@ -236,144 +269,327 @@ const createGroupMembers = async (
   groupsCreated: any[],
 ) => {
   console.log("Creating group members...");
-
   const groupMembersData = [];
+  let totalMembersCreated = 0;
 
-  // Iterate through the groups created
   for (const group of groupsCreated) {
-    const numberOfMembers = faker.number.int({ min: 1, max: 20 });
+    const numberOfMembers = faker.number.int({ min: 1, max: 10 });
+    // console.log(`Creating ${numberOfMembers} members in group ${group.id}...`);
 
-    // Shuffle and select a subset of created users to become group members
-    const members = faker.helpers
-      .shuffle(Object.values(usersCreated).flat())
+    const eligibleUsers = Object.keys(usersCreated)
+      .filter((userType) => userType !== "noGroupMemberships")
+      .flatMap((userType) => usersCreated[userType]);
+
+    let members = faker.helpers
+      .shuffle(Object.values(eligibleUsers).flat())
       .slice(0, numberOfMembers);
+
+    // Add specific members to the group
+    if (usersCreated.fMemberOfGroupG) {
+      members.push(...usersCreated.fMemberOfGroupG);
+    }
+    if (usersCreated.iMemberOfGroupG) {
+      members.push(...usersCreated.iMemberOfGroupG);
+    }
+
+    // Ensure hNotMemberOfGroupG is not a member when gOwnerOfGroup is the owner
+    if (usersCreated.hNotMemberOfGroupG) {
+      members = members.filter(
+        (member: any) =>
+          !(
+            member.id === group.ownerId &&
+            usersCreated.hNotMemberOfGroupG.some((u) => u.id === member.id)
+          ),
+      );
+    }
 
     for (const member of members) {
       // Avoid adding the group owner as a member
       if (member.id === group.ownerId) continue;
 
+      const role = member.username.includes("groupAdmin")
+        ? GroupRole.ADMIN
+        : faker.helpers.arrayElement([GroupRole.MEMBER, GroupRole.ADMIN]);
+
+      const userCreatedAt = new Date(member.createdAt);
+      const groupCreatedAt = new Date(group.createdAt);
+      const earliestJoinedDate = new Date(
+        Math.max(userCreatedAt.getTime(), groupCreatedAt.getTime()),
+      );
+
+      const randomDate = faker.date.between({
+        from: earliestJoinedDate,
+        to: new Date(),
+      });
       groupMembersData.push({
         userId: member.id,
         groupId: group.id,
-        role: faker.helpers.arrayElement([GroupRole.MEMBER, GroupRole.ADMIN]),
+        role,
         acceptedInvite: faker.datatype.boolean(),
+        joinedAt: randomDate,
       });
+
+      totalMembersCreated++;
     }
   }
 
-  // Batch create group members
   await prisma.groupMember.createMany({
     data: groupMembersData,
     skipDuplicates: true,
   });
+
+  const fetchedGroupMembers = await prisma.groupMember.findMany({
+    where: {
+      userId: {
+        in: groupMembersData.map((member) => member.userId),
+      },
+    },
+  });
+
+  console.log(
+    `...${totalMembersCreated} members across ${groupsCreated.length} groups created!`,
+  );
+  return fetchedGroupMembers;
 };
 
 // 4. Helper function to create public posts
-const createPublicPosts = async (
-  options: SeedOptions,
-  usersCreated: Record<string, any[]>,
-) => {
-  console.log(`Creating ${options.accountData.posts} public posts...`);
-
+const createPublicPosts = async (usersCreated: Record<string, any[]>) => {
+  console.log("Creating public posts...");
   const postsCreated = [];
 
-  for (let i = 0; i < Number(options.accountData.posts); i++) {
-    const post = await prisma.post.create({
-      data: {
-        content: faker.lorem.sentence(),
-        userId: faker.helpers.arrayElement(usersCreated.userVerified).id,
-      },
-    });
+  const eligibleUsers = Object.keys(usersCreated)
+    .filter((userType) => userType !== "noPosts")
+    .flatMap((userType) => usersCreated[userType])
+    .filter((user) => user.isVerified);
 
-    postsCreated.push(post);
+  const postsData = [];
+
+  for (let i = 0; i < eligibleUsers.length; i += 2) {
+    const user = eligibleUsers[i];
+    const numberOfPosts = user.username.includes("UserManyPosts")
+      ? 50
+      : faker.number.int({ min: 0, max: 20 });
+
+    // console.log(
+    //   `Creating ${numberOfPosts} public posts for ${user.username}...`,
+    // );
+
+    for (let j = 0; j < numberOfPosts; j++) {
+      const randomDate = faker.date.between({
+        from: new Date(user.createdAt),
+        to: new Date(),
+      });
+
+      postsData.push({
+        content: `public post ${faker.lorem.sentence()}`,
+        userId: user.id,
+        createdAt: randomDate,
+      });
+    }
   }
+
+  await prisma.post.createMany({
+    data: postsData,
+    skipDuplicates: true,
+  });
+
+  // Fetch the created posts to get their IDs
+  const fetchedPosts = await prisma.post.findMany({
+    where: {
+      userId: {
+        in: eligibleUsers.map((user) => user.id),
+      },
+    },
+  });
+
+  postsCreated.push(...fetchedPosts);
+  console.log(`...${postsCreated.length} public posts created!`);
 
   return postsCreated;
 };
 
 // 5. Helper function to create public comments
 const createComments = async (
-  options: SeedOptions,
   usersCreated: Record<string, any[]>,
   postsCreated: any[],
 ) => {
-  console.log(`Creating ${options.accountData.comments} comments...`);
+  console.log("Creating public comments...");
+  const commentsData = [];
+  let totalCommentsCreated = 0;
 
-  const commentsCreated = [];
+  const userKeys = Object.keys(usersCreated);
 
-  for (let i = 0; i < Number(options.accountData.comments); i++) {
-    const comment = await prisma.comment.create({
-      data: {
+  for (let i = 0; i < userKeys.length; i += 2) {
+    const post = postsCreated[i];
+    const postUser = Object.values(usersCreated)
+      .flat()
+      .find((u) => u.id === post.userId);
+    const numberOfComments = postUser?.username.includes("noComments")
+      ? 0
+      : accountDataGenerator("random", userQuantity, 20);
+
+    // console.log(`Creating ${numberOfComments} comments on ${post.id}...`);
+
+    for (let j = 0; j < numberOfComments; j++) {
+      const user = faker.helpers.arrayElement(
+        Object.values(usersCreated).flat(),
+      );
+      const commentCreatedAt = faker.date.between({
+        from: new Date(post.createdAt),
+        to: new Date(),
+      });
+
+      commentsData.push({
         content: faker.lorem.sentence(),
-        userId: faker.helpers.arrayElement(usersCreated.userVerified).id,
-        postId: faker.helpers.arrayElement(postsCreated).id,
-      },
-    });
+        userId: user.id,
+        postId: post.id,
+        createdAt: commentCreatedAt,
+      });
 
-    commentsCreated.push(comment);
+      totalCommentsCreated++;
+    }
   }
 
-  return commentsCreated;
+  await prisma.comment.createMany({
+    data: commentsData,
+    skipDuplicates: true,
+  });
+
+  // Fetch the created comments to get their IDs
+  const createdComments = await prisma.comment.findMany({
+    where: {
+      postId: {
+        in: postsCreated.map((post) => post.id),
+      },
+      userId: {
+        in: Object.values(usersCreated)
+          .flat()
+          .map((user) => user.id),
+      },
+    },
+  });
+
+  console.log(
+    `...${totalCommentsCreated} comments across ${postsCreated.length} posts created!`,
+  );
+
+  return createdComments;
 };
 
 // 6. Helper function to create events
-const createEvents = async (
-  options: SeedOptions,
-  usersCreated: Record<string, any[]>,
-) => {
-  console.log(`Creating ${options.accountData.events} events...`);
+const createEvents = async (usersCreated: Record<string, any[]>) => {
+  console.log("Creating events...");
+  const eventsData = [];
+  const userKeys = Object.keys(usersCreated);
 
-  const eventsCreated = [];
+  for (let i = 1; i < userKeys.length; i += 4) {
+    const user = usersCreated[userKeys[i]][0];
+    const eventQuantity = accountDataGenerator("random", userQuantity, 50);
+    // console.log(
+    //   `Creating ${eventQuantity} events for user ${user.username}...`,
+    // );
+    for (let i = 0; i < eventQuantity; i++) {
+      const randomDate = faker.date.between({
+        from: new Date(Date.now() - 2 * 30 * 24 * 60 * 60 * 1000), // 2 months ago
+        to: new Date(Date.now() + 14 * 30 * 24 * 60 * 60 * 1000), // 14 months in the future
+      });
 
-  for (let i = 0; i < Number(options.accountData.events); i++) {
-    const event = await prisma.event.create({
-      data: {
+      const startTime = faker.date.between({
+        from: new Date(randomDate.setHours(0, 0, 0, 0)), // Start of the day
+        to: new Date(randomDate.setHours(23, 59, 59, 999)), // End of the day
+      });
+
+      const endTime = faker.date.between({
+        from: new Date(startTime.getTime() + 1 * 60 * 60 * 1000), // At least 1 hour after start time
+        to: new Date(startTime.getTime() + 10 * 60 * 60 * 1000), // Up to 10 hours after start time
+      });
+
+      const createdAt = faker.date.between({
+        from: new Date(user.createdAt),
+        to: new Date(),
+      });
+
+      eventsData.push({
         title: faker.lorem.words(),
         location: faker.location.city(),
         description: faker.lorem.paragraph(),
         url: faker.internet.url(),
-        when: faker.date.soon(90).toISOString(),
-        startTime: faker.date.future().toISOString().slice(11, 16),
-        endTime: faker.date.future().toISOString().slice(11, 16),
+        when: randomDate.toISOString(),
+        startTime: startTime.toISOString().slice(11, 16),
+        endTime: endTime.toISOString().slice(11, 16),
         performers: faker.helpers
           .shuffle(["Performer1", "Performer2", "Performer3"])
           .slice(0, 2),
-        createdById: faker.helpers.arrayElement(usersCreated.userVerified).id,
+        createdById: user.id,
         isCancelled: faker.datatype.boolean(),
-        status: faker.helpers.arrayElement(["DRAFT", "ACTIVE", "COMPLETED"]),
+        status: faker.helpers.arrayElement(["DRAFT", "PUBLISHED"]),
         visibility: faker.helpers.arrayElement(["PUBLIC", "PRIVATE"]),
-      },
-    });
-
-    eventsCreated.push(event);
+        createdAt,
+      });
+    }
   }
 
-  return eventsCreated;
+  await prisma.event.createMany({
+    data: eventsData,
+    skipDuplicates: true,
+  });
+
+  // Fetch the created events to get their IDs
+  const events = await prisma.event.findMany({
+    where: {
+      createdById: {
+        in: userKeys.map((key) => usersCreated[key][0].id),
+      },
+    },
+  });
+
+  console.log(`...${eventsData.length} events created!`);
+
+  return events;
 };
 
 // 7. Helper function to create event attendees
 const createEventAttendees = async (
-  options: SeedOptions,
   usersCreated: Record<string, any[]>,
   eventsCreated: any[],
 ) => {
-  console.log(
-    `Creating ${options.accountData.eventAttendees} event attendees...`,
-  );
-
+  console.log("Creating event attendees...");
   const eventAttendeesData = [];
 
   for (const event of eventsCreated) {
-    const numberOfAttendees = faker.number.int({ min: 1, max: 50 });
+    const eventCreator = Object.values(usersCreated)
+      .flat()
+      .find((user) => user.id === event.createdById);
 
-    const attendees = faker.helpers
+    if (eventCreator) {
+      eventAttendeesData.push({
+        userId: eventCreator.id,
+        eventId: event.id,
+        createdAt: faker.date.between({
+          from: new Date(event.createdAt),
+          to: new Date(),
+        }),
+      });
+    }
+
+    const numberOfAdditionalAttendees = faker.number.int({ min: 0, max: 15 });
+
+    // console.log(
+    //   `Creating ${numberOfAdditionalAttendees} attendees for event ${event.id}...`,
+    // );
+    const additionalAttendees = faker.helpers
       .shuffle(Object.values(usersCreated).flat())
-      .slice(0, numberOfAttendees);
+      .filter((user: any) => user.id !== eventCreator.id)
+      .slice(0, numberOfAdditionalAttendees);
 
-    for (const attendee of attendees) {
+    for (const attendee of additionalAttendees) {
       eventAttendeesData.push({
         userId: attendee.id,
         eventId: event.id,
+        createdAt: faker.date.between({
+          from: new Date(event.createdAt),
+          to: new Date(),
+        }),
       });
     }
   }
@@ -382,22 +598,26 @@ const createEventAttendees = async (
     data: eventAttendeesData,
     skipDuplicates: true,
   });
+
+  console.log(`...${eventAttendeesData.length} event attendees created!`);
+
+  return eventAttendeesData;
 };
 
 // 8. Helper function to create likes
 
 const createLikes = async (
-  options: SeedOptions,
   usersCreated: Record<string, any[]>,
   postsCreated: any[],
 ) => {
   console.log("Creating likes...");
-
   const likeData = [];
 
-  for (let i = 0; i < Number(options.accountData.posts); i++) {
+  for (let i = 0; i < postsCreated.length; i += 2) {
     const post = postsCreated[i];
     const numberOfLikes = faker.number.int({ min: 0, max: 20 });
+
+    // console.log(`Creating ${numberOfLikes} likes for post ${post.id}...`);
 
     const likers = faker.helpers
       .shuffle(Object.values(usersCreated).flat())
@@ -415,22 +635,25 @@ const createLikes = async (
     data: likeData,
     skipDuplicates: true,
   });
+
+  console.log(`...${likeData.length} likes created!`);
+
+  return likeData;
 };
 
 // 9. Helper function to create dislikes
 
 const createDislikes = async (
-  options: SeedOptions,
   usersCreated: Record<string, any[]>,
   postsCreated: any[],
 ) => {
   console.log("Creating dislikes...");
-
   const dislikeData = [];
 
-  for (let i = 0; i < Number(options.accountData.posts); i++) {
+  for (let i = 0; i < postsCreated.length; i += 2) {
     const post = postsCreated[i];
-    const numberOfDislikes = faker.number.int({ min: 0, max: 10 });
+    const numberOfDislikes = faker.number.int({ min: 0, max: 20 });
+    // console.log(`Creating ${numberOfDislikes} dislikes for post ${post.id}...`);
 
     const dislikers = faker.helpers
       .shuffle(Object.values(usersCreated).flat())
@@ -448,22 +671,26 @@ const createDislikes = async (
     data: dislikeData,
     skipDuplicates: true,
   });
+
+  console.log(`...${dislikeData.length} dislikes created!`);
+  return dislikeData;
 };
 
 // 10. Helper function to create bookmarks
 
 const createBookmarks = async (
-  options: SeedOptions,
   usersCreated: Record<string, any[]>,
   postsCreated: any[],
 ) => {
   console.log("Creating bookmarks...");
-
   const bookmarkData = [];
 
-  for (let i = 0; i < Number(options.accountData.posts); i++) {
+  for (let i = 0; i < postsCreated.length; i += 2) {
     const post = postsCreated[i];
     const numberOfBookmarks = faker.number.int({ min: 0, max: 10 });
+    // console.log(
+    //   `Creating ${numberOfBookmarks} bookmarks for post ${post.id}...`,
+    // );
 
     const bookmarkers = faker.helpers
       .shuffle(Object.values(usersCreated).flat())
@@ -481,65 +708,301 @@ const createBookmarks = async (
     data: bookmarkData,
     skipDuplicates: true,
   });
+
+  console.log(`...${bookmarkData.length} bookmarks created!`);
 };
 
-// 11. Helper function to create notifications
+// 10.1 Helper function to create follows
+const createFollowers = async (usersCreated: Record<string, any[]>) => {
+  console.log("Creating followers...");
+  const followerData = [];
 
-const createNotifications = async (
+  const users = Object.values(usersCreated).flat();
+
+  for (const user of users) {
+    const numberOfFollowers = faker.number.int({ min: 0, max: 15 });
+    // console.log(
+    //   `Creating ${numberOfFollowers} followers for user ${user.id}...`,
+    // );
+
+    const followers = faker.helpers
+      .shuffle(users)
+      .filter((follower: any) => follower.id !== user.id) // Ensure a user does not follow themselves
+      .slice(0, numberOfFollowers);
+
+    for (const follower of followers) {
+      followerData.push({
+        followerId: follower.id,
+        followingId: user.id,
+      });
+    }
+  }
+
+  await prisma.follow.createMany({
+    data: followerData,
+    skipDuplicates: true,
+  });
+
+  console.log(`...${followerData.length} followers created!`);
+
+  return followerData;
+};
+
+// 11. Helper function to create notifications for comments
+interface Post {
+  id: string;
+  userId: string;
+}
+const createCommentNotifications = async (
   commentsCreated: any[],
-  usersCreated: Record<string, any[]>,
-  postsCreated: any[],
+  allPosts: Post[],
 ) => {
-  console.log("Creating notifications...");
-
+  console.log("Creating comment notifications...");
   const notificationData = [];
 
+  const postMap = new Map(allPosts.map((post: any) => [post.id, post]));
+
   for (const comment of commentsCreated) {
-    const commentWithPost = await prisma.comment.findUnique({
-      where: { id: comment.id },
-      include: { post: true },
-    });
+    const post = postMap.get(comment.postId);
+
+    // console.log(`Creating notification for comment ${comment.id}...`);
 
     // Ensure the comment and associated post exist
-    if (!commentWithPost?.post) continue;
+    if (!post) continue;
 
     notificationData.push({
-      recipientId: commentWithPost.post.userId, // The user who made the post
-      issuerId: faker.helpers.arrayElement(Object.values(usersCreated).flat())
-        .id, // A random user issuing the notification
-      postId: commentWithPost.post.id, // Post related to the comment
-      type: faker.helpers.arrayElement([
-        NotificationType.LIKE,
-        NotificationType.COMMENT,
-        NotificationType.FOLLOW,
-      ]),
+      recipientId: post.userId, // The user who made the post
+      issuerId: comment.userId, // The user who made the comment
+      postId: post.id, // Post related to the comment
+      type: NotificationType.COMMENT,
       read: faker.datatype.boolean(),
       createdAt: faker.date.recent(),
     });
   }
 
-  // Create the notifications
   await prisma.notification.createMany({
     data: notificationData,
     skipDuplicates: true,
   });
+
+  console.log(`...${notificationData.length} comment notifications created!`);
+};
+
+// 11.1 Helper function to create notifications for likes
+
+const createLikeNotifications = async (createdLikes: any, allPosts: Post[]) => {
+  console.log("Creating like notifications...");
+  const notificationData = [];
+
+  const postMap = new Map(allPosts.map((post: any) => [post.id, post]));
+
+  for (const like of createdLikes) {
+    const post = postMap.get(like.postId);
+    // console.log(`Creating notification for like ${like.id}...`);
+
+    if (!post) continue;
+
+    notificationData.push({
+      recipientId: post.userId, // The user who made the post
+      issuerId: like.userId, // The user who liked the post
+      postId: post.id, // Post related to the like
+      type: NotificationType.LIKE,
+      read: faker.datatype.boolean(),
+      createdAt: faker.date.recent(),
+    });
+  }
+
+  await prisma.notification.createMany({
+    data: notificationData,
+    skipDuplicates: true,
+  });
+
+  console.log(`...${notificationData.length} like notifications created!`);
+};
+
+// 11.2 Helper function to create notifications for dislikes
+
+const createDislikeNotifications = async (
+  createdDislikes: any,
+  allPosts: Post[],
+) => {
+  console.log("Creating dislike notifications...");
+  const notificationData = [];
+
+  const postMap = new Map(allPosts.map((post: any) => [post.id, post]));
+
+  for (const dislike of createdDislikes) {
+    const post = postMap.get(dislike.postId);
+    // console.log(`Creating notification for dislike ${dislike.id}...`);
+
+    if (!post) continue;
+
+    notificationData.push({
+      recipientId: post.userId, // The user who made the post
+      issuerId: dislike.userId, // The user who disliked the post
+      postId: post.id, // Post related to the dislike
+      type: NotificationType.DISLIKE,
+      read: faker.datatype.boolean(),
+      createdAt: faker.date.recent(),
+    });
+  }
+
+  await prisma.notification.createMany({
+    data: notificationData,
+    skipDuplicates: true,
+  });
+
+  console.log(`...${notificationData.length} dislike notifications created!`);
+};
+
+// 11.3 Helper function to create notifications for follows
+
+const createFollowNotifications = async (createdFollowers: any) => {
+  console.log("Creating follow notifications...");
+  const notificationData = [];
+
+  for (const follow of createdFollowers) {
+    // console.log(`Creating notification for follow ${follow.id}...`);
+
+    notificationData.push({
+      recipientId: follow.followingId, // The user being followed
+      issuerId: follow.followerId, // The user who followed
+      type: NotificationType.FOLLOW,
+      read: faker.datatype.boolean(),
+      createdAt: faker.date.recent(),
+    });
+  }
+
+  await prisma.notification.createMany({
+    data: notificationData,
+    skipDuplicates: true,
+  });
+
+  console.log(`...${notificationData.length} follow notifications created!`);
+};
+
+// 11.4 Helper function to create notifications for event attending
+
+interface Event {
+  id: string;
+  createdById: string;
+  createdAt: Date;
+}
+
+const createAttendeeNotifications = async (
+  createdAttendees: any,
+  createdEvents: Event[],
+) => {
+  console.log("Creating event attendee notifications...");
+  const notificationData = [];
+
+  const eventMap = new Map(
+    createdEvents.map((event: any) => [event.id, event]),
+  );
+
+  for (const attendee of createdAttendees) {
+    const event = eventMap.get(attendee.eventId);
+    // console.log(`Creating notification for event attendee ${attendee.id}...`);
+
+    if (!event) continue;
+
+    notificationData.push({
+      recipientId: event.createdById, // The user who created the event
+      issuerId: attendee.userId, // The user who is attending the event
+      eventId: event.id, // Event related to the attendee
+      type: NotificationType.EVENT_ATTENDEE,
+      read: faker.datatype.boolean(),
+      createdAt: faker.date.recent(),
+    });
+  }
+
+  await prisma.notification.createMany({
+    data: notificationData,
+    skipDuplicates: true,
+  });
+
+  console.log(
+    `...${notificationData.length} event attendee notifications created!`,
+  );
+};
+
+// 11.5 Helper function to create notifications for event cancellations
+
+const createCancellationNotifications = async (
+  createdAttendees: any,
+  createdEvents: Event[],
+) => {
+  console.log("Creating event cancellation notifications...");
+  const notificationData = [];
+
+  const cancelledEvents = createdEvents.filter(
+    (event: any) => event.isCancelled,
+  );
+
+  const attendeesMap = new Map();
+  for (const attendee of createdAttendees) {
+    if (!attendeesMap.has(attendee.eventId)) {
+      attendeesMap.set(attendee.eventId, []);
+    }
+    attendeesMap.get(attendee.eventId).push(attendee);
+  }
+
+  for (const event of cancelledEvents) {
+    const attendees = attendeesMap.get(event.id) || [];
+
+    // console.log(
+    //   `Creating notification for cancelled event ${event.id} attendee ${attendee.id}...`,
+    // );
+
+    for (const attendee of attendees) {
+      notificationData.push({
+        recipientId: attendee.userId, // The user who is attending the event
+        issuerId: event.createdById, // The user who created the event
+        eventId: event.id, // Event related to the cancellation
+        type: NotificationType.EVENT_CANCELLED,
+        read: faker.datatype.boolean(),
+        createdAt: faker.date.recent(),
+      });
+    }
+  }
+
+  await prisma.notification.createMany({
+    data: notificationData,
+    skipDuplicates: true,
+  });
+
+  console.log(
+    `...${notificationData.length} event cancellation notifications created!`,
+  );
 };
 
 // 12. Helper function to create media
 
-const createMedia = async (options: SeedOptions, postsCreated: any[]) => {
-  console.log("Creating media...");
-
+const createMedia = async (postsCreated: any[]) => {
+  console.log("Creating media for posts...");
   const mediaData = [];
+  const mediaTypes = ["IMAGE", "VIDEO"];
+  const getMediaUrl = (type: string) => {
+    if (type === "IMAGE") {
+      return `https://i.pravatar.cc/150?img=${faker.number.int({ min: 1, max: 70 })}`;
+    } else if (type === "VIDEO") {
+      // Placeholder video URL (2-second video)
+      return "https://www.w3schools.com/html/mov_bbb.mp4#t=0,2";
+    }
+    return "";
+  };
 
-  for (let i = 0; i < Number(options.accountData.posts); i++) {
+  for (let i = 0; i < postsCreated.length; i += 2) {
     const post = postsCreated[i];
     const numberOfMedia = faker.number.int({ min: 0, max: 5 });
+    // console.log(`Creating media for post ${post.id}...`);
 
     for (let j = 0; j < numberOfMedia; j++) {
+      const type = faker.helpers.arrayElement(mediaTypes);
+
       mediaData.push({
-        type: faker.helpers.arrayElement(mediaTypes),
-        url: faker.image.avatar(),
+        type,
+        url: getMediaUrl(type),
         postId: post.id,
       });
     }
@@ -549,526 +1012,180 @@ const createMedia = async (options: SeedOptions, postsCreated: any[]) => {
     data: mediaData,
     skipDuplicates: true,
   });
+
+  console.log(`...${mediaData.length} pieces of media created!`);
 };
 
-// 13. Helper function to create group comments
+// 13. Helper function to create group posts
 
-async function createGroupComments(
-  options: SeedOptions,
-  groupPosts: any[],
-  createdUsers: Record<string, any[]>,
-): Promise<any[]> {
-  console.log(
-    `Creating ${options.accountData.groupComments} group comments...`,
-  );
+const createGroupPosts = async (groupsCreated: any[], groupMembers: any[]) => {
+  console.log("Creating group posts...");
+  const groupPostsData = [];
 
-  const createdGroupComments = [];
+  for (let i = 0; i < groupsCreated.length; i += 2) {
+    const group = groupsCreated[i];
+    const numberOfPosts = accountDataGenerator("random", userQuantity, 10);
 
-  for (let i = 0; i < Number(options.accountData.groupComments); i++) {
-    const comment = await prisma.comment.create({
-      data: {
+    const usersInGroup = groupMembers.filter(
+      (member) => member.groupId === group.id && member.acceptedInvite === true,
+    );
+
+    if (usersInGroup.length === 0) {
+      console.log(
+        `No users found in group ${group.id}. Skipping post creation.`,
+      );
+      continue;
+    }
+
+    for (let j = 0; j < numberOfPosts; j++) {
+      const user = faker.helpers.arrayElement(usersInGroup);
+
+      // console.log(
+      //   `Creating ${numberOfPosts} posts in group ${group.id} by user ${user.userId}...`,
+      // );
+
+      const randomDate = faker.date.between({
+        from: new Date(user.joinedAt),
+        to: new Date(),
+      });
+
+      groupPostsData.push({
         content: faker.lorem.sentence(),
-        userId: faker.helpers.arrayElement(Object.values(createdUsers).flat())
-          .id,
-        postId: faker.helpers.arrayElement(groupPosts).id,
-      },
-    });
-
-    createdGroupComments.push(comment);
-  }
-
-  return createdGroupComments; // Return the created comments
-}
-
-// 14. Helper function to create group comment likes
-
-const createGroupCommentLikes = async (
-  options: SeedOptions,
-  groupComments: any[],
-  usersCreated: Record<string, any[]>,
-) => {
-  console.log("Creating group comment likes...");
-
-  const groupCommentLikeData = [];
-
-  for (let i = 0; i < Number(options.accountData.groupComments); i++) {
-    const groupComment = groupComments[i];
-
-    groupCommentLikeData.push({
-      userId: faker.helpers.arrayElement(Object.values(usersCreated).flat()).id,
-      postId: groupComment.postId,
-    });
-  }
-
-  await prisma.like.createMany({
-    data: groupCommentLikeData,
-    skipDuplicates: true,
-  });
-};
-
-// 15. Helper function to create group comment dislikes
-
-const createGroupCommentDislikes = async (
-  options: SeedOptions,
-  groupComments: any[],
-  usersCreated: Record<string, any[]>,
-) => {
-  console.log("Creating group comment dislikes...");
-
-  const groupCommentDislikeData = [];
-
-  for (let i = 0; i < Number(options.accountData.groupComments); i++) {
-    const groupComment = groupComments[i];
-
-    groupCommentDislikeData.push({
-      userId: faker.helpers.arrayElement(Object.values(usersCreated).flat()).id,
-      postId: groupComment.postId,
-    });
-  }
-
-  await prisma.dislike.createMany({
-    data: groupCommentDislikeData,
-    skipDuplicates: true,
-  });
-};
-
-// 16.  Helper function to create group comment bookmarks
-
-const createGroupCommentBookmarks = async (
-  options: SeedOptions,
-  groupComments: any[],
-  usersCreated: Record<string, any[]>,
-) => {
-  console.log("Creating group comment bookmarks...");
-
-  const groupCommentBookmarkData = [];
-
-  for (let i = 0; i < Number(options.accountData.groupComments); i++) {
-    const groupComment = groupComments[i];
-
-    groupCommentBookmarkData.push({
-      userId: faker.helpers.arrayElement(Object.values(usersCreated).flat()).id,
-      postId: groupComment.postId,
-    });
-  }
-
-  await prisma.bookmark.createMany({
-    data: groupCommentBookmarkData,
-    skipDuplicates: true,
-  });
-};
-
-// 17. Helper function to create group comment notifications
-
-const createGroupCommentNotifications = async (
-  options: SeedOptions,
-  groupComments: any[],
-  usersCreated: Record<string, any[]>,
-) => {
-  console.log("Creating group comment notifications...");
-
-  const groupCommentNotificationData = [];
-
-  for (let i = 0; i < Number(options.accountData.groupComments); i++) {
-    const groupComment = groupComments[i];
-
-    groupCommentNotificationData.push({
-      recipientId: faker.helpers.arrayElement(
-        Object.values(usersCreated).flat(),
-      ).id,
-      issuerId: faker.helpers.arrayElement(Object.values(usersCreated).flat())
-        .id,
-      postId: faker.helpers.arrayElement(Object.values(groupComment).flat()).id,
-      type: faker.helpers.arrayElement([
-        NotificationType.LIKE,
-        NotificationType.COMMENT,
-      ]),
-      read: faker.datatype.boolean(),
-      createdAt: faker.date.recent(),
-    });
-  }
-
-  await prisma.notification.createMany({
-    data: groupCommentNotificationData,
-    skipDuplicates: true,
-  });
-};
-
-// // 18. Helper function to create group comment media ////fix
-
-// const createGroupCommentMedia = async (
-//   options: SeedOptions,
-//   groupComments: any[],
-// ) => {
-//   console.log("Creating group comment media...");
-
-//   const groupCommentMediaData = [];
-
-//   for (let i = 0; i < Number(options.accountData.groupComments); i++) {
-//     const groupComment = groupComments[i];
-
-//     groupCommentMediaData.push({
-//       type: faker.helpers.arrayElement(mediaTypes),
-//       url: faker.image.imageUrl(),
-//       postId: groupComment.id,
-//     });
-//   }
-
-//   await prisma.media.createMany({
-//     data: groupCommentMediaData,
-//     skipDuplicates: true,
-//   });
-// };
-
-// 21. Helper function to create group posts
-
-const createGroupPosts = async (
-  options: SeedOptions,
-  groupsCreated: any[],
-  usersCreated: Record<string, any[]>,
-) => {
-  console.log(`Creating ${options.accountData.groupPosts} group posts...`);
-
-  const groupPostsCreated = [];
-
-  for (let i = 0; i < Number(options.accountData.groupPosts); i++) {
-    const group = faker.helpers.arrayElement(groupsCreated);
-
-    const groupPost = await prisma.post.create({
-      data: {
-        content: faker.lorem.sentence(),
-        userId: faker.helpers.arrayElement(Object.values(usersCreated).flat())
-          .id, // Selecting a random user from the users created
+        userId: user.userId, // Selecting a random user from the users in the group
         groupId: group.id, // Assigning the group ID
-      },
-    });
-
-    groupPostsCreated.push(groupPost);
-  }
-
-  return groupPostsCreated;
-};
-
-// 22. Helper function to create group post likes
-
-const createGroupPostLikes = async (
-  options: SeedOptions,
-  groupPosts: any[],
-  usersCreated: Record<string, any[]>,
-) => {
-  console.log("Creating group post likes...");
-
-  const groupPostLikeData = [];
-
-  for (let i = 0; i < Number(options.accountData.groupPosts); i++) {
-    const groupPost = groupPosts[i];
-
-    groupPostLikeData.push({
-      userId: faker.helpers.arrayElement(Object.values(usersCreated).flat()).id,
-      postId: groupPost.id,
-    });
-  }
-
-  await prisma.like.createMany({
-    data: groupPostLikeData,
-    skipDuplicates: true,
-  });
-};
-
-// 23. Helper function to create group post dislikes
-
-const createGroupPostDislikes = async (
-  options: SeedOptions,
-  groupPosts: any[],
-  usersCreated: Record<string, any[]>,
-) => {
-  console.log("Creating group post dislikes...");
-
-  const groupPostDislikeData = [];
-
-  for (let i = 0; i < Number(options.accountData.groupPosts); i++) {
-    const groupPost = groupPosts[i];
-
-    groupPostDislikeData.push({
-      userId: faker.helpers.arrayElement(Object.values(usersCreated).flat()).id,
-      postId: groupPost.id,
-    });
-  }
-
-  await prisma.dislike.createMany({
-    data: groupPostDislikeData,
-    skipDuplicates: true,
-  });
-};
-
-// 24. Helper function to create group post bookmarks
-
-const createGroupPostBookmarks = async (
-  options: SeedOptions,
-  groupPosts: any[],
-  usersCreated: Record<string, any[]>,
-) => {
-  console.log("Creating group post bookmarks...");
-
-  const groupPostBookmarkData = [];
-
-  for (let i = 0; i < Number(options.accountData.groupPosts); i++) {
-    const groupPost = groupPosts[i];
-
-    groupPostBookmarkData.push({
-      userId: faker.helpers.arrayElement(Object.values(usersCreated).flat()).id,
-      postId: groupPost.id,
-    });
-  }
-
-  await prisma.bookmark.createMany({
-    data: groupPostBookmarkData,
-    skipDuplicates: true,
-  });
-};
-
-// 25. Helper function to create group post notifications
-
-const createGroupPostNotifications = async (
-  options: SeedOptions,
-  groupPosts: any[],
-  usersCreated: Record<string, any[]>,
-) => {
-  console.log("Creating group post notifications...");
-
-  const groupPostNotificationData = [];
-
-  for (let i = 0; i < Number(options.accountData.groupPosts); i++) {
-    const groupPost = groupPosts[i];
-
-    groupPostNotificationData.push({
-      recipientId: groupPost.userId,
-      issuerId: faker.helpers.arrayElement(Object.values(usersCreated).flat())
-        .id,
-      postId: groupPost.id,
-      type: faker.helpers.arrayElement([
-        NotificationType.LIKE,
-        NotificationType.COMMENT,
-      ]),
-      read: faker.datatype.boolean(),
-      createdAt: faker.date.recent(),
-    });
-  }
-
-  await prisma.notification.createMany({
-    data: groupPostNotificationData,
-    skipDuplicates: true,
-  });
-};
-
-// 26. Helper function to create group post media
-
-const createGroupPostMedia = async (
-  options: SeedOptions,
-  groupPosts: any[],
-) => {
-  console.log("Creating group post media...");
-
-  const groupPostMediaData = [];
-
-  for (let i = 0; i < Number(options.accountData.groupPosts); i++) {
-    const groupPost = groupPosts[i];
-    const numberOfMedia = faker.number.int({ min: 0, max: 5 });
-
-    for (let j = 0; j < numberOfMedia; j++) {
-      groupPostMediaData.push({
-        type: faker.helpers.arrayElement(mediaTypes),
-        url: faker.image.avatar(),
-        postId: groupPost.id,
+        createdAt: randomDate,
       });
     }
   }
 
-  await prisma.media.createMany({
-    data: groupPostMediaData,
+  await prisma.post.createMany({
+    data: groupPostsData,
     skipDuplicates: true,
   });
+
+  const groupPostsCreated = await prisma.post.findMany({
+    where: {
+      userId: {
+        in: groupPostsData.map((post) => post.userId),
+      },
+      groupId: {
+        in: groupsCreated.map((group) => group.id),
+      },
+    },
+  });
+
+  console.log(`...${groupPostsCreated.length} group posts created!`);
+
+  return groupPostsCreated;
 };
 
-// 27. Helper function to create group post comments
+// 13.1 Helper function to create group comments
 
-const createGroupPostComments = async (
-  options: SeedOptions,
+async function createGroupComments(
   groupPosts: any[],
-  usersCreated: Record<string, any[]>,
-) => {
+  createdGroupMembers: any[],
+  createdUsers: Record<string, any[]>,
+): Promise<any[]> {
   console.log("Creating group post comments...");
+  const groupCommentsData = [];
 
-  const groupPostCommentsData = [];
-
-  for (let i = 0; i < Number(options.accountData.groupPosts); i++) {
-    const post = groupPosts[i];
-
-    groupPostCommentsData.push({
-      content: faker.lorem.sentence(),
-      userId: faker.helpers.arrayElement(Object.values(usersCreated).flat()).id,
-      postId: post.id,
-    });
+  // Create a map of user IDs to user data for quick lookup
+  const userMap = new Map();
+  for (const userType in createdUsers) {
+    for (const user of createdUsers[userType]) {
+      userMap.set(user.id, user);
+    }
   }
 
+  // Loop through the group posts to create comments
+  for (let i = 0; i < groupPosts.length; i += 2) {
+    const groupPost = groupPosts[i];
+    // console.log(
+    //   `Processing group post ${groupPost.id} in group ${groupPost.groupId}...`,
+    // );
+
+    // Filter members by groupId
+    const members = createdGroupMembers.filter(
+      (member) =>
+        member.groupId === groupPost.groupId && member.acceptedInvite === true,
+    );
+
+    if (members.length === 0) {
+      // console.warn(
+      //   `No eligible users found for group ${groupPost.groupId}. Skipping comment creation.`,
+      // );
+      continue;
+    }
+
+    const numberOfComments = accountDataGenerator("random", 1, 10);
+    // console.log(
+    //   `Creating ${numberOfComments} comments on group post ${groupPost.id}...`,
+    // );
+
+    for (let j = 0; j < Number(numberOfComments); j++) {
+      const selectedMember = faker.helpers.arrayElement(members);
+      const user = userMap.get(selectedMember.userId);
+
+      if (!user || !user.id || !user.createdAt) {
+        // console.warn(
+        //   `Invalid user data for group ${groupPost.groupId}. Skipping comment creation.`,
+        // );
+        continue;
+      }
+
+      const userCreatedAt = new Date(user.createdAt);
+      const postCreatedAt = new Date(groupPost.createdAt);
+      const earliestCommentDate = new Date(
+        Math.max(userCreatedAt.getTime(), postCreatedAt.getTime()),
+      );
+
+      const commentCreatedAt = faker.date.between({
+        from: earliestCommentDate,
+        to: new Date(),
+      });
+
+      groupCommentsData.push({
+        content: faker.lorem.sentence(),
+        userId: user.id,
+        postId: groupPost.id,
+        createdAt: commentCreatedAt,
+      });
+    }
+  }
+
+  // Batch create group comments
   await prisma.comment.createMany({
-    data: groupPostCommentsData,
+    data: groupCommentsData,
     skipDuplicates: true,
   });
-};
 
-// // 28. Helper function to create group post comment likes
+  // Fetch the created group comments to get their IDs
+  const groupCommentsCreated = await prisma.comment.findMany({
+    where: {
+      postId: {
+        in: groupPosts.map((post) => post.id),
+      },
+      userId: {
+        in: groupCommentsData.map((comment) => comment.userId),
+      },
+    },
+  });
 
-// const createGroupPostCommentLikes = async (
-//   options: SeedOptions,
-//   groupComments: any[],
-//   usersCreated: Record<string, any[]>,
-// ) => {
-//   console.log("Creating group post comment likes...");
+  console.log(`...${groupCommentsCreated.length} group post comments created!`);
 
-//   const groupPostCommentLikeData = [];
-
-//   for (let i = 0; i < Number(options.accountData.groupPosts); i++) {
-//     const groupComment = groupComments[i];
-
-//     groupPostCommentLikeData.push({
-//       userId: faker.helpers.arrayElement(Object.values(usersCreated).flat()).id,
-//       postId: groupComment.id,
-//     });
-//   }
-
-//   await prisma.like.createMany({
-//     data: groupPostCommentLikeData,
-//     skipDuplicates: true,
-//   });
-// };
-
-// // 29. Helper function to create group post comment dislikes
-
-// const createGroupPostCommentDislikes = async (
-//   options: SeedOptions,
-//   groupComments: any[],
-//   usersCreated: Record<string, any[]>,
-// ) => {
-//   console.log("Creating group post comment dislikes...");
-
-//   const groupPostCommentDislikeData = [];
-
-//   for (let i = 0; i < Number(options.accountData.groupPosts); i++) {
-//     const groupComment = groupComments[i];
-
-//     groupPostCommentDislikeData.push({
-//       userId: faker.helpers.arrayElement(Object.values(usersCreated).flat()).id,
-//       postId: groupComment.id,
-//     });
-//   }
-
-//   await prisma.dislike.createMany({
-//     data: groupPostCommentDislikeData,
-//     skipDuplicates: true,
-//   });
-// };
-
-// // 30. Helper function to create group post comment bookmarks
-
-// const createGroupPostCommentBookmarks = async (
-//   options: SeedOptions,
-//   groupComments: any[],
-//   usersCreated: Record<string, any[]>,
-// ) => {
-//   console.log("Creating group post comment bookmarks...");
-
-//   const groupPostCommentBookmarkData = [];
-
-//   for (let i = 0; i < Number(options.accountData.groupPosts); i++) {
-//     const groupComment = groupComments[i];
-
-//     groupPostCommentBookmarkData.push({
-//       userId: faker.helpers.arrayElement(Object.values(usersCreated).flat()).id,
-//       postId: groupComment.id,
-//     });
-//   }
-
-//   await prisma.bookmark.createMany({
-//     data: groupPostCommentBookmarkData,
-//     skipDuplicates: true,
-//   });
-// };
-
-// 31. Helper function to create group post comment notifications
-
-// const createGroupPostCommentNotifications = async (
-//   options: SeedOptions,
-//   groupComments: any[],
-//   usersCreated: Record<string, any[]>,
-// ) => {
-//   console.log("Creating group post comment notifications...");
-
-//   const groupPostCommentNotificationData = [];
-
-//   for (let i = 0; i < Number(options.accountData.groupPosts); i++) {
-//     const groupComment = groupComments[i];
-
-//     groupPostCommentNotificationData.push({
-//       recipientId: faker.helpers.arrayElement(
-//         Object.values(usersCreated).flat(),
-//       ).id,
-//       issuerId: faker.helpers.arrayElement(Object.values(usersCreated).flat())
-//         .id,
-//       postId: groupComment.id,
-//       type: faker.helpers.arrayElement([
-//         NotificationType.LIKE,
-//         NotificationType.COMMENT,
-//       ]),
-//       read: faker.datatype.boolean(),
-//       createdAt: faker.date.recent(),
-//     });
-//   }
-
-//   await prisma.notification.createMany({
-//     data: groupPostCommentNotificationData,
-//     skipDuplicates: true,
-//   });
-// };
-
-// // 32. Helper function to create group post comment media
-
-// const createGroupPostCommentMedia = async (
-//   options: SeedOptions,
-//   groupComments: any[],
-// ) => {
-//   console.log("Creating group post comment media...");
-
-//   const groupPostCommentMediaData = [];
-
-//   for (let i = 0; i < Number(options.accountData.groupPosts); i++) {
-//     const groupComment = groupComments[i];
-
-//     groupPostCommentMediaData.push({
-//       type: faker.helpers.arrayElement(mediaTypes),
-//       url: faker.image.avatar(),
-//       postId: groupComment.id,
-//     });
-//   }
-
-//   await prisma.media.createMany({
-//     data: groupPostCommentMediaData,
-//     skipDuplicates: true,
-//   });
-// };
+  return groupCommentsCreated;
+}
 
 async function main() {
   async function deleteTestUsers() {
-    console.log("Clearing database ...");
+    console.log("Deleting testUsers and data from Database...");
 
-    // List of test usernames you want to delete
-    const partialUsernames = Object.keys(options.userTypes).map(
+    const partialUsernames = testUserData.userTypes.map(
       (userType) =>
-        `test${userType.charAt(0).toUpperCase() + userType.slice(1)}`,
+        `testUser${userType.charAt(0).toUpperCase() + userType.slice(1)}`,
     );
 
     try {
-      // Delete users whose usernames contain any of the partialUsernames
       const usersToDelete = await prisma.user.findMany({
         where: {
           OR: partialUsernames.map((partialName) => ({
@@ -1084,8 +1201,7 @@ async function main() {
 
       const userIds = usersToDelete.map((user: any) => user.id);
 
-      console.log(`${userIds.length} test users found!`);
-      // Delete related records
+      console.log(`...${userIds.length} test users found!`);
       await prisma.event.deleteMany({
         where: {
           createdById: {
@@ -1112,8 +1228,7 @@ async function main() {
         },
       });
 
-      // Delete users
-      const deleteUsers = await prisma.user.deleteMany({
+      await prisma.user.deleteMany({
         where: {
           id: {
             in: userIds,
@@ -1121,7 +1236,7 @@ async function main() {
         },
       });
 
-      console.log(`${userIds.length} test users deleted successfully!`);
+      console.log(`...${userIds.length} test users deleted successfully!`);
     } catch (error) {
       console.error("Error deleting test users:", error);
     } finally {
@@ -1129,143 +1244,93 @@ async function main() {
     }
   }
 
-  // (async () => {
-  // await deleteTestUsers();
-  // await new Promise((resolve) => setTimeout(resolve, 60000));
-
-  // add a delay to ensure the database is cleared before seeding, one minute
-  // })();
-
   await deleteTestUsers();
-  await new Promise((resolve) => setTimeout(resolve, 60000));
+  try {
+    console.log("Removing non-existent users from StreamChat...");
+    await deleteNonExistentUsersFromStreamChat();
+    console.log("...Removed Nonexistent users from StreamChat!");
+  } catch (error) {
+    console.error("Error:", error);
+  } finally {
+    await prisma.$disconnect();
+  }
 
-  console.log("Start seeding ...");
+  console.log("Start seeding...");
 
   // 1. Create Users
-  const createdUsers = await createUsers(options);
+  const createdUsers = await createUsers(testUserData);
 
   // 2. Create Groups
-  const createdGroups = await createGroups(options, createdUsers);
+  const createdGroups = await createGroups(createdUsers);
 
   // 3. Create Group Members
-  await createGroupMembers(createdUsers, createdGroups);
+  const createdGroupMembers = await createGroupMembers(
+    createdUsers,
+    createdGroups,
+  );
 
   // 4. Create Public Posts
-  const createdPosts = await createPublicPosts(options, createdUsers);
+  const createdPosts = await createPublicPosts(createdUsers);
 
   // 5. Create Comments
-  const createdComments = await createComments(
-    options,
-    createdUsers,
-    createdPosts,
-  );
+  const createdComments = await createComments(createdUsers, createdPosts);
 
   // 6. Create Events
-  const createdEvents = await createEvents(options, createdUsers);
+  const createdEvents = await createEvents(createdUsers);
 
   // 7. Create Event Attendees
-  await createEventAttendees(options, createdUsers, createdEvents);
+  const createdAttendees = await createEventAttendees(
+    createdUsers,
+    createdEvents,
+  );
 
+  // 10.1 Helper function to create follows
+  const createdFollowers = await createFollowers(createdUsers);
+
+  // 13. Create Group Posts
+  const createdGroupPosts = await createGroupPosts(
+    createdGroups,
+    createdGroupMembers,
+  );
+
+  const allPosts = createdPosts.concat(createdGroupPosts);
   // 8. Create Likes
-  await createLikes(options, createdUsers, createdPosts);
+  const createdLikes = await createLikes(createdUsers, allPosts);
 
   // 9. Create Dislikes
-  await createDislikes(options, createdUsers, createdPosts);
+  const createdDislikes = await createDislikes(createdUsers, allPosts);
 
   // 10. Create Bookmarks
-  await createBookmarks(options, createdUsers, createdPosts);
-
-  // 11. Create Notifications
-  await createNotifications(createdComments, createdUsers, createdPosts);
+  await createBookmarks(createdUsers, allPosts);
 
   // 12. Create Media For Posts
-  await createMedia(options, createdPosts);
+  await createMedia(allPosts);
 
-  // 21. Create Group Posts
-  const createdGroupPosts = await createGroupPosts(
-    options,
-    createdGroups,
-    createdUsers,
-  );
-
+  // 13.1 Create Group Comments
   const createdGroupComments = await createGroupComments(
-    options,
     createdGroupPosts,
+    createdGroupMembers,
     createdUsers,
   );
 
-  // 14. Create Group Comment Likes
-  await createGroupCommentLikes(options, createdGroupComments, createdUsers);
+  // 11. Create Comment Notifications
+  const allComments = createdComments.concat(createdGroupComments);
+  await createCommentNotifications(allComments, allPosts);
 
-  // 15. Create Group Comment Dislikes
-  await createGroupCommentDislikes(options, createdGroupComments, createdUsers);
+  // 11.1 Create Like Notifications
+  await createLikeNotifications(createdLikes, allPosts);
 
-  // 16. Create Group Comment Bookmarks
-  await createGroupCommentBookmarks(
-    options,
-    createdGroupComments,
-    createdUsers,
-  );
+  // 11.2 Create Dislike Notifications
+  await createDislikeNotifications(createdDislikes, allPosts);
 
-  // 17. Create Group Comment Notifications
-  await createGroupCommentNotifications(
-    options,
-    createdGroupComments,
-    createdUsers,
-  );
+  // 11.3 Create Follow Notifications
+  await createFollowNotifications(createdFollowers);
 
-  // // 18. Create Group Comment Media
-  // await createGroupCommentMedia(options, createdGroupComments);
+  // 11.4 Create Attendee Notifications
+  await createAttendeeNotifications(createdAttendees, createdEvents);
 
-  // 22. Create Group Post Likes
-  await createGroupPostLikes(options, createdGroupPosts, createdUsers);
-
-  // 23. Create Group Post Dislikes
-  await createGroupPostDislikes(options, createdGroupPosts, createdUsers);
-
-  // 24. Create Group Post Bookmarks
-  await createGroupPostBookmarks(options, createdGroupPosts, createdUsers);
-
-  // 25. Create Group Post Notifications
-  await createGroupPostNotifications(options, createdGroupPosts, createdUsers);
-
-  // 26. Create Group Post Media
-  await createGroupPostMedia(options, createdGroupPosts);
-
-  // 27. Create Group Post Comments
-  await createGroupPostComments(options, createdGroupPosts, createdUsers);
-
-  //   // 28. Create Group Post Comment Likes
-  //   await createGroupPostCommentLikes(
-  //     options,
-  //     createdGroupComments,
-  //     createdUsers,
-  //   );
-
-  //   // 29. Create Group Post Comment Dislikes
-  //   await createGroupPostCommentDislikes(
-  //     options,
-  //     createdGroupComments,
-  //     createdUsers,
-  //   );
-
-  //   // 30. Create Group Post Comment Bookmarks
-  //   await createGroupPostCommentBookmarks(
-  //     options,
-  //     createdGroupComments,
-  //     createdUsers,
-  //   );
-
-  //   // 31. Create Group Post Comment Notifications
-  //   await createGroupPostCommentNotifications(
-  //     options,
-  //     createdGroupComments,
-  //     createdUsers,
-  //   );
-
-  //   // 32. Create Group Post Comment Media
-  //   await createGroupPostCommentMedia(options, createdGroupComments);
-  //   console.log("Seeding finished.");
+  // 11.5 Create Cancellation Notifications
+  await createCancellationNotifications(createdAttendees, createdEvents);
 }
 
 main()

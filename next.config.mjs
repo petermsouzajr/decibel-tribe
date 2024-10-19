@@ -7,6 +7,7 @@ const nextConfig = {
   },
   serverExternalPackages: ["@node-rs/argon2"],
   images: {
+    domains: ["cloudflare-ipfs.com", "i.pravatar.cc", "www.w3schools.com"],
     remotePatterns: [
       {
         protocol: "https",
