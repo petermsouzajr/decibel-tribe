@@ -9,13 +9,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import {
-  updateUserPassword,
-  updateUserEmail,
-  updateUserProfile,
-} from "./actions";
-import { validateRequest } from "@/auth";
-import prisma from "@/lib/prisma";
+import { updateUserProfile } from "./actions";
 
 export function useUpdateProfileMutation() {
   const { toast } = useToast();
