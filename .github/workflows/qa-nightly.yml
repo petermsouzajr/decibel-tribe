@@ -5,7 +5,7 @@ on:
     - cron: "0 1 * * *" # Runs daily at 1 AM UTC
   push:
     branches:
-      - master
+      - main
 
 jobs:
   qa-regression:
