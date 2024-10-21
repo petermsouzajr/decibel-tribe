@@ -6,7 +6,7 @@ module.exports = {
   //    context('math', () => {
   //      it('can add numbers [C2452][smoke]', () => {
   teamNames: [
-    "baron",
+    "Baron",
     //'wilkins',
     //'canonicus',
   ],
