@@ -11,6 +11,11 @@ jobs:
   qa-regression:
     runs-on: ubuntu-latest
 
+    env:
+      POSTGRES_PRISMA_URL: ${{ secrets.POSTGRES_PRISMA_URL }}
+      NEXT_PUBLIC_STREAM_KEY: ${{ secrets.NEXT_PUBLIC_STREAM_KEY }}
+      STREAM_SECRET: ${{ secrets.STREAM_SECRET }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
