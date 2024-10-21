@@ -9,7 +9,7 @@ describe("[Baron] Login Page Functionality [smoke]", () => {
   let messages: LoginMessages;
 
   const validUserData = {
-    username: Cypress.env("username"),
+    username: Cypress.env("verifiedUsername"),
     password: Cypress.env("password"),
   };
 

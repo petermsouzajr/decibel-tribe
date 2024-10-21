@@ -47,48 +47,6 @@ const accountDataGenerator = (
   return Number(value);
 };
 
-const deleteNonExistentUsersFromStreamChat = async () => {
-  try {
-    // Initialize StreamChat client
-    const client = StreamChat.getInstance(streamKey, streamSecret);
-
-    // Fetch all users from the database
-    const dbUsers = await prisma.user.findMany({ select: { id: true } });
-    const dbUserIds = dbUsers.map((user: { id: any }) => user.id);
-
-    // Fetch all users from StreamChat
-    const streamUsers = await client.queryUsers({ limit: 1000 });
-    const streamUserIds = streamUsers.users.map((user: { id: any }) => user.id);
-
-    // Find users that are in StreamChat but not in the database
-    const usersToDelete = streamUserIds.filter(
-      (userId: any) => !dbUserIds.includes(userId),
-    );
-
-    // Delete users from StreamChat
-    for (const userId of usersToDelete) {
-      try {
-        await client.deleteUser(userId, {
-          hardDelete: true, // Permanently deletes the user
-        });
-        // console.log(`Deleted user from StreamChat: ${userId}`);
-      } catch (error) {
-        if (error instanceof Error) {
-          console.error(`Failed to delete user ${userId}:`, error.message);
-        } else {
-          console.error(`Failed to delete user ${userId}:`, error);
-        }
-      }
-    }
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error("Error during user synchronization:", error.message);
-    } else {
-      console.error("Error during user synchronization:", error);
-    }
-  }
-};
-
 const streamChatClient = StreamChat.getInstance(streamKey, streamSecret);
 
 interface TestUserData {
@@ -104,7 +62,112 @@ const testUserData: TestUserData = {
   userTypes: Object.keys(cypressEnv).filter(key => key.endsWith('Username')).map(key => key.replace('Username', '')),
 };
 
-// 1. Helper function to create users
+// 1. Helper function to delete existing test user data
+async function deleteTestUsers() {
+  console.log("Deleting testUsers and data from Database...");
+
+  const partialUsernames = testUserData.userTypes.map(
+    (userType) =>
+      `testUser${userType.charAt(0).toUpperCase() + userType.slice(1)}`,
+  );
+
+  try {
+    const usersToDelete = await prisma.user.findMany({
+      where: {
+        OR: partialUsernames.map((partialName) => ({
+          username: {
+            contains: partialName,
+          },
+        })),
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    const userIds = usersToDelete.map((user: any) => user.id);
+
+    await prisma.event.deleteMany({
+      where: {
+        createdById: {
+          in: userIds,
+        },
+      },
+    });
+
+    // Add other related deletions here as needed
+    // For example, if you have other models like posts, comments, etc.
+    await prisma.post.deleteMany({
+      where: {
+        userId: {
+          in: userIds,
+        },
+      },
+    });
+
+    await prisma.comment.deleteMany({
+      where: {
+        userId: {
+          in: userIds,
+        },
+      },
+    });
+
+    await prisma.user.deleteMany({
+      where: {
+        id: {
+          in: userIds,
+        },
+      },
+    });
+
+    console.log(`...${userIds.length} test users deleted successfully!`);
+  } catch (error) {
+    console.error("Error deleting test users:", error);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+// 2. Helper funciton to delete test user data from StreamChat
+const deleteTestUsersFromStreamChat = async (testUsernames: string[]) => {
+  try {
+    // Initialize StreamChat client
+    const client = StreamChat.getInstance(streamKey, streamSecret);
+
+    // Query StreamChat for specific test users
+    const streamUsers = await client.queryUsers({
+      id: { $in: testUsernames },
+    });
+
+    // Delete test users from StreamChat
+    for (const user of streamUsers.users) {
+      try {
+        await client.deleteUser(user.id, {
+          hardDelete: true, // Permanently deletes the user
+        });
+        console.log(`Deleted test user from StreamChat: ${user.id}`);
+      } catch (error) {
+        if (error instanceof Error) {
+          console.error(
+            `Failed to delete test user ${user.id}:`,
+            error.message,
+          );
+        } else {
+          console.error(`Failed to delete test user ${user.id}:`, error);
+        }
+      }
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("Error during test user synchronization:", error.message);
+    } else {
+      console.error("Error during test user synchronization:", error);
+    }
+  }
+};
+
+// 3. Helper function to create users
 const createUsers = async (testUserData: TestUserData) => {
   const quantity = testUserData.quantityOfEachUser;
   const userTypes = testUserData.userTypes;
@@ -207,7 +270,7 @@ const createUsers = async (testUserData: TestUserData) => {
   return usersCreated;
 };
 
-// 2. Helper function to create groups
+// 4. Helper function to create groups
 const createGroups = async (usersCreated: Record<string, any[]>) => {
   console.log(`Creating groups...`);
   const groupsCreated = [];
@@ -261,7 +324,7 @@ const createGroups = async (usersCreated: Record<string, any[]>) => {
   return groupsCreated;
 };
 
-// 3. Helper function to create group members
+// 5. Helper function to create group members
 const createGroupMembers = async (
   usersCreated: Record<string, any[]>,
   groupsCreated: any[],
@@ -350,7 +413,7 @@ const createGroupMembers = async (
   return fetchedGroupMembers;
 };
 
-// 4. Helper function to create public posts
+// 6. Helper function to create public posts
 const createPublicPosts = async (usersCreated: Record<string, any[]>) => {
   console.log("Creating public posts...");
   const postsCreated = [];
@@ -406,7 +469,7 @@ const createPublicPosts = async (usersCreated: Record<string, any[]>) => {
   return postsCreated;
 };
 
-// 5. Helper function to create public comments
+// 7. Helper function to create public comments
 const createComments = async (
   usersCreated: Record<string, any[]>,
   postsCreated: any[],
@@ -474,7 +537,7 @@ const createComments = async (
   return createdComments;
 };
 
-// 6. Helper function to create events
+// 8. Helper function to create events
 const createEvents = async (usersCreated: Record<string, any[]>) => {
   console.log("Creating events...");
   const eventsData = [];
@@ -546,7 +609,7 @@ const createEvents = async (usersCreated: Record<string, any[]>) => {
   return events;
 };
 
-// 7. Helper function to create event attendees
+// 9. Helper function to create event attendees
 const createEventAttendees = async (
   usersCreated: Record<string, any[]>,
   eventsCreated: any[],
@@ -602,115 +665,7 @@ const createEventAttendees = async (
   return eventAttendeesData;
 };
 
-// 8. Helper function to create likes
-
-const createLikes = async (
-  usersCreated: Record<string, any[]>,
-  postsCreated: any[],
-) => {
-  console.log("Creating likes...");
-  const likeData = [];
-
-  for (let i = 0; i < postsCreated.length; i += 2) {
-    const post = postsCreated[i];
-    const numberOfLikes = faker.number.int({ min: 0, max: 20 });
-
-    // console.log(`Creating ${numberOfLikes} likes for post ${post.id}...`);
-
-    const likers = faker.helpers
-      .shuffle(Object.values(usersCreated).flat())
-      .slice(0, numberOfLikes);
-
-    for (const liker of likers) {
-      likeData.push({
-        userId: liker.id,
-        postId: post.id,
-      });
-    }
-  }
-
-  await prisma.like.createMany({
-    data: likeData,
-    skipDuplicates: true,
-  });
-
-  console.log(`...${likeData.length} likes created!`);
-
-  return likeData;
-};
-
-// 9. Helper function to create dislikes
-
-const createDislikes = async (
-  usersCreated: Record<string, any[]>,
-  postsCreated: any[],
-) => {
-  console.log("Creating dislikes...");
-  const dislikeData = [];
-
-  for (let i = 0; i < postsCreated.length; i += 2) {
-    const post = postsCreated[i];
-    const numberOfDislikes = faker.number.int({ min: 0, max: 20 });
-    // console.log(`Creating ${numberOfDislikes} dislikes for post ${post.id}...`);
-
-    const dislikers = faker.helpers
-      .shuffle(Object.values(usersCreated).flat())
-      .slice(0, numberOfDislikes);
-
-    for (const disliker of dislikers) {
-      dislikeData.push({
-        userId: disliker.id,
-        postId: post.id,
-      });
-    }
-  }
-
-  await prisma.dislike.createMany({
-    data: dislikeData,
-    skipDuplicates: true,
-  });
-
-  console.log(`...${dislikeData.length} dislikes created!`);
-  return dislikeData;
-};
-
-// 10. Helper function to create bookmarks
-
-const createBookmarks = async (
-  usersCreated: Record<string, any[]>,
-  postsCreated: any[],
-) => {
-  console.log("Creating bookmarks...");
-  const bookmarkData = [];
-
-  for (let i = 0; i < postsCreated.length; i += 2) {
-    const post = postsCreated[i];
-    const numberOfBookmarks = faker.number.int({ min: 0, max: 10 });
-    // console.log(
-    //   `Creating ${numberOfBookmarks} bookmarks for post ${post.id}...`,
-    // );
-
-    const bookmarkers = faker.helpers
-      .shuffle(Object.values(usersCreated).flat())
-      .slice(0, numberOfBookmarks);
-
-    for (const bookmarker of bookmarkers) {
-      bookmarkData.push({
-        userId: bookmarker.id,
-        postId: post.id,
-      });
-    }
-  }
-
-  await prisma.bookmark.createMany({
-    data: bookmarkData,
-    skipDuplicates: true,
-  });
-
-  console.log(`...${bookmarkData.length} bookmarks created!`);
-};
-
-// 10.1 Helper function to create follows
+// 10 Helper function to create follows
 const createFollowers = async (usersCreated: Record<string, any[]>) => {
   console.log("Creating followers...");
   const followerData = [];
@@ -746,236 +701,168 @@ const createFollowers = async (usersCreated: Record<string, any[]>) => {
   return followerData;
 };
 
-// 11. Helper function to create notifications for comments
-interface Post {
-  id: string;
-  userId: string;
-}
-const createCommentNotifications = async (
-  commentsCreated: any[],
-  allPosts: Post[],
-) => {
-  console.log("Creating comment notifications...");
-  const notificationData = [];
+// 11. Helper function to create group posts
+const createGroupPosts = async (groupsCreated: any[], groupMembers: any[]) => {
+  console.log("Creating group posts...");
+  const groupPostsData = [];
 
-  const postMap = new Map(allPosts.map((post: any) => [post.id, post]));
-
-  for (const comment of commentsCreated) {
-    const post = postMap.get(comment.postId);
-
-    // console.log(`Creating notification for comment ${comment.id}...`);
-
-    // Ensure the comment and associated post exist
-    if (!post) continue;
-
-    notificationData.push({
-      recipientId: post.userId, // The user who made the post
-      issuerId: comment.userId, // The user who made the comment
-      postId: post.id, // Post related to the comment
-      type: NotificationType.COMMENT,
-      read: faker.datatype.boolean(),
-      createdAt: faker.date.recent(),
-    });
-  }
-
-  await prisma.notification.createMany({
-    data: notificationData,
-    skipDuplicates: true,
-  });
-
-  console.log(`...${notificationData.length} comment notifications created!`);
-};
-
-// 11.1 Helper function to create notifications for likes
-
-const createLikeNotifications = async (createdLikes: any, allPosts: Post[]) => {
-  console.log("Creating like notifications...");
-  const notificationData = [];
-
-  const postMap = new Map(allPosts.map((post: any) => [post.id, post]));
-
-  for (const like of createdLikes) {
-    const post = postMap.get(like.postId);
-    // console.log(`Creating notification for like ${like.id}...`);
-
-    if (!post) continue;
-
-    notificationData.push({
-      recipientId: post.userId, // The user who made the post
-      issuerId: like.userId, // The user who liked the post
-      postId: post.id, // Post related to the like
-      type: NotificationType.LIKE,
-      read: faker.datatype.boolean(),
-      createdAt: faker.date.recent(),
-    });
-  }
-
-  await prisma.notification.createMany({
-    data: notificationData,
-    skipDuplicates: true,
-  });
-
-  console.log(`...${notificationData.length} like notifications created!`);
-};
-
-// 11.2 Helper function to create notifications for dislikes
-
-const createDislikeNotifications = async (
-  createdDislikes: any,
-  allPosts: Post[],
-) => {
-  console.log("Creating dislike notifications...");
-  const notificationData = [];
-
-  const postMap = new Map(allPosts.map((post: any) => [post.id, post]));
-
-  for (const dislike of createdDislikes) {
-    const post = postMap.get(dislike.postId);
-    // console.log(`Creating notification for dislike ${dislike.id}...`);
-
-    if (!post) continue;
-
-    notificationData.push({
-      recipientId: post.userId, // The user who made the post
-      issuerId: dislike.userId, // The user who disliked the post
-      postId: post.id, // Post related to the dislike
-      type: NotificationType.DISLIKE,
-      read: faker.datatype.boolean(),
-      createdAt: faker.date.recent(),
-    });
-  }
-
-  await prisma.notification.createMany({
-    data: notificationData,
-    skipDuplicates: true,
-  });
-
-  console.log(`...${notificationData.length} dislike notifications created!`);
-};
-
-// 11.3 Helper function to create notifications for follows
-
-const createFollowNotifications = async (createdFollowers: any) => {
-  console.log("Creating follow notifications...");
-  const notificationData = [];
-
-  for (const follow of createdFollowers) {
-    // console.log(`Creating notification for follow ${follow.id}...`);
-
-    notificationData.push({
-      recipientId: follow.followingId, // The user being followed
-      issuerId: follow.followerId, // The user who followed
-      type: NotificationType.FOLLOW,
-      read: faker.datatype.boolean(),
-      createdAt: faker.date.recent(),
-    });
-  }
-
-  await prisma.notification.createMany({
-    data: notificationData,
-    skipDuplicates: true,
-  });
-
-  console.log(`...${notificationData.length} follow notifications created!`);
-};
-
-// 11.4 Helper function to create notifications for event attending
-
-interface Event {
-  id: string;
-  createdById: string;
-  createdAt: Date;
-}
-
-const createAttendeeNotifications = async (
-  createdAttendees: any,
-  createdEvents: Event[],
-) => {
-  console.log("Creating event attendee notifications...");
-  const notificationData = [];
-
-  const eventMap = new Map(
-    createdEvents.map((event: any) => [event.id, event]),
+  const groupsWithMembers = groupsCreated.filter((group) =>
+    groupMembers.some(
+      (member) => member.groupId === group.id && member.acceptedInvite === true,
+    ),
   );
 
-  for (const attendee of createdAttendees) {
-    const event = eventMap.get(attendee.eventId);
-    // console.log(`Creating notification for event attendee ${attendee.id}...`);
+  for (const group of groupsWithMembers) {
+    const numberOfPosts = accountDataGenerator("random", userQuantity, 10);
 
-    if (!event) continue;
+    const usersInGroup = groupMembers.filter(
+      (member) => member.groupId === group.id && member.acceptedInvite === true,
+    );
 
-    notificationData.push({
-      recipientId: event.createdById, // The user who created the event
-      issuerId: attendee.userId, // The user who is attending the event
-      eventId: event.id, // Event related to the attendee
-      type: NotificationType.EVENT_ATTENDEE,
-      read: faker.datatype.boolean(),
-      createdAt: faker.date.recent(),
-    });
-  }
+    for (let j = 0; j < numberOfPosts; j++) {
+      const user = faker.helpers.arrayElement(usersInGroup);
 
-  await prisma.notification.createMany({
-    data: notificationData,
-    skipDuplicates: true,
-  });
+      const randomDate = faker.date.between({
+        from: new Date(user.joinedAt),
+        to: new Date(),
+      });
 
-  console.log(
-    `...${notificationData.length} event attendee notifications created!`,
-  );
-};
-
-// 11.5 Helper function to create notifications for event cancellations
-
-const createCancellationNotifications = async (
-  createdAttendees: any,
-  createdEvents: Event[],
-) => {
-  console.log("Creating event cancellation notifications...");
-  const notificationData = [];
-
-  const cancelledEvents = createdEvents.filter(
-    (event: any) => event.isCancelled,
-  );
-
-  const attendeesMap = new Map();
-  for (const attendee of createdAttendees) {
-    if (!attendeesMap.has(attendee.eventId)) {
-      attendeesMap.set(attendee.eventId, []);
-    }
-    attendeesMap.get(attendee.eventId).push(attendee);
-  }
-
-  for (const event of cancelledEvents) {
-    const attendees = attendeesMap.get(event.id) || [];
-
-    // console.log(
-    //   `Creating notification for cancelled event ${event.id} attendee ${attendee.id}...`,
-    // );
-
-    for (const attendee of attendees) {
-      notificationData.push({
-        recipientId: attendee.userId, // The user who is attending the event
-        issuerId: event.createdById, // The user who created the event
-        eventId: event.id, // Event related to the cancellation
-        type: NotificationType.EVENT_CANCELLED,
-        read: faker.datatype.boolean(),
-        createdAt: faker.date.recent(),
+      groupPostsData.push({
+        content: faker.lorem.sentence(),
+        userId: user.userId,
+        groupId: group.id,
+        createdAt: randomDate,
       });
     }
   }
 
-  await prisma.notification.createMany({
-    data: notificationData,
+  await prisma.post.createMany({
+    data: groupPostsData,
     skipDuplicates: true,
   });
 
-  console.log(
-    `...${notificationData.length} event cancellation notifications created!`,
-  );
+  const groupPostsCreated = await prisma.post.findMany({
+    where: {
+      userId: {
+        in: groupPostsData.map((post) => post.userId),
+      },
+      groupId: {
+        in: groupsCreated.map((group) => group.id),
+      },
+    },
+  });
+
+  console.log(`...${groupPostsCreated.length} group posts created!`);
+
+  return groupPostsCreated;
 };
 
-// 12. Helper function to create media
+// 12. Helper function to create likes
+const createLikes = async (
+  usersCreated: Record<string, any[]>,
+  postsCreated: any[],
+) => {
+  console.log("Creating likes...");
+  const likeData = [];
 
+  for (let i = 0; i < postsCreated.length; i += 2) {
+    const post = postsCreated[i];
+    const numberOfLikes = faker.number.int({ min: 0, max: 20 });
+
+    // console.log(`Creating ${numberOfLikes} likes for post ${post.id}...`);
+
+    const likers = faker.helpers
+      .shuffle(Object.values(usersCreated).flat())
+      .slice(0, numberOfLikes);
+
+    for (const liker of likers) {
+      likeData.push({
+        userId: liker.id,
+        postId: post.id,
+      });
+    }
+  }
+
+  await prisma.like.createMany({
+    data: likeData,
+    skipDuplicates: true,
+  });
+
+  console.log(`...${likeData.length} likes created!`);
+
+  return likeData;
+};
+
+// 13. Helper function to create dislikes
+const createDislikes = async (
+  usersCreated: Record<string, any[]>,
+  postsCreated: any[],
+) => {
+  console.log("Creating dislikes...");
+  const dislikeData = [];
+
+  for (let i = 0; i < postsCreated.length; i += 2) {
+    const post = postsCreated[i];
+    const numberOfDislikes = faker.number.int({ min: 0, max: 20 });
+    // console.log(`Creating ${numberOfDislikes} dislikes for post ${post.id}...`);
+
+    const dislikers = faker.helpers
+      .shuffle(Object.values(usersCreated).flat())
+      .slice(0, numberOfDislikes);
+
+    for (const disliker of dislikers) {
+      dislikeData.push({
+        userId: disliker.id,
+        postId: post.id,
+      });
+    }
+  }
+
+  await prisma.dislike.createMany({
+    data: dislikeData,
+    skipDuplicates: true,
+  });
+
+  console.log(`...${dislikeData.length} dislikes created!`);
+  return dislikeData;
+};
+
+// 14. Helper function to create bookmarks
+const createBookmarks = async (
+  usersCreated: Record<string, any[]>,
+  postsCreated: any[],
+) => {
+  console.log("Creating bookmarks...");
+  const bookmarkData = [];
+
+  for (let i = 0; i < postsCreated.length; i += 2) {
+    const post = postsCreated[i];
+    const numberOfBookmarks = faker.number.int({ min: 0, max: 10 });
+    // console.log(
+    //   `Creating ${numberOfBookmarks} bookmarks for post ${post.id}...`,
+    // );
+
+    const bookmarkers = faker.helpers
+      .shuffle(Object.values(usersCreated).flat())
+      .slice(0, numberOfBookmarks);
+
+    for (const bookmarker of bookmarkers) {
+      bookmarkData.push({
+        userId: bookmarker.id,
+        postId: post.id,
+      });
+    }
+  }
+
+  await prisma.bookmark.createMany({
+    data: bookmarkData,
+    skipDuplicates: true,
+  });
+
+  console.log(`...${bookmarkData.length} bookmarks created!`);
+};
+
+// 15. Helper function to create media
 const createMedia = async (postsCreated: any[]) => {
   console.log("Creating media for posts...");
   const mediaData = [];
@@ -1014,71 +901,7 @@ const createMedia = async (postsCreated: any[]) => {
   console.log(`...${mediaData.length} pieces of media created!`);
 };
 
-// 13. Helper function to create group posts
-
-const createGroupPosts = async (groupsCreated: any[], groupMembers: any[]) => {
-  console.log("Creating group posts...");
-  const groupPostsData = [];
-
-  for (let i = 0; i < groupsCreated.length; i += 2) {
-    const group = groupsCreated[i];
-    const numberOfPosts = accountDataGenerator("random", userQuantity, 10);
-
-    const usersInGroup = groupMembers.filter(
-      (member) => member.groupId === group.id && member.acceptedInvite === true,
-    );
-
-    if (usersInGroup.length === 0) {
-      console.log(
-        `No users found in group ${group.id}. Skipping post creation.`,
-      );
-      continue;
-    }
-
-    for (let j = 0; j < numberOfPosts; j++) {
-      const user = faker.helpers.arrayElement(usersInGroup);
-
-      // console.log(
-      //   `Creating ${numberOfPosts} posts in group ${group.id} by user ${user.userId}...`,
-      // );
-
-      const randomDate = faker.date.between({
-        from: new Date(user.joinedAt),
-        to: new Date(),
-      });
-
-      groupPostsData.push({
-        content: faker.lorem.sentence(),
-        userId: user.userId, // Selecting a random user from the users in the group
-        groupId: group.id, // Assigning the group ID
-        createdAt: randomDate,
-      });
-    }
-  }
-
-  await prisma.post.createMany({
-    data: groupPostsData,
-    skipDuplicates: true,
-  });
-
-  const groupPostsCreated = await prisma.post.findMany({
-    where: {
-      userId: {
-        in: groupPostsData.map((post) => post.userId),
-      },
-      groupId: {
-        in: groupsCreated.map((group) => group.id),
-      },
-    },
-  });
-
-  console.log(`...${groupPostsCreated.length} group posts created!`);
-
-  return groupPostsCreated;
-};
-
-// 13.1 Helper function to create group comments
-
+// 16. Helper function to create group comments
 async function createGroupComments(
   groupPosts: any[],
   createdGroupMembers: any[],
@@ -1174,79 +997,238 @@ async function createGroupComments(
   return groupCommentsCreated;
 }
 
-async function main() {
-  async function deleteTestUsers() {
-    console.log("Deleting testUsers and data from Database...");
+// 17. Helper function to create notifications for comments
+interface Post {
+  id: string;
+  userId: string;
+}
+const createCommentNotifications = async (
+  commentsCreated: any[],
+  allPosts: Post[],
+) => {
+  console.log("Creating comment notifications...");
+  const notificationData = [];
 
-    const partialUsernames = testUserData.userTypes.map(
-      (userType) =>
-        `testUser${userType.charAt(0).toUpperCase() + userType.slice(1)}`,
-    );
+  const postMap = new Map(allPosts.map((post: any) => [post.id, post]));
 
-    try {
-      const usersToDelete = await prisma.user.findMany({
-        where: {
-          OR: partialUsernames.map((partialName) => ({
-            username: {
-              contains: partialName,
-            },
-          })),
-        },
-        select: {
-          id: true,
-        },
+  for (const comment of commentsCreated) {
+    const post = postMap.get(comment.postId);
+
+    // console.log(`Creating notification for comment ${comment.id}...`);
+
+    // Ensure the comment and associated post exist
+    if (!post) continue;
+
+    notificationData.push({
+      recipientId: post.userId, // The user who made the post
+      issuerId: comment.userId, // The user who made the comment
+      postId: post.id, // Post related to the comment
+      type: NotificationType.COMMENT,
+      read: faker.datatype.boolean(),
+      createdAt: faker.date.recent(),
+    });
+  }
+
+  await prisma.notification.createMany({
+    data: notificationData,
+    skipDuplicates: true,
+  });
+
+  console.log(`...${notificationData.length} comment notifications created!`);
+};
+
+// 18. Helper function to create notifications for likes
+const createLikeNotifications = async (createdLikes: any, allPosts: Post[]) => {
+  console.log("Creating like notifications...");
+  const notificationData = [];
+
+  const postMap = new Map(allPosts.map((post: any) => [post.id, post]));
+
+  for (const like of createdLikes) {
+    const post = postMap.get(like.postId);
+    // console.log(`Creating notification for like ${like.id}...`);
+
+    if (!post) continue;
+
+    notificationData.push({
+      recipientId: post.userId, // The user who made the post
+      issuerId: like.userId, // The user who liked the post
+      postId: post.id, // Post related to the like
+      type: NotificationType.LIKE,
+      read: faker.datatype.boolean(),
+      createdAt: faker.date.recent(),
+    });
+  }
+
+  await prisma.notification.createMany({
+    data: notificationData,
+    skipDuplicates: true,
+  });
+
+  console.log(`...${notificationData.length} like notifications created!`);
+};
+
+// 19. Helper function to create notifications for dislikes
+const createDislikeNotifications = async (
+  createdDislikes: any,
+  allPosts: Post[],
+) => {
+  console.log("Creating dislike notifications...");
+  const notificationData = [];
+
+  const postMap = new Map(allPosts.map((post: any) => [post.id, post]));
+
+  for (const dislike of createdDislikes) {
+    const post = postMap.get(dislike.postId);
+    // console.log(`Creating notification for dislike ${dislike.id}...`);
+
+    if (!post) continue;
+
+    notificationData.push({
+      recipientId: post.userId, // The user who made the post
+      issuerId: dislike.userId, // The user who disliked the post
+      postId: post.id, // Post related to the dislike
+      type: NotificationType.DISLIKE,
+      read: faker.datatype.boolean(),
+      createdAt: faker.date.recent(),
+    });
+  }
+
+  await prisma.notification.createMany({
+    data: notificationData,
+    skipDuplicates: true,
+  });
+
+  console.log(`...${notificationData.length} dislike notifications created!`);
+};
+
+// 20. Helper function to create notifications for follows
+const createFollowNotifications = async (createdFollowers: any) => {
+  console.log("Creating follow notifications...");
+  const notificationData = [];
+
+  for (const follow of createdFollowers) {
+    // console.log(`Creating notification for follow ${follow.id}...`);
+
+    notificationData.push({
+      recipientId: follow.followingId, // The user being followed
+      issuerId: follow.followerId, // The user who followed
+      type: NotificationType.FOLLOW,
+      read: faker.datatype.boolean(),
+      createdAt: faker.date.recent(),
+    });
+  }
+
+  await prisma.notification.createMany({
+    data: notificationData,
+    skipDuplicates: true,
+  });
+
+  console.log(`...${notificationData.length} follow notifications created!`);
+};
+
+// 21. Helper function to create notifications for event attending
+interface Event {
+  id: string;
+  createdById: string;
+  createdAt: Date;
+}
+
+const createAttendeeNotifications = async (
+  createdAttendees: any,
+  createdEvents: Event[],
+) => {
+  console.log("Creating event attendee notifications...");
+  const notificationData = [];
+
+  const eventMap = new Map(
+    createdEvents.map((event: any) => [event.id, event]),
+  );
+
+  for (const attendee of createdAttendees) {
+    const event = eventMap.get(attendee.eventId);
+    // console.log(`Creating notification for event attendee ${attendee.id}...`);
+
+    if (!event) continue;
+
+    notificationData.push({
+      recipientId: event.createdById, // The user who created the event
+      issuerId: attendee.userId, // The user who is attending the event
+      eventId: event.id, // Event related to the attendee
+      type: NotificationType.EVENT_ATTENDEE,
+      read: faker.datatype.boolean(),
+      createdAt: faker.date.recent(),
+    });
+  }
+
+  await prisma.notification.createMany({
+    data: notificationData,
+    skipDuplicates: true,
+  });
+
+  console.log(
+    `...${notificationData.length} event attendee notifications created!`,
+  );
+};
+
+// 22. Helper function to create notifications for event cancellations
+const createCancellationNotifications = async (
+  createdAttendees: any,
+  createdEvents: Event[],
+) => {
+  console.log("Creating event cancellation notifications...");
+  const notificationData = [];
+
+  const cancelledEvents = createdEvents.filter(
+    (event: any) => event.isCancelled,
+  );
+
+  const attendeesMap = new Map();
+  for (const attendee of createdAttendees) {
+    if (!attendeesMap.has(attendee.eventId)) {
+      attendeesMap.set(attendee.eventId, []);
+    }
+    attendeesMap.get(attendee.eventId).push(attendee);
+  }
+
+  for (const event of cancelledEvents) {
+    const attendees = attendeesMap.get(event.id) || [];
+
+    // console.log(
+    //   `Creating notification for cancelled event ${event.id} attendee ${attendee.id}...`,
+    // );
+
+    for (const attendee of attendees) {
+      notificationData.push({
+        recipientId: attendee.userId, // The user who is attending the event
+        issuerId: event.createdById, // The user who created the event
+        eventId: event.id, // Event related to the cancellation
+        type: NotificationType.EVENT_CANCELLED,
+        read: faker.datatype.boolean(),
+        createdAt: faker.date.recent(),
       });
-
-      const userIds = usersToDelete.map((user: any) => user.id);
-
-      console.log(`...${userIds.length} test users found!`);
-      await prisma.event.deleteMany({
-        where: {
-          createdById: {
-            in: userIds,
-          },
-        },
-      });
-
-      // Add other related deletions here as needed
-      // For example, if you have other models like posts, comments, etc.
-      await prisma.post.deleteMany({
-        where: {
-          userId: {
-            in: userIds,
-          },
-        },
-      });
-
-      await prisma.comment.deleteMany({
-        where: {
-          userId: {
-            in: userIds,
-          },
-        },
-      });
-
-      await prisma.user.deleteMany({
-        where: {
-          id: {
-            in: userIds,
-          },
-        },
-      });
-
-      console.log(`...${userIds.length} test users deleted successfully!`);
-    } catch (error) {
-      console.error("Error deleting test users:", error);
-    } finally {
-      await prisma.$disconnect();
     }
   }
 
+  await prisma.notification.createMany({
+    data: notificationData,
+    skipDuplicates: true,
+  });
+
+  console.log(
+    `...${notificationData.length} event cancellation notifications created!`,
+  );
+};
+
+async function main() {
+  // 1. Delete existing test users and data
   await deleteTestUsers();
+
+  // 2. Delete test users data from StreamChat
   try {
-    console.log("Removing non-existent users from StreamChat...");
-    await deleteNonExistentUsersFromStreamChat();
-    console.log("...Removed Nonexistent users from StreamChat!");
+    console.log("Removing testUsers from StreamChat...");
+    await deleteTestUsersFromStreamChat(testUserData.userTypes);
+    console.log("...Removed testUsers from StreamChat!");
   } catch (error) {
     console.error("Error:", error);
   } finally {
@@ -1255,79 +1237,79 @@ async function main() {
 
   console.log("Start seeding...");
 
-  // 1. Create Users
+  // 3. Create Users
   const createdUsers = await createUsers(testUserData);
 
-  // 2. Create Groups
+  // 4. Create Groups
   const createdGroups = await createGroups(createdUsers);
 
-  // 3. Create Group Members
+  // 5. Create Group Members
   const createdGroupMembers = await createGroupMembers(
     createdUsers,
     createdGroups,
   );
 
-  // 4. Create Public Posts
+  // 6. Create Public Posts
   const createdPosts = await createPublicPosts(createdUsers);
 
-  // 5. Create Comments
+  // 7. Create Comments
   const createdComments = await createComments(createdUsers, createdPosts);
 
-  // 6. Create Events
+  // 8. Create Events
   const createdEvents = await createEvents(createdUsers);
 
-  // 7. Create Event Attendees
+  // 9. Create Event Attendees
   const createdAttendees = await createEventAttendees(
     createdUsers,
     createdEvents,
   );
 
-  // 10.1 Helper function to create follows
+  // 10. Helper function to create follows
   const createdFollowers = await createFollowers(createdUsers);
 
-  // 13. Create Group Posts
+  // 11. Create Group Posts
   const createdGroupPosts = await createGroupPosts(
     createdGroups,
     createdGroupMembers,
   );
 
   const allPosts = createdPosts.concat(createdGroupPosts);
-  // 8. Create Likes
+  // 12. Create Likes
   const createdLikes = await createLikes(createdUsers, allPosts);
 
-  // 9. Create Dislikes
+  // 13. Create Dislikes
   const createdDislikes = await createDislikes(createdUsers, allPosts);
 
-  // 10. Create Bookmarks
+  // 14. Create Bookmarks
   await createBookmarks(createdUsers, allPosts);
 
-  // 12. Create Media For Posts
+  // 15. Create Media For Posts
   await createMedia(allPosts);
 
-  // 13.1 Create Group Comments
+  // 16. Create Group Comments
   const createdGroupComments = await createGroupComments(
     createdGroupPosts,
     createdGroupMembers,
     createdUsers,
   );
 
-  // 11. Create Comment Notifications
+  // 17. Create Comment Notifications
   const allComments = createdComments.concat(createdGroupComments);
   await createCommentNotifications(allComments, allPosts);
 
-  // 11.1 Create Like Notifications
+  // 18. Create Like Notifications
   await createLikeNotifications(createdLikes, allPosts);
 
-  // 11.2 Create Dislike Notifications
+  // 19. Create Dislike Notifications
   await createDislikeNotifications(createdDislikes, allPosts);
 
-  // 11.3 Create Follow Notifications
+  // 20. Create Follow Notifications
   await createFollowNotifications(createdFollowers);
 
-  // 11.4 Create Attendee Notifications
+  // 21. Create Attendee Notifications
   await createAttendeeNotifications(createdAttendees, createdEvents);
 
-  // 11.5 Create Cancellation Notifications
+  // 22. Create Cancellation Notifications
   await createCancellationNotifications(createdAttendees, createdEvents);
 }
 

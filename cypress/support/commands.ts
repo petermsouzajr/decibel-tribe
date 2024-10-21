@@ -4,7 +4,7 @@ Cypress.Commands.add("logoutByApi", () => {
 
 Cypress.Commands.add(
   "loginByApi",
-  (username = Cypress.env("username"), password = Cypress.env("password")) => {
+  (username, password = Cypress.env("password")) => {
     cy.request({
       method: "POST",
       url: "/api/auth/login",

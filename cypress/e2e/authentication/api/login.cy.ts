@@ -3,7 +3,7 @@ import { LoginMessages } from "../../../pages/authentication/loginPage";
 describe.only("Login API Functionality", () => {
   let messages: LoginMessages;
 
-  const validUsername = Cypress.env("username");
+  const validUsername = Cypress.env("verifiedUsername");
   const validPassword = Cypress.env("password");
   const invalidUsername = "invalidUser";
   const invalidPassword = "invalidPass";

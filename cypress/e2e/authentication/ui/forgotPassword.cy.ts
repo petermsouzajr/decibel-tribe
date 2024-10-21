@@ -8,8 +8,8 @@ const pageElements = ForgotPasswordPage.elements;
 describe("Forgot Password Page Functionality", () => {
   let messages: ForgotPasswordMessages;
 
-  const validUserEmail = Cypress.env("resetusername");
-  const validUsername = Cypress.env("resetuserEmail");
+  const validUserEmail = Cypress.env("unverifiedEmail");
+  const validUsername = Cypress.env("unverifiedUsername");
   const invalidCredential = "invalidUser";
 
   before(() => {
