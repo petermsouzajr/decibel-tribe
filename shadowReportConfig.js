@@ -45,7 +45,7 @@ module.exports = {
     "https://docs.google.com/spreadsheets/d/1Y8tFpbNEKPtQWmo3U9idGxxoSB3zIbLrQFsllr1mySs/edit?gid=1916560860#gid=1916560860",
 
   // Path to your Google credentials file, service account credentials JSON file:
-  googleKeyFilePath: "./googleCredentials.json",
+  googleKeyFilePath: process.env.GOOGLE_KEY_FILE_PATH,
 
   // Path to your test data results, matching the output format of the test runner:
   testData: "./cypress/results/output.json",

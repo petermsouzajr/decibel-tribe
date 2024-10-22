@@ -25,6 +25,18 @@ jobs:
         with:
           node-version: "21"
 
+      - name: Install GPG
+        run: sudo apt-get install -y gpg
+
+      - name: Decrypt Google Sheets Key
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          echo "$GPG_PASSPHRASE" | gpg --batch --yes --passphrase-fd 0 --output googleCredentials.json --decrypt googleCredentials.json.gpg
+
+      - name: Set Google Key File Path
+        run: echo "GOOGLE_KEY_FILE_PATH=$(pwd)/googleCredentials.json" >> $GITHUB_ENV
+
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
