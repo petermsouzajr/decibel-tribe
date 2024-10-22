@@ -41,4 +41,6 @@ jobs:
         run: npm install --legacy-peer-deps
 
       - name: Run QA regression tests
+        env:
+          GOOGLE_KEY_FILE_PATH: ${{ env.GOOGLE_KEY_FILE_PATH }}
         run: npm run cypress:nightly
