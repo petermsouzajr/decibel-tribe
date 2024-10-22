@@ -37,6 +37,7 @@ next-env.d.ts
 
 # cypress
 /cypress/results
+/cypress/downloads
 /cypress/screenshots
 googleCredentials.json
 cypress.env.json
