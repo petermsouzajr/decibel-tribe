@@ -39,7 +39,7 @@ export async function resendVerification(
       return { error: `User not found.` };
     }
 
-    const { id: userId, email: userEmail, isVerified, googleId } = existingUser;
+    const { id: userId, email: userEmail } = existingUser;
 
     if (userEmail) {
       await resendVerificationEmail(userEmail);

@@ -62,10 +62,9 @@ export async function GET(req: NextRequest) {
       })
       .json<{ id: string; name: string; email: string }>();
 
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await prisma.user.findFirst({
       where: {
-        googleId: googleUser.id,
-        email: googleUser.email,
+        OR: [{ googleId: googleUser.id }, { email: googleUser.email }],
       },
     });
 
