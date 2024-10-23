@@ -7,6 +7,29 @@ import { OAuth2RequestError } from "arctic";
 import { generateIdFromEntropySize } from "lucia";
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
+import { randomInt } from "crypto";
+
+const generateUniqueUsername = async (baseUsername: any, prisma: any) => {
+  let username = baseUsername;
+  let isUnique = false;
+
+  while (!isUnique) {
+    const existingUser = await prisma.user.findUnique({
+      where: {
+        username,
+      },
+    });
+
+    if (!existingUser) {
+      isUnique = true;
+    } else {
+      const randomSuffix = randomInt(1000, 9999);
+      username = `${baseUsername}${randomSuffix}`;
+    }
+  }
+
+  return username;
+};
 
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get("code");
@@ -62,13 +85,14 @@ export async function GET(req: NextRequest) {
     }
 
     const userId = generateIdFromEntropySize(10);
-    const username = slugify(googleUser.name);
+    const baseUsername = slugify(googleUser.name);
+    const uniqueUsername = await generateUniqueUsername(baseUsername, prisma);
 
     await prisma.$transaction(async (tx) => {
       await tx.user.create({
         data: {
           id: userId,
-          username,
+          username: uniqueUsername,
           displayName: googleUser.name,
           googleId: googleUser.id,
           email: googleUser.email,
@@ -77,8 +101,8 @@ export async function GET(req: NextRequest) {
       });
       await streamServerClient.upsertUser({
         id: userId,
-        username,
-        name: username,
+        username: uniqueUsername,
+        name: uniqueUsername,
       });
     });
 

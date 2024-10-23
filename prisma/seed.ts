@@ -9,12 +9,15 @@ const Prisma = require("@prisma/client");
 const fs = require("fs");
 const path = require("path");
 const { StreamChat } = require("stream-chat");
-
 const cypressEnvPath = path.resolve(__dirname, "../cypress.env.json");
 const cypressEnv = JSON.parse(fs.readFileSync(cypressEnvPath, "utf-8"));
 const envPath = path.resolve(__dirname, "../.env");
 dotenv.config({ path: envPath });
-
+let generateIdFromEntropySize: any;
+(async () => {
+  const luciaModule = await import("lucia");
+  generateIdFromEntropySize = luciaModule.generateIdFromEntropySize;
+})();
 const streamKey = process.env.NEXT_PUBLIC_STREAM_KEY;
 const streamSecret = process.env.STREAM_SECRET;
 
@@ -172,12 +175,12 @@ const createUsers = async (testUserData: TestUserData) => {
   const quantity = testUserData.quantityOfEachUser;
   const userTypes = testUserData.userTypes;
   const password = testUserData.password;
+  const users: any = [];
 
   console.log(
     `Creating ${userQuantity * Object.keys(userTypes).length} users...`,
   );
 
-  const usersCreated: Record<string, any[]> = {};
   const passwordHash = await hash(password, {
     memoryCost: 19456,
     timeCost: 2,
@@ -185,12 +188,9 @@ const createUsers = async (testUserData: TestUserData) => {
     parallelism: 1,
   });
 
-  const allUsers = [];
-
   for (const userType of userTypes) {
-    const users = [];
-
     for (let i = 0; i < quantity; i++) {
+      const userId = generateIdFromEntropySize(10);
       // Format username as `testUserType1`, `testUserType2`, etc.
       const username = `testUser${userType.charAt(0).toUpperCase() + userType.slice(1)}${quantity > 1 ? i + 1 : ""}`;
       const email = `${username.toLowerCase()}@example.com`;
@@ -217,6 +217,7 @@ const createUsers = async (testUserData: TestUserData) => {
       });
 
       users.push({
+        id: userId,
         username,
         email,
         displayName: username,
@@ -233,24 +234,12 @@ const createUsers = async (testUserData: TestUserData) => {
       data: users,
       skipDuplicates: true,
     });
-
-    // Fetch the created users to get their IDs
-    const fetchedUsers = await prisma.user.findMany({
-      where: {
-        username: {
-          in: users.map((user) => user.username),
-        },
-      },
-    });
-
-    usersCreated[userType] = fetchedUsers;
-    allUsers.push(...fetchedUsers);
   }
 
-  console.log(`Adding ${allUsers.length} users to StreamChat...`);
+  console.log(`Adding ${users.length} users to StreamChat...`);
 
   // Add users to StreamChat in bulk
-  const streamChatUsers = allUsers.map((user) => ({
+  const streamChatUsers = users.map((user: any) => ({
     id: user.id,
     name: user.displayName,
     image: user.avatarUrl,
@@ -259,7 +248,7 @@ const createUsers = async (testUserData: TestUserData) => {
 
   try {
     await streamChatClient.upsertUsers(streamChatUsers);
-    console.log(`...${allUsers.length} new users added to StreamChat!`);
+    console.log(`...${users.length} new users added to StreamChat!`);
   } catch (error) {
     console.error(
       `Failed to add users to StreamChat:`,
@@ -267,13 +256,12 @@ const createUsers = async (testUserData: TestUserData) => {
     );
   }
 
-  return usersCreated;
+  return users;
 };
 
 // 4. Helper function to create groups
 const createGroups = async (usersCreated: Record<string, any[]>) => {
   console.log(`Creating groups...`);
-  const groupsCreated = [];
 
   // Gather all users except those in the "noGroupMemberships" category
   const eligibleUsers = Object.keys(usersCreated)
@@ -289,12 +277,15 @@ const createGroups = async (usersCreated: Record<string, any[]>) => {
     // );
 
     for (let i = 0; i < numberOfGroups; i++) {
+      const groupId = generateIdFromEntropySize(10);
+
       const randomDate = faker.date.between({
         from: new Date(user.createdAt),
         to: new Date(),
       });
 
       groupsData.push({
+        id: groupId,
         name: faker.company.name(),
         description: faker.lorem.sentence(),
         ownerId: user.id,
@@ -308,20 +299,9 @@ const createGroups = async (usersCreated: Record<string, any[]>) => {
     skipDuplicates: true,
   });
 
-  // Fetch the created groups to get their IDs
-  const fetchedGroups = await prisma.group.findMany({
-    where: {
-      ownerId: {
-        in: eligibleUsers.map((user) => user.id),
-      },
-    },
-  });
+  console.log(`...${groupsData.length} groups created!`);
 
-  groupsCreated.push(...fetchedGroups);
-
-  console.log(`...${groupsCreated.length} groups created!`);
-
-  return groupsCreated;
+  return groupsData;
 };
 
 // 5. Helper function to create group members
@@ -367,6 +347,7 @@ const createGroupMembers = async (
     for (const member of members) {
       // Avoid adding the group owner as a member
       if (member.id === group.ownerId) continue;
+      const groupMemberId = generateIdFromEntropySize(10);
 
       const role = member.username.includes("groupAdmin")
         ? GroupRole.ADMIN
@@ -383,6 +364,7 @@ const createGroupMembers = async (
         to: new Date(),
       });
       groupMembersData.push({
+        id: groupMemberId,
         userId: member.id,
         groupId: group.id,
         role,
@@ -399,31 +381,21 @@ const createGroupMembers = async (
     skipDuplicates: true,
   });
 
-  const fetchedGroupMembers = await prisma.groupMember.findMany({
-    where: {
-      userId: {
-        in: groupMembersData.map((member) => member.userId),
-      },
-    },
-  });
-
   console.log(
     `...${totalMembersCreated} members across ${groupsCreated.length} groups created!`,
   );
-  return fetchedGroupMembers;
+  return groupMembersData;
 };
 
 // 6. Helper function to create public posts
 const createPublicPosts = async (usersCreated: Record<string, any[]>) => {
   console.log("Creating public posts...");
-  const postsCreated = [];
+  const postsData = [];
 
   const eligibleUsers = Object.keys(usersCreated)
     .filter((userType) => userType !== "noPosts")
     .flatMap((userType) => usersCreated[userType])
     .filter((user) => user.isVerified);
-
-  const postsData = [];
 
   for (let i = 0; i < eligibleUsers.length; i += 2) {
     const user = eligibleUsers[i];
@@ -436,12 +408,15 @@ const createPublicPosts = async (usersCreated: Record<string, any[]>) => {
     // );
 
     for (let j = 0; j < numberOfPosts; j++) {
+      const postId = generateIdFromEntropySize(10);
+
       const randomDate = faker.date.between({
         from: new Date(user.createdAt),
         to: new Date(),
       });
 
       postsData.push({
+        id: postId,
         content: `public post ${faker.lorem.sentence()}`,
         userId: user.id,
         createdAt: randomDate,
@@ -454,19 +429,9 @@ const createPublicPosts = async (usersCreated: Record<string, any[]>) => {
     skipDuplicates: true,
   });
 
-  // Fetch the created posts to get their IDs
-  const fetchedPosts = await prisma.post.findMany({
-    where: {
-      userId: {
-        in: eligibleUsers.map((user) => user.id),
-      },
-    },
-  });
+  console.log(`...${postsData.length} public posts created!`);
 
-  postsCreated.push(...fetchedPosts);
-  console.log(`...${postsCreated.length} public posts created!`);
-
-  return postsCreated;
+  return postsData;
 };
 
 // 7. Helper function to create public comments
@@ -480,7 +445,7 @@ const createComments = async (
 
   const userKeys = Object.keys(usersCreated);
 
-  for (let i = 0; i < userKeys.length; i += 2) {
+  for (let i = 0; i < userKeys.length; i++) {
     const post = postsCreated[i];
     const postUser = Object.values(usersCreated)
       .flat()
@@ -492,6 +457,7 @@ const createComments = async (
     // console.log(`Creating ${numberOfComments} comments on ${post.id}...`);
 
     for (let j = 0; j < numberOfComments; j++) {
+      const commentId = generateIdFromEntropySize(10);
       const user = faker.helpers.arrayElement(
         Object.values(usersCreated).flat(),
       );
@@ -501,7 +467,8 @@ const createComments = async (
       });
 
       commentsData.push({
-        content: faker.lorem.sentence(),
+        id: commentId,
+        content: `public comment ${faker.lorem.sentence()}`,
         userId: user.id,
         postId: post.id,
         createdAt: commentCreatedAt,
@@ -516,40 +483,28 @@ const createComments = async (
     skipDuplicates: true,
   });
 
-  // Fetch the created comments to get their IDs
-  const createdComments = await prisma.comment.findMany({
-    where: {
-      postId: {
-        in: postsCreated.map((post) => post.id),
-      },
-      userId: {
-        in: Object.values(usersCreated)
-          .flat()
-          .map((user) => user.id),
-      },
-    },
-  });
-
   console.log(
     `...${totalCommentsCreated} comments across ${postsCreated.length} posts created!`,
   );
 
-  return createdComments;
+  return commentsData;
 };
 
 // 8. Helper function to create events
-const createEvents = async (usersCreated: Record<string, any[]>) => {
+const createEvents = async (usersCreated: any[]) => {
   console.log("Creating events...");
-  const eventsData = [];
-  const userKeys = Object.keys(usersCreated);
 
-  for (let i = 1; i < userKeys.length; i += 4) {
-    const user = usersCreated[userKeys[i]][0];
+  const eventsData = [];
+
+  for (let i = 0; i < usersCreated.length; i += 4) {
+    const user = usersCreated[i];
     const eventQuantity = accountDataGenerator("random", userQuantity, 50);
     // console.log(
     //   `Creating ${eventQuantity} events for user ${user.username}...`,
     // );
-    for (let i = 0; i < eventQuantity; i++) {
+    for (let j = 0; j < eventQuantity; j++) {
+      const eventId = generateIdFromEntropySize(10);
+
       const randomDate = faker.date.between({
         from: new Date(Date.now() - 2 * 30 * 24 * 60 * 60 * 1000), // 2 months ago
         to: new Date(Date.now() + 14 * 30 * 24 * 60 * 60 * 1000), // 14 months in the future
@@ -571,6 +526,7 @@ const createEvents = async (usersCreated: Record<string, any[]>) => {
       });
 
       eventsData.push({
+        id: eventId,
         title: faker.lorem.words(),
         location: faker.location.city(),
         description: faker.lorem.paragraph(),
@@ -595,18 +551,9 @@ const createEvents = async (usersCreated: Record<string, any[]>) => {
     skipDuplicates: true,
   });
 
-  // Fetch the created events to get their IDs
-  const events = await prisma.event.findMany({
-    where: {
-      createdById: {
-        in: userKeys.map((key) => usersCreated[key][0].id),
-      },
-    },
-  });
-
   console.log(`...${eventsData.length} events created!`);
 
-  return events;
+  return eventsData;
 };
 
 // 9. Helper function to create event attendees
@@ -720,6 +667,8 @@ const createGroupPosts = async (groupsCreated: any[], groupMembers: any[]) => {
     );
 
     for (let j = 0; j < numberOfPosts; j++) {
+      const groupPostId = generateIdFromEntropySize(10);
+
       const user = faker.helpers.arrayElement(usersInGroup);
 
       const randomDate = faker.date.between({
@@ -728,7 +677,8 @@ const createGroupPosts = async (groupsCreated: any[], groupMembers: any[]) => {
       });
 
       groupPostsData.push({
-        content: faker.lorem.sentence(),
+        id: groupPostId,
+        content: `group post ${faker.lorem.sentence()}`,
         userId: user.userId,
         groupId: group.id,
         createdAt: randomDate,
@@ -741,20 +691,9 @@ const createGroupPosts = async (groupsCreated: any[], groupMembers: any[]) => {
     skipDuplicates: true,
   });
 
-  const groupPostsCreated = await prisma.post.findMany({
-    where: {
-      userId: {
-        in: groupPostsData.map((post) => post.userId),
-      },
-      groupId: {
-        in: groupsCreated.map((group) => group.id),
-      },
-    },
-  });
+  console.log(`...${groupPostsData.length} group posts created!`);
 
-  console.log(`...${groupPostsCreated.length} group posts created!`);
-
-  return groupPostsCreated;
+  return groupPostsData;
 };
 
 // 12. Helper function to create likes
@@ -905,17 +844,15 @@ const createMedia = async (postsCreated: any[]) => {
 async function createGroupComments(
   groupPosts: any[],
   createdGroupMembers: any[],
-  createdUsers: Record<string, any[]>,
+  createdUsers: any[],
 ): Promise<any[]> {
   console.log("Creating group post comments...");
   const groupCommentsData = [];
 
   // Create a map of user IDs to user data for quick lookup
   const userMap = new Map();
-  for (const userType in createdUsers) {
-    for (const user of createdUsers[userType]) {
-      userMap.set(user.id, user);
-    }
+  for (const user of createdUsers) {
+    userMap.set(user.id, user);
   }
 
   // Loop through the group posts to create comments
@@ -944,6 +881,7 @@ async function createGroupComments(
     // );
 
     for (let j = 0; j < Number(numberOfComments); j++) {
+      const groupCommentId = generateIdFromEntropySize(10);
       const selectedMember = faker.helpers.arrayElement(members);
       const user = userMap.get(selectedMember.userId);
 
@@ -966,7 +904,8 @@ async function createGroupComments(
       });
 
       groupCommentsData.push({
-        content: faker.lorem.sentence(),
+        id: groupCommentId,
+        content: `group comment ${faker.lorem.sentence()}`,
         userId: user.id,
         postId: groupPost.id,
         createdAt: commentCreatedAt,
@@ -980,31 +919,15 @@ async function createGroupComments(
     skipDuplicates: true,
   });
 
-  // Fetch the created group comments to get their IDs
-  const groupCommentsCreated = await prisma.comment.findMany({
-    where: {
-      postId: {
-        in: groupPosts.map((post) => post.id),
-      },
-      userId: {
-        in: groupCommentsData.map((comment) => comment.userId),
-      },
-    },
-  });
+  console.log(`...${groupCommentsData.length} group post comments created!`);
 
-  console.log(`...${groupCommentsCreated.length} group post comments created!`);
-
-  return groupCommentsCreated;
+  return groupCommentsData;
 }
 
 // 17. Helper function to create notifications for comments
-interface Post {
-  id: string;
-  userId: string;
-}
 const createCommentNotifications = async (
   commentsCreated: any[],
-  allPosts: Post[],
+  allPosts: any[],
 ) => {
   console.log("Creating comment notifications...");
   const notificationData = [];
@@ -1038,7 +961,7 @@ const createCommentNotifications = async (
 };
 
 // 18. Helper function to create notifications for likes
-const createLikeNotifications = async (createdLikes: any, allPosts: Post[]) => {
+const createLikeNotifications = async (createdLikes: any, allPosts: any[]) => {
   console.log("Creating like notifications...");
   const notificationData = [];
 
@@ -1071,7 +994,7 @@ const createLikeNotifications = async (createdLikes: any, allPosts: Post[]) => {
 // 19. Helper function to create notifications for dislikes
 const createDislikeNotifications = async (
   createdDislikes: any,
-  allPosts: Post[],
+  allPosts: any[],
 ) => {
   console.log("Creating dislike notifications...");
   const notificationData = [];
@@ -1128,15 +1051,10 @@ const createFollowNotifications = async (createdFollowers: any) => {
 };
 
 // 21. Helper function to create notifications for event attending
-interface Event {
-  id: string;
-  createdById: string;
-  createdAt: Date;
-}
 
 const createAttendeeNotifications = async (
   createdAttendees: any,
-  createdEvents: Event[],
+  createdEvents: any[],
 ) => {
   console.log("Creating event attendee notifications...");
   const notificationData = [];
@@ -1174,7 +1092,7 @@ const createAttendeeNotifications = async (
 // 22. Helper function to create notifications for event cancellations
 const createCancellationNotifications = async (
   createdAttendees: any,
-  createdEvents: Event[],
+  createdEvents: any[],
 ) => {
   console.log("Creating event cancellation notifications...");
   const notificationData = [];
