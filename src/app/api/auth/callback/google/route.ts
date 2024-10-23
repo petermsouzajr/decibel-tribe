@@ -65,6 +65,7 @@ export async function GET(req: NextRequest) {
     const existingUser = await prisma.user.findUnique({
       where: {
         googleId: googleUser.id,
+        email: googleUser.email,
       },
     });
 
