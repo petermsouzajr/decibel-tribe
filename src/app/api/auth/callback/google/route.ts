@@ -76,6 +76,17 @@ export async function GET(req: NextRequest) {
         sessionCookie.value,
         sessionCookie.attributes,
       );
+      if (!existingUser.googleId) {
+        await prisma.user.update({
+          where: {
+            id: existingUser.id,
+          },
+          data: {
+            googleId: googleUser.id,
+          },
+        });
+      }
+
       return new Response(null, {
         status: 302,
         headers: {
