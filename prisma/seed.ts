@@ -21,16 +21,29 @@ let generateIdFromEntropySize: any;
 const streamKey = process.env.NEXT_PUBLIC_STREAM_KEY;
 const streamSecret = process.env.STREAM_SECRET;
 
-const userQuantity = 1;
+// Number of each type of user to generate
+// Example: If userQuantity = 1, you get ["verifiedUser"]
+//          If userQuantity = 2, you get ["verifiedUser1", "verifiedUser2"], etc.
+const userQuantity = 4;
 
+// Generates a random integer between min and max (inclusive).
+// Example: random(5, 10) could return any number from 5 to 10, including both 5 and 10.
 const random = (min: number, max: number) => faker.number.int({ min, max });
 
+// Generates a weighted random number based on a base value and an optional factor.
+// The result is influenced by a random float between 0.5 and 1.5 to add variability.
+// Example: weightedRandom(10) will return a value between 5 (10 * 0.5) and 15 (10 * 1.5).
+// Example: weightedRandom(20, 2) will return a value between 20 (20 * 2 * 0.5) and 60 (20 * 2 * 1.5).
 const weightedRandom = (base: number, factor = 1) => {
   return Math.floor(
     base * factor * faker.datatype.float({ min: 0.5, max: 1.5 }),
   );
 };
 
+// Generates a proportionate random number based on the number of users and a factor.
+// The result is a random integer between half and one and a half times the product of users and factor.
+// Example: proportionateRandom(10, 2) will return a value between 10 (10 * 2 * 0.5) and 30 (10 * 2 * 1.5).
+// Example: proportionateRandom(5, 3) will return a value between 7.5 (5 * 3 * 0.5) and 22.5 (5 * 3 * 1.5).
 const proportionateRandom = (users: number, factor: number) => {
   return random(
     Math.ceil(users * factor * 0.5),
@@ -38,7 +51,11 @@ const proportionateRandom = (users: number, factor: number) => {
   );
 };
 
-// AccountData Generator
+// Generates account data based on the provided value, number of users, and a factor.
+// If the value is "random", it generates a proportionate random number based on users and factor.
+// Otherwise, it returns the value as a number.
+// Example: accountDataGenerator("random", 10, 2) will return a value between 10 and 30.
+// Example: accountDataGenerator(5, 10, 2) returns 5 (since the value isn't "random").
 const accountDataGenerator = (
   value: string | number,
   users: number,
@@ -314,7 +331,7 @@ const createGroupMembers = async (
   let totalMembersCreated = 0;
 
   for (const group of groupsCreated) {
-    const numberOfMembers = faker.number.int({ min: 1, max: 10 });
+    const numberOfMembers = accountDataGenerator("random", userQuantity, 3);
     // console.log(`Creating ${numberOfMembers} members in group ${group.id}...`);
 
     const eligibleUsers = Object.keys(usersCreated)
@@ -397,11 +414,11 @@ const createPublicPosts = async (usersCreated: Record<string, any[]>) => {
     .flatMap((userType) => usersCreated[userType])
     .filter((user) => user.isVerified);
 
-  for (let i = 0; i < eligibleUsers.length; i += 2) {
+  for (let i = 0; i < eligibleUsers.length; i++) {
     const user = eligibleUsers[i];
     const numberOfPosts = user.username.includes("UserManyPosts")
       ? 50
-      : faker.number.int({ min: 0, max: 20 });
+      : accountDataGenerator("random", userQuantity, 5);
 
     // console.log(
     //   `Creating ${numberOfPosts} public posts for ${user.username}...`,
@@ -496,9 +513,9 @@ const createEvents = async (usersCreated: any[]) => {
 
   const eventsData = [];
 
-  for (let i = 0; i < usersCreated.length; i += 4) {
+  for (let i = 0; i < usersCreated.length; i++) {
     const user = usersCreated[i];
-    const eventQuantity = accountDataGenerator("random", userQuantity, 50);
+    const eventQuantity = accountDataGenerator("random", userQuantity, 20);
     // console.log(
     //   `Creating ${eventQuantity} events for user ${user.username}...`,
     // );
@@ -620,7 +637,7 @@ const createFollowers = async (usersCreated: Record<string, any[]>) => {
   const users = Object.values(usersCreated).flat();
 
   for (const user of users) {
-    const numberOfFollowers = faker.number.int({ min: 0, max: 15 });
+    const numberOfFollowers = accountDataGenerator("random", userQuantity, 10);
     // console.log(
     //   `Creating ${numberOfFollowers} followers for user ${user.id}...`,
     // );
@@ -704,9 +721,9 @@ const createLikes = async (
   console.log("Creating likes...");
   const likeData = [];
 
-  for (let i = 0; i < postsCreated.length; i += 2) {
+  for (let i = 0; i < postsCreated.length; i++) {
     const post = postsCreated[i];
-    const numberOfLikes = faker.number.int({ min: 0, max: 20 });
+    const numberOfLikes = accountDataGenerator("random", userQuantity, 5);
 
     // console.log(`Creating ${numberOfLikes} likes for post ${post.id}...`);
 
@@ -740,9 +757,9 @@ const createDislikes = async (
   console.log("Creating dislikes...");
   const dislikeData = [];
 
-  for (let i = 0; i < postsCreated.length; i += 2) {
+  for (let i = 0; i < postsCreated.length; i++) {
     const post = postsCreated[i];
-    const numberOfDislikes = faker.number.int({ min: 0, max: 20 });
+    const numberOfDislikes = accountDataGenerator("random", userQuantity, 5);
     // console.log(`Creating ${numberOfDislikes} dislikes for post ${post.id}...`);
 
     const dislikers = faker.helpers
@@ -774,9 +791,9 @@ const createBookmarks = async (
   console.log("Creating bookmarks...");
   const bookmarkData = [];
 
-  for (let i = 0; i < postsCreated.length; i += 2) {
+  for (let i = 0; i < postsCreated.length; i++) {
     const post = postsCreated[i];
-    const numberOfBookmarks = faker.number.int({ min: 0, max: 10 });
+    const numberOfBookmarks = accountDataGenerator("random", userQuantity, 5);
     // console.log(
     //   `Creating ${numberOfBookmarks} bookmarks for post ${post.id}...`,
     // );
@@ -816,7 +833,7 @@ const createMedia = async (postsCreated: any[]) => {
     return "";
   };
 
-  for (let i = 0; i < postsCreated.length; i += 2) {
+  for (let i = 0; i < postsCreated.length; i++) {
     const post = postsCreated[i];
     const numberOfMedia = faker.number.int({ min: 0, max: 5 });
     // console.log(`Creating media for post ${post.id}...`);
@@ -856,7 +873,7 @@ async function createGroupComments(
   }
 
   // Loop through the group posts to create comments
-  for (let i = 0; i < groupPosts.length; i += 2) {
+  for (let i = 0; i < groupPosts.length; i++) {
     const groupPost = groupPosts[i];
     // console.log(
     //   `Processing group post ${groupPost.id} in group ${groupPost.groupId}...`,
