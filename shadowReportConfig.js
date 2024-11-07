@@ -41,14 +41,13 @@ module.exports = {
     // 'beta',
   ],
   // Replace with the actual Google Spreadsheet ID, found in the URL:
-  googleSpreadsheetId:
-    "https://docs.google.com/spreadsheets/d/1Y8tFpbNEKPtQWmo3U9idGxxoSB3zIbLrQFsllr1mySs/edit?gid=1916560860#gid=1916560860",
+  googleSpreadsheetId: process.env.GOOGLE_SHEET_URL,
 
   // Path to your Google credentials file, service account credentials JSON file:
   googleKeyFilePath: process.env.GOOGLE_KEY_FILE_PATH,
 
   // Path to your test data results, matching the output format of the test runner:
-  testData: "./cypress/results/output.json",
+  testData: process.env.CYPRESS_RESULTS_PATH,
 
   // Default path to the directory where CSV downloads will be saved:
   // (optional) uncomment and replace with your desired path:

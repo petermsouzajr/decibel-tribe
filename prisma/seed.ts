@@ -24,7 +24,7 @@ const streamSecret = process.env.STREAM_SECRET;
 // Number of each type of user to generate
 // Example: If userQuantity = 1, you get ["verifiedUser"]
 //          If userQuantity = 2, you get ["verifiedUser1", "verifiedUser2"], etc.
-const userQuantity = 4;
+const userQuantity = 1;
 
 // Generates a random integer between min and max (inclusive).
 // Example: random(5, 10) could return any number from 5 to 10, including both 5 and 10.

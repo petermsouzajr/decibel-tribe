@@ -3,7 +3,6 @@ import SearchField from "@/components/SearchField";
 import UserButton from "@/components/UserButton";
 import useScrollDirection from "@/hooks/useScrollDirection";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
 export default function Navbar() {
   const scrollDirection = useScrollDirection();
