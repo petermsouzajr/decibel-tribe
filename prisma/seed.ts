@@ -1155,80 +1155,80 @@ async function main() {
 
   console.log("Start seeding...");
 
-  // 3. Create Users
-  const createdUsers = await createUsers(testUserData);
+  // // 3. Create Users
+  // const createdUsers = await createUsers(testUserData);
 
-  // 4. Create Groups
-  const createdGroups = await createGroups(createdUsers);
+  // // 4. Create Groups
+  // const createdGroups = await createGroups(createdUsers);
 
-  // 5. Create Group Members
-  const createdGroupMembers = await createGroupMembers(
-    createdUsers,
-    createdGroups,
-  );
+  // // 5. Create Group Members
+  // const createdGroupMembers = await createGroupMembers(
+  //   createdUsers,
+  //   createdGroups,
+  // );
 
-  // 6. Create Public Posts
-  const createdPosts = await createPublicPosts(createdUsers);
+  // // 6. Create Public Posts
+  // const createdPosts = await createPublicPosts(createdUsers);
 
-  // 7. Create Comments
-  const createdComments = await createComments(createdUsers, createdPosts);
+  // // 7. Create Comments
+  // const createdComments = await createComments(createdUsers, createdPosts);
 
-  // 8. Create Events
-  const createdEvents = await createEvents(createdUsers);
+  // // 8. Create Events
+  // const createdEvents = await createEvents(createdUsers);
 
-  // 9. Create Event Attendees
-  const createdAttendees = await createEventAttendees(
-    createdUsers,
-    createdEvents,
-  );
+  // // 9. Create Event Attendees
+  // const createdAttendees = await createEventAttendees(
+  //   createdUsers,
+  //   createdEvents,
+  // );
 
-  // 10. Helper function to create follows
-  const createdFollowers = await createFollowers(createdUsers);
+  // // 10. Helper function to create follows
+  // const createdFollowers = await createFollowers(createdUsers);
 
-  // 11. Create Group Posts
-  const createdGroupPosts = await createGroupPosts(
-    createdGroups,
-    createdGroupMembers,
-  );
+  // // 11. Create Group Posts
+  // const createdGroupPosts = await createGroupPosts(
+  //   createdGroups,
+  //   createdGroupMembers,
+  // );
 
-  const allPosts = createdPosts.concat(createdGroupPosts);
-  // 12. Create Likes
-  const createdLikes = await createLikes(createdUsers, allPosts);
+  // const allPosts = createdPosts.concat(createdGroupPosts);
+  // // 12. Create Likes
+  // const createdLikes = await createLikes(createdUsers, allPosts);
 
-  // 13. Create Dislikes
-  const createdDislikes = await createDislikes(createdUsers, allPosts);
+  // // 13. Create Dislikes
+  // const createdDislikes = await createDislikes(createdUsers, allPosts);
 
-  // 14. Create Bookmarks
-  await createBookmarks(createdUsers, allPosts);
+  // // 14. Create Bookmarks
+  // await createBookmarks(createdUsers, allPosts);
 
-  // 15. Create Media For Posts
-  await createMedia(allPosts);
+  // // 15. Create Media For Posts
+  // await createMedia(allPosts);
 
-  // 16. Create Group Comments
-  const createdGroupComments = await createGroupComments(
-    createdGroupPosts,
-    createdGroupMembers,
-    createdUsers,
-  );
+  // // 16. Create Group Comments
+  // const createdGroupComments = await createGroupComments(
+  //   createdGroupPosts,
+  //   createdGroupMembers,
+  //   createdUsers,
+  // );
 
-  // 17. Create Comment Notifications
-  const allComments = createdComments.concat(createdGroupComments);
-  await createCommentNotifications(allComments, allPosts);
+  // // 17. Create Comment Notifications
+  // const allComments = createdComments.concat(createdGroupComments);
+  // await createCommentNotifications(allComments, allPosts);
 
-  // 18. Create Like Notifications
-  await createLikeNotifications(createdLikes, allPosts);
+  // // 18. Create Like Notifications
+  // await createLikeNotifications(createdLikes, allPosts);
 
-  // 19. Create Dislike Notifications
-  await createDislikeNotifications(createdDislikes, allPosts);
+  // // 19. Create Dislike Notifications
+  // await createDislikeNotifications(createdDislikes, allPosts);
 
-  // 20. Create Follow Notifications
-  await createFollowNotifications(createdFollowers);
+  // // 20. Create Follow Notifications
+  // await createFollowNotifications(createdFollowers);
 
-  // 21. Create Attendee Notifications
-  await createAttendeeNotifications(createdAttendees, createdEvents);
+  // // 21. Create Attendee Notifications
+  // await createAttendeeNotifications(createdAttendees, createdEvents);
 
-  // 22. Create Cancellation Notifications
-  await createCancellationNotifications(createdAttendees, createdEvents);
+  // // 22. Create Cancellation Notifications
+  // await createCancellationNotifications(createdAttendees, createdEvents);
 }
 
 main()
