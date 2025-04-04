@@ -9,7 +9,7 @@ import {
   updateUserProfileSchema,
   UpdateUserProfileValues,
 } from "@/lib/validation";
-import { hash, verify } from "@node-rs/argon2";
+import bcrypt from "bcryptjs";
 
 export async function updateUserProfile(values: UpdateUserProfileValues) {
   const validatedValues = updateUserProfileSchema.parse(values);
@@ -92,12 +92,7 @@ export async function updateUserPassword({
   });
 
   if (!userRecord?.passwordHash) {
-    const hashedNewPassword = await hash(newPassword, {
-      memoryCost: 19456,
-      timeCost: 2,
-      outputLen: 32,
-      parallelism: 1,
-    });
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
     await prisma.user.update({
       where: { id: user.id },
@@ -108,9 +103,9 @@ export async function updateUserPassword({
   }
 
   if (currentPassword) {
-    const isPasswordValid = await verify(
-      userRecord.passwordHash,
+    const isPasswordValid = await bcrypt.compare(
       currentPassword,
+      userRecord.passwordHash,
     );
     if (!isPasswordValid) {
       throw new Error("Current password is incorrect.");
@@ -119,12 +114,7 @@ export async function updateUserPassword({
     throw new Error("Current password is required to update the password.");
   }
 
-  const hashedNewPassword = await hash(newPassword, {
-    memoryCost: 19456,
-    timeCost: 2,
-    outputLen: 32,
-    parallelism: 1,
-  });
+  const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
   await prisma.user.update({
     where: { id: user.id },
@@ -154,9 +144,9 @@ export async function updateUserEmail({
     throw new Error("Password not set for this user.");
   }
 
-  const isPasswordValid = await verify(
-    userRecord.passwordHash,
+  const isPasswordValid = await bcrypt.compare(
     currentPassword,
+    userRecord.passwordHash,
   );
   if (!isPasswordValid) {
     throw new Error("Current password is incorrect.");

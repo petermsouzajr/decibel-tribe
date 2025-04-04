@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { signUpSchema, SignUpValues } from "@/lib/validation";
-import { hash } from "@node-rs/argon2";
+import bcrypt from "bcryptjs"; // Import bcryptjs
 import { generateIdFromEntropySize } from "lucia";
 import { isRedirectError } from "next/dist/client/components/redirect";
 import { generateAndSendVerification } from "../sendVerification";
@@ -13,12 +13,9 @@ export async function signUp(
   try {
     const { username, email, password } = signUpSchema.parse(credentials);
 
-    const passwordHash = await hash(password, {
-      memoryCost: 19456,
-      timeCost: 2,
-      outputLen: 32,
-      parallelism: 1,
-    });
+    // Use bcryptjs hashing
+    const saltRounds = 10; // Standard salt rounds (adjust if needed)
+    const passwordHash = await bcrypt.hash(password, saltRounds);
 
     const userId = generateIdFromEntropySize(10);
 
@@ -57,7 +54,7 @@ export async function signUp(
     return { success: true };
   } catch (error) {
     if (isRedirectError(error)) throw error;
-    console.error(error);
+    console.error("Sign up error:", error); // Log specific error
     return {
       error: "Something went wrong. Please try again.",
     };

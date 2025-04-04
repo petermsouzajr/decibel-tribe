@@ -19,3 +19,44 @@ vi.mock("react", async (importOriginal) => {
       fn) as typeof actual.cache,
   };
 });
+
+// Mock next/cache globally to handle unstable_cache errors
+vi.mock("next/cache", () => ({
+  unstable_cache: vi.fn((cb) => cb), // Simple pass-through mock
+}));
+
+// Mock next/headers globally
+vi.mock("next/headers", () => ({
+  cookies: vi.fn(() => ({
+    get: vi.fn((name?: string) => {
+      // console.log(`Mock cookies().get called with: ${name}`);
+      // Return null initially, or adjust if specific tests need a mock cookie
+      return undefined;
+    }),
+    // Add other methods like set, has, delete if needed by your tests
+    has: vi.fn(() => false),
+    set: vi.fn(),
+    delete: vi.fn(),
+  })),
+  // Mock other exports from next/headers if needed (e.g., headers)
+  headers: vi.fn(() => new Map()),
+}));
+
+// Mock prisma client globally (adding more methods)
+vi.mock("@/lib/prisma", () => ({
+  default: {
+    // Explicitly make mocked methods vi.fn()
+    post: {
+      findUnique: vi.fn(),
+    },
+    user: {
+      findUnique: vi.fn(),
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+    },
+    event: {
+      findUnique: vi.fn(),
+    },
+    $queryRaw: vi.fn(),
+  },
+}));

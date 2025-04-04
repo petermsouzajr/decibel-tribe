@@ -78,7 +78,13 @@ export const validateRequest = cache(
           sessionCookie.attributes,
         );
       }
-    } catch {}
+    } catch (error) {
+      console.error("Error setting session cookie in validateRequest:", error);
+      return {
+        user: null,
+        session: null,
+      };
+    }
 
     return result;
   },

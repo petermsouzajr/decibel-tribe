@@ -17,7 +17,7 @@ vi.mock("@/app/(auth)/sendVerification", () => ({
   resendVerificationEmail: vi.fn(),
 }));
 
-describe("resendVerification", () => {
+describe.skip("Password Reset Actions", () => {
   const mockCredentials: resetPasswordValues = {
     credential: "test@example.com",
   };

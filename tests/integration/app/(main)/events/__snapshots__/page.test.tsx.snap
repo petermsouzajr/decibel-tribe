@@ -31,13 +31,13 @@ exports[`Events Page > should match snapshot 1`] = `
             tabindex="0"
           >
             <button
-              aria-controls="radix-:rc:-content-events-for-you"
+              aria-controls="radix-:r6:-content-events-for-you"
               aria-selected="true"
               class="inline-flex h-full flex-1 items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:font-bold data-[state=active]:text-foreground"
               data-orientation="horizontal"
               data-radix-collection-item=""
               data-state="active"
-              id="radix-:rc:-trigger-events-for-you"
+              id="radix-:r6:-trigger-events-for-you"
               role="tab"
               tabindex="-1"
               type="button"
@@ -45,13 +45,13 @@ exports[`Events Page > should match snapshot 1`] = `
               For you
             </button>
             <button
-              aria-controls="radix-:rc:-content-events-following"
+              aria-controls="radix-:r6:-content-events-following"
               aria-selected="false"
               class="inline-flex h-full flex-1 items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:font-bold data-[state=active]:text-foreground"
               data-orientation="horizontal"
               data-radix-collection-item=""
               data-state="inactive"
-              id="radix-:rc:-trigger-events-following"
+              id="radix-:r6:-trigger-events-following"
               role="tab"
               tabindex="-1"
               type="button"
@@ -60,11 +60,11 @@ exports[`Events Page > should match snapshot 1`] = `
             </button>
           </div>
           <div
-            aria-labelledby="radix-:rc:-trigger-events-for-you"
+            aria-labelledby="radix-:r6:-trigger-events-for-you"
             class="mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             data-orientation="horizontal"
             data-state="active"
-            id="radix-:rc:-content-events-for-you"
+            id="radix-:r6:-content-events-for-you"
             role="tabpanel"
             style="animation-duration: 0s;"
             tabindex="0"
@@ -147,12 +147,12 @@ exports[`Events Page > should match snapshot 1`] = `
             </div>
           </div>
           <div
-            aria-labelledby="radix-:rc:-trigger-events-following"
+            aria-labelledby="radix-:r6:-trigger-events-following"
             class="mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             data-orientation="horizontal"
             data-state="inactive"
             hidden=""
-            id="radix-:rc:-content-events-following"
+            id="radix-:r6:-content-events-following"
             role="tabpanel"
             tabindex="0"
           />

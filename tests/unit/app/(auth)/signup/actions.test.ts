@@ -1,8 +1,8 @@
 import prisma from "@/lib/prisma";
 import { signUp } from "@/app/(auth)/signup/actions";
 import { signUpSchema } from "@/lib/validation";
-import { hash } from "@node-rs/argon2";
 import { generateIdFromEntropySize } from "lucia";
+import bcrypt from "bcryptjs";
 import { generateAndSendVerification } from "@/app/(auth)/sendVerification";
 import { isRedirectError } from "next/dist/client/components/redirect";
 
@@ -23,10 +23,6 @@ vi.mock("@/lib/validation", () => ({
   },
 }));
 
-vi.mock("@node-rs/argon2", () => ({
-  hash: vi.fn(),
-}));
-
 vi.mock("lucia", () => ({
   generateIdFromEntropySize: vi.fn(),
 }));
@@ -38,6 +34,8 @@ vi.mock("@/app/(auth)/sendVerification", () => ({
 vi.mock("next/dist/client/components/redirect", () => ({
   isRedirectError: vi.fn(),
 }));
+
+vi.mock("bcryptjs");
 
 describe("signUp", () => {
   const mockCredentials = {
@@ -63,7 +61,7 @@ describe("signUp", () => {
 
     await signUp(mockCredentials);
 
-    expect(signUpSchema.parse).toHaveBeenCalledWith(mockCredentials);
+    expect(signUpSchema.parse).toBeCalledWith(mockCredentials);
   });
 
   it("should return an error if the username is already taken", async () => {
@@ -99,36 +97,30 @@ describe("signUp", () => {
     // @ts-ignore
     signUpSchema.parse.mockReturnValue(mockCredentials);
     // @ts-ignore
-    hash.mockResolvedValue(mockPasswordHash);
-    // @ts-ignore
     generateIdFromEntropySize.mockReturnValue(mockUserId);
 
     await signUp(mockCredentials);
 
-    expect(hash).toHaveBeenCalledWith(mockCredentials.password, {
-      memoryCost: 19456,
-      timeCost: 2,
-      outputLen: 32,
-      parallelism: 1,
-    });
-    expect(generateIdFromEntropySize).toHaveBeenCalledWith(10);
+    expect(generateIdFromEntropySize).toBeCalledWith(10);
   });
 
   it("should generate and send a verification email", async () => {
     // @ts-ignore
     signUpSchema.parse.mockReturnValue(mockCredentials);
     // @ts-ignore
-    hash.mockResolvedValue(mockPasswordHash);
-    // @ts-ignore
     generateIdFromEntropySize.mockReturnValue(mockUserId);
+    // Mock bcrypt.hash to return a predictable value
+    const mockedHash = "mockedBcryptHash";
+    vi.mocked(bcrypt.hash).mockResolvedValue(mockedHash);
 
     await signUp(mockCredentials);
 
-    expect(generateAndSendVerification).toHaveBeenCalledWith(
+    // Expect generateAndSendVerification to be called with the mocked hash
+    expect(generateAndSendVerification).toBeCalledWith(
       mockUserId,
       mockCredentials.username,
       mockCredentials.email,
-      mockPasswordHash,
+      mockedHash,
     );
   });
 
@@ -154,6 +146,6 @@ describe("signUp", () => {
     // @ts-ignore
     isRedirectError.mockReturnValue(true);
 
-    await expect(signUp(mockCredentials)).rejects.toThrow(redirectError);
+    await expect(signUp(mockCredentials)).rejects.toThrowError(redirectError);
   });
 });

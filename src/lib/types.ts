@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 
-export function getUserDataSelect(loggedInUserId: string) {
-  return {
+export function getUserDataSelect(loggedInUserId?: string | null) {
+  const select = {
     id: true,
     username: true,
     displayName: true,
@@ -35,14 +35,6 @@ export function getUserDataSelect(loggedInUserId: string) {
         },
       },
     },
-    followers: {
-      where: {
-        followerId: loggedInUserId,
-      },
-      select: {
-        followerId: true,
-      },
-    },
     _count: {
       select: {
         posts: true,
@@ -50,6 +42,22 @@ export function getUserDataSelect(loggedInUserId: string) {
       },
     },
   } satisfies Prisma.UserSelect;
+
+  if (loggedInUserId) {
+    return {
+      ...select,
+      followers: {
+        where: {
+          followerId: loggedInUserId,
+        },
+        select: {
+          followerId: true,
+        },
+      },
+    } satisfies Prisma.UserSelect;
+  }
+
+  return select;
 }
 
 export type UserData = Prisma.UserGetPayload<{
@@ -90,36 +98,12 @@ export type EventData = Prisma.EventGetPayload<{
   include: ReturnType<typeof getEventDataInclude>;
 }>;
 
-export function getPostDataInclude(loggedInUserId: string) {
-  return {
+export function getPostDataInclude(loggedInUserId?: string | null) {
+  const include = {
     user: {
       select: getUserDataSelect(loggedInUserId),
     },
     attachments: true,
-    likes: {
-      where: {
-        userId: loggedInUserId,
-      },
-      select: {
-        userId: true,
-      },
-    },
-    dislikes: {
-      where: {
-        userId: loggedInUserId,
-      },
-      select: {
-        userId: true,
-      },
-    },
-    bookmarks: {
-      where: {
-        userId: loggedInUserId,
-      },
-      select: {
-        userId: true,
-      },
-    },
     _count: {
       select: {
         likes: true,
@@ -134,6 +118,38 @@ export function getPostDataInclude(loggedInUserId: string) {
       },
     },
   } satisfies Prisma.PostInclude;
+
+  if (loggedInUserId) {
+    return {
+      ...include,
+      likes: {
+        where: {
+          userId: loggedInUserId,
+        },
+        select: {
+          userId: true,
+        },
+      },
+      dislikes: {
+        where: {
+          userId: loggedInUserId,
+        },
+        select: {
+          userId: true,
+        },
+      },
+      bookmarks: {
+        where: {
+          userId: loggedInUserId,
+        },
+        select: {
+          userId: true,
+        },
+      },
+    } satisfies Prisma.PostInclude;
+  }
+
+  return include;
 }
 
 export type PostData = Prisma.PostGetPayload<{
@@ -174,7 +190,7 @@ export type GroupMembershipData = Prisma.GroupMemberGetPayload<{
   include: ReturnType<typeof getGroupMemberSelect>;
 }>;
 
-export function getCommentDataInclude(loggedInUserId: string) {
+export function getCommentDataInclude(loggedInUserId?: string | null) {
   return {
     user: {
       select: getUserDataSelect(loggedInUserId),

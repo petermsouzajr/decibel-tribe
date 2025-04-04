@@ -3,10 +3,11 @@
 import { lucia } from "@/auth";
 import prisma from "@/lib/prisma";
 import { loginSchema, LoginValues } from "@/lib/validation";
-import { verify } from "@node-rs/argon2";
+// import { verify } from "@node-rs/argon2";
 import { isRedirectError } from "next/dist/client/components/redirect";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import bcrypt from "bcryptjs";
 import { resendVerificationEmail } from "../sendVerification";
 
 export async function login(
@@ -35,6 +36,9 @@ export async function login(
     });
 
     if (!existingUser || !existingUser.passwordHash) {
+      console.log(
+        `Login attempt failed: User ${username} not found or no hash.`,
+      );
       return {
         error: "Incorrect username or password",
       };
@@ -49,14 +53,15 @@ export async function login(
       };
     }
 
-    const validPassword = await verify(existingUser.passwordHash, password, {
-      memoryCost: 19456,
-      timeCost: 2,
-      outputLen: 32,
-      parallelism: 1,
-    });
+    const validPassword = await bcrypt.compare(
+      password,
+      existingUser.passwordHash,
+    );
 
     if (!validPassword) {
+      console.log(
+        `Login attempt failed: Incorrect password for user ${username}.`,
+      );
       return {
         error: "Incorrect username or password",
       };
@@ -77,7 +82,7 @@ export async function login(
     return redirect("/");
   } catch (error) {
     if (isRedirectError(error)) throw error;
-    console.error(error);
+    console.error("Login error:", error);
     return {
       error: "Something went wrong. Please try again.",
     };

@@ -1,11 +1,13 @@
-import { validateRequest } from "@/auth";
+// import { validateRequest } from "@/auth";
+import { lucia } from "@/auth"; // Import lucia
+import { cookies } from "next/headers"; // Import cookies
 import prisma from "@/lib/prisma";
 import {
   getEventDataInclude,
   getPostDataInclude,
   getUserDataSelect,
 } from "@/lib/types";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server"; // Import NextResponse
 import { parse, isValid, addDays } from "date-fns";
 import { Prisma } from "@prisma/client";
 
@@ -155,34 +157,64 @@ function filterEvents(events: any[], q: string) {
 
 export async function GET(req: NextRequest) {
   try {
-    const q = req.nextUrl.searchParams.get("q") || "";
+    const query = req.nextUrl.searchParams.get("q");
+    const category = req.nextUrl.searchParams.get("category") || "users";
 
-    const pageSize = 10;
+    if (!query) {
+      return NextResponse.json({ error: "Query is required" }, { status: 400 });
+    }
 
-    const { user } = await validateRequest();
+    // Direct session validation
+    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    if (!sessionId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { user, session } = await lucia.validateSession(sessionId);
+
+    if (!session) {
+      const sessionCookie = lucia.createBlankSessionCookie();
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (session && session.fresh) {
+      const sessionCookie = lucia.createSessionCookie(session.id);
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+    }
+    // --- End direct session validation
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    if (typeof q !== "string") {
-      throw new Error("Invalid query");
-    }
 
-    const searchQuery = q.trim();
+    let results: any = [];
+
+    const pageSize = 10;
+
+    const searchQuery = query.trim();
 
     const posts = await prisma.post.findMany({
       where: {
         OR: [
           {
             content: {
-              contains: q,
+              contains: query,
               mode: "insensitive",
             },
           },
           {
             user: {
               displayName: {
-                contains: q,
+                contains: query,
                 mode: "insensitive",
               },
             },
@@ -190,7 +222,7 @@ export async function GET(req: NextRequest) {
           {
             user: {
               username: {
-                contains: q,
+                contains: query,
                 mode: "insensitive",
               },
             },
@@ -207,25 +239,25 @@ export async function GET(req: NextRequest) {
         OR: [
           {
             username: {
-              contains: q,
+              contains: query,
               mode: "insensitive",
             },
           },
           {
             displayName: {
-              contains: q,
+              contains: query,
               mode: "insensitive",
             },
           },
           {
             email: {
-              contains: q,
+              contains: query,
               mode: "insensitive",
             },
           },
           {
             bio: {
-              contains: q,
+              contains: query,
               mode: "insensitive",
             },
           },
@@ -237,7 +269,7 @@ export async function GET(req: NextRequest) {
     });
 
     const allEvents = await fetchValidEvents(user.id);
-    const filteredEvents = filterEvents(allEvents, q);
+    const filteredEvents = filterEvents(allEvents, query);
 
     const usersWithSkills = await prisma.user.findMany({
       where: {
@@ -245,7 +277,7 @@ export async function GET(req: NextRequest) {
           some: {
             skill: {
               name: {
-                contains: q,
+                contains: query,
                 mode: "insensitive",
               },
             },
@@ -262,7 +294,7 @@ export async function GET(req: NextRequest) {
           some: {
             instrument: {
               name: {
-                contains: q,
+                contains: query,
                 mode: "insensitive",
               },
             },
@@ -275,19 +307,21 @@ export async function GET(req: NextRequest) {
 
     const nextCursor = posts.length > pageSize ? posts[pageSize].id : null;
 
-    return NextResponse.json({
+    results = {
       posts: posts.slice(0, pageSize),
       users: users.slice(0, pageSize),
       events: filteredEvents.slice(0, pageSize),
       usersWithSkills: usersWithSkills.slice(0, pageSize),
       usersWithInstruments: usersWithInstruments.slice(0, pageSize),
       nextCursor,
-    });
+    };
+
+    return NextResponse.json(results);
   } catch (error) {
-    console.error(error);
+    console.error("Search API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
-    );
+    ); // Use NextResponse
   }
 }

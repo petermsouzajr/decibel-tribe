@@ -1,22 +1,48 @@
-import { NextRequest, NextResponse } from "next/server";
-import { validateRequest } from "@/auth";
+import { lucia } from "@/auth";
+import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
-import { getPostDataInclude } from "@/lib/types";
+import { getPostDataInclude, PostsPage } from "@/lib/types";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { groupId: string } },
 ) {
   try {
-    const { user } = await validateRequest();
+    const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
+    const pageSize = 10;
+
+    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    if (!sessionId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { user, session } = await lucia.validateSession(sessionId);
+
+    if (!session) {
+      const sessionCookie = lucia.createBlankSessionCookie();
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (session && session.fresh) {
+      const sessionCookie = lucia.createSessionCookie(session.id);
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+    }
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const groupId = params.groupId;
-    const pageSize = 10;
-    const cursor = req.nextUrl.searchParams.get("cursor");
 
     const isMember = await prisma.groupMember.findUnique({
       where: {
@@ -52,9 +78,11 @@ export async function GET(
 
     if (hasNextPage) posts.pop();
 
-    return NextResponse.json({ posts, nextCursor });
+    const data: PostsPage = { posts, nextCursor };
+
+    return NextResponse.json(data);
   } catch (error) {
-    console.error("Error fetching group posts:", error);
+    console.error("Error in GET /api/groups/[groupId]/posts:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
