@@ -152,87 +152,7 @@ export function getPostDataInclude(loggedInUserId?: string | null) {
   return include;
 }
 
-export type PostData = Prisma.PostGetPayload<{
-  include: ReturnType<typeof getPostDataInclude>;
-}>;
-
-export interface PostsPage {
-  posts: PostData[];
-  nextCursor: string | null;
-}
-
-export function getGroupMemberSelect() {
-  return {
-    userId: true,
-    groupId: true,
-    role: true,
-    joinedAt: true,
-    group: {
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        ownerId: true,
-      },
-    },
-    user: {
-      select: {
-        id: true,
-        username: true,
-        displayName: true,
-      },
-    },
-    acceptedInvite: true,
-  } satisfies Prisma.GroupMemberSelect;
-}
-
-export type GroupMembershipData = Prisma.GroupMemberGetPayload<{
-  include: ReturnType<typeof getGroupMemberSelect>;
-}>;
-
-export function getCommentDataInclude(loggedInUserId?: string | null) {
-  return {
-    user: {
-      select: getUserDataSelect(loggedInUserId),
-    },
-  } satisfies Prisma.CommentInclude;
-}
-
-export type CommentData = Prisma.CommentGetPayload<{
-  include: ReturnType<typeof getCommentDataInclude>;
-}>;
-
-export interface CommentsPage {
-  comments: CommentData[];
-  previousCursor: string | null;
-}
-
-// Define the specific include structure used in the notifications API route
-// KEEPING THIS HERE conceptually to ensure the manual type below matches,
-// but not exporting/using it directly for GetPayload anymore.
-const notificationApiInclude_internal = (loggedInUserId: string) =>
-  ({
-    issuer: {
-      select: getUserDataSelect(loggedInUserId),
-    },
-    post: {
-      select: {
-        id: true,
-        content: true,
-      },
-    },
-    event: {
-      select: {
-        id: true,
-        title: true,
-        location: true,
-      },
-    },
-  }) satisfies Prisma.NotificationInclude;
-
-// Manually define the expected issuer type based on getUserDataSelect(userId)
-// This explicitly includes the conditional followers array and other user fields.
-export type IssuerDataWithFollowers = {
+export type UserWithFollowerStatus = {
   id: string;
   username: string;
   displayName: string;
@@ -266,7 +186,6 @@ export type IssuerDataWithFollowers = {
   }[];
 };
 
-// Keep the manually defined NotificationData using the explicit issuer type above
 export interface NotificationData {
   id: string;
   recipientId: string;
@@ -277,7 +196,7 @@ export interface NotificationData {
   eventId: string | null;
   createdAt: Date;
 
-  issuer: IssuerDataWithFollowers;
+  issuer: UserWithFollowerStatus;
   post: {
     id: string;
     content: string;
@@ -320,6 +239,7 @@ export interface NotificationCountInfo {
 export interface MessageCountInfo {
   unreadCount: number;
 }
+
 export interface Event {
   id: string;
   title: string;
@@ -389,4 +309,69 @@ export interface EditState {
   editedTitle: string;
   editedStartTime: string;
   editedEndTime: string;
+}
+
+// Helper type to get the payload structure from getPostDataInclude
+// Ensures we include likes, dislikes, bookmarks conditionally
+type PostPayloadCreator<T extends string | null | undefined> =
+  Prisma.PostGetPayload<{ include: ReturnType<typeof getPostDataInclude> }>;
+
+// Manually define PostData to ensure the user field has the correct type
+export type PostData = Omit<
+  PostPayloadCreator<string>, // Get base payload including conditional fields like 'likes'
+  "user" // Remove the potentially inferred user
+> & {
+  // Add the explicitly typed user back
+  user: UserWithFollowerStatus;
+};
+
+export interface PostsPage {
+  posts: PostData[];
+  nextCursor: string | null;
+}
+
+export function getGroupMemberSelect() {
+  return {
+    userId: true,
+    groupId: true,
+    role: true,
+    joinedAt: true,
+    group: {
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        ownerId: true,
+      },
+    },
+    user: {
+      select: {
+        id: true,
+        username: true,
+        displayName: true,
+      },
+    },
+    acceptedInvite: true,
+  } satisfies Prisma.GroupMemberSelect;
+}
+
+export type GroupMembershipData = Prisma.GroupMemberGetPayload<{
+  include: ReturnType<typeof getGroupMemberSelect>;
+}>;
+
+export function getCommentDataInclude(loggedInUserId?: string | null) {
+  return {
+    user: {
+      select: getUserDataSelect(loggedInUserId),
+    },
+  } satisfies Prisma.CommentInclude;
+}
+
+export type CommentData = Prisma.CommentGetPayload<{
+  include: ReturnType<typeof getCommentDataInclude>;
+}>;
+
+export interface CommentsPage {
+  comments: CommentData[];
+  previousCursor: string | null;
 }
