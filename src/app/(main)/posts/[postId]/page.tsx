@@ -5,7 +5,12 @@ import Post from "@/components/posts/Post";
 import UserAvatar from "@/components/UserAvatar";
 import UserTooltip from "@/components/UserTooltip";
 import prisma from "@/lib/prisma";
-import { getPostDataInclude, UserData } from "@/lib/types";
+import {
+  getPostDataInclude,
+  UserData,
+  PostData,
+  UserWithFollowerStatus,
+} from "@/lib/types";
 import { Loader2 } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
@@ -16,18 +21,20 @@ interface PageProps {
   params: { postId: string };
 }
 
-const getPost = cache(async (postId: string, loggedInUserId: string) => {
-  const post = await prisma.post.findUnique({
-    where: {
-      id: postId,
-    },
-    include: getPostDataInclude(loggedInUserId),
-  });
+const getPost = cache(
+  async (postId: string, loggedInUserId: string): Promise<PostData> => {
+    const post = await prisma.post.findUnique({
+      where: {
+        id: postId,
+      },
+      include: getPostDataInclude(loggedInUserId),
+    });
 
-  if (!post) notFound();
+    if (!post) notFound();
 
-  return post;
-});
+    return post as PostData;
+  },
+);
 
 export async function generateMetadata({
   params: { postId },
@@ -44,9 +51,9 @@ export async function generateMetadata({
 }
 
 export default async function Page({ params: { postId } }: PageProps) {
-  const { user } = await validateRequest();
+  const { user: loggedInUser } = await validateRequest();
 
-  if (!user) {
+  if (!loggedInUser) {
     return (
       <p className="text-destructive">
         You&apos;re not authorized to view this page.
@@ -54,7 +61,7 @@ export default async function Page({ params: { postId } }: PageProps) {
     );
   }
 
-  const post = await getPost(postId, user.id);
+  const post = await getPost(postId, loggedInUser.id);
 
   return (
     <main className="flex w-full min-w-0 gap-5">
@@ -63,7 +70,7 @@ export default async function Page({ params: { postId } }: PageProps) {
       </div>
       <div className="sticky top-[5.25rem] hidden h-fit w-80 flex-none lg:block">
         <Suspense fallback={<Loader2 className="mx-auto animate-spin" />}>
-          <UserInfoSidebar user={post.user} />
+          <UserInfoSidebar user={post.user} loggedInUserId={loggedInUser.id} />
         </Suspense>
       </div>
     </main>
@@ -71,14 +78,11 @@ export default async function Page({ params: { postId } }: PageProps) {
 }
 
 interface UserInfoSidebarProps {
-  user: UserData;
+  user: UserWithFollowerStatus;
+  loggedInUserId: string;
 }
 
-async function UserInfoSidebar({ user }: UserInfoSidebarProps) {
-  const { user: loggedInUser } = await validateRequest();
-
-  if (!loggedInUser) return null;
-
+async function UserInfoSidebar({ user, loggedInUserId }: UserInfoSidebarProps) {
   return (
     <div className="space-y-5 rounded-2xl bg-card p-5 shadow-sm">
       <div className="text-xl font-bold">About this user</div>
@@ -103,13 +107,13 @@ async function UserInfoSidebar({ user }: UserInfoSidebarProps) {
           {user.bio}
         </div>
       </Linkify>
-      {user.id !== loggedInUser.id && (
+      {user.id !== loggedInUserId && (
         <FollowButton
           userId={user.id}
           initialState={{
             followers: user._count.followers,
             isFollowedByUser: user.followers.some(
-              ({ followerId }) => followerId === loggedInUser.id,
+              ({ followerId }) => followerId === loggedInUserId,
             ),
           }}
         />
