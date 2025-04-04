@@ -2,9 +2,12 @@
 import { lucia } from "@/auth";
 import { cookies } from "next/headers";
 import { StreamChat } from "stream-chat";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+// Opt out of static generation
+export const dynamic = "force-dynamic";
+
+export async function GET(req: NextRequest) {
   try {
     const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
     if (!sessionId) {

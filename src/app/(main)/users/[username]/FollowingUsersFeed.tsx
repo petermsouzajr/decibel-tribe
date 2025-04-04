@@ -3,27 +3,38 @@
 import InfiniteScrollContainer from "@/components/InfiniteScrollContainer";
 import User from "@/components/posts/User";
 import kyInstance from "@/lib/ky";
-import { UserData } from "@/lib/types";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { UserWithFollowerStatus } from "@/lib/types";
+import { InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+
+interface FollowingApiResponse {
+  users: UserWithFollowerStatus[];
+  nextCursor: string | null;
+}
 
 export default function FollowingUsers() {
   const searchParams = useSearchParams();
   const username = searchParams.get("user") ?? "";
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } =
-    useInfiniteQuery<{ users: UserData[]; nextCursor: string | null }, Error>({
-      queryKey: ["followers-users", username],
+    useInfiniteQuery<
+      FollowingApiResponse,
+      Error,
+      InfiniteData<FollowingApiResponse>,
+      [string, string],
+      string | null
+    >({
+      queryKey: ["following-users", username],
       queryFn: ({ pageParam }) =>
         kyInstance
           .get("/api/users/following", {
             searchParams: {
-              ...(pageParam ? { cursor: pageParam as string } : undefined),
+              ...(pageParam ? { cursor: pageParam } : undefined),
               ...(username ? { username } : undefined),
             },
           })
-          .json<{ users: UserData[]; nextCursor: string | null }>(),
+          .json<FollowingApiResponse>(),
       getNextPageParam: (lastPage) => lastPage.nextCursor,
       initialPageParam: null,
     });
@@ -31,7 +42,7 @@ export default function FollowingUsers() {
   const users = data?.pages.flatMap((page) => page.users) || [];
 
   if (status === "pending") {
-    return <p>Loading...</p>;
+    return <Loader2 className="mx-auto my-3 animate-spin" />;
   }
 
   if (status === "error") {
@@ -42,7 +53,7 @@ export default function FollowingUsers() {
     );
   }
 
-  if (users.length === 0) {
+  if (users.length === 0 && !hasNextPage) {
     return (
       <p className="text-center text-muted-foreground">
         {username
@@ -55,7 +66,9 @@ export default function FollowingUsers() {
   return (
     <InfiniteScrollContainer
       className="space-y-5"
-      onBottomReached={() => hasNextPage && fetchNextPage()}
+      onBottomReached={() =>
+        hasNextPage && !isFetchingNextPage && fetchNextPage()
+      }
     >
       {users.map((user) => (
         <User key={user.id} user={user} />

@@ -6,10 +6,15 @@ import {
   getEventDataInclude,
   getPostDataInclude,
   getUserDataSelect,
+  PostData,
+  UserWithFollowerStatus,
 } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server"; // Import NextResponse
 import { parse, isValid, addDays } from "date-fns";
 import { Prisma } from "@prisma/client";
+
+// Opt out of static generation
+export const dynamic = "force-dynamic";
 
 async function fetchValidEvents(loggedInUserId: string, username?: string) {
   let eventConditions: Prisma.EventWhereInput = {};
@@ -158,7 +163,7 @@ function filterEvents(events: any[], q: string) {
 export async function GET(req: NextRequest) {
   try {
     const query = req.nextUrl.searchParams.get("q");
-    const category = req.nextUrl.searchParams.get("category") || "users";
+    // const category = req.nextUrl.searchParams.get("category") || "users"; // Category not used currently?
 
     if (!query) {
       return NextResponse.json({ error: "Query is required" }, { status: 400 });
@@ -196,132 +201,59 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    let results: any = [];
-
     const pageSize = 10;
-
     const searchQuery = query.trim();
 
     const posts = await prisma.post.findMany({
       where: {
         OR: [
+          { content: { contains: searchQuery, mode: "insensitive" } },
           {
-            content: {
-              contains: query,
-              mode: "insensitive",
+            user: {
+              displayName: { contains: searchQuery, mode: "insensitive" },
             },
           },
           {
-            user: {
-              displayName: {
-                contains: query,
-                mode: "insensitive",
-              },
-            },
-          },
-          {
-            user: {
-              username: {
-                contains: query,
-                mode: "insensitive",
-              },
-            },
+            user: { username: { contains: searchQuery, mode: "insensitive" } },
           },
         ],
       },
+      // Ensure include uses the logged-in user ID
       include: getPostDataInclude(user.id),
       orderBy: { createdAt: "desc" },
-      take: pageSize + 1,
+      take: pageSize,
     });
 
     const users = await prisma.user.findMany({
       where: {
         OR: [
-          {
-            username: {
-              contains: query,
-              mode: "insensitive",
-            },
-          },
-          {
-            displayName: {
-              contains: query,
-              mode: "insensitive",
-            },
-          },
-          {
-            email: {
-              contains: query,
-              mode: "insensitive",
-            },
-          },
-          {
-            bio: {
-              contains: query,
-              mode: "insensitive",
-            },
-          },
+          { username: { contains: searchQuery, mode: "insensitive" } },
+          { displayName: { contains: searchQuery, mode: "insensitive" } },
         ],
       },
+      // Ensure include uses the logged-in user ID
       select: getUserDataSelect(user.id),
-      orderBy: { createdAt: "desc" },
-      take: pageSize + 1,
+      take: pageSize,
     });
 
-    const allEvents = await fetchValidEvents(user.id);
-    const filteredEvents = filterEvents(allEvents, query);
+    const events = await fetchValidEvents(user.id);
+    const filteredEvents = filterEvents(events, searchQuery);
 
-    const usersWithSkills = await prisma.user.findMany({
-      where: {
-        userSkills: {
-          some: {
-            skill: {
-              name: {
-                contains: query,
-                mode: "insensitive",
-              },
-            },
-          },
-        },
-      },
-      select: getUserDataSelect(user.id),
-      take: pageSize + 1,
+    // --- Assert types before returning ---
+    const typedUsers = users as UserWithFollowerStatus[];
+    const typedPosts = posts as PostData[];
+    // EventData type might need similar assertion if used directly
+
+    return NextResponse.json({
+      users: typedUsers,
+      posts: typedPosts,
+      events: filteredEvents.slice(0, pageSize), // Assuming EventData typing is handled elsewhere or simple
     });
-
-    const usersWithInstruments = await prisma.user.findMany({
-      where: {
-        userInstruments: {
-          some: {
-            instrument: {
-              name: {
-                contains: query,
-                mode: "insensitive",
-              },
-            },
-          },
-        },
-      },
-      select: getUserDataSelect(user.id),
-      take: pageSize + 1,
-    });
-
-    const nextCursor = posts.length > pageSize ? posts[pageSize].id : null;
-
-    results = {
-      posts: posts.slice(0, pageSize),
-      users: users.slice(0, pageSize),
-      events: filteredEvents.slice(0, pageSize),
-      usersWithSkills: usersWithSkills.slice(0, pageSize),
-      usersWithInstruments: usersWithInstruments.slice(0, pageSize),
-      nextCursor,
-    };
-
-    return NextResponse.json(results);
   } catch (error) {
-    console.error("Search API error:", error);
+    console.error("Error in GET /api/search:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
-    ); // Use NextResponse
+    );
   }
 }

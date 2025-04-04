@@ -4,6 +4,9 @@ import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { getPostDataInclude, PostsPage, PostData } from "@/lib/types";
 
+// Opt out of static generation
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   try {
     const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;

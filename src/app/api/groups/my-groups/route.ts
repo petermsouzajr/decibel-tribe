@@ -4,6 +4,9 @@ import { lucia } from "@/auth"; // Import lucia
 import { cookies } from "next/headers"; // Import cookies
 import prisma from "@/lib/prisma";
 
+// Opt out of static generation
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   try {
     // Direct session validation

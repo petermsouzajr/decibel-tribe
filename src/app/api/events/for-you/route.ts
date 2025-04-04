@@ -1,9 +1,11 @@
 import prisma from "@/lib/prisma";
 import { EventsPage, getEventDataInclude } from "@/lib/types";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { lucia } from "@/auth";
-import { NextResponse } from "next/server";
+
+// Opt out of static generation
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {

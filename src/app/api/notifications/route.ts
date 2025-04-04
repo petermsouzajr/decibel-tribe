@@ -6,6 +6,9 @@ import { NotificationsPage, NotificationData } from "@/lib/types"; // Import Not
 import { NextRequest, NextResponse } from "next/server"; // Import NextResponse
 import { getUserDataSelect } from "@/lib/types"; // Corrected import path
 
+// Opt out of static generation
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   try {
     const cursor = req.nextUrl.searchParams.get("cursor") || undefined;

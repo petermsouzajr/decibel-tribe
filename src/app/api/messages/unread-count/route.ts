@@ -4,8 +4,13 @@ import { cookies } from "next/headers"; // Import cookies
 import streamServerClient from "@/lib/stream";
 import { MessageCountInfo } from "@/lib/types";
 import { NextResponse } from "next/server"; // Import NextResponse
+import { StreamChat } from "stream-chat";
+import { NextRequest } from "next/server";
 
-export async function GET() {
+// Opt out of static generation
+export const dynamic = "force-dynamic";
+
+export async function GET(req: NextRequest) {
   try {
     // Direct session validation
     const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;

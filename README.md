@@ -3,7 +3,7 @@
 ## Stay Human
 
 to install dependencies
-`npm install --legacy-peer-deps`
+`npm install`
 
 view local prisma db
 `npm prisma studio`

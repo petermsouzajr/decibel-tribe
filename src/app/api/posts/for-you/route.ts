@@ -5,6 +5,9 @@ import prisma from "@/lib/prisma";
 import { getPostDataInclude, PostsPage, PostData } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server"; // Import NextResponse
 
+// Opt out of static generation
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   try {
     const cursor = req.nextUrl.searchParams.get("cursor") || undefined;

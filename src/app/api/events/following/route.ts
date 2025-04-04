@@ -5,6 +5,9 @@ import prisma from "@/lib/prisma";
 import { EventsPage, getEventDataInclude } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server"; // Import NextResponse
 
+// Opt out of static generation
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   try {
     // Direct session validation

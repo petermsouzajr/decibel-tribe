@@ -3,9 +3,12 @@ import { lucia } from "@/auth"; // Import lucia
 import { cookies } from "next/headers"; // Import cookies
 import prisma from "@/lib/prisma";
 import { NotificationCountInfo } from "@/lib/types";
-import { NextResponse } from "next/server"; // Import NextResponse
+import { NextRequest, NextResponse } from "next/server"; // Import NextRequest and NextResponse
 
-export async function GET() {
+// Opt out of static generation
+export const dynamic = "force-dynamic";
+
+export async function GET(req: NextRequest) {
   try {
     // Direct session validation
     const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;

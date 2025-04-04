@@ -1,6 +1,6 @@
 import { useSession } from "@/app/(main)/SessionProvider";
 import { useToast } from "@/components/ui/use-toast";
-import { PostsPage } from "@/lib/types";
+import { PostsPage, PostData, UserWithFollowerStatus } from "@/lib/types";
 import {
   InfiniteData,
   QueryFilters,
@@ -18,7 +18,7 @@ export function useSubmitPostMutation() {
 
   const mutation = useMutation({
     mutationFn: submitPost,
-    onSuccess: async (newPost, variables) => {
+    onSuccess: async (newPost: PostData, variables) => {
       const isPublicPost = !variables.groupId;
 
       if (isPublicPost) {
@@ -37,15 +37,17 @@ export function useSubmitPostMutation() {
 
         queryClient.setQueriesData<InfiniteData<PostsPage, string | null>>(
           queryFilter,
-          (oldData) => {
+          (oldData): InfiniteData<PostsPage, string | null> | undefined => {
+            const typedNewPost = newPost as PostData;
             const firstPage = oldData?.pages[0];
 
             if (firstPage) {
+              const existingPosts = firstPage.posts as PostData[];
               return {
                 pageParams: oldData.pageParams,
                 pages: [
                   {
-                    posts: [newPost, ...firstPage.posts],
+                    posts: [typedNewPost, ...existingPosts],
                     nextCursor: firstPage.nextCursor,
                   },
                   ...oldData.pages.slice(1),
@@ -56,7 +58,7 @@ export function useSubmitPostMutation() {
                 pageParams: [],
                 pages: [
                   {
-                    posts: [newPost],
+                    posts: [typedNewPost],
                     nextCursor: null,
                   },
                 ],
@@ -79,15 +81,17 @@ export function useSubmitPostMutation() {
 
         queryClient.setQueryData<InfiniteData<PostsPage>>(
           queryKey,
-          (oldData) => {
+          (oldData): InfiniteData<PostsPage> | undefined => {
+            const typedNewPost = newPost as PostData;
             const firstPage = oldData?.pages[0];
 
             if (firstPage) {
+              const existingPosts = firstPage.posts as PostData[];
               return {
                 pageParams: oldData.pageParams,
                 pages: [
                   {
-                    posts: [newPost, ...firstPage.posts],
+                    posts: [typedNewPost, ...existingPosts],
                     nextCursor: firstPage.nextCursor,
                   },
                   ...oldData.pages.slice(1),
@@ -98,7 +102,7 @@ export function useSubmitPostMutation() {
                 pageParams: [],
                 pages: [
                   {
-                    posts: [newPost],
+                    posts: [typedNewPost],
                     nextCursor: null,
                   },
                 ],

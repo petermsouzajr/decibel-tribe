@@ -1,12 +1,18 @@
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { UTApi } from "uploadthing/server";
 
-export async function GET(req: Request) {
+// Opt out of static generation
+export const dynamic = "force-dynamic";
+
+const utapi = new UTApi();
+
+export async function GET(request: NextRequest) {
   try {
-    const authHeader = req.headers.get("Authorization");
+    const authHeader = request.headers.get("Authorization");
 
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return Response.json(
+      return NextResponse.json(
         { message: "Invalid authorization header" },
         { status: 401 },
       );

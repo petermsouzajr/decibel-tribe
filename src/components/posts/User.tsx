@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "@/app/(main)/SessionProvider";
-import { UserData } from "@/lib/types";
+import { UserData, UserWithFollowerStatus } from "@/lib/types";
 import { formatRelativeDate } from "@/lib/utils";
 import Link from "next/link";
 import Linkify from "../Linkify";
@@ -10,7 +10,7 @@ import UserTooltip from "../UserTooltip";
 import FollowButton from "../FollowButton";
 
 interface UserCardProps {
-  user: UserData;
+  user: UserWithFollowerStatus;
 }
 
 export default function UserCard({ user }: UserCardProps) {
@@ -45,16 +45,14 @@ export default function UserCard({ user }: UserCardProps) {
               Member since {formatRelativeDate(user.createdAt)}
             </div>
           </div>
-          {user.id !== loggedInUser.id && (
+          {loggedInUser && user.id !== loggedInUser.id && (
             <FollowButton
               userId={user.id}
               initialState={{
                 followers: user._count?.followers ?? 0,
-                isFollowedByUser: user.followers
-                  ? user.followers.some(
-                      ({ followerId }) => followerId === loggedInUser.id,
-                    )
-                  : false,
+                isFollowedByUser: user.followers.some(
+                  ({ followerId }) => followerId === loggedInUser.id,
+                ),
               }}
             />
           )}

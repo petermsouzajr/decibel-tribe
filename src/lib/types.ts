@@ -1,4 +1,4 @@
-import { Prisma, NotificationType } from "@prisma/client";
+import { Prisma, NotificationType, Media } from "@prisma/client";
 
 export function getUserDataSelect(loggedInUserId?: string | null) {
   const select = {
@@ -317,12 +317,30 @@ type PostPayloadCreator<T extends string | null | undefined> =
   Prisma.PostGetPayload<{ include: ReturnType<typeof getPostDataInclude> }>;
 
 // Manually define PostData to ensure the user field has the correct type
-export type PostData = Omit<
-  PostPayloadCreator<string>, // Get base payload including conditional fields like 'likes'
-  "user" // Remove the potentially inferred user
-> & {
-  // Add the explicitly typed user back
+export type PostData = {
+  id: string;
+  content: string;
+  userId: string;
+  createdAt: Date;
+  groupId: string | null;
+
+  // Nested relations from getPostDataInclude(userId)
   user: UserWithFollowerStatus;
+  attachments: Media[]; // Use the imported Media type
+  _count: {
+    likes: number;
+    dislikes: number;
+    comments: number;
+  };
+  Group: {
+    id: string;
+    name: string;
+  } | null;
+
+  // Conditionally included relations (present when loggedInUserId is provided)
+  likes: { userId: string }[];
+  dislikes: { userId: string }[];
+  bookmarks: { userId: string }[];
 };
 
 export interface PostsPage {

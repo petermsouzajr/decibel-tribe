@@ -5,6 +5,9 @@ import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { getUserDataSelect } from "@/lib/types";
 
+// Opt out of static generation
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   try {
     // Direct session validation
