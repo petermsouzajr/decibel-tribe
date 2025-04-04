@@ -207,27 +207,37 @@ export interface CommentsPage {
   previousCursor: string | null;
 }
 
-export const notificationsInclude = {
-  issuer: {
-    select: getUserDataSelect("issuerUserId"),
-  },
-  post: {
-    select: {
-      content: true,
+// Define the specific include structure used in the notifications API route
+export const notificationApiInclude = (loggedInUserId: string) =>
+  ({
+    issuer: {
+      select: getUserDataSelect(loggedInUserId), // Pass the actual ID here
     },
-  },
-  event: {
-    select: {
-      title: true,
-      location: true,
-      id: true,
+    post: {
+      select: {
+        id: true, // Include post ID for linking
+        content: true,
+      },
     },
-  },
-} satisfies Prisma.NotificationInclude;
+    event: {
+      select: {
+        id: true, // Include event ID for linking
+        title: true,
+        location: true,
+      },
+    },
+  }) satisfies Prisma.NotificationInclude;
 
-export type NotificationData = Prisma.NotificationGetPayload<{
-  include: typeof notificationsInclude;
-}>;
+// Update NotificationData type to use the payload derived from the actual include logic
+// Note: We can't directly use a function call in GetPayload, so we define a helper type
+type NotificationPayloadCreator<T extends string | null | undefined> =
+  Prisma.NotificationGetPayload<{
+    include: ReturnType<typeof notificationApiInclude>;
+  }>;
+
+// Use the helper type. The actual ID doesn't matter for the type structure itself,
+// only that the conditional 'followers' field is now part of the 'issuer' type.
+export type NotificationData = NotificationPayloadCreator<string>;
 
 export interface NotificationsPage {
   notifications: NotificationData[];
