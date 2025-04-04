@@ -2,8 +2,9 @@
 import { lucia } from "@/auth"; // Import lucia
 import { cookies } from "next/headers"; // Import cookies
 import prisma from "@/lib/prisma";
-import { notificationsInclude, NotificationsPage } from "@/lib/types";
+import { NotificationsPage } from "@/lib/types"; // Removed notificationsInclude
 import { NextRequest, NextResponse } from "next/server"; // Import NextResponse
+import { getUserDataSelect } from "@/lib/types"; // Corrected import path
 
 export async function GET(req: NextRequest) {
   try {
@@ -46,7 +47,24 @@ export async function GET(req: NextRequest) {
       where: {
         recipientId: user.id,
       },
-      include: notificationsInclude,
+      include: {
+        issuer: {
+          select: getUserDataSelect(user.id),
+        },
+        post: {
+          select: {
+            id: true,
+            content: true,
+          },
+        },
+        event: {
+          select: {
+            id: true,
+            title: true,
+            location: true,
+          },
+        },
+      },
       orderBy: { createdAt: "desc" },
       take: pageSize + 1,
       cursor: cursor ? { id: cursor } : undefined,
