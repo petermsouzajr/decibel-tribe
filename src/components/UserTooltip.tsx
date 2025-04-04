@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "@/app/(main)/SessionProvider";
-import { FollowerInfo, UserData } from "@/lib/types";
+import { FollowerInfo, UserWithFollowerStatus } from "@/lib/types";
 import Link from "next/link";
 import { PropsWithChildren } from "react";
 import FollowButton from "./FollowButton";
@@ -16,7 +16,7 @@ import {
 import UserAvatar from "./UserAvatar";
 
 interface UserTooltipProps extends PropsWithChildren {
-  user: UserData;
+  user: UserWithFollowerStatus;
 }
 
 export default function UserTooltip({ children, user }: UserTooltipProps) {
@@ -24,7 +24,7 @@ export default function UserTooltip({ children, user }: UserTooltipProps) {
 
   const followerState: FollowerInfo = {
     followers: user._count.followers,
-    isFollowedByUser: !!user.followers.some(
+    isFollowedByUser: user.followers.some(
       ({ followerId }) => followerId === loggedInUser.id,
     ),
   };
