@@ -1,5 +1,5 @@
 import { useToast } from "@/components/ui/use-toast";
-import { PostsPage } from "@/lib/types";
+import { PostsPage, PostData, UserWithFollowerStatus } from "@/lib/types";
 import { useUploadThing } from "@/lib/uploadthing";
 import { UpdateUserProfileValues } from "@/lib/validation";
 import {
@@ -44,26 +44,30 @@ export function useUpdateProfileMutation() {
 
       queryClient.setQueriesData<InfiniteData<PostsPage, string | null>>(
         queryFilter,
-        (oldData) => {
-          if (!oldData) return;
+        (oldData): InfiniteData<PostsPage, string | null> | undefined => {
+          if (!oldData) return undefined;
 
           return {
             pageParams: oldData.pageParams,
-            pages: oldData.pages.map((page) => ({
-              nextCursor: page.nextCursor,
-              posts: page.posts.map((post) => {
-                if (post.user.id === updatedUser.id) {
-                  return {
-                    ...post,
-                    user: {
+            pages: oldData.pages.map((page): PostsPage => {
+              return {
+                nextCursor: page.nextCursor,
+                posts: page.posts.map((post): PostData => {
+                  if (post.user.id === updatedUser.id) {
+                    const newUser: UserWithFollowerStatus = {
+                      ...(post.user as UserWithFollowerStatus),
                       ...updatedUser,
-                      avatarUrl: newAvatarUrl || updatedUser.avatarUrl,
-                    },
-                  };
-                }
-                return post;
-              }),
-            })),
+                      avatarUrl: newAvatarUrl ?? updatedUser.avatarUrl,
+                    };
+                    return {
+                      ...post,
+                      user: newUser,
+                    } as PostData;
+                  }
+                  return post as PostData;
+                }),
+              };
+            }),
           };
         },
       );
