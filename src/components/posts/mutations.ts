@@ -1,4 +1,4 @@
-import { PostsPage } from "@/lib/types";
+import { PostsPage, PostData } from "@/lib/types";
 import {
   InfiniteData,
   QueryFilters,
@@ -20,20 +20,22 @@ export function useDeletePostMutation() {
   const mutation = useMutation({
     mutationFn: deletePost,
     onSuccess: async (deletedPost) => {
-      const queryFilter: QueryFilters = { queryKey: ["post-feed"] };
+      const queryKey = ["post-feed"];
 
-      await queryClient.cancelQueries(queryFilter);
+      await queryClient.cancelQueries({ queryKey });
 
-      queryClient.setQueriesData<InfiniteData<PostsPage, string | null>>(
-        queryFilter,
+      queryClient.setQueryData<InfiniteData<PostsPage, string | null>>(
+        queryKey,
         (oldData) => {
           if (!oldData) return;
 
           return {
             pageParams: oldData.pageParams,
-            pages: oldData.pages.map((page) => ({
+            pages: oldData.pages.map((page: PostsPage) => ({
               nextCursor: page.nextCursor,
-              posts: page.posts.filter((p) => p.id !== deletedPost.id),
+              posts: page.posts.filter(
+                (p: PostData) => p.id !== deletedPost.id,
+              ),
             })),
           };
         },

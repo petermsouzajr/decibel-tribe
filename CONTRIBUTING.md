@@ -73,6 +73,7 @@ Now you should be able to access the application locally, typically at `http://l
 - **Linting & Formatting:** This project uses ESLint for linting and Prettier for formatting.
   - Run `npm run build` to catch build errors before pushing major changes.
   - Run `npm run lint` to check for issues and automatically format code.
+  - Run `npx tsc --noEmit` to check for Typescript errors.
   - Ensure code passes linting before submitting a PR. Consider configuring your editor to format on save.
 - **Component Structure:** Follow existing patterns for component organization and naming conventions.
 - **Accessibility:** Keep accessibility (a11y) in mind when creating UI components.

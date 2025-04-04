@@ -24,19 +24,19 @@ export function useSubmitPostMutation() {
       if (isPublicPost) {
         const queryFilter = {
           queryKey: ["post-feed"],
-          predicate(query) {
+          predicate(query: any) {
             return (
               query.queryKey.includes("for-you") ||
               (query.queryKey.includes("user-posts") &&
                 query.queryKey.includes(user.id))
             );
           },
-        } satisfies QueryFilters;
+        } as QueryFilters;
 
-        await queryClient.cancelQueries(queryFilter);
+        await queryClient.cancelQueries(queryFilter as QueryFilters);
 
         queryClient.setQueriesData<InfiniteData<PostsPage, string | null>>(
-          queryFilter,
+          { queryKey: queryFilter.queryKey },
           (oldData): InfiniteData<PostsPage, string | null> | undefined => {
             const typedNewPost = newPost as PostData;
             const firstPage = oldData?.pages[0];
@@ -69,9 +69,7 @@ export function useSubmitPostMutation() {
 
         queryClient.invalidateQueries({
           queryKey: queryFilter.queryKey,
-          predicate(query) {
-            return queryFilter.predicate(query) && !query.state.data;
-          },
+          predicate: queryFilter.predicate,
         });
       } else {
         const groupId = variables.groupId;

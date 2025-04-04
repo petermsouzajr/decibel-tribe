@@ -1,0 +1,29 @@
+{
+  // Inherit settings from the root config
+  "extends": "../tsconfig.json",
+
+  "compilerOptions": {
+    // Override 'types' specifically for the test environment
+    // Include only what Vitest/Jest-DOM needs.
+    // Ensure 'node' is included if needed by your test setup/imports.
+    "types": ["vitest/globals", "@testing-library/jest-dom", "node"],
+
+    // Ensure DOM is available for Jest-DOM matchers
+    "lib": ["ESNext", "DOM", "DOM.Iterable"]
+
+    // Optional: You might not need 'noEmit' here if the root config has it,
+    // but explicitly setting it won't hurt.
+    // "noEmit": true
+  },
+
+  // Define what this config applies to (relative to this file)
+  "include": [
+    "./**/*.ts", // All TS files in tests/ and subdirs
+    "./**/*.tsx", // All TSX files in tests/ and subdirs
+    "../src/vitest.d.ts", // Include your global augmentation file
+    "../src/custom.d.ts" // Explicitly include custom declarations
+    // "./setupTests.ts" // Include setupTests.ts if it needs type checking
+  ],
+
+  "exclude": [] // Keep empty unless specific sub-folders need exclusion here
+}

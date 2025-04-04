@@ -1,0 +1,30 @@
+// src/custom.d.ts
+
+// Declaration for bcryptjs if types aren't automatically picked up
+declare module "bcryptjs";
+
+// Declarations for image assets
+declare module "*.png" {
+  const value: any;
+  export default value;
+}
+
+declare module "*.jpg" {
+  const value: any;
+  export default value;
+}
+
+declare module "*.jpeg" {
+  const value: any;
+  export default value;
+}
+
+declare module "*.gif" {
+  const value: any;
+  export default value;
+}
+
+declare module "*.svg" {
+  const value: any;
+  export default value;
+}

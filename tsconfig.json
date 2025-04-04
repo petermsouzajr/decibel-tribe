@@ -14,7 +14,7 @@
     "jsx": "preserve",
     "incremental": true,
     "typeRoots": ["node_modules", "node_modules/@types"],
-    "types": ["vitest/globals", "node", "@testing-library/jest-dom"],
+    "types": ["node"],
     "plugins": [
       {
         "name": "next"
@@ -31,5 +31,5 @@
     ".next/types/**/*.ts",
     "tests/setupTests.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "cypress", "tests"]
 }
