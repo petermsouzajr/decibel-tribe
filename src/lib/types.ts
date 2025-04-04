@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, NotificationType } from "@prisma/client";
 
 export function getUserDataSelect(loggedInUserId?: string | null) {
   const select = {
@@ -208,36 +208,57 @@ export interface CommentsPage {
 }
 
 // Define the specific include structure used in the notifications API route
-export const notificationApiInclude = (loggedInUserId: string) =>
+// KEEPING THIS HERE conceptually to ensure the manual type below matches,
+// but not exporting/using it directly for GetPayload anymore.
+const notificationApiInclude_internal = (loggedInUserId: string) =>
   ({
     issuer: {
-      select: getUserDataSelect(loggedInUserId), // Pass the actual ID here
+      select: getUserDataSelect(loggedInUserId),
     },
     post: {
       select: {
-        id: true, // Include post ID for linking
+        id: true,
         content: true,
       },
     },
     event: {
       select: {
-        id: true, // Include event ID for linking
+        id: true,
         title: true,
         location: true,
       },
     },
   }) satisfies Prisma.NotificationInclude;
 
-// Update NotificationData type to use the payload derived from the actual include logic
-// Note: We can't directly use a function call in GetPayload, so we define a helper type
-type NotificationPayloadCreator<T extends string | null | undefined> =
-  Prisma.NotificationGetPayload<{
-    include: ReturnType<typeof notificationApiInclude>;
-  }>;
+// Define the expected issuer type more explicitly based on getUserDataSelect(userId)
+// This includes the conditional followers array.
+export type IssuerDataWithFollowers = Prisma.UserGetPayload<{
+  select: ReturnType<typeof getUserDataSelect & ((userId: string) => any)>; // Helper to ensure conditional part is picked up
+}>;
 
-// Use the helper type. The actual ID doesn't matter for the type structure itself,
-// only that the conditional 'followers' field is now part of the 'issuer' type.
-export type NotificationData = NotificationPayloadCreator<string>;
+// Manually define NotificationData matching the API route's include/select
+export interface NotificationData {
+  id: string;
+  recipientId: string;
+  issuerId: string;
+  postId: string | null;
+  type: NotificationType; // Now this should resolve correctly
+  read: boolean;
+  eventId: string | null;
+  createdAt: Date;
+
+  // Define nested relations explicitly based on the API query
+  issuer: IssuerDataWithFollowers; // Use the type that includes 'followers'
+  post: {
+    id: string;
+    content: string;
+  } | null;
+  event: {
+    id: string;
+    title: string;
+    location: string;
+  } | null;
+}
 
 export interface NotificationsPage {
   notifications: NotificationData[];
