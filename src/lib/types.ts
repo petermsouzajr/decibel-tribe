@@ -230,25 +230,54 @@ const notificationApiInclude_internal = (loggedInUserId: string) =>
     },
   }) satisfies Prisma.NotificationInclude;
 
-// Define the expected issuer type more explicitly based on getUserDataSelect(userId)
-// This includes the conditional followers array.
-export type IssuerDataWithFollowers = Prisma.UserGetPayload<{
-  select: ReturnType<typeof getUserDataSelect & ((userId: string) => any)>; // Helper to ensure conditional part is picked up
-}>;
+// Manually define the expected issuer type based on getUserDataSelect(userId)
+// This explicitly includes the conditional followers array and other user fields.
+export type IssuerDataWithFollowers = {
+  id: string;
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+  bio: string | null;
+  createdAt: Date;
+  email: string | null;
+  passwordHash: string | null;
+  userPreferences: {
+    calendar: string;
+  } | null;
+  userInstruments: {
+    instrument: {
+      id: string;
+      name: string;
+    };
+  }[];
+  userSkills: {
+    skill: {
+      id: string;
+      name: string;
+    };
+  }[];
+  _count: {
+    posts: number;
+    followers: number;
+  };
+  // The conditionally included field:
+  followers: {
+    followerId: string;
+  }[];
+};
 
-// Manually define NotificationData matching the API route's include/select
+// Keep the manually defined NotificationData using the explicit issuer type above
 export interface NotificationData {
   id: string;
   recipientId: string;
   issuerId: string;
   postId: string | null;
-  type: NotificationType; // Now this should resolve correctly
+  type: NotificationType; // Correctly imported type
   read: boolean;
   eventId: string | null;
   createdAt: Date;
 
-  // Define nested relations explicitly based on the API query
-  issuer: IssuerDataWithFollowers; // Use the type that includes 'followers'
+  issuer: IssuerDataWithFollowers;
   post: {
     id: string;
     content: string;
