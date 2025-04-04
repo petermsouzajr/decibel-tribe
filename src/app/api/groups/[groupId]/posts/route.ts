@@ -1,7 +1,7 @@
 import { lucia } from "@/auth";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
-import { getPostDataInclude, PostsPage } from "@/lib/types";
+import { getPostDataInclude, PostsPage, PostData } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -78,7 +78,9 @@ export async function GET(
 
     if (hasNextPage) posts.pop();
 
-    const data: PostsPage = { posts, nextCursor };
+    const typedPosts = posts as PostData[];
+
+    const data: PostsPage = { posts: typedPosts, nextCursor };
 
     return NextResponse.json(data);
   } catch (error) {

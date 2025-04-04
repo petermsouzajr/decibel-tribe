@@ -2,7 +2,7 @@
 import { lucia } from "@/auth"; // Import lucia
 import { cookies } from "next/headers"; // Import cookies
 import prisma from "@/lib/prisma";
-import { getPostDataInclude, PostsPage } from "@/lib/types";
+import { getPostDataInclude, PostsPage, PostData } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server"; // Import NextResponse
 
 export async function GET(req: NextRequest) {
@@ -54,8 +54,10 @@ export async function GET(req: NextRequest) {
 
     const nextCursor = posts.length > pageSize ? posts[pageSize].id : null;
 
+    const typedPosts = posts.slice(0, pageSize) as PostData[];
+
     const data: PostsPage = {
-      posts: posts.slice(0, pageSize),
+      posts: typedPosts,
       nextCursor,
     };
 

@@ -2,7 +2,7 @@
 import { lucia } from "@/auth"; // Import lucia
 import { cookies } from "next/headers"; // Import cookies
 import prisma from "@/lib/prisma";
-import { getPostDataInclude, PostsPage } from "@/lib/types";
+import { getPostDataInclude, PostsPage, PostData } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server"; // Import NextResponse
 
 export async function GET(req: NextRequest) {
@@ -42,29 +42,23 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const bookmarks = await prisma.bookmark.findMany({
+    const posts = await prisma.post.findMany({
       where: {
-        userId: user.id,
+        bookmarks: { some: { userId: user.id } },
+        groupId: null, // Assuming we only bookmark public posts for now
       },
-      include: {
-        post: {
-          include: getPostDataInclude(user.id),
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
+      include: getPostDataInclude(user.id), // Includes user with followers
+      orderBy: { createdAt: "desc" },
       take: pageSize + 1,
       cursor: cursor ? { id: cursor } : undefined,
     });
 
-    const nextCursor =
-      bookmarks.length > pageSize ? bookmarks[pageSize].id : null;
+    const nextCursor = posts.length > pageSize ? posts[pageSize].id : null;
 
-    const data: PostsPage = {
-      posts: bookmarks.slice(0, pageSize).map((bookmark) => bookmark.post),
-      nextCursor,
-    };
+    // Explicitly assert the type of the fetched posts array
+    const typedPosts = posts.slice(0, pageSize) as PostData[];
+
+    const data: PostsPage = { posts: typedPosts, nextCursor }; // Use the asserted array
 
     return NextResponse.json(data); // Use NextResponse
   } catch (error) {

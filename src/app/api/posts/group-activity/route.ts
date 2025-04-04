@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { lucia } from "@/auth";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
-import { getPostDataInclude, PostsPage } from "@/lib/types";
+import { getPostDataInclude, PostsPage, PostData } from "@/lib/types";
 
 export async function GET(req: NextRequest) {
   try {
@@ -36,11 +36,11 @@ export async function GET(req: NextRequest) {
     const pageSize = 10;
 
     const userGroups = await prisma.groupMember.findMany({
-      where: { userId: user.id },
+      where: { userId: user.id, acceptedInvite: true },
       select: { groupId: true },
     });
 
-    const groupIds = userGroups.map((gm) => gm.groupId);
+    const groupIds = userGroups.map((g) => g.groupId);
 
     const posts = await prisma.post.findMany({
       where: {
@@ -54,8 +54,10 @@ export async function GET(req: NextRequest) {
 
     const nextCursor = posts.length > pageSize ? posts[pageSize - 1].id : null;
 
+    const typedPosts = posts.slice(0, pageSize) as PostData[];
+
     const data: PostsPage = {
-      posts: posts.slice(0, pageSize),
+      posts: typedPosts,
       nextCursor,
     };
 

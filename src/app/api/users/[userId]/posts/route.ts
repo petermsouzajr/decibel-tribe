@@ -2,12 +2,13 @@
 import { lucia } from "@/auth";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
-import { getPostDataInclude, PostsPage } from "@/lib/types";
+import { getPostDataInclude, PostsPage, PostData } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
+import { validateRequest } from "@/auth";
 
 export async function GET(
   req: NextRequest,
-  { params: { userId } }: { params: { userId: string } },
+  { params }: { params: { userId: string } },
 ) {
   try {
     const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
@@ -25,23 +26,30 @@ export async function GET(
       loggedInUserId = user?.id;
     }
 
+    const { user: loggedInUser } = await validateRequest();
+    if (!loggedInUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
     const pageSize = 10;
 
     const posts = await prisma.post.findMany({
-      where: { userId },
-      include: getPostDataInclude(loggedInUserId),
+      where: {
+        userId: params.userId,
+        groupId: null,
+      },
+      include: getPostDataInclude(loggedInUser.id),
       orderBy: { createdAt: "desc" },
       take: pageSize + 1,
       cursor: cursor ? { id: cursor } : undefined,
     });
 
-    const nextCursor = posts.length > pageSize ? posts[pageSize - 1].id : null;
+    const nextCursor = posts.length > pageSize ? posts[pageSize].id : null;
 
-    const data: PostsPage = {
-      posts: posts.slice(0, pageSize),
-      nextCursor,
-    };
+    const typedPosts = posts.slice(0, pageSize) as PostData[];
+
+    const data: PostsPage = { posts: typedPosts, nextCursor };
 
     return NextResponse.json(data);
   } catch (error) {
