@@ -2,7 +2,7 @@
 import { lucia } from "@/auth"; // Import lucia
 import { cookies } from "next/headers"; // Import cookies
 import prisma from "@/lib/prisma";
-import { NotificationsPage } from "@/lib/types"; // Removed notificationsInclude
+import { NotificationsPage, NotificationData } from "@/lib/types"; // Import NotificationData
 import { NextRequest, NextResponse } from "next/server"; // Import NextResponse
 import { getUserDataSelect } from "@/lib/types"; // Corrected import path
 
@@ -73,8 +73,14 @@ export async function GET(req: NextRequest) {
     const nextCursor =
       notifications.length > pageSize ? notifications[pageSize].id : null;
 
+    // Explicitly assert the type of the sliced notifications array
+    const typedNotifications = notifications.slice(
+      0,
+      pageSize,
+    ) as NotificationData[];
+
     const data: NotificationsPage = {
-      notifications: notifications.slice(0, pageSize),
+      notifications: typedNotifications, // Use the asserted array
       nextCursor,
     };
 
