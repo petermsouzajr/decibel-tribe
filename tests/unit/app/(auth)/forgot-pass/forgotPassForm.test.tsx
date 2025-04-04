@@ -7,7 +7,7 @@ vi.mock("@/app/(auth)/forgot-pass/actions", () => ({
 }));
 
 // NOTE: Skipping due to complex assertion failures needing deeper investigation.
-describe.skip("ForgotPassForm", () => {
+describe("ForgotPassForm", () => {
   beforeEach(() => {
     render(<ForgotPassForm />);
   });
@@ -20,8 +20,7 @@ describe.skip("ForgotPassForm", () => {
   });
 
   it("should submit the form and displays success message", async () => {
-    //@ts-ignore
-    resendVerification.mockResolvedValue({ error: "" });
+    vi.mocked(resendVerification).mockResolvedValue({ error: "" });
 
     fireEvent.change(screen.getByLabelText(/Username\/Email/i), {
       target: { value: "test@example.com" },
@@ -30,21 +29,25 @@ describe.skip("ForgotPassForm", () => {
       screen.getByRole("button", { name: /Send Verification Email/i }),
     );
 
+    // Assert mock call first using waitFor
     await waitFor(() => {
       expect(resendVerification).toHaveBeenCalledWith({
         credential: "test@example.com",
       });
-      expect(
-        screen.getByText(
-          /Verification email resent! Check your inbox at test@example.com./i,
-        ),
-      ).toBeInTheDocument();
     });
+
+    // Now wait specifically for the success message to appear using findByText
+    expect(
+      await screen.findByText(
+        /Verification email sent! Check your inbox at test@example.com./i,
+      ),
+    ).toBeInTheDocument();
   });
 
   it("should submit the form and displays error message", async () => {
-    //@ts-ignore
-    resendVerification.mockResolvedValue({ error: "User not found." });
+    vi.mocked(resendVerification).mockResolvedValue({
+      error: "User not found.",
+    });
 
     fireEvent.change(screen.getByLabelText(/Username\/Email/i), {
       target: { value: "unknown@example.com" },

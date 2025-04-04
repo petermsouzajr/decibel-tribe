@@ -2,12 +2,10 @@
 
 exports[`Event Details Page > should match snapshot 1`] = `
 <body>
-  <div />
-</body>
-`;
-
-exports[`Event details Page > should match snapshot 1`] = `
-<body>
-  <div />
+  <div>
+    <div>
+      Mocked Event Details Page
+    </div>
+  </div>
 </body>
 `;

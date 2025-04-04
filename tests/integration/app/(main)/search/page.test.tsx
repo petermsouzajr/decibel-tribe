@@ -7,11 +7,7 @@ import prisma from "@/lib/prisma";
 import { vi } from "vitest";
 import { validateRequest } from "@/auth";
 
-// vi.mock("@/auth", () => ({ // Old simple mock
-//   validateRequest: vi.fn(),
-// }));
-
-// Refine mock for auth
+// Mock auth module
 vi.mock("@/auth", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/auth")>();
   return {
@@ -20,14 +16,37 @@ vi.mock("@/auth", async (importOriginal) => {
   };
 });
 
+// Mock next/navigation
 vi.mock("next/navigation", () => ({
   useSearchParams: () => ({
-    get: () => "",
+    get: () => "", // Mock to return empty query string
+  }),
+  useRouter: () => ({
+    push: vi.fn(), // Add mock push function
+    // Add other router methods if needed (replace, back, etc.)
   }),
 }));
 
-// NOTE: Skipping due to persistent "Objects are not valid as a React child" errors.
-describe.skip("Search Page", () => {
+// Mock react-query for SearchResults
+vi.mock("@tanstack/react-query", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
+  return {
+    ...actual,
+    useInfiniteQuery: vi.fn().mockReturnValue({
+      status: "success",
+      data: {
+        pages: [{ users: [], posts: [], events: [], nextCursor: null }],
+        pageParams: [null],
+      }, // Empty results
+      fetchNextPage: vi.fn(),
+      hasNextPage: false,
+      isFetching: false,
+      isFetchingNextPage: false,
+    }),
+  };
+});
+
+describe("Search Page", () => {
   let queryClient: QueryClient;
 
   const mockSession = {
@@ -54,11 +73,8 @@ describe.skip("Search Page", () => {
       <SessionProvider value={mockSession}>
         <QueryClientProvider client={queryClient}>
           <React.Suspense fallback={<div>Loading...</div>}>
-            <Page
-              searchParams={{
-                q: "",
-              }}
-            />
+            {/* Render Page without searchParams prop */}
+            <Page />
           </React.Suspense>
         </QueryClientProvider>
       </SessionProvider>,
@@ -67,9 +83,10 @@ describe.skip("Search Page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     queryClient = new QueryClient();
-    global.innerWidth = 1024;
-    window.dispatchEvent(new Event("resize"));
-    global.fetch = vi.fn();
+    // Keep prisma mocks for now, remove fetch mock
+    // global.innerWidth = 1024;
+    // window.dispatchEvent(new Event("resize"));
+    // global.fetch = vi.fn();
     vi.mocked(prisma.$queryRaw).mockResolvedValue([]);
     vi.mocked(prisma.user.findMany).mockResolvedValue([]);
     vi.mocked(validateRequest).mockResolvedValue({
@@ -78,21 +95,24 @@ describe.skip("Search Page", () => {
     });
   });
 
-  it("should render the Users/Posts tab", async () => {
+  it("should render the Users/Posts tab", () => {
+    // Remove async
     renderPage();
-    const usersPostsTab = screen.getByRole("tab", { name: /Users\/Posts/i });
+    const usersPostsTab = screen.getByRole("tab", { name: /Users\/Posts/i }); // Escaped /
     expect(usersPostsTab).toBeInTheDocument();
   });
 
-  it("should render the Instruments/Skills tab", async () => {
+  it("should render the Instruments/Skills tab", () => {
+    // Remove async
     renderPage();
     const instrumentsSkillsTab = screen.getByRole("tab", {
-      name: /Instruments\/Skills/i,
+      name: /Instruments\/Skills/i, // Escaped /
     });
     expect(instrumentsSkillsTab).toBeInTheDocument();
   });
 
-  it("should render the Events tab", async () => {
+  it("should render the Events tab", () => {
+    // Remove async
     renderPage();
     const eventsTab = screen.getByRole("tab", { name: /Events/i });
     expect(eventsTab).toBeInTheDocument();

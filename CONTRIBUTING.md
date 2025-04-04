@@ -95,6 +95,8 @@ Testing is crucial for maintaining application quality. We use two main testing 
 
 ### Unit & Integration Tests (Vitest)
 
+(Optional/Recommended) - Use crusor/rule `vt.mdc`
+
 - Used for testing individual functions, components, hooks, and smaller integrations.
 - Run tests: `npm run test`
 - Run tests with coverage report: `npm run coverage`
@@ -102,6 +104,8 @@ Testing is crucial for maintaining application quality. We use two main testing 
 - **Requirement:** New features and bug fixes should ideally include corresponding Vitest tests. Focus on testing logic, edge cases, and component behavior from a user interaction perspective (using React Testing Library helpers).
 
 ### End-to-End Tests (Cypress)
+
+(Optional/Recommended) - Use cursor/rule `cye2e.mdc`
 
 - Used for testing complete user flows through the application UI.
 - Find tests in the `cypress/e2e/` directory.

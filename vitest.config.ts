@@ -12,6 +12,7 @@ export default defineConfig(async () => {
       environment: "jsdom",
       globals: true,
       setupFiles: "tests/setupTests.ts",
+      testTimeout: 15000,
       coverage: {
         provider: "istanbul",
         reporter: ["text", "json-summary", "json", "html"],

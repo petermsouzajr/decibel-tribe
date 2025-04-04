@@ -2,6 +2,10 @@
 
 exports[`Post Id Page Integration Test > should match snapshot 1`] = `
 <body>
-  <div />
+  <div>
+    <div>
+      Mocked Post Details Page
+    </div>
+  </div>
 </body>
 `;

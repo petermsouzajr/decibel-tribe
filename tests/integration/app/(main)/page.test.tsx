@@ -7,6 +7,14 @@ import { vi } from "vitest";
 import prisma from "@/lib/prisma";
 import { validateRequest } from "@/auth";
 
+// Mock the entire TrendsSidebar component
+vi.mock("@/components/TrendsSidebar", () => ({
+  // Provide a default export that is a simple React component
+  default: () => <div>Mocked TrendsSidebar</div>,
+  // If TrendsSidebar has named exports that are used, mock them here too
+  // e.g., export const someNamedExport = ... -> someNamedExport: vi.fn(),
+}));
+
 // Refine mock for auth within this file
 vi.mock("@/auth", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/auth")>();
@@ -16,18 +24,8 @@ vi.mock("@/auth", async (importOriginal) => {
   };
 });
 
-// Mock the function causing the unstable_cache issue
-vi.mock("@/components/TrendsSidebar", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@/components/TrendsSidebar")>();
-  return {
-    ...actual, // Keep other exports if any
-    getTrendingTopics: vi.fn().mockResolvedValue([]), // Return empty array
-  };
-});
-
 // NOTE: Skipping due to persistent "Objects are not valid as a React child" errors.
-describe.skip("Home Page", () => {
+describe("Home Page", () => {
   let queryClient: QueryClient;
 
   const mockSession = {

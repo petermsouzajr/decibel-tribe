@@ -1,8 +1,8 @@
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
 import { validateRequest } from "@/auth";
 import { redirect } from "next/navigation";
 import { vi } from "vitest";
+import Layout from "@/app/(auth)/layout";
 
 // NOTE: Skipping this test suite due to persistent issues rendering the async layout component
 // in the JSDOM environment. Needs further investigation.
@@ -14,33 +14,31 @@ vi.mock("next/navigation", () => ({
   redirect: vi.fn(),
 }));
 
-describe.skip("Layout", () => {
-  let Layout: React.ComponentType<{ children: React.ReactNode }>;
-
-  beforeAll(async () => {
-    const layoutModule = await import("@/app/(auth)/layout");
-    Layout = layoutModule.default;
-  });
+describe("Layout (Auth)", () => {
+  const mockChildren = <div>Child Content</div>;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(validateRequest).mockResolvedValue({ user: null, session: null });
-    render(
-      <React.Suspense fallback={<div>Loading...</div>}>
-        <Layout children={<div>Child Content</div>} />
-      </React.Suspense>,
-    );
   });
 
   it("should call validateRequest", async () => {
-    await waitFor(() => {
-      expect(validateRequest).toHaveBeenCalled();
-    });
+    vi.mocked(validateRequest).mockResolvedValue({ user: null, session: null });
+
+    await Layout({ children: mockChildren });
+
+    expect(validateRequest).toHaveBeenCalledTimes(1);
   });
 
   it("should redirect to home if user is authenticated", async () => {
+    const mockUser = {
+      id: "user-id",
+      username: "testuser",
+      displayName: "Test User",
+      avatarUrl: null,
+      googleId: null,
+    };
     vi.mocked(validateRequest).mockResolvedValue({
-      user: { id: "user-id" } as any,
+      user: mockUser as any,
       session: {
         id: "session-id",
         expiresAt: new Date(),
@@ -48,20 +46,18 @@ describe.skip("Layout", () => {
       } as any,
     });
 
-    render(
-      <React.Suspense fallback={<div>Loading...</div>}>
-        <Layout children={<div>Child Content</div>} />
-      </React.Suspense>,
-    );
+    await Layout({ children: mockChildren });
 
-    await waitFor(() => {
-      expect(redirect).toHaveBeenCalledWith("/");
-    });
+    expect(redirect).toHaveBeenCalledTimes(1);
+    expect(redirect).toHaveBeenCalledWith("/");
   });
 
-  it("should render children if user is not authenticated", async () => {
-    await waitFor(() => {
-      expect(screen.getByText("Child Content")).toBeInTheDocument();
-    });
+  it("should return children if user is not authenticated", async () => {
+    vi.mocked(validateRequest).mockResolvedValue({ user: null, session: null });
+
+    const result = await Layout({ children: mockChildren });
+
+    expect(redirect).not.toHaveBeenCalled();
+    expect(result).toEqual(<>{mockChildren}</>);
   });
 });

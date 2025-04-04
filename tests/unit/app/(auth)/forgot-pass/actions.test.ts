@@ -8,6 +8,7 @@ vi.mock("@/lib/prisma", () => {
     default: {
       user: {
         findFirst: vi.fn(),
+        update: vi.fn().mockResolvedValue({}),
       },
     },
   };
@@ -17,7 +18,7 @@ vi.mock("@/app/(auth)/sendVerification", () => ({
   resendVerificationEmail: vi.fn(),
 }));
 
-describe.skip("Password Reset Actions", () => {
+describe("Password Reset Actions", () => {
   const mockCredentials: resetPasswordValues = {
     credential: "test@example.com",
   };
@@ -27,16 +28,21 @@ describe.skip("Password Reset Actions", () => {
   });
 
   it("should resend verification email when user is found", async () => {
-    //@ts-ignore
-    prisma.user.findFirst.mockResolvedValue({
+    vi.mocked(prisma.user.findFirst).mockResolvedValue({
       id: "1",
       email: "test@example.com",
       isVerified: false,
       googleId: null,
+      username: "testuser",
+      displayName: "Test User",
+      pendingEmail: null,
+      passwordHash: null,
+      avatarUrl: null,
+      bio: null,
+      createdAt: new Date(),
     });
 
-    //@ts-ignore
-    resendVerificationEmail.mockResolvedValue(undefined);
+    vi.mocked(resendVerificationEmail).mockResolvedValue({ error: "" });
 
     const result = await resendVerification(mockCredentials);
 
@@ -54,8 +60,7 @@ describe.skip("Password Reset Actions", () => {
   });
 
   it("should return error when user is not found", async () => {
-    //@ts-ignore
-    prisma.user.findFirst.mockResolvedValue(null);
+    vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
 
     const result = await resendVerification(mockCredentials);
 
@@ -73,8 +78,9 @@ describe.skip("Password Reset Actions", () => {
   });
 
   it("should return error when an exception occurs", async () => {
-    //@ts-ignore
-    prisma.user.findFirst.mockRejectedValue(new Error("Database error"));
+    vi.mocked(prisma.user.findFirst).mockRejectedValue(
+      new Error("Database error"),
+    );
 
     const result = await resendVerification(mockCredentials);
 

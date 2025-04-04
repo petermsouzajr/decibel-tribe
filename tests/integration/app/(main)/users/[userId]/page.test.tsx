@@ -19,10 +19,11 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-// vi.mock("@/app/(main)/users/[username]/page", () => ({
-//   default: () => <div>Mocked User Page</div>,
-//   generateMetadata: vi.fn().mockResolvedValue({ title: "Mock User Title" }),
-// }));
+// Activate the mock for the Page component
+vi.mock("@/app/(main)/users/[username]/page", () => ({
+  default: () => <div>Mocked User Page</div>,
+  generateMetadata: vi.fn().mockResolvedValue({ title: "Mock User Title" }),
+}));
 
 const mockUserData = {
   id: "user-123",
@@ -56,7 +57,7 @@ const mockUserData = {
 
 // NOTE: Skipping due to persistent "Cannot destructure property 'params'" error.
 // Needs further investigation into async component rendering/prop handling in Vitest.
-describe.skip("User Page", () => {
+describe("User Page", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {

@@ -1,29 +1,67 @@
 import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import kyInstance from "@/lib/ky";
 import Page from "@/app/(main)/notifications/page";
 import SessionProvider from "@/app/(main)/SessionProvider";
 import { vi } from "vitest";
 import prisma from "@/lib/prisma";
 
-vi.mock("@/lib/ky", () => ({
-  default: {
-    get: vi.fn(),
-  },
-}));
-
-// Mock the function causing the unstable_cache issue
-vi.mock("@/components/TrendsSidebar", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@/components/TrendsSidebar")>();
+// Mock @tanstack/react-query hooks
+vi.mock("@tanstack/react-query", async (importOriginal) => {
+  // Define mock data INSIDE the factory function
+  const mockNotification = {
+    createdAt: new Date(),
+    event: null,
+    eventId: null,
+    id: "1",
+    issuer: {
+      avatarUrl: "https://example.com/avatar.png",
+      bio: "Test bio",
+      displayName: "Test User",
+      id: "1",
+      username: "testuser",
+      _count: {
+        followers: 1,
+      },
+      followers: [
+        {
+          followerId: "2",
+        },
+      ],
+    },
+    issuerId: "2",
+    post: null,
+    postId: null,
+    read: false,
+    recipientId: "2",
+    type: "EVENT_ATTENDEE",
+  };
+  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
-    ...actual, // Keep other exports if any
-    getTrendingTopics: vi.fn().mockResolvedValue([]), // Return empty array
+    ...actual,
+    useInfiniteQuery: vi.fn().mockReturnValue({
+      status: "success",
+      data: {
+        pages: [{ notifications: [mockNotification], nextCursor: null }],
+        pageParams: [null],
+      },
+      fetchNextPage: vi.fn(),
+      hasNextPage: false,
+      isFetching: false,
+      isFetchingNextPage: false,
+    }),
+    useMutation: vi.fn(() => ({
+      mutate: vi.fn(), // Simple mock for the mutate function
+    })),
   };
 });
 
+// Mock the entire TrendsSidebar component
+vi.mock("@/components/TrendsSidebar", () => ({
+  default: () => <div>Mocked TrendsSidebar</div>,
+}));
+
 // NOTE: Skipping due to persistent "Objects are not valid as a React child" errors.
-describe.skip("Notifications Page", () => {
+describe("Notifications Page", () => {
   let queryClient: QueryClient;
 
   const mockSession = {
@@ -65,85 +103,15 @@ describe.skip("Notifications Page", () => {
       unobserve() {}
       disconnect() {}
     };
-
-    // @ts-ignore
-    kyInstance.get.mockImplementation(() => ({
-      json: () =>
-        Promise.resolve({
-          notifications: [
-            {
-              createdAt: new Date(),
-              event: null,
-              eventId: null,
-              id: "1",
-              issuer: {
-                avatarUrl: "https://example.com/avatar.png",
-                bio: "Test bio",
-                displayName: "Test User",
-                id: "1",
-                username: "testuser",
-                _count: {
-                  followers: 1,
-                },
-                followers: [
-                  {
-                    followerId: "2",
-                  },
-                ],
-              },
-              issuerId: "2",
-              post: null,
-              postId: null,
-              read: false,
-              recipientId: "2",
-              type: "EVENT_ATTENDEE",
-            },
-          ],
-          nextCursor: null,
-        }),
-    }));
   });
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Remove prisma and ky mocks
     // Configure mocks that might change per test
-    vi.mocked(prisma.user.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.$queryRaw).mockResolvedValue([]); // Ensure this is configured here
-    vi.mocked(kyInstance.get).mockResolvedValue({
-      json: () =>
-        Promise.resolve({
-          notifications: [
-            {
-              createdAt: new Date(),
-              event: null,
-              eventId: null,
-              id: "1",
-              issuer: {
-                avatarUrl: "https://example.com/avatar.png",
-                bio: "Test bio",
-                displayName: "Test User",
-                id: "1",
-                username: "testuser",
-                _count: {
-                  followers: 1,
-                },
-                followers: [
-                  {
-                    followerId: "2",
-                  },
-                ],
-              },
-              issuerId: "2",
-              post: null,
-              postId: null,
-              read: false,
-              recipientId: "2",
-              type: "EVENT_ATTENDEE",
-            },
-          ],
-          nextCursor: null,
-        }),
-    } as any);
+    // vi.mocked(prisma.user.findMany).mockResolvedValue([]);
+    // vi.mocked(prisma.$queryRaw).mockResolvedValue([]); // Ensure this is configured here
+    // vi.mocked(kyInstance.get).mockResolvedValue({ ... } as any);
   });
 
   it("should render the Notifications component as part of the page", () => {

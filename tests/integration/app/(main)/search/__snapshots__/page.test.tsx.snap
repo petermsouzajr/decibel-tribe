@@ -4,194 +4,145 @@ exports[`Search Page > should match snapshot 1`] = `
 <body>
   <div>
     <main
-      class="flex w-full min-w-0 gap-5"
+      class="p-5"
     >
-      <div
-        class="w-full min-w-0 space-y-5"
+      <h1
+        class="text-center text-3xl font-bold"
       >
-        <div
-          data-orientation="horizontal"
-          dir="ltr"
+        Search
+      </h1>
+      <div
+        class="mx-auto my-3 max-w-xl"
+      >
+        <form
+          action="/search"
+          class="max-w-md flex-grow"
+          method="GET"
         >
           <div
-            aria-orientation="horizontal"
-            class="inline-flex h-12 w-full items-center justify-center gap-1 rounded-md bg-card p-1 text-muted-foreground shadow-sm"
-            data-orientation="horizontal"
-            role="tablist"
-            style="outline: none;"
-            tabindex="0"
+            class="relative"
           >
-            <button
-              aria-controls="radix-:rc:-content-users/posts"
-              aria-selected="true"
-              class="inline-flex h-full flex-1 items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:font-bold data-[state=active]:text-foreground"
-              data-orientation="horizontal"
-              data-radix-collection-item=""
-              data-state="active"
-              id="radix-:rc:-trigger-users/posts"
-              role="tab"
-              tabindex="-1"
-              type="button"
+            <input
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              name="q"
+              placeholder="Search"
+            />
+            <svg
+              class="lucide lucide-search absolute right-3 top-1/2 size-5 -translate-y-1/2 transform cursor-pointer text-muted-foreground"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
             >
-              Users/Posts
-            </button>
-            <button
-              aria-controls="radix-:rc:-content-instruments/skills"
-              aria-selected="false"
-              class="inline-flex h-full flex-1 items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:font-bold data-[state=active]:text-foreground"
-              data-orientation="horizontal"
-              data-radix-collection-item=""
-              data-state="inactive"
-              id="radix-:rc:-trigger-instruments/skills"
-              role="tab"
-              tabindex="-1"
-              type="button"
-            >
-              Instruments/Skills
-            </button>
-            <button
-              aria-controls="radix-:rc:-content-events"
-              aria-selected="false"
-              class="inline-flex h-full flex-1 items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:font-bold data-[state=active]:text-foreground"
-              data-orientation="horizontal"
-              data-radix-collection-item=""
-              data-state="inactive"
-              id="radix-:rc:-trigger-events"
-              role="tab"
-              tabindex="-1"
-              type="button"
-            >
-              Events
-            </button>
+              <circle
+                cx="11"
+                cy="11"
+                r="8"
+              />
+              <path
+                d="m21 21-4.3-4.3"
+              />
+            </svg>
           </div>
-          <div
-            aria-labelledby="radix-:rc:-trigger-users/posts"
-            class="mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            data-orientation="horizontal"
-            data-state="active"
-            id="radix-:rc:-content-users/posts"
-            role="tabpanel"
-            style="animation-duration: 0s;"
-            tabindex="0"
-          >
-            <div
-              class="space-y-5"
-            >
-              <div
-                class="w-full animate-pulse space-y-3 rounded-2xl bg-card p-5 shadow-sm"
-              >
-                <div
-                  class="flex flex-wrap gap-3"
-                >
-                  <div
-                    class="animate-pulse bg-muted size-12 rounded-full"
-                  />
-                  <div
-                    class="space-y-1.5"
-                  >
-                    <div
-                      class="animate-pulse bg-muted h-4 w-24 rounded"
-                    />
-                    <div
-                      class="animate-pulse bg-muted h-4 w-20 rounded"
-                    />
-                  </div>
-                </div>
-                <div
-                  class="animate-pulse bg-muted h-16 rounded"
-                />
-              </div>
-              <div
-                class="w-full animate-pulse space-y-3 rounded-2xl bg-card p-5 shadow-sm"
-              >
-                <div
-                  class="flex flex-wrap gap-3"
-                >
-                  <div
-                    class="animate-pulse bg-muted size-12 rounded-full"
-                  />
-                  <div
-                    class="space-y-1.5"
-                  >
-                    <div
-                      class="animate-pulse bg-muted h-4 w-24 rounded"
-                    />
-                    <div
-                      class="animate-pulse bg-muted h-4 w-20 rounded"
-                    />
-                  </div>
-                </div>
-                <div
-                  class="animate-pulse bg-muted h-16 rounded"
-                />
-              </div>
-              <div
-                class="w-full animate-pulse space-y-3 rounded-2xl bg-card p-5 shadow-sm"
-              >
-                <div
-                  class="flex flex-wrap gap-3"
-                >
-                  <div
-                    class="animate-pulse bg-muted size-12 rounded-full"
-                  />
-                  <div
-                    class="space-y-1.5"
-                  >
-                    <div
-                      class="animate-pulse bg-muted h-4 w-24 rounded"
-                    />
-                    <div
-                      class="animate-pulse bg-muted h-4 w-20 rounded"
-                    />
-                  </div>
-                </div>
-                <div
-                  class="animate-pulse bg-muted h-16 rounded"
-                />
-              </div>
-            </div>
-          </div>
-          <div
-            aria-labelledby="radix-:rc:-trigger-instruments/skills"
-            class="mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            data-orientation="horizontal"
-            data-state="inactive"
-            hidden=""
-            id="radix-:rc:-content-instruments/skills"
-            role="tabpanel"
-            tabindex="0"
-          />
-          <div
-            aria-labelledby="radix-:rc:-trigger-events"
-            class="mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            data-orientation="horizontal"
-            data-state="inactive"
-            hidden=""
-            id="radix-:rc:-content-events"
-            role="tabpanel"
-            tabindex="0"
-          />
-        </div>
+        </form>
       </div>
       <div
-        class="sticky top-[5.25rem] hidden h-fit w-72 flex-none space-y-5 md:block lg:w-80"
+        class="mx-auto mt-5 max-w-2xl"
+        data-orientation="horizontal"
+        dir="ltr"
       >
-        <svg
-          class="lucide lucide-loader-circle mx-auto animate-spin"
-          fill="none"
-          height="24"
-          stroke="currentColor"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          viewBox="0 0 24 24"
-          width="24"
-          xmlns="http://www.w3.org/2000/svg"
+        <div
+          aria-orientation="horizontal"
+          class="inline-flex h-12 items-center justify-center gap-1 rounded-md bg-card p-1 text-muted-foreground shadow-sm w-full"
+          data-orientation="horizontal"
+          role="tablist"
+          style="outline: none;"
+          tabindex="0"
         >
-          <path
-            d="M21 12a9 9 0 1 1-6.219-8.56"
-          />
-        </svg>
+          <button
+            aria-controls="radix-:rc:-content-users/posts"
+            aria-selected="true"
+            class="inline-flex h-full items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:font-bold data-[state=active]:text-foreground flex-1"
+            data-orientation="horizontal"
+            data-radix-collection-item=""
+            data-state="active"
+            id="radix-:rc:-trigger-users/posts"
+            role="tab"
+            tabindex="-1"
+            type="button"
+          >
+            Users/Posts
+          </button>
+          <button
+            aria-controls="radix-:rc:-content-instruments/skills"
+            aria-selected="false"
+            class="inline-flex h-full items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:font-bold data-[state=active]:text-foreground flex-1"
+            data-orientation="horizontal"
+            data-radix-collection-item=""
+            data-state="inactive"
+            id="radix-:rc:-trigger-instruments/skills"
+            role="tab"
+            tabindex="-1"
+            type="button"
+          >
+            Instruments/Skills
+          </button>
+          <button
+            aria-controls="radix-:rc:-content-events"
+            aria-selected="false"
+            class="inline-flex h-full items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:font-bold data-[state=active]:text-foreground flex-1"
+            data-orientation="horizontal"
+            data-radix-collection-item=""
+            data-state="inactive"
+            id="radix-:rc:-trigger-events"
+            role="tab"
+            tabindex="-1"
+            type="button"
+          >
+            Events
+          </button>
+        </div>
+        <div
+          aria-labelledby="radix-:rc:-trigger-users/posts"
+          class="mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          data-orientation="horizontal"
+          data-state="active"
+          id="radix-:rc:-content-users/posts"
+          role="tabpanel"
+          style="animation-duration: 0s;"
+          tabindex="0"
+        >
+          <p
+            class="text-center text-muted-foreground"
+          >
+            Search for bands, musicians, posts, and events.
+          </p>
+        </div>
+        <div
+          aria-labelledby="radix-:rc:-trigger-instruments/skills"
+          class="mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          data-orientation="horizontal"
+          data-state="inactive"
+          hidden=""
+          id="radix-:rc:-content-instruments/skills"
+          role="tabpanel"
+          tabindex="0"
+        />
+        <div
+          aria-labelledby="radix-:rc:-trigger-events"
+          class="mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          data-orientation="horizontal"
+          data-state="inactive"
+          hidden=""
+          id="radix-:rc:-content-events"
+          role="tabpanel"
+          tabindex="0"
+        />
       </div>
     </main>
   </div>

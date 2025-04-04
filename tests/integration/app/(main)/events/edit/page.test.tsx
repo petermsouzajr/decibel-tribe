@@ -32,7 +32,7 @@ vi.mock("@/lib/prisma", () => ({
 }));
 
 // NOTE: Skipping entire suite due to persistent timeout errors and complex mocking required.
-describe.skip("Edit Event Page", () => {
+describe("Edit Event Page", () => {
   let queryClient: QueryClient;
   const fixedDate = new Date("2024-09-30T10:00:00.000Z");
 
@@ -65,21 +65,21 @@ describe.skip("Edit Event Page", () => {
       </QueryClientProvider>,
     );
 
-  it("should render the form heading", async () => {
+  it("should render the form heading", () => {
     renderPage();
 
-    const pageTitle = await screen.findByRole("heading", {
+    const pageTitle = screen.getByRole("heading", {
       name: /Create New Event/i,
     });
 
     expect(pageTitle).toBeInTheDocument();
   });
 
-  it("should render the event form", async () => {
+  it("should render the event form", () => {
     renderPage();
 
-    const titleLabel = await screen.findByLabelText(/Title/i);
-    const startTimeLabel = await screen.findByLabelText(/Start Time/i);
+    const titleLabel = screen.getByLabelText(/Title/i);
+    const startTimeLabel = screen.getByLabelText(/Start Time/i);
 
     expect(titleLabel).toBeInTheDocument();
     expect(startTimeLabel).toBeInTheDocument();

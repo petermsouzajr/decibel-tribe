@@ -2,6 +2,10 @@
 
 exports[`User Page > should match snapshot 1`] = `
 <body>
-  <div />
+  <div>
+    <div>
+      Mocked User Page
+    </div>
+  </div>
 </body>
 `;

@@ -3,6 +3,12 @@ import SessionProvider from "@/app/(main)/SessionProvider";
 import { render } from "@testing-library/react";
 import { vi } from "vitest";
 
+// Mock the custom hook
+vi.mock("./useInitializeChatClient", () => ({
+  // Provide a default export which is a function returning null
+  default: vi.fn(() => null),
+}));
+
 const mockUser: any = {
   id: "1",
   name: "testUser",
@@ -21,7 +27,7 @@ const mockSessionContext: SessionContextType = {
 };
 
 // NOTE: Skipping due to complex mocking required for Stream Chat API calls.
-describe.skip("Messages Page", () => {
+describe("Messages Page", () => {
   const renderPage = () =>
     render(
       <SessionProvider value={mockSessionContext}>
