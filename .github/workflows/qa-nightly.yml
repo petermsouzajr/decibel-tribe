@@ -38,7 +38,7 @@ jobs:
         run: echo "GOOGLE_KEY_FILE_PATH=$(pwd)/googleCredentials.json" >> $GITHUB_ENV
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm install
 
       - name: Run QA regression tests
         run: npm run cypress:nightly
