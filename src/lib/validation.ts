@@ -37,7 +37,7 @@ export const createPostSchema = z.object({
 
 export const updateUserProfileSchema = z.object({
   displayName: requiredString.max(50, "Must be less than 50 characters"),
-  bio: z.string().max(200, "Must be at most 200 characters"),
+  bio: z.string().max(200, "Must be at most 200 characters").optional(),
   instruments: z
     .array(z.string())
     .max(15, "You can select up to 15 instruments"),

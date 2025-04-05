@@ -1,3 +1,6 @@
+// /// <reference types="vitest/globals" /> // Removed
+// src/components/auth/LoginForm.test.tsx
+import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import LoginForm from "@/app/(auth)/login/LoginForm";
 import { login } from "@/app/(auth)/login/actions";

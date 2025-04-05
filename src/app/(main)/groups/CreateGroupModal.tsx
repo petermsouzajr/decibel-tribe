@@ -23,14 +23,14 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "@/components/ui/use-toast";
 
 const createGroupSchema = z.object({
   name: z.string().min(1, "Group name is required"),
   description: z.string().optional(),
 });
 
-interface CreateGroupModalProps {
+export interface CreateGroupModalProps {
   open: boolean;
   onClose: () => void;
 }
@@ -67,10 +67,12 @@ export default function CreateGroupModal({
       onClose();
     },
     onError: (error: Error) => {
-      alert(error.message || "Failed to create group.");
+      toast({
+        variant: "destructive",
+        description: error.message || "Failed to create group.",
+      });
     },
   });
-  const { toast } = useToast();
 
   const form = useForm<NewGroup>({
     resolver: zodResolver(createGroupSchema),

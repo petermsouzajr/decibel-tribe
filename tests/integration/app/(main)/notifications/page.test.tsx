@@ -4,6 +4,7 @@ import Page from "@/app/(main)/notifications/page";
 import SessionProvider from "@/app/(main)/SessionProvider";
 import { vi } from "vitest";
 import prisma from "@/lib/prisma";
+import { describe, it, expect } from "vitest";
 
 // Mock @tanstack/react-query hooks
 vi.mock("@tanstack/react-query", async (importOriginal) => {
@@ -59,6 +60,15 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 vi.mock("@/components/TrendsSidebar", () => ({
   default: () => <div>Mocked TrendsSidebar</div>,
 }));
+
+// Mock the specific function used for date formatting
+vi.mock("@/lib/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/utils")>();
+  return {
+    ...actual,
+    formatRelativeDate: vi.fn(() => "MOCKED_DATE"), // Always return a fixed string
+  };
+});
 
 // NOTE: Skipping due to persistent "Objects are not valid as a React child" errors.
 describe("Notifications Page", () => {

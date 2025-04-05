@@ -153,6 +153,7 @@ function AddAttachmentsButton({
         className="text-primary hover:text-primary"
         disabled={disabled}
         onClick={() => fileInputRef.current?.click()}
+        aria-label="Add attachment"
       >
         <ImageIcon size={20} />
       </Button>
@@ -179,7 +180,7 @@ interface AttachmentPreviewsProps {
   removeAttachment: (fileName: string) => void;
 }
 
-function AttachmentPreviews({
+export function AttachmentPreviews({
   attachments,
   removeAttachment,
 }: AttachmentPreviewsProps) {
@@ -235,10 +236,15 @@ function AttachmentPreview({
       )}
       {!isUploading && (
         <button
-          onClick={onRemoveClick}
-          className="absolute right-3 top-3 rounded-full bg-foreground p-1.5 text-background transition-colors hover:bg-foreground/60"
+          type="button"
+          className="absolute right-1 top-1 rounded-full bg-foreground/60 p-1 text-background transition-colors hover:bg-foreground"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemoveClick();
+          }}
+          aria-label="Remove attachment"
         >
-          <X size={20} />
+          <X size={16} />
         </button>
       )}
     </div>

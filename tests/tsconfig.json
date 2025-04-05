@@ -3,13 +3,18 @@
   "extends": "../tsconfig.json",
 
   "compilerOptions": {
-    // Override 'types' specifically for the test environment
-    // Include only what Vitest/Jest-DOM needs.
-    // Ensure 'node' is included if needed by your test setup/imports.
+    "baseUrl": "../",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "types": ["vitest/globals", "@testing-library/jest-dom", "node"],
+    "jsx": "react-jsx",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "noEmit": true,
 
-    // Ensure DOM is available for Jest-DOM matchers
-    "lib": ["ESNext", "DOM", "DOM.Iterable"]
+    "outDir": "../dist/tests"
 
     // Optional: You might not need 'noEmit' here if the root config has it,
     // but explicitly setting it won't hurt.
@@ -18,12 +23,17 @@
 
   // Define what this config applies to (relative to this file)
   "include": [
-    "./**/*.ts", // All TS files in tests/ and subdirs
-    "./**/*.tsx", // All TSX files in tests/ and subdirs
-    "../src/vitest.d.ts", // Include your global augmentation file
-    "../src/custom.d.ts" // Explicitly include custom declarations
-    // "./setupTests.ts" // Include setupTests.ts if it needs type checking
+    "./setupTests.ts", // Include setup file
+    "./vitest.d.ts" // Include Vitest specific type definitions
+    // Do NOT include ../src/**/* here, let the root tsconfig handle src checks
   ],
 
-  "exclude": [] // Keep empty unless specific sub-folders need exclusion here
+  "exclude": [
+    "node_modules", // Exclude node_modules again
+    "../cypress", // Exclude cypress folder
+    "../node_modules",
+    "../dist",
+    "**/*.test.ts", // Exclude test files from this specific check
+    "**/*.test.tsx" // Exclude test files from this specific check
+  ]
 }

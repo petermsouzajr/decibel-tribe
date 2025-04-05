@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { expect } from "vitest";
 import Page from "@/app/(auth)/login/page";
 
 describe("Login Page", () => {

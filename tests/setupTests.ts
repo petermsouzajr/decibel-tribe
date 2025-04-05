@@ -1,24 +1,11 @@
 import "@testing-library/jest-dom/vitest";
-// Remove the explicit module declaration - we'll put this in a .d.ts file
-/*
-import type { TestingLibraryMatchers } from "@testing-library/jest-dom/matchers";
-import { expect } from "vitest";
-import { vi } from "vitest";
-
-declare module "vitest" {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  interface JestAssertion<T = any>
-    extends TestingLibraryMatchers<typeof expect.stringContaining, T> {}
-}
-*/
 
 // Mock react's cache function globally
 vi.mock("react", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react")>();
   return {
     ...actual,
-    cache: (<T extends (...args: any[]) => any>(fn: T) =>
-      fn) as typeof actual.cache,
+    cache: vi.fn((fn) => fn) as (...args: any[]) => any,
   };
 });
 
@@ -62,3 +49,33 @@ vi.mock("@/lib/prisma", () => ({
     $queryRaw: vi.fn(),
   },
 }));
+
+// --- Remove Mocks added for LikeButton ---
+
+// // Mock server actions - Keep this if other tests might need it globally?
+// vi.mock("../src/lib/actions/posts");
+
+// // Mock navigation - Keep this if other tests might need it globally?
+// vi.mock("next/navigation", () => ({
+//   useRouter: () => ({
+//     refresh: vi.fn(),
+//   }),
+// }));
+
+// // Mock UI feedback (toast) - Keep this if other tests might need it globally?
+// vi.mock("sonner", () => ({
+//   toast: {
+//     error: vi.fn(),
+//   },
+// }));
+
+// Remove next-auth/react mock
+// vi.mock("next-auth/react", () => ({ ... }));
+
+// Remove react-query mock
+// const mockGlobalMutate = vi.fn();
+// const mockGlobalRefetch = vi.fn();
+// vi.mock("@tanstack/react-query", () => ({ ... }));
+
+// Remove exports
+// export { mockGlobalMutate, mockGlobalRefetch };

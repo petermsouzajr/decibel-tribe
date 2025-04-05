@@ -1,3 +1,6 @@
+// /// <reference types="vitest/globals" /> // Removed
+// src/components/auth/ForgotPassForm.test.tsx
+import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import ForgotPassForm from "@/app/(auth)/forgot-pass/forgotPassForm";
 import { resendVerification } from "@/app/(auth)/forgot-pass/actions";

@@ -80,7 +80,7 @@ exports[`Notifications Page > should match snapshot 1`] = `
                     class="block text-sm text-muted-foreground hover:underline"
                     href="/events/undefined"
                   >
-                    0 seconds ago
+                    MOCKED_DATE
                   </a>
                 </div>
                 <button

@@ -1,3 +1,6 @@
+// /// <reference types="vitest/globals" /> // Removed
+// src/components/auth/SignUpForm.test.tsx
+import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { signUp } from "@/app/(auth)/signup/actions";
 import { useRouter } from "next/navigation";

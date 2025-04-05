@@ -97,9 +97,10 @@ export default function Post({ post }: PostProps) {
               userId={post.user.id}
               initialState={{
                 followers: post.user._count.followers,
-                isFollowedByUser: post.user.followers.some(
-                  ({ followerId }) => followerId === user.id,
-                ),
+                isFollowedByUser:
+                  post.user.followers?.some(
+                    (follower) => follower.followerId === user.id,
+                  ) ?? false,
               }}
             />
           )}

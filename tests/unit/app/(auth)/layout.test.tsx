@@ -1,7 +1,8 @@
+/// <reference types="vitest/globals" />
 import React from "react";
 import { validateRequest } from "@/auth";
 import { redirect } from "next/navigation";
-import { vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import Layout from "@/app/(auth)/layout";
 
 // NOTE: Skipping this test suite due to persistent issues rendering the async layout component
