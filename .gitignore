@@ -39,3 +39,6 @@ next-env.d.ts
 /cypress/screenshots
 googleCredentials.json
 cypress.env.json
+
+# vitest
+vitest/failing_tests.log

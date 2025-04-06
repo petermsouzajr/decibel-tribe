@@ -11,7 +11,7 @@ export default defineConfig(async () => {
     test: {
       environment: "jsdom",
       globals: true,
-      setupFiles: "tests/setupTests.ts",
+      setupFiles: "vitest/tests/setupTests.ts",
       testTimeout: 15000,
       coverage: {
         provider: "istanbul",

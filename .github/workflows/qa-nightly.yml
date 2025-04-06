@@ -1,8 +1,8 @@
 name: QA Regression
 
 on:
-  schedule:
-    - cron: "0 1 * * *" # Runs daily at 1 AM UTC
+  # schedule: # Temporarily disable the nightly run
+  #  - cron: "0 1 * * *" # Runs daily at 1 AM UTC
   push:
     branches:
       - main
