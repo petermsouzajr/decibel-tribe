@@ -21,6 +21,7 @@ export const SignupPage = {
     emailInput: () => cy.get('input[name="email"]'),
     passwordInput: () => cy.get('input[name="password"]'),
     submitButton: () => cy.get('button[type="submit"]'),
+    errorMessage: () => cy.get("p.text-destructive"),
     successDialogueHeading: (messages: SignupMessages) =>
       cy.get("h2").contains(messages.successMessages.signUpCompleteHeading),
     successDialogueContent: (messages: SignupMessages) =>

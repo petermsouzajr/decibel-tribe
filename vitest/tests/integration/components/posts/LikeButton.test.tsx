@@ -77,7 +77,7 @@ import { LikeInfo } from "@/lib/types";
 // import { mockGlobalMutate, mockGlobalRefetch } from "../../../tests/setupTests";
 
 // Import the component's props type
-import { LikeButtonProps } from "./LikeButton";
+import { LikeButtonProps } from "@/components/posts/LikeButton";
 
 // --- Test Setup ---
 const postId = "post1";

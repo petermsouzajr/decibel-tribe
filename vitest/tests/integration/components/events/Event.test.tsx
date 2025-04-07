@@ -4,7 +4,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import EventComponent from "@/components/events/Event"; // Updated import
 import { EventData, UserData } from "@/lib/types"; // Import types
-import { SessionProvider, useSession } from "@/app/(main)/SessionProvider";
+import SessionProvider, { useSession } from "@/app/(main)/SessionProvider"; // Import SessionProvider as default
 import { useToast } from "@/components/ui/use-toast";
 import { Session } from "lucia"; // Import Session
 

@@ -1,9 +1,6 @@
 import { defineConfig } from "vitest/config";
-import path from "path";
 import react from "@vitejs/plugin-react";
-import tsconfigPaths from "vite-tsconfig-paths";
 
-//@ts-ignore
 export default defineConfig(async () => {
   const { default: tsconfigPaths } = await import("vite-tsconfig-paths");
 
@@ -14,7 +11,7 @@ export default defineConfig(async () => {
       setupFiles: "vitest/tests/setupTests.ts",
       testTimeout: 15000,
       coverage: {
-        provider: "istanbul",
+        provider: "istanbul" as const,
         reporter: ["text", "json-summary", "json", "html"],
         reportsDirectory: "./coverage/vitest",
         all: true,
@@ -31,16 +28,5 @@ export default defineConfig(async () => {
       },
     },
     plugins: [react(), tsconfigPaths()],
-    resolve: {
-      alias: {
-        "@": path.resolve(__dirname, "./src"),
-      },
-    },
-    esbuild: {
-      jsx: "automatic",
-      jsxFactory: "React.createElement",
-      jsxFragment: "React.Fragment",
-      loader: "tsx",
-    },
   };
 });

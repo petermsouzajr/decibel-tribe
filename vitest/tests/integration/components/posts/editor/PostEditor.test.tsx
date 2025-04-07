@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event"; // Import userEvent
 import PostEditor from "@/components/posts/editor/PostEditor";
-import { SessionProvider, useSession } from "@/app/(main)/SessionProvider";
+import SessionProvider, { useSession } from "@/app/(main)/SessionProvider"; // Import SessionProvider as default
 import { useSubmitPostMutation } from "@/components/posts/editor/mutations";
 import useMediaUpload, {
   Attachment,

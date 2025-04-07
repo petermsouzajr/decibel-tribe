@@ -71,7 +71,7 @@ Now you should be able to access the application locally, typically at `http://l
 
 - **TypeScript:** Follow standard TypeScript best practices.
 - **Linting & Formatting:** This project uses ESLint for linting and Prettier for formatting.
-  - Run `npm run check-all` to check for Typescript errors, build errors, and formatting before pushing changes.
+  - Run `npm run check:all` to check for Typescript errors, build errors, and formatting before pushing changes.
   - Ensure code passes linting before submitting a PR. Consider configuring your editor to format on save.
 - **Component Structure:** Follow existing patterns for component organization and naming conventions.
 - **Accessibility:** Keep accessibility (a11y) in mind when creating UI components.
@@ -97,9 +97,10 @@ Testing is crucial for maintaining application quality. We use two main testing 
 (Optional/Recommended) - Use crusor/rule `vt.mdc`
 
 - Used for testing individual functions, components, hooks, and smaller integrations.
-- Run tests: `npm run test`
-- Run tests with coverage report: `npm run coverage`
-- Find tests in the `tests/` directory or alongside components (`*.test.tsx`).
+- Run tests: `npm run vitest`
+- Run tests with coverage report: `npm run vitest:coverage`
+- Run `npm run check:all` to check for potential syntax and type errors.
+- Find tests in the `vitest/tests/` directory or alongside components (`*.test.tsx`).
 - **Requirement:** New features and bug fixes should ideally include corresponding Vitest tests. Focus on testing logic, edge cases, and component behavior from a user interaction perspective (using React Testing Library helpers).
 
 ### End-to-End Tests (Cypress)
@@ -108,10 +109,11 @@ Testing is crucial for maintaining application quality. We use two main testing 
 
 - Used for testing complete user flows through the application UI.
 - Find tests in the `cypress/e2e/` directory.
-- Run tests interactively: `npm run cypress:open`
-- Run tests headlessly (like in CI): `npm run cypress:run`
+- Run tests interactively: `npm run cy:open`
+- Run tests headlessly (like in CI): `npm run cy:run`
+- Run `cy:check:all` to check for potential syntax or type errors.
 - **Requirement:** Significant new user-facing features or critical workflows (like authentication, core posting) should be covered by E2E tests.
-- **Note:** E2E tests often require a specific database state. Utilize the seeding script (`npx prisma db seed`) or custom Cypress commands (`cypress/support/commands.ts`) that might interact with seeding or APIs for setup/teardown.
+- **Note:** E2E tests often require a specific database state. Utilize the seeding script (`npm run db:seed`) or custom Cypress commands (`cypress/support/commands.ts`) that might interact with seeding or APIs for setup/teardown.
 
 ## Submitting Changes
 

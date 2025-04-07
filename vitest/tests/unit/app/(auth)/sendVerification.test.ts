@@ -1,8 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  generateVerificationToken,
-  sendVerificationEmail,
-} from "@/lib/sendEmail";
+// Import default exports
+import generateVerificationToken from "@/lib/sendEmail";
+import sendVerificationEmail from "@/lib/sendEmail"; // Assuming sendVerificationEmail is also default or needs separate import
+// Remove named imports if they are default:
+// import {
+//   generateVerificationToken,
+//   sendVerificationEmail,
+// } from "@/lib/sendEmail";
+
 import { lucia } from "@/auth";
 import { cookies } from "next/headers";
 import {

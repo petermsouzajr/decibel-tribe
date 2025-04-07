@@ -1,32 +1,41 @@
 import { vi } from "vitest";
-import kyInstance from "@/lib/ky"; // Need to import it to mock specific methods
+import kyInstance from "@/lib/ky"; // Import original instance for reference if needed, but mock replaces it
 
-// Mock kyInstance specifically for the token endpoint
+// Revert to the mock structure that mimics Fetch Response with .json()
 vi.mock("@/lib/ky", async (importOriginal) => {
   const actualKy = await importOriginal<typeof import("@/lib/ky")>();
+
+  // Define the mock response object structure expected by Stream Chat tokenProvider
+  const mockTokenResponse = {
+    ok: true, // Add ok status for more realistic Response mock
+    status: 200,
+    json: async () => ({ token: "mock-stream-token" }),
+  };
+  const mockEmptyResponse = {
+    ok: true,
+    status: 200,
+    json: async () => ({}), // For other calls
+  };
+
   return {
-    ...actualKy, // Keep original behavior for other methods/endpoints
+    ...actualKy, // Preserve other named exports from the module if any
     default: {
+      // Mock the default export (kyInstance)
       ...actualKy.default,
       get: vi
         .fn()
         .mockImplementation(
           async (url: string | URL | Request, options?: any) => {
-            if (url === "/api/get-token") {
-              console.log("Mocked /api/get-token called");
-              // Return a structure that mimics ky response with a mock token
-              return {
-                json: async () => ({ token: "mock-stream-token" }),
-              };
+            if (String(url).includes("/api/get-token")) {
+              console.log("Mocked /api/get-token called (Response-like)");
+              // Return a Promise resolving to the object with .json()
+              return Promise.resolve(mockTokenResponse);
             }
-            // For other URLs, use the original implementation (if needed, or just return empty mock)
-            // console.log(`Mock kyInstance.get called with non-token URL: ${url}`);
-            // return actualKy.default.get(url, options); // Fallback might be complex, let's just return mock for now
-            return {
-              json: async () => ({}), // Default empty mock for other GETs in this test
-            };
+            console.warn(`Unexpected ky.get call in test: ${url}`);
+            return Promise.resolve(mockEmptyResponse); // For other calls
           },
         ),
+      // Add mocks for other methods (post, put, delete) if needed
     },
   };
 });
@@ -37,7 +46,6 @@ import { render } from "@testing-library/react";
 
 // Mock the custom hook
 vi.mock("./useInitializeChatClient", () => ({
-  // Provide a default export which is a function returning null
   default: vi.fn(() => null),
 }));
 
@@ -58,7 +66,6 @@ const mockSessionContext: SessionContextType = {
   setUser: () => {},
 };
 
-// NOTE: Skipping due to complex mocking required for Stream Chat API calls.
 describe("Messages Page", () => {
   const renderPage = () =>
     render(

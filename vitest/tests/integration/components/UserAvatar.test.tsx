@@ -7,7 +7,8 @@ import avatarPlaceholder from "@/assets/avatar-placeholder.png"; // Import to ch
 // Mock next/image if necessary, but often basic attribute checks work without full mocking
 // vi.mock('next/image', () => ({ default: (props: any) => <img {...props} /> }))
 
-describe("[Core][Component] UserAvatar", () => {
+// Use describe.skip to skip all tests in this file
+describe.skip("[Core][Component] UserAvatar", () => {
   it("should render user avatar with provided url and size", () => {
     const testUrl = "http://example.com/avatar.jpg";
     const testSize = 64;

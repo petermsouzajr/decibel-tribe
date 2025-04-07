@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event"; // Import userEvent
 import Post from "@/components/posts/Post"; // Updated import
-import { SessionProvider, useSession } from "@/app/(main)/SessionProvider";
+import SessionProvider, { useSession } from "@/app/(main)/SessionProvider"; // Import SessionProvider as default
 import { formatRelativeDate } from "@/lib/utils";
 import { PostData, UserData } from "@/lib/types"; // Assuming types are here
 import { Session } from "lucia";

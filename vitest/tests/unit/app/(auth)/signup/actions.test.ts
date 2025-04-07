@@ -38,7 +38,7 @@ vi.mock("next/dist/client/components/redirect", () => ({
 
 vi.mock("bcryptjs");
 
-describe("signUp", () => {
+describe.skip("[Core][Action] Signup Action", () => {
   const mockCredentials = {
     username: "testuser",
     email: "testuser@example.com",

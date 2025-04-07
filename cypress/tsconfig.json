@@ -1,0 +1,20 @@
+{
+  // Extend your root config to inherit base settings like paths
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    // --- Crucial for Cypress ---
+    "types": ["cypress", "node"], // Add cypress global types
+    "lib": ["es2015", "dom"], // Standard libs needed for Cypress env
+    "resolveJsonModule": true, // Explicitly allow JSON imports
+    // --- Overrides from root ---
+    "noEmit": true, // Don't actually compile TS files here
+    "isolatedModules": false, // Cypress files might not be strict modules
+    "strict": false, // Often less strictness is pragmatic for tests, adjust as needed
+    "skipLibCheck": true // Skip checking libs like cypress itself
+    // Remove or adjust other root options if they conflict (e.g., moduleResolution if needed)
+  },
+  // Include all TS files within the cypress directory
+  "include": ["./**/*.ts", "./**/*.tsx", "../node_modules/cypress"],
+  // Exclude node_modules within cypress if any were to exist
+  "exclude": ["node_modules"]
+}

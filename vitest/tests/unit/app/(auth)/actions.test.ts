@@ -2,10 +2,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 // Mock dependencies like Prisma, Lucia-auth, validation schemas, etc.
 // Import actions
-import { logout } from "./actions"; // Adjust the import path if necessary
+import { logout } from "@/app/(auth)/actions"; // Use alias path
 import { lucia, validateRequest } from "@/auth";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { Session } from "lucia";
 
 // Define types for mocks based on imports in actions.ts
 // Simplified for brevity - in a real scenario, these might need more properties

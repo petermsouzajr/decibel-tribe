@@ -7,7 +7,7 @@ import { loginSchema, LoginValues } from "@/lib/validation";
 import { isRedirectError } from "next/dist/client/components/redirect";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import bcrypt from "bcryptjs";
+import * as bcrypt from "bcryptjs";
 import { resendVerificationEmail } from "../sendVerification";
 
 export async function login(
