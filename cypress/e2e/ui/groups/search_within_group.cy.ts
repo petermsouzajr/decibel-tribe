@@ -1,6 +1,6 @@
 // Assumes logged-in user is member of 'activeGroup' with searchable posts
 
-describe("Groups - Search within Group", () => {
+describe("[GroupsTeam] Groups - Search within Group [functional]", () => {
   let groupId: string;
   const searchTerm = "uniqueGroupPostContent";
 

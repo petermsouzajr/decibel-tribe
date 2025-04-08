@@ -2,7 +2,7 @@
 // Assumes a post from another user exists (seeded or created via API in beforeEach)
 // Assumes Post Page Object exists
 
-describe("Posts - Like Post", () => {
+describe("[SocialTeam] Posts - Like Post [functional]", () => {
   let targetPostId: string; // Store ID of the post to interact with
 
   beforeEach(() => {

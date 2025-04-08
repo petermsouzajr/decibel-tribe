@@ -1,6 +1,6 @@
 // Assumes logged-in user 'newUser' has ZERO notifications
 
-describe("Notifications - Empty State", () => {
+describe("[NotificationsTeam] Notifications - Empty State [functional]", () => {
   beforeEach(() => {
     // TODO: Ensure user exists and has 0 notifications (clean slate)
     // cy.loginByApi("newUser", Cypress.env("password"));

@@ -1,7 +1,7 @@
 // Assumes user 'profileOwner' is followed by 'follower1' and 'follower2' (seeded/created)
 // Assumes UserProfilePage Page Object exists
 
-describe("User Profile - View Followers List", () => {
+describe("[SocialTeam] User Profile - View Followers List [functional]", () => {
   const profileOwnerUsername = "profileOwner";
 
   beforeEach(() => {

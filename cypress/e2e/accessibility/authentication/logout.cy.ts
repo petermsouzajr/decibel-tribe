@@ -1,7 +1,7 @@
 import { LogoutPage } from "../../../pages/authentication/logoutPage";
 import { LoginPage } from "../../../pages/authentication/loginPage";
 
-describe.skip("[AuthTeam] Logout Page Accessibility [regression][accessibility]", () => {
+describe.skip("[AuthTeam] Logout Page Accessibility [smoke]", () => {
   beforeEach(() => {
     // @ts-ignore
     cy.loginViaUi(); // Logs in via UI Flow

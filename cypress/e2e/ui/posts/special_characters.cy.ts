@@ -1,6 +1,6 @@
 // Assumes logged-in user (use cy.loginByApi)
 
-describe("Posts - Special Characters", () => {
+describe("[SocialTeam] Posts - Special Characters [functional]", () => {
   beforeEach(() => {
     // cy.loginByApi("testuser", Cypress.env("password"));
     cy.loginViaUi();

@@ -2,7 +2,7 @@
 // Assumes user 'searchTargetUser' exists (seeded/created)
 // Assumes SearchPage Page Object exists
 
-describe.skip("[Auth] Search - Click Through User Result", () => {
+describe.skip("[SocialTeam] Search - Click Through User Result [functional]", () => {
   const targetUsername = "searchTargetUser";
 
   beforeEach(() => {

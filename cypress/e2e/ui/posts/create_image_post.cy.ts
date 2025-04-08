@@ -1,7 +1,7 @@
 // Assumes logged-in user (use cy.loginByApi in beforeEach)
 // Assumes Page Objects for PostEditor exist
 
-describe("Posts - Create Image Post", () => {
+describe("[SocialTeam] Posts - Create Image Post [functional]", () => {
   beforeEach(() => {
     // cy.loginByApi("testuser", Cypress.env("password"));
     cy.loginViaUi();

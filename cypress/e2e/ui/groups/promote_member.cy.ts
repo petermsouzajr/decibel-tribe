@@ -2,7 +2,7 @@
 // Assumes 'memberToPromote' is a REGULAR member
 // Assumes GroupPage Page Object exists with member management controls
 
-describe("Groups - Promote Member", () => {
+describe("[GroupsTeam] Groups - Promote Member [functional]", () => {
   let groupId: string;
   const memberToPromote = "memberToPromote";
 

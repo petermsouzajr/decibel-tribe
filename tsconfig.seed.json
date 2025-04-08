@@ -1,0 +1,25 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "./dist",
+    "rootDir": "prisma",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "sourceMap": false,
+    "types": [],
+    "noImplicitAny": true,
+    "incremental": false
+  },
+  "include": ["prisma/**/*.mts"],
+  "exclude": [
+    "node_modules",
+    "src",
+    "cypress",
+    "tests",
+    "dist",
+    "**/*.spec.mts"
+  ]
+}

@@ -1,7 +1,7 @@
 // Assumes logged-in user 'groupOwner' owns group 'groupToEdit' (seeded/created)
 // Assumes GroupPage Page Object exists with edit capabilities
 
-describe("Groups - Edit Group Info", () => {
+describe("[GroupsTeam] Groups - Edit Group Info [functional]", () => {
   let groupId: string;
   const initialGroupName = "groupToEdit";
   const updatedGroupName = "Edited Group Name";

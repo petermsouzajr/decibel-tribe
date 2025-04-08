@@ -1,7 +1,7 @@
 // Assumes user 'inviteeUser' has pending invite to group 'invitedGroup' (seeded/created)
 // Assumes NotificationsPage Page Object exists
 
-describe("Groups - Accept Invite", () => {
+describe("[GroupsTeam] Groups - Accept Invite [functional]", () => {
   const groupName = "invitedGroup";
   let groupId: string;
 

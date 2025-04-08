@@ -5,7 +5,7 @@ import { ResendVerificationPage } from "../../../pages/authentication/resendVeri
 
 // Skipping entire suite as the /resend-verification page does not seem to exist.
 // This functionality likely needs to be tested as part of another flow (e.g., after failed login).
-describe.skip("Authentication - Resend Verification Email", () => {
+describe.skip("[AuthTeam] Authentication - Resend Verification Email [functional]", () => {
   const unverifiedUserEmail = Cypress.env("unverifiedEmail"); // Get from env
 
   beforeEach(() => {

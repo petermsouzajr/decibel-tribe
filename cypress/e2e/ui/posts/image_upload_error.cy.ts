@@ -1,6 +1,6 @@
 // Assumes logged-in user (use cy.loginByApi)
 
-describe("Posts - Image Upload Error", () => {
+describe("[MediaTeam] Posts - Image Upload Error [functional]", () => {
   beforeEach(() => {
     // cy.loginByApi("testuser", Cypress.env("password"));
     cy.loginViaUi();

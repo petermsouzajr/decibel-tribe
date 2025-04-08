@@ -1,7 +1,7 @@
 // Assumes logged-in user 'testuser' views profile of 'listOwner'
 // Assumes 'listOwner' follows/is followed by 'targetUser'
 
-describe("User Profile - Follow/Unfollow from List", () => {
+describe("[SocialTeam] User Profile - Follow/Unfollow from List [functional]", () => {
   const listOwner = "listOwner";
   const targetUser = "targetUser";
 

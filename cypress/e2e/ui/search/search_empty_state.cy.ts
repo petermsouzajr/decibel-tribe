@@ -1,6 +1,6 @@
 // Assumes logged-in user (use cy.loginByApi)
 
-describe("Search - Empty State", () => {
+describe("[SocialTeam] Search - Empty State [functional]", () => {
   beforeEach(() => {
     // cy.loginByApi("testuser", Cypress.env("password"));
     cy.loginViaUi();

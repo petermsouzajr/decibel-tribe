@@ -1,6 +1,6 @@
 // Assumes logged-in user has chat with > N messages (where N is page size)
 
-describe("Messaging - Load More Messages", () => {
+describe("[MessagingTeam] Messaging - Load More Messages [functional]", () => {
   const otherUsername = "longChatUser";
   const initialMsgCount = 20; // Example page size
 

@@ -1,7 +1,7 @@
 // Assumes logged-in user (use cy.loginByApi in beforeEach)
 // Assumes Page Objects for HomePage and PostEditor exist
 
-describe("Posts - Create Text Post", () => {
+describe("[SocialTeam] Posts - Create Text Post [smoke]", () => {
   beforeEach(() => {
     // cy.loginByApi("testuser", Cypress.env("password"));
     cy.loginViaUi();

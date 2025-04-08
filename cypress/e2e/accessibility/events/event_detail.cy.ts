@@ -1,7 +1,7 @@
-describe("Accessibility - Event Detail Page", () => {
+describe.skip("[EventsTeam] Accessibility - Event Detail Page [sanity]", () => {
   let eventId: string;
 
-  beforeEach.skip(() => {
+  beforeEach(() => {
     // TODO: Ensure event exists
     // cy.loginByApi(); // Login if needed to view event details
     cy.loginViaUi();

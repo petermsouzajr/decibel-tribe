@@ -2,7 +2,7 @@
 // Assumes a post exists (seeded/created)
 // Assumes reporting feature/API exists
 
-describe("Posts - Report Post", () => {
+describe("[SocialTeam] Posts - Report Post [functional]", () => {
   let targetPostId: string;
   const postContent = "Post to be reported";
 

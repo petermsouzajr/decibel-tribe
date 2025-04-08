@@ -2,7 +2,7 @@
 // Assumes 'attendee1' and 'attendee2' are attending the event
 // Assumes EventPage Page Object exists
 
-describe("Events - View Attendees", () => {
+describe("[EventsTeam] Events - View Attendees [functional]", () => {
   const eventName = "popularEvent";
   let eventId: string;
 

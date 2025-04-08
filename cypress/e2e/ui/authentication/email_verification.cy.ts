@@ -1,6 +1,6 @@
 // Requires email checking or mocking capabilities
 
-describe.skip("Authentication - Email Verification", () => {
+describe.skip("[AuthTeam] Authentication - Email Verification [functional]", () => {
   it("should mark user as verified after clicking verification link", () => {
     const userEmail = "unverified.user@example.com";
     const username = "unverifiedUser";

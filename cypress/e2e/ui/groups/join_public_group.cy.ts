@@ -1,7 +1,7 @@
 // Assumes logged-in user 'joinerUser' is NOT a member of public group 'publicGroup'
 // Assumes GroupPage Page Object exists
 
-describe("Groups - Join Public Group", () => {
+describe("[GroupsTeam] Groups - Join Public Group [functional]", () => {
   let groupId: string;
   const groupName = "publicGroup";
 

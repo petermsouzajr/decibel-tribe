@@ -1,7 +1,7 @@
 // Assumes user 'commentOwner' commented on a post (seeded/created)
 // Assumes Post Page Object exists
 
-describe("Posts - Delete Comment", () => {
+describe("[SocialTeam] Posts - Delete Comment [functional]", () => {
   let targetPostId: string;
   let commentId: string;
   const commentText = "Comment to be deleted";

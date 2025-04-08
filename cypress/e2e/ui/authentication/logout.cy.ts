@@ -1,7 +1,7 @@
 import { LogoutPage } from "../../../pages/authentication/logoutPage";
 import { LoginPage } from "../../../pages/authentication/loginPage";
 
-describe("The Logout Functionality", () => {
+describe("[AuthTeam] The Logout Functionality [smoke]", () => {
   const validUsername = Cypress.env("verifiedUsername");
   beforeEach(() => {
     // @ts-ignore

@@ -2,7 +2,7 @@
 // Assumes posts exist with the hashtag #TestHashtag (seeded/created)
 // Assumes SearchPage Page Object exists
 
-describe("Search - Hashtag", () => {
+describe("[SocialTeam] Search - Hashtag [functional]", () => {
   const targetHashtag = "#TestHashtag";
   const hashtagQuery = "TestHashtag"; // Search usually omits the #
 

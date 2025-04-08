@@ -2,7 +2,7 @@
 // Assumes a General Settings page exists
 // Assumes SettingsPage Page Object exists
 
-describe.skip("[Auth] Settings - Update General", () => {
+describe.skip("[AuthTeam] Settings - Update General [functional]", () => {
   const testUsername = "testUser2@test.com"; // Define username
 
   beforeEach(() => {

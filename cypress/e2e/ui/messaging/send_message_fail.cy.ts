@@ -1,7 +1,7 @@
 // Assumes logged-in user (use cy.loginByApi)
 // Assumes chat exists with 'otherUser'
 
-describe("Messaging - API Error Handling", () => {
+describe("[MessagingTeam] Messaging - API Error Handling [functional]", () => {
   const otherUsername = "otherUser";
 
   beforeEach(() => {

@@ -4,7 +4,7 @@ import {
 } from "../../../pages/authentication/loginPage";
 
 // Add hierarchical tags: [TeamName][Category][Type]
-describe.skip("[AuthTeam] Login Page Accessibility [regression]", () => {
+describe.skip("[AuthTeam] Login Page Accessibility [sanity]", () => {
   let messages: LoginMessages;
 
   before(() => {

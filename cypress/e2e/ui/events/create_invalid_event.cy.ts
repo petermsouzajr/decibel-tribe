@@ -2,7 +2,7 @@
 // Assumes EventForm Page Object exists
 import { generateEventData } from "../../../factories/eventData"; // Assuming an eventData factory
 
-describe("Events - Create Invalid Event Fail", () => {
+describe("[EventsTeam] Events - Create Invalid Event Fail [functional]", () => {
   beforeEach(() => {
     // cy.loginByApi("testuser", Cypress.env("password"));
     cy.loginViaUi();

@@ -1,7 +1,7 @@
 // Assumes logged-in user 'currentUser' has chat with 'otherUser' (seeded/created)
 // Assumes ChatPage Page Object exists with delete functionality
 
-describe("Messaging - Delete Conversation", () => {
+describe("[MessagingTeam] Messaging - Delete Conversation [functional]", () => {
   const otherUsername = "otherUser";
   let channelId: string;
 

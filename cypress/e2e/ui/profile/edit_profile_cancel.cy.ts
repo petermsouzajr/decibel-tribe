@@ -1,7 +1,7 @@
 // Assumes logged-in user (use cy.loginByApi)
 // Assumes EditProfileDialog exists
 
-describe("User Profile - Edit Form Cancel", () => {
+describe("[AuthTeam] User Profile - Edit Form Cancel [functional]", () => {
   const initialDisplayName = "testuser"; // Assume this is the current name
 
   beforeEach(() => {

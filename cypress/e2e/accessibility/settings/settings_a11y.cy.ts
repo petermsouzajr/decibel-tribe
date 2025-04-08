@@ -1,7 +1,7 @@
 // Assumes logged-in user (use cy.loginByApi in beforeEach)
 // Requires cypress-axe package installation and setup
 
-describe.skip("Accessibility - Settings Page", () => {
+describe.skip("[AuthTeam] Accessibility - Settings Page [sanity]", () => {
   beforeEach(() => {
     // cy.loginByApi("testuser", Cypress.env("password"));
     cy.loginViaUi();

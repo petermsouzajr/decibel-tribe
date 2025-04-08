@@ -1,6 +1,6 @@
 // Assumes logged-in user 'newUser' has NO posts and follows NOBODY
 
-describe("Posts - Feed Empty State", () => {
+describe("[SocialTeam] Posts - Feed Empty State [functional]", () => {
   beforeEach(() => {
     // TODO: Ensure newUser exists, has 0 posts, follows 0 users
     // cy.loginByApi("newUser", Cypress.env("password"));

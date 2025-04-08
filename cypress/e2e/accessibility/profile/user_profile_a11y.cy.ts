@@ -1,7 +1,7 @@
 // Assumes user 'profileUser' exists
 // Requires cypress-axe package installation and setup
 
-describe.skip("Accessibility - User Profile Page", () => {
+describe.skip("[AuthTeam] Accessibility - User Profile Page [sanity]", () => {
   beforeEach(() => {
     // No login needed if profiles are public, otherwise cy.loginByApi()
     cy.visit("/users/profileUser"); // Use a known user

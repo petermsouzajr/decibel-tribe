@@ -2,7 +2,7 @@
 // Assumes a group with name 'Existing Test Group' already exists (seeded or created)
 // Assumes CreateGroupModal Page Object exists
 
-describe("Groups - Create Duplicate Name Fail", () => {
+describe("[GroupsTeam] Groups - Create Duplicate Name Fail [functional]", () => {
   const existingGroupName = "Existing Test Group";
 
   beforeEach(() => {

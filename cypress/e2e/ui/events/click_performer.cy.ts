@@ -2,7 +2,7 @@
 // Assumes an event 'eventWithPerformer' exists with performer 'performerUser' (seeded/created)
 // Assumes EventPage Page Object exists
 
-describe("Events - Click Performer Profile", () => {
+describe("[EventsTeam] Events - Click Performer Profile [functional]", () => {
   let eventId: string;
   const performerUsername = "performerUser";
 

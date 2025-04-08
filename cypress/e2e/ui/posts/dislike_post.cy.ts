@@ -2,7 +2,7 @@
 // Assumes a post from another user exists (seeded or created via API)
 // Assumes Post Page Object exists
 
-describe("Posts - Dislike Post", () => {
+describe("[SocialTeam] Posts - Dislike Post [functional]", () => {
   let targetPostId: string;
 
   beforeEach(() => {

@@ -1,4 +1,4 @@
-describe.skip("Accessibility - Event Creation Form", () => {
+describe.skip("[EventsTeam] Accessibility - Event Creation Form [functional]", () => {
   beforeEach(() => {
     cy.loginViaUi();
     cy.visit("/events/create");

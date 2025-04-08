@@ -2,7 +2,7 @@
 // Assumes a Settings/Preferences page exists with notification controls
 // Assumes SettingsPage Page Object exists
 
-describe("Notifications - Update Preferences", () => {
+describe("[NotificationsTeam] Notifications - Update Preferences [functional]", () => {
   beforeEach(() => {
     // cy.loginByApi("testuser", Cypress.env("password"));
     cy.loginViaUi();

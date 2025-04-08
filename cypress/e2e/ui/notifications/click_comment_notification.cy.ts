@@ -2,7 +2,7 @@
 // Assumes user 'commenter' commented on that post, generating a notification for postOwner
 // Assumes NotificationsPage Page Object exists
 
-describe("Notifications - Click Through Comment", () => {
+describe("[NotificationsTeam] Notifications - Click Through Comment [functional]", () => {
   let targetPostId: string;
 
   beforeEach(() => {

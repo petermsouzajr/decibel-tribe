@@ -1,7 +1,7 @@
 // Assumes logged-in user 'userA' has matched with 'userToUnmatch'
 // Assumes MatchesPage Page Object exists
 
-describe.skip("Dating - Unmatch User", () => {
+describe.skip("[SocialTeam] Dating - Unmatch User [functional]", () => {
   const userToUnmatch = "userToUnmatch";
 
   beforeEach(() => {

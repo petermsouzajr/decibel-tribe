@@ -2,7 +2,7 @@
 // Assumes user 'privateProfileUser' exists and has a PRIVATE profile
 // Assumes viewerUser does NOT follow privateProfileUser
 
-describe("User Profile - View Private Profile Fail", () => {
+describe("[AuthTeam] User Profile - View Private Profile Fail [functional]", () => {
   const targetUsername = "privateProfileUser";
 
   beforeEach(() => {

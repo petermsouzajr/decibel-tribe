@@ -1,7 +1,7 @@
 // Assumes logged-in user (use cy.loginByApi in beforeEach)
 // Requires cypress-axe package installation and setup in support/commands.ts
 
-describe.skip("Accessibility - Main Feed/Dashboard", () => {
+describe.skip("[SocialTeam] Accessibility - Main Feed/Dashboard [sanity]", () => {
   beforeEach(() => {
     // cy.loginByApi("testuser", Cypress.env("password"));
     cy.loginViaUi();

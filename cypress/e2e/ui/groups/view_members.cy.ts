@@ -2,7 +2,7 @@
 // Assumes 'otherMember' is also a member
 // Assumes GroupPage Page Object exists
 
-describe("Groups - View Members", () => {
+describe("[GroupsTeam] Groups - View Members [functional]", () => {
   const groupName = "memberGroup";
   let groupId: string;
 

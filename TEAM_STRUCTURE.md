@@ -2,43 +2,39 @@
 
 ## Introduction
 
-To streamline development, improve focus, and facilitate ownership, the project is organized into distinct feature teams. Each team is responsible for the end-to-end development, testing, and maintenance of a specific set of application features.
-
-It is crucial that teams focus on their designated areas and coordinate through defined interfaces or APIs when features interact, minimizing direct overlap in codebase ownership.
+To streamline development, improve focus, and facilitate ownership, the project is organized into distinct feature teams. Each team is responsible for the end-to-end development, testing, and maintenance of a specific set of application features. Teams should focus on their designated areas and coordinate through defined interfaces or APIs when features interact.
 
 ## Team Definitions
 
-### 1. Authentication & User Management Team (`[Auth]`)
+### 1. AuthTeam (`[AuthTeam]`)
 
-This team handles user identity, access control, and core profile data.
+This team handles user identity, access control, core profile data, and account settings.
 
 **Responsibilities:**
 
-- User Registration (Signup)
-- User Login (Email/Password, Google OAuth)
+- User Registration (Signup), Login (Email/Password, Google OAuth)
 - Password Management (Forgot/Reset Password)
 - Email Verification Process
-- Session Management (Lucia integration, Session Provider)
+- Session Management (Lucia integration, Session Provider - _Coordination with [PlatformTeam]_)
 - Core User Profile Data (Fetching and updating username, displayName, bio, avatar)
-- User Account Settings (Password changes, Email changes)
-- Authentication-related Server Actions and API routes
-- User Search Functionality
+- User Account Settings (Password changes, Email changes, Preferences)
+- Authentication-related Server Actions and API routes.
 
-### 2. Core Social & Content Team (`[Social]`)
+### 2. SocialTeam (`[SocialTeam]`)
 
-This team focuses on the primary content creation, discovery, and social interaction features.
+This team focuses on content creation, discovery (feeds, search), and core social interactions.
 
 **Responsibilities:**
 
-- Post Creation, Editing, and Deletion
+- Post Creation, Editing, and Deletion (Text, Media - _Coordination with [MediaTeam]_)
 - Post Feeds (e.g., "For You", "Following", User-specific feeds)
 - Viewing Single Post Details
-- User Following/Unfollowing System (including related UI and backend logic)
+- User Following/Unfollowing System
 - Bookmarking Posts
-- Content Search (Posts, potentially integrating with User search)
-- Post Component Rendering and Interactions
+- Content Search (Posts, Users, Events, Groups)
+- Post Component Rendering and Interactions (Likes, Comments - _Coordination with [NotificationsTeam]_)
 
-### 3. Events & Calendar Team (`[Events]`)
+### 3. EventsTeam (`[EventsTeam]`)
 
 This team manages event creation, discovery, and the calendar interface.
 
@@ -49,9 +45,9 @@ This team manages event creation, discovery, and the calendar interface.
 - Event Listing and Discovery Mechanisms
 - Calendar Component Implementation and Display Logic
 - Integration with User Preferences for Calendar Visibility
-- Event-related Search Functionality
+- Event-related Search Functionality (_Refine: Focus on event-specific filters/display, core search logic owned by [SocialTeam]_)
 
-### 4. Groups Team (`[Groups]`)
+### 4. GroupsTeam (`[GroupsTeam]`)
 
 This team handles the functionality related to user groups.
 
@@ -60,9 +56,10 @@ This team handles the functionality related to user groups.
 - Group Creation and Management
 - Viewing Group Pages and Details
 - Group Membership Management (Joining, Roles, Invites)
-- Displaying Posts within a Group Context (May coordinate with `[Social]`)
+- Displaying Posts within a Group Context (_Coordination with [SocialTeam]_)
+- Group-related Search Functionality (_Refine: Focus on group-specific filters/display_)
 
-### 5. Messaging Team (`[Messaging]`)
+### 5. MessagingTeam (`[MessagingTeam]`)
 
 This team focuses on the real-time user-to-user communication features.
 
@@ -74,19 +71,47 @@ This team focuses on the real-time user-to-user communication features.
 - Starting New Conversations / Chats
 - User Presence Indicators within Chat
 
-### 6. Notifications Team (`[Notifications]`)
+### 6. NotificationsTeam (`[NotificationsTeam]`)
 
 This team is responsible for the user notification system.
 
 **Responsibilities:**
 
-- Displaying Notifications to Users
-- Backend Logic for Generating Notification Events (May require coordination with other teams)
-- Managing Notification States (Read/Unread - if implemented)
+- Displaying Notifications to Users (UI Component - _Coordination with [PlatformTeam]_)
+- Backend Logic for Generating Notification Events (_Coordination with [SocialTeam], [GroupsTeam], [EventsTeam] etc._)
+- Managing Notification States (Read/Unread)
+- Real-time notification updates (if applicable).
+
+### 7. MediaTeam (`[MediaTeam]`)
+
+This team handles file uploads, storage, and processing across the application.
+
+**Responsibilities:**
+
+- Integration with Uploadthing or similar upload services.
+- API routes for handling uploads (`/api/uploadthing`).
+- Storage configuration and management (e.g., S3 buckets).
+- Image/Video processing or optimization (if applicable).
+- Cleanup of unused uploads (`/api/clear-uploads`).
+- Security considerations for file uploads.
+
+### 8. PlatformTeam (`[PlatformTeam]`)
+
+This team owns the core application shell, navigation, shared UI components, build/deployment processes, and cross-cutting concerns.
+
+**Responsibilities:**
+
+- Main application layout (`src/app/(main)/layout.tsx`).
+- Core navigation components (Navbar, Menubar, Sidebars).
+- Base UI component library / Design system integration.
+- Cross-cutting concerns like routing setup, global state management (if applicable beyond session), base styling.
+- Session Provider integration and setup (_Coordination with [AuthTeam]_).
+- Build configuration, CI/CD pipelines, testing infrastructure setup.
+- Shared utility functions/hooks not specific to a feature team.
 
 ## Collaboration and Boundaries
 
-While features may interact (e.g., a Post belonging to a Group, a User attending an Event), each team owns the primary implementation within their domain. Cross-team dependencies should be handled through clear data contracts, shared utility functions/types, or well-defined API interactions. Avoid modifying code primarily owned by another team without consultation.
+While features may interact (e.g., a Post belonging to a Group, a User attending an Event), each team owns the primary implementation within their domain. Cross-team dependencies should be handled through clear data contracts, shared utility functions/types (owned by PlatformTeam or agreed upon), or well-defined API interactions. Avoid modifying code primarily owned by another team without consultation.
 
 ## Automation Integration: Team Tagging
 
@@ -98,25 +123,17 @@ Team names are added within square brackets (e.g., `[TeamName]`) to the descript
 
 ### Example
 
-This example shows the `[Windsor]` tag applied to a top-level `describe` block, indicating all tests within this suite belong to the "Windsor" team (in a hypothetical scenario). The tag could also be placed on inner `context` or specific `it` blocks if granularity is needed. Test case IDs (`[Cxxxx]`) and other tags (`[smoke]`) can coexist.
+This example shows the `[SocialTeam]` tag applied to a top-level `describe` block, indicating all tests within this suite belong to the "Social" team (in a hypothetical scenario). The tag could also be placed on inner `context` or specific `it` blocks if granularity is needed. Test case IDs (`[Cxxxx]`) and other tags (`[smoke]`) can coexist.
 
 ```javascript
-describe("[Windsor] Unit test our math functions", () => {
-  context("math", () => {
-    it("can add numbers [C2452][smoke]", () => {
-      expect(add(1, 2)).to.eq(3);
+describe("[SocialTeam] Unit test our feed functions", () => {
+  context("feeds", () => {
+    it("can fetch the 'For You' feed [C3001][smoke]", () => {
+      // ...
     });
 
-    it("can subtract numbers [C24534][smoke]", () => {
-      expect(subtract(5, 12)).to.eq(-7);
-    });
-
-    it("can divide numbers [C2460] [usability]", () => {
-      expect(divide(27, 9)).to.eq(3);
-    });
-
-    it("can multiply numbers [C2461]", () => {
-      expect(multiply(5, 4)).to.eq(20);
+    it("can like a post [C3005]", () => {
+      // ...
     });
   });
 });
@@ -126,7 +143,7 @@ describe("[Windsor] Unit test our math functions", () => {
 
 These team tags enable several useful automation capabilities:
 
-- **Targeted Test Execution:** Run only the tests relevant to a specific team, useful during development or for focused regression testing (e.g., `npx vitest run -t "[Auth]"` or configuring CI jobs).
+- **Targeted Test Execution:** Run only the tests relevant to a specific team, useful during development or for focused regression testing (e.g., `npx vitest run -t "[AuthTeam]"` or configuring CI jobs).
 - **Code Coverage Metrics:** Filter code coverage reports to show coverage achieved specifically by a team's tests for their owned features.
 - **Test Failure Triage:** Quickly identify which team is likely responsible for fixing a failing test in CI/CD pipelines.
 - **Quality Dashboards:** Generate reports showing test pass/fail rates or coverage per team.

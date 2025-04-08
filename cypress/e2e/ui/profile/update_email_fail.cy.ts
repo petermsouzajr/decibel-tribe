@@ -1,7 +1,7 @@
 // Assumes logged-in user (use cy.loginByApi in beforeEach)
 // Assumes UpdateEmailDialog Page Object exists
 
-describe("User Profile - Update Email Fail", () => {
+describe("[AuthTeam] User Profile - Update Email Fail [functional]", () => {
   beforeEach(() => {
     // cy.loginByApi("testuser", Cypress.env("password"));
     cy.loginViaUi();

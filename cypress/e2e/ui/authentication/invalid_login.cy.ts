@@ -1,7 +1,7 @@
 import { LoginPage } from "../../../pages/authentication/loginPage";
 // import * as loginMessages from "../../../fixtures/authentication/loginMessages.json"; // TODO: Resolve JSON import issue
 
-describe("Authentication - Invalid Login", () => {
+describe("[AuthTeam] Authentication - Invalid Login [functional]", () => {
   beforeEach(() => {
     LoginPage.visit();
     // Intercept the login API if needed, or rely on actual backend response

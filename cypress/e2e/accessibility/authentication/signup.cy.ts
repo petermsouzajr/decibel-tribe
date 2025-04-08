@@ -1,6 +1,6 @@
 import { SignupPage } from "../../../pages/authentication/signupPage";
 
-describe.skip("[AuthTeam] Signup Page Accessibility [regression]", () => {
+describe.skip("[AuthTeam] Signup Page Accessibility [sanity]", () => {
   beforeEach(() => {
     SignupPage.visit();
   });

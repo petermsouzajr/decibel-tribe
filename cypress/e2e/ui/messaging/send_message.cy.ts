@@ -2,7 +2,7 @@
 // Assumes an existing chat channel exists with 'receiverUser' (seeded/created)
 // Assumes ChatPage Page Object exists
 
-describe("Messaging - Send Message", () => {
+describe("[MessagingTeam] Messaging - Send Message [smoke]", () => {
   const receiverUsername = "receiverUser";
   let channelId: string; // ID of the chat channel
 

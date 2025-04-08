@@ -3,7 +3,7 @@
 
 import { LoginPage } from "../../../pages/authentication/loginPage";
 
-describe("Authentication - Session Expiry", () => {
+describe("[AuthTeam] Authentication - Session Expiry [functional]", () => {
   // Use the default username from the login command for consistency
   const testUsername = "testUser2@test.com";
 

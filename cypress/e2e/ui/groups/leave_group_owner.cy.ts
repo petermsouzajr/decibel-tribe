@@ -1,7 +1,7 @@
 // Assumes logged-in user 'groupOwner' owns 'ownerGroup'
 // Tests implications of owner leaving (e.g., deletion, ownership transfer)
 
-describe("Groups - Leave Group (Owner)", () => {
+describe("[GroupsTeam] Groups - Leave Group (Owner) [functional]", () => {
   let groupId: string;
 
   beforeEach(() => {

@@ -1,7 +1,7 @@
 // Assumes logged-in user 'userA' has matched with 'userB' (seeded/created)
 // Assumes MatchesPage Page Object exists
 
-describe.skip("Dating - View Match", () => {
+describe.skip("[SocialTeam] Dating - View Match [functional]", () => {
   const matchedUsername = "userB";
 
   beforeEach(() => {

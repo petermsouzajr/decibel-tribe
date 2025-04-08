@@ -2,7 +2,7 @@
 // Assumes group 'privateGroup' exists and is PRIVATE
 // Assumes nonMemberUser is NOT a member
 
-describe("Groups - Post in Private Group Fail", () => {
+describe("[GroupsTeam] Groups - Post in Private Group Fail [functional]", () => {
   let groupId: string;
   const groupName = "privateGroup";
 

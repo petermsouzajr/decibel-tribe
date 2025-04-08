@@ -2,7 +2,7 @@
 // Assumes user has several unread notifications (seeded/created via actions)
 // Assumes NotificationsPage Page Object exists
 
-describe("Notifications - Mark All Read", () => {
+describe("[NotificationsTeam] Notifications - Mark All Read [functional]", () => {
   beforeEach(() => {
     // TODO: Ensure user has multiple unread notifications via API actions (e.g., follows, likes)
     // cy.loginByApi("testuser", Cypress.env("password"));

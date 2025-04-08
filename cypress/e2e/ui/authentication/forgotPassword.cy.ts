@@ -5,7 +5,8 @@ import {
 
 const pageElements = ForgotPasswordPage.elements;
 
-describe("Forgot Password Page Functionality", () => {
+// @ts-ignore
+describe("[AuthTeam] Forgot Password Page Functionality [functional]", () => {
   let messages: ForgotPasswordMessages;
 
   const validUserEmail = Cypress.env("unverifiedEmail");

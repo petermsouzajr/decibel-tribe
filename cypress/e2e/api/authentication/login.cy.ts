@@ -1,6 +1,6 @@
 import { LoginMessages } from "../../../pages/authentication/loginPage";
 
-describe("Login API Functionality", () => {
+describe("[AuthTeam] Login API Functionality [functional]", () => {
   let messages: LoginMessages;
 
   const validUsername = "testUserVerified";

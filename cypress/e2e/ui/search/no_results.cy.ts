@@ -1,7 +1,7 @@
 // Assumes logged-in user (use cy.loginByApi in beforeEach)
 // Assumes SearchPage Page Object exists
 
-describe("Search - No Results", () => {
+describe("[SocialTeam] Search - No Results [functional]", () => {
   beforeEach(() => {
     // cy.loginByApi("testuser", Cypress.env("password"));
     cy.loginViaUi();

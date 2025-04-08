@@ -2,7 +2,7 @@
 // Assumes event 'pastEvent' exists with an end date in the past (seeded/created)
 // Assumes EventPage Page Object exists
 
-describe("Events - View Past Event", () => {
+describe("[EventsTeam] Events - View Past Event [functional]", () => {
   let eventId: string;
 
   beforeEach(() => {

@@ -1,7 +1,7 @@
 // Assumes logged-in user (use cy.loginByApi in beforeEach)
 // Assumes EditProfileDialog Page Object exists with elements for skills/instruments
 
-describe("User Profile - Edit Skills/Instruments", () => {
+describe("[AuthTeam] User Profile - Edit Skills/Instruments [functional]", () => {
   beforeEach(() => {
     // cy.loginByApi("testuser", Cypress.env("password"));
     cy.loginViaUi();

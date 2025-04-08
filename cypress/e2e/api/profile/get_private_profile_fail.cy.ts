@@ -1,5 +1,5 @@
 // API Test
-describe("API - Get User Profile Fail (Private)", () => {
+describe("[AuthTeam] API - Get User Profile Fail (Private) [functional]", () => {
   let privateUserId: string;
   let viewerToken: string;
 

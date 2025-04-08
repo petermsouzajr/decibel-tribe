@@ -1,6 +1,6 @@
 // Assumes logged-in user (use cy.loginByApi)
 
-describe("Posts - Character Limit", () => {
+describe("[SocialTeam] Posts - Character Limit [functional]", () => {
   const charLimit = 500; // Example limit
   const overLimitText = "a".repeat(charLimit + 10);
   const limitText = "a".repeat(charLimit);

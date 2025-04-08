@@ -1,7 +1,7 @@
 // Assumes user 'blockerUser' has blocked 'userToUnblock' (seeded/created)
 // Assumes UserProfilePage Page Object exists
 
-describe("User Profile - Unblock User", () => {
+describe("[AuthTeam] User Profile - Unblock User [functional]", () => {
   const userToUnblock = "userToUnblock";
 
   beforeEach(() => {

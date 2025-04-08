@@ -1,7 +1,7 @@
 // Assumes logged-in user 'eventOwner' created 'eventToEdit'
 // Assumes EventForm Page Object exists
 
-describe("Events - Validation on Edit", () => {
+describe("[EventsTeam] Events - Validation on Edit [functional]", () => {
   let eventId: string;
 
   beforeEach(() => {

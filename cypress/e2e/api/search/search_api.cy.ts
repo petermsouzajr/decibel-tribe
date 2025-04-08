@@ -1,6 +1,6 @@
 // API Test - does not require UI interaction
 
-describe("API - Search Endpoint (/api/search)", () => {
+describe("[SocialTeam] API - Search Endpoint (/api/search) [functional]`", () => {
   const searchQuery = "testQuery";
 
   before(() => {

@@ -2,7 +2,7 @@
 // Assumes a post exists (seeded or created via API in beforeEach)
 // Assumes Post Page Object and BookmarksPage Page Object exist
 
-describe("Posts - Bookmark Post", () => {
+describe("[SocialTeam] Posts - Bookmark Post [functional]", () => {
   let targetPostId: string;
   let postContent: string = "Post to be bookmarked";
 

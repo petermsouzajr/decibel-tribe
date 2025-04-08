@@ -2,7 +2,7 @@
 // Assumes 'userToRemove' is a member of the group
 // Assumes GroupPage Page Object exists
 
-describe("Groups - Remove Member", () => {
+describe("[GroupsTeam] Groups - Remove Member [functional]", () => {
   const groupName = "ownerGroup";
   const userToRemove = "userToRemove";
   let groupId: string;

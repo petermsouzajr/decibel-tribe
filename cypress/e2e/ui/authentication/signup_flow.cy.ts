@@ -2,7 +2,7 @@ import { SignupPage } from "../../../pages/authentication/signupPage";
 import { generateUserData } from "../../../factories/userData"; // Assuming a userData factory exists
 // import * as signupMessages from "../../../fixtures/authentication/signupMessages.json"; // TODO: Resolve JSON import issue
 
-describe("Authentication - Signup Flow", () => {
+describe("[AuthTeam] Authentication - Signup Flow [functional]", () => {
   beforeEach(() => {
     // Potentially seed database or intercept relevant API calls if needed
     SignupPage.visit();

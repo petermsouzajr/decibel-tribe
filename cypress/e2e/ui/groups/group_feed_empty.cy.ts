@@ -1,6 +1,6 @@
 // Assumes logged-in user is member of 'emptyGroup' which has NO posts
 
-describe("Groups - View Feed Empty State", () => {
+describe("[GroupsTeam] Groups - View Feed Empty State [functional]", () => {
   let groupId: string;
 
   beforeEach(() => {

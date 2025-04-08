@@ -1,7 +1,7 @@
 // Assumes logged-in user 'postOwner' created a post (seeded/created)
 // Assumes Post Page Object exists with edit capabilities
 
-describe("Posts - Edit Text Post", () => {
+describe("[SocialTeam] Posts - Edit Text Post [functional]", () => {
   let targetPostId: string;
   const initialContent = "Initial post content to be edited";
   const updatedContent = "Updated post content from Cypress!";

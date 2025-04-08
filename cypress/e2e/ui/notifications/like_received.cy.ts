@@ -2,7 +2,7 @@
 // Assumes user 'likerUser' liked that post, generating a notification for postOwner
 // Assumes NotificationsPage Page Object exists
 
-describe("Notifications - Like Received", () => {
+describe("[NotificationsTeam] Notifications - Like Received [functional]", () => {
   let targetPostId: string;
   const likerUsername = "likerUser";
 

@@ -2,7 +2,7 @@
 // Assumes event 'otherUserEvent' was created by 'eventOwner'
 // Assumes viewerUser is NOT eventOwner
 
-describe("Events - Edit Other User Event Fail", () => {
+describe("[EventsTeam] Events - Edit Other User Event Fail [functional]", () => {
   let eventId: string;
 
   beforeEach(() => {

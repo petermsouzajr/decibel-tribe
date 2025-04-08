@@ -1,7 +1,7 @@
 // Assumes logged-in user is member of group 'testGroup'
 // Requires cypress-axe package installation and setup
 
-describe.skip("Accessibility - Group Page", () => {
+describe.skip("[GroupsTeam] Accessibility - Group Page [sanity]", () => {
   let groupId: string;
 
   beforeEach(() => {

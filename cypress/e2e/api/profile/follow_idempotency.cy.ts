@@ -1,5 +1,5 @@
 // API Test
-describe("API - Follow User Idempotency", () => {
+describe("[SocialTeam] API - Follow User Idempotency [functional]", () => {
   let followerUserId: string;
   let followedUserId: string;
   // TODO: Setup: Create two users via API/seeding: followerUser, followedUser

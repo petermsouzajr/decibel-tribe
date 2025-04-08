@@ -5,7 +5,7 @@ import {
 
 const pageElements = ForgotPasswordPage.elements;
 
-describe.skip("[AuthTeam] Forgot Password Page Accessibility [regression]", () => {
+describe.skip("[AuthTeam] Forgot Password Page Accessibility [sanity]", () => {
   let messages: ForgotPasswordMessages;
   const invalidUser = "invalidUser";
 

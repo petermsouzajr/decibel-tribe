@@ -2,7 +2,7 @@
 // Assumes another user 'followTarget' exists (seeded or created)
 // Assumes UserProfilePage Page Object exists
 
-describe("User Profile - Follow User", () => {
+describe("[SocialTeam] User Profile - Follow User [functional]", () => {
   const targetUsername = "followTarget";
 
   beforeEach(() => {

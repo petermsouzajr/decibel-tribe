@@ -1,7 +1,7 @@
 // Assumes user 'postOwner' created a post (seeded/created)
 // Assumes Post Page Object exists
 
-describe("Posts - Delete Post", () => {
+describe("[SocialTeam] Posts - Delete Post [functional]", () => {
   let targetPostId: string;
   const postContent = "Post to be deleted";
 

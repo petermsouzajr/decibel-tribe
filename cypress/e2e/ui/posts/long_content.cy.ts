@@ -1,6 +1,6 @@
 // Assumes logged-in user (use cy.loginByApi)
 
-describe("Posts - Long Content Handling", () => {
+describe("[SocialTeam] Posts - Long Content Handling [functional]", () => {
   beforeEach(() => {
     // cy.loginByApi("testuser", Cypress.env("password"));
     cy.loginViaUi();

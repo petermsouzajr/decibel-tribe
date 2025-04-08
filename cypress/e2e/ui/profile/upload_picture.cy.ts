@@ -1,7 +1,7 @@
 // Assumes logged-in user (use cy.loginByApi in beforeEach)
 // Assumes EditProfileDialog Page Object exists with avatar upload elements
 
-describe("User Profile - Upload Picture", () => {
+describe("[MediaTeam] User Profile - Upload Picture [functional]", () => {
   beforeEach(() => {
     // cy.loginByApi("testuser", Cypress.env("password"));
     cy.loginViaUi();

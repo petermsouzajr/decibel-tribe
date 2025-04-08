@@ -2,7 +2,7 @@
 // Assumes UserProfilePage and EditProfileDialog Page Objects exist
 import { generateProfileData } from "../../../factories/profileData"; // Assuming a profileData factory
 
-describe("User Profile - Edit Info", () => {
+describe("[AuthTeam] User Profile - Edit Info [functional]", () => {
   beforeEach(() => {
     // cy.loginByApi("testuser", Cypress.env("password"));
     cy.loginViaUi();

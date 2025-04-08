@@ -1,7 +1,7 @@
 // Assumes logged-in user (use cy.loginByApi in beforeEach)
 // Assumes enough posts exist (>= 1 page + 1) to trigger infinite scroll (seeded/created)
 
-describe("Posts - Infinite Scroll", () => {
+describe("[SocialTeam] Posts - Infinite Scroll [functional]", () => {
   const initialPostCount = 10; // Assuming page size is 10
   const postPrefix = "Infinite scroll post #";
 

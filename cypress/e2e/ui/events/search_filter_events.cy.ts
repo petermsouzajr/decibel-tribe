@@ -2,7 +2,7 @@
 // Assumes events with specific names/dates/locations exist (seeded/created)
 // Assumes EventsPage Page Object exists with search/filter controls
 
-describe("Events - Search/Filter", () => {
+describe("[EventsTeam] Events - Search/Filter [functional]", () => {
   const specificEventName = "Searchable Rock Concert";
   const specificLocation = "Event City";
 

@@ -2,7 +2,7 @@
 // Assumes UpdatePasswordDialog Page Object exists
 import { generatePassword } from "../../../factories/passwordData"; // Assuming a password factory
 
-describe("User Profile - Update Password Success", () => {
+describe("[AuthTeam] User Profile - Update Password Success [functional]", () => {
   beforeEach(() => {
     // cy.loginByApi("testuser", Cypress.env("password"));
     cy.loginViaUi();

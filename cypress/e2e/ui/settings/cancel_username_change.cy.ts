@@ -1,7 +1,7 @@
 // Assumes logged-in user 'testuser' exists
 // Assumes Account Settings page exists
 
-describe.skip("[Auth] Settings - Cancel Username Change", () => {
+describe.skip("[AuthTeam] Settings - Cancel Username Change [functional]", () => {
   const testUsername = "testUser2@test.com"; // Define username for login/visit
 
   beforeEach(() => {

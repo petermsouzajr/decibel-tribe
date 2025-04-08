@@ -2,7 +2,7 @@
 // Assumes a post exists (seeded or created via API in beforeEach)
 // Assumes Post Page Object exists with comment elements
 
-describe("Posts - Add Comment", () => {
+describe("[SocialTeam] Posts - Add Comment [functional]", () => {
   let targetPostId: string; // Store ID of the post to interact with
 
   beforeEach(() => {

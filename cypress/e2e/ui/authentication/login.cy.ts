@@ -6,7 +6,7 @@ import { LogoutPage } from "../../../pages/authentication/logoutPage";
 
 const pageElements = LoginPage.elements;
 // @ts-ignore
-describe("[Baron] Login Page Functionality [smoke]", () => {
+describe("[AuthTeam] Login Page Functionality [smoke]", () => {
   let messages: LoginMessages;
 
   const validUserData = {

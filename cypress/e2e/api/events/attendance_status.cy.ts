@@ -1,5 +1,5 @@
 // API Test
-describe("API - Event Attendance Check", () => {
+describe("[EventsTeam] API - Event Attendance Check [functional]", () => {
   let eventId: string;
   // Using loginViaUi which handles session via cookies, no token needed directly
   // let attendeeToken: string;

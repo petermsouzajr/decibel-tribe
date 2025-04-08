@@ -2,7 +2,7 @@
 // Assumes 'blockedUser' exists and has BLOCKED senderUser
 // Assumes ChatPage Page Object exists
 
-describe("Messaging - Send to Blocked User Fail", () => {
+describe("[MessagingTeam] Messaging - Send to Blocked User Fail [functional]", () => {
   const blockedUsername = "blockedUser";
   let channelId: string; // ID of the chat channel if it exists
 

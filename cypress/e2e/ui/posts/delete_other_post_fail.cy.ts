@@ -2,7 +2,7 @@
 // Assumes post 'otherUserPost' exists, created by 'postOwner'
 // Assumes viewerUser is NOT postOwner
 
-describe("Posts - Delete Other User Post Fail", () => {
+describe("[SocialTeam] Posts - Delete Other User Post Fail [functional]", () => {
   let targetPostId: string;
   const postContent = "Cannot delete this post";
 

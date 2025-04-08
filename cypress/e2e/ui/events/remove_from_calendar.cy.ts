@@ -2,7 +2,7 @@
 // Assumes user is attending event 'attendedEvent' (seeded/created)
 // Assumes EventPage Page Object exists
 
-describe("Events - Remove From Calendar", () => {
+describe("[EventsTeam] Events - Remove From Calendar [functional]", () => {
   const eventName = "attendedEvent";
   let eventId: string;
 

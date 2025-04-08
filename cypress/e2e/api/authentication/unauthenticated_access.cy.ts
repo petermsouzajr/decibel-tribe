@@ -1,5 +1,5 @@
 // API Test
-describe("API - Unauthenticated Access", () => {
+describe("[AuthTeam] API - Unauthenticated Access [smoke]", () => {
   it("should return 401 Unauthorized for protected endpoints without credentials", () => {
     cy.request({
       method: "GET",

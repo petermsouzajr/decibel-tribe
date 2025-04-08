@@ -1,7 +1,7 @@
 // Assumes logged-in user with dating profile
 // Assumes DatingPreferencesPage exists
 
-describe.skip("Dating - Update Preferences", () => {
+describe.skip("[SocialTeam] Dating - Update Preferences [functional]", () => {
   beforeEach(() => {
     // cy.loginByApi("datingUser", Cypress.env("password"));
     cy.visit("/dating/preferences"); // Assuming route exists

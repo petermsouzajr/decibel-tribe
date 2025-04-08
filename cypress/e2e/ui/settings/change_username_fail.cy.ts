@@ -2,7 +2,7 @@
 // Assumes user 'existingUser' also exists
 // Assumes an Account Settings page exists
 
-describe.skip("[Auth] Settings - Change Username Fail (Duplicate)", () => {
+describe.skip("[AuthTeam] Settings - Change Username Fail (Duplicate) [functional]", () => {
   const existingUsername = "existingUser";
   const testUsername = "testUser2@test.com"; // Define username for login/visit
 

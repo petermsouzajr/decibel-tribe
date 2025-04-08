@@ -20,6 +20,6 @@
     "jsx": "react-jsx",
     "types": ["vitest/globals", "node", "@testing-library/jest-dom"]
   },
-  "include": [".", "../../types/**/*.d.ts"],
+  "include": [".", "../../types/**/*.d.ts", "../../prisma/seedModules/**/*.ts"],
   "exclude": ["node_modules"]
 }

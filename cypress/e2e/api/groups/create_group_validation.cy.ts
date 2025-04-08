@@ -2,7 +2,7 @@
 
 // import { generateGroupData } from "../../../factories/groupFactory"; // Reverted import
 
-describe("API - Group Creation Validation (/api/groups)", () => {
+describe("[GroupsTeam] API - Group Creation Validation (/api/groups) [functional]", () => {
   let authToken: string; // Store auth token/cookie if needed
   let existingGroupName = "PreExistingGroupForConflictTest"; // Hardcoded name
 

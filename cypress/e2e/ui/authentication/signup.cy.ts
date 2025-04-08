@@ -6,7 +6,8 @@ import {
 
 const pageElements = SignupPage.elements;
 
-describe("Signup Page Functionality", () => {
+// @ts-ignore
+describe("[AuthTeam] Signup Page Functionality [functional]", () => {
   let messages: SignupMessages;
   const randomNumber = Math.floor(Math.random() * 1000000);
 

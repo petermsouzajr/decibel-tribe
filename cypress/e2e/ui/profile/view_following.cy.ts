@@ -1,7 +1,7 @@
 // Assumes user 'testuser' follows 'followedUser1' and 'followedUser2' (seeded/created)
 // Assumes UserProfilePage Page Object exists
 
-describe("User Profile - View Following List", () => {
+describe("[SocialTeam] User Profile - View Following List [functional]", () => {
   beforeEach(() => {
     // TODO: Ensure testuser exists and follows followedUser1, followedUser2
     // cy.loginByApi("testuser", Cypress.env("password"));

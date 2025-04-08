@@ -1,7 +1,7 @@
 // Assumes event 'limitedEvent' exists with an attendee limit (e.g., 1)
 // Assumes 'attendee1' has already filled the spot
 
-describe("Events - RSVP Limit Reached", () => {
+describe("[EventsTeam] Events - RSVP Limit Reached [functional]", () => {
   let eventId: string;
 
   beforeEach(() => {

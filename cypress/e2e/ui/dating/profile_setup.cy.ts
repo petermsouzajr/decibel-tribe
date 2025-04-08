@@ -2,7 +2,7 @@
 // Assumes dating feature flag/access is enabled for the user
 // Assumes DatingSetupWizard Page Object(s) exist
 
-describe.skip("Dating - Profile Setup Flow", () => {
+describe.skip("[SocialTeam] Dating - Profile Setup Flow [functional]", () => {
   beforeEach(() => {
     // cy.loginByApi("newUserForDating", Cypress.env("password"));
     // TODO: Ensure user does NOT have an existing dating profile

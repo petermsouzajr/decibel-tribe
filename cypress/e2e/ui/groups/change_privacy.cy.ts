@@ -1,7 +1,10 @@
 // Assumes logged-in user 'groupOwner' owns group 'privacyGroup' (seeded/created as public)
 // Assumes GroupPage Page Object exists with edit capabilities
 
-describe("Groups - Change Privacy", () => {
+describe("[GroupsTeam] Groups - Change Privacy [functional]", () => {
+  // Assumes logged-in user 'groupOwner' owns group 'privacyGroup' (seeded/created as public)
+  // Assumes GroupPage Page Object exists with edit capabilities
+
   let groupId: string;
   const groupName = "privacyGroup";
 

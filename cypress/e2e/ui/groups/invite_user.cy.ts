@@ -2,7 +2,7 @@
 // Assumes another user 'inviteeUser' exists
 // Assumes GroupPage and AddUserModal Page Objects exist
 
-describe("Groups - Invite User", () => {
+describe("[GroupsTeam] Groups - Invite User [functional]", () => {
   const groupName = "ownerGroup";
   const inviteeUsername = "inviteeUser";
   let groupId: string;

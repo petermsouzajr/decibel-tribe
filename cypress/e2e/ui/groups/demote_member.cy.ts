@@ -1,7 +1,7 @@
 // Assumes logged-in user 'groupOwner' owns group 'ownerGroup'
 // Assumes 'adminToDemote' is an ADMIN/MODERATOR of the group
 
-describe("Groups - Demote Member", () => {
+describe("[GroupsTeam] Groups - Demote Member [functional]", () => {
   let groupId: string;
   const adminToDemote = "adminToDemote";
 

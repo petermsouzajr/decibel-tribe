@@ -2,7 +2,7 @@
 // Assumes potential matches exist in the database
 // Assumes MatchDeck Page Object exists
 
-describe.skip("Dating - Swiping Deck", () => {
+describe.skip("[SocialTeam] Dating - Swiping Deck [functional]", () => {
   beforeEach(() => {
     // cy.loginByApi("datingUser", Cypress.env("password"));
     // TODO: Ensure dating profile exists, ensure potential matches exist

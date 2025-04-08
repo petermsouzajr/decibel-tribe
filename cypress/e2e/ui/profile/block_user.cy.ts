@@ -1,7 +1,7 @@
 // Assumes users 'blockerUser' and 'userToBlock' exist
 // Assumes UserProfilePage Page Object exists with block functionality
 
-describe("User Profile - Block User", () => {
+describe("[SocialTeam] User Profile - Block User [functional]", () => {
   const userToBlock = "userToBlock";
 
   beforeEach(() => {

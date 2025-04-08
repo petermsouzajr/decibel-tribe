@@ -2,7 +2,7 @@
 // Assumes 'targetUser' exists and has NO existing chat with currentUser
 // Assumes NewChatDialog Page Object exists
 
-describe("Messaging - Start New Chat", () => {
+describe("[MessagingTeam] Messaging - Start New Chat [functional]", () => {
   const targetUsername = "targetUser";
 
   beforeEach(() => {
