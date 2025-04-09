@@ -12,13 +12,13 @@ This document provides guidelines for contributing effectively.
   - [Setup](#setup)
 - [How to Contribute](#how-to-contribute)
 - [Development Process](#development-process)
+  - [Workflow Summary TL;DR](#typical-developer-workflow-summary)
   - [Branching](#branching)
   - [Coding Style](#coding-style)
   - [Commit Messages](#commit-messages)
-- [Testing](#testing)
-  - [Unit & Integration Tests (Vitest)](#unit--integration-tests-vitest)
-  - [End-to-End Tests (Cypress)](#end-to-end-tests-cypress)
-- [Submitting Changes](#submitting-changes)
+  - [Unit Tests (Vitest)](#developer-tests-vitest)
+  - [Submitting Changes](#submitting-changes)
+- [End-to-End Tests (Cypress)](#end-to-end-tests-cypress)
 - [Reporting Bugs](#reporting-bugs)
 - [Suggesting Enhancements](#suggesting-enhancements)
 
@@ -71,8 +71,10 @@ Now you should be able to access the application locally, typically at `http://l
 
 - **TypeScript:** Follow standard TypeScript best practices.
 - **Linting & Formatting:** This project uses ESLint for linting and Prettier for formatting.
-  - Run `npm run check:all` to check for Typescript errors, build errors, and formatting before pushing changes.
-  - Ensure code passes linting before submitting a PR. Consider configuring your editor to format on save.
+  - Run **`npm run dev:check:types`**: **(Recommended Check)** Runs all the above static analysis checks (`dev:lint`, `dev:types:src`, `dev:types:vitest`). Useful to run after development.
+    - `npm run dev:lint` checks application code style.
+    - `npm run dev:types:src` and `npm run dev:types:vitest` check TypeScript types in the app and Vitest tests respectively.
+  - Ensure code passes these checks before submitting a PR. Consider configuring your editor to format on save using Prettier.
 - **Component Structure:** Follow existing patterns for component organization and naming conventions.
 - **Accessibility:** Keep accessibility (a11y) in mind when creating UI components.
 
@@ -90,42 +92,42 @@ Please follow the [Conventional Commits](https://www.conventionalcommits.org/en/
 
 ## Testing
 
-Testing is crucial for maintaining application quality. We use two main testing frameworks:
+Testing is crucial for maintaining application quality. This section focuses on commands for _executing_ tests.
 
-### Unit & Integration Tests (Vitest)
+### Developer Tests (Vitest)
 
-(Optional/Recommended) - Use crusor/rule `vt.mdc`
+(Optional/Recommended) - Use cursor/rule `vt.mdc` for Vitest Expert Prompt and `vitest/VITEST_DEBUGGING_WORKFLOW.md` to trigger a vitest debuging workflow for vitest unit tests.
 
-- Used for testing individual functions, components, hooks, and smaller integrations.
-- Run tests: `npm run vitest`
-- Run tests with coverage report: `npm run vitest:coverage`
-- Run `npm run check:all` to check for potential syntax and type errors.
-- Find tests in the `vitest/tests/` directory or alongside components (`*.test.tsx`).
-- **Requirement:** New features and bug fixes should ideally include corresponding Vitest tests. Focus on testing logic, edge cases, and component behavior from a user interaction perspective (using React Testing Library helpers).
+- Used for testing individual functions, components, hooks, smaller integrations, and database seed logic.
+- Tests are typically found in the `vitest/tests/` directory, alongside components (`*.test.tsx`), or in the `prisma/` directory for seed tests.
+- **Comprehensive Pre-Commit/Push Check:**
+  - **`npm run dev:check:all`**: **(Strongly Recommended Before Committing/Pushing)** This command bundles static analysis (`dev:check:types`), runs all developer tests (`dev:test:all`), and attempts a production build (`build`). It's the best way to ensure your changes integrate correctly before sharing them.
+- **Granular Execution Commands:**
+  - `npm run dev:test:unit`: Runs application unit/integration tests once.
+  - `npm run dev:test:seed`: Runs database seed script tests once.
+  - `npm run dev:test:unit:watch`: Runs unit/integration tests in interactive watch mode (useful during development).
+  - `npm run dev:test:unit:ui`: Opens the Vitest UI for interactive debugging.
+  - `npm run dev:test:unit:coverage`: Runs unit/integration tests and generates a coverage report.
+- **Combined Test Execution Command:**
+  - **`npm run dev:test:all`**: **(Recommended for Developers)** Runs all developer-focused tests (`dev:test:unit` and `dev:test:seed`).
+- **Requirement:** New features and bug fixes should ideally include corresponding Vitest tests. Focus on testing logic, edge cases, and component behavior.
 
 ### End-to-End Tests (Cypress)
 
-(Optional/Recommended) - Use cursor/rule `cye2e.mdc`
+End-to-End (E2E) tests simulate full user workflows using Cypress, and are primarily managed by the QA team.
 
-- Used for testing complete user flows through the application UI.
-- Find tests in the `cypress/e2e/` directory.
-- Run tests interactively: `npm run cy:open`
-- Run tests headlessly (like in CI): `npm run cy:run`
-- Run `cy:check:all` to check for potential syntax or type errors.
-- **Requirement:** Significant new user-facing features or critical workflows (like authentication, core posting) should be covered by E2E tests.
-- **Note:** E2E tests often require a specific database state. Utilize the seeding script (`npm run db:seed`) or custom Cypress commands (`cypress/support/commands.ts`) that might interact with seeding or APIs for setup/teardown.
+- **Contribution Guidelines:** For detailed information on writing, structuring, debugging, and contributing to Cypress tests, please refer to the **[Cypress README](./cypress/README.md)**.
 
 ## Submitting Changes
 
-1.  Ensure your code passes linting: `npm run lint`.
-2.  Ensure all tests pass: `npm run test` and `npm run cypress:run`.
-3.  Commit your changes following the [Commit Messages](#commit-messages) guidelines.
-4.  Push your feature branch to your fork: `git push origin YOUR_BRANCH_NAME`.
-5.  Open a **Pull Request (PR)** against the `main` branch of the original `petermsouzajr/decibel-tribe` repository.
-6.  **Describe your changes** clearly in the PR description. Link any related GitHub issues (e.g., `Closes #123`).
-7.  Ensure all **CI checks** (GitHub Actions) pass on your PR.
-8.  Participate in the **code review** process and address any feedback promptly.
-9.  Once approved and checks pass, a maintainer will merge your PR.
+1.  Run relevant checks before committing. **We strongly recommend running `npm run dev:check:all`** to catch most application-related issues (linting, types, unit tests, build errors).
+2.  Commit your changes following the [Commit Messages](#commit-messages) guidelines.
+3.  Push your feature branch to your fork: `git push origin YOUR_BRANCH_NAME`.
+4.  Open a **Pull Request (PR)** against the `main` branch of the original `petermsouzajr/decibel-tribe` repository.
+5.  **Describe your changes** clearly in the PR description. Link any related GitHub issues (e.g., `Closes #123`).
+6.  Ensure all **CI checks** (GitHub Actions) pass on your PR. These checks will likely run commands like `dev:check`, `dev:test:all`, and potentially E2E tests.
+7.  Participate in the **code review** process and address any feedback promptly.
+8.  Once approved and checks pass, a maintainer will merge your PR.
 
 ## Reporting Bugs
 

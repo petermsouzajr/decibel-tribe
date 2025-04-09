@@ -2,8 +2,7 @@
 
 describe.skip("[AuthTeam] Authentication - Email Verification [functional]", () => {
   it("should mark user as verified after clicking verification link", () => {
-    const userEmail = "unverified.user@example.com";
-    const username = "unverifiedUser";
+    const username = Cypress.env("testUserUnverified");
     // TODO: Create user via API or seeding, ensuring they are UNVERIFIED initially
 
     // --- Steps (Conceptual) ---

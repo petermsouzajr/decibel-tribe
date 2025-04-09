@@ -6,7 +6,7 @@ import {
   cypressEnv,
   streamChatClient,
   passwordHash,
-} from "../../seedUtils.mjs"; // Corrected path and extension
+} from "../../seedUtils.mts"; // Ensure path and extension are correct
 
 // Define the structure of the returned user data
 interface CreatedUser {
@@ -38,75 +38,76 @@ export async function seedUsers(
   }
 
   console.log("Seeding users...");
-  const usersData: Prisma.UserCreateInput[] = []; // Explicitly typed array
+  const usersData: Prisma.UserCreateInput[] = [];
   const createdUsersForReturn: CreatedUser[] = [];
 
-  // Use imported cypressEnv
-  const userTypes = Object.keys(cypressEnv)
-    .filter((key) => key.endsWith("Username"))
-    .map((key) => key.replace("Username", ""));
-  const quantity = userQuantity;
+  // Get user type keys and the email domain from the refactored cypressEnv
+  const allKeys = Object.keys(cypressEnv);
+  const userTypeKeys = allKeys.filter((key) => key.endsWith("User"));
+  const emailDomain = cypressEnv.testUserEmailDomain; // Default fallback
   const password = cypressEnv.password;
 
-  console.log(`Creating ${quantity * userTypes.length} users...`);
+  console.log(
+    `Creating ${userTypeKeys.length} users based on cypress.env.json keys...`,
+  );
 
   const hashedPassword = await hasher(password);
 
-  for (const userType of userTypes) {
-    for (let i = 0; i < quantity; i++) {
-      const userId = generateIdFromEntropySize(10);
-      const username = `testUser${userType.charAt(0).toUpperCase() + userType.slice(1)}${quantity > 1 ? i + 1 : ""}`;
-      const email = `${username.toLowerCase()}@example.com`;
-      const isGoogleLoginUser = username.includes("GoogleLogin");
-      const googleId = isGoogleLoginUser
-        ? `${faker.string.numeric(10)}${faker.string.alphanumeric(10)}`
-        : null;
+  for (const key of userTypeKeys) {
+    const username = cypressEnv[key as keyof typeof cypressEnv]; // Get username directly
+    if (!username) continue; // Skip if username is somehow missing
 
-      const userPasswordHash = isGoogleLoginUser ? null : hashedPassword;
+    const userId = generateIdFromEntropySize(10);
+    const email = `${username.toLowerCase()}${emailDomain}`; // Construct email
 
-      const isVerified = !userType.includes("unverified");
-      const hasAvatar = !userType.includes("noAvatar") && Math.random() < 0.8;
+    // Determine user characteristics based on the KEY, not the username content
+    const isGoogleLoginUser = key === "googleLoginUser";
+    const isVerified = !key.toLowerCase().includes("unverified");
+    const hasAvatar = !key.toLowerCase().includes("noavatar");
+    const isNoBioUser = key.toLowerCase().includes("nobio");
 
-      let avatarUrl = hasAvatar
+    const googleId = isGoogleLoginUser
+      ? `${faker.string.numeric(10)}${faker.string.alphanumeric(10)}`
+      : null;
+    const userPasswordHash = isGoogleLoginUser ? null : hashedPassword;
+    let avatarUrl =
+      hasAvatar && Math.random() < 0.8
         ? `https://i.pravatar.cc/150?img=${faker.number.int({ min: 1, max: 70 })}`
         : null;
+    const bio = isNoBioUser ? null : faker.lorem.sentence();
+    const createdAt = faker.date.between({
+      from: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000),
+      to: new Date(),
+    });
 
-      const isNoBioUser = username.includes("NoBio");
-      const bio = isNoBioUser ? null : faker.lorem.sentence();
-      const createdAt = faker.date.between({
-        from: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000),
-        to: new Date(),
-      });
+    const userData: Prisma.UserCreateInput = {
+      id: userId,
+      username,
+      email,
+      displayName: username, // Use username as default displayName
+      passwordHash: userPasswordHash,
+      isVerified,
+      avatarUrl,
+      googleId,
+      bio,
+      createdAt,
+    };
+    usersData.push(userData);
 
-      const userData: Prisma.UserCreateInput = {
-        id: userId,
-        username,
-        email,
-        displayName: username,
-        passwordHash: userPasswordHash,
-        isVerified,
-        avatarUrl,
-        googleId,
-        bio,
-        createdAt,
-      };
-      usersData.push(userData);
-
-      // Add data needed by other modules to the return array
-      createdUsersForReturn.push({
-        id: userId,
-        username: username,
-        email: email,
-        isVerified: isVerified,
-        createdAt: createdAt,
-        displayName: username,
-        avatarUrl: avatarUrl,
-        bio: bio,
-        passwordHash: userPasswordHash,
-        pendingEmail: null,
-        googleId: googleId,
-      });
-    }
+    // Add data needed by other modules to the return array
+    createdUsersForReturn.push({
+      id: userId,
+      username: username,
+      email: email,
+      isVerified: isVerified,
+      createdAt: createdAt,
+      displayName: username,
+      avatarUrl: avatarUrl,
+      bio: bio,
+      passwordHash: userPasswordHash,
+      pendingEmail: null, // Assuming no pending email during initial seed
+      googleId: googleId,
+    });
   }
 
   // Use the passed prismaClient

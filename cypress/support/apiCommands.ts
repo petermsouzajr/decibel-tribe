@@ -1,33 +1,28 @@
-Cypress.Commands.add("loginByApi", (username, password) => {
-  // Use provided credentials. Ensure both are provided.
-  if (!username || !password) {
-    throw new Error(
-      "loginByApi: Username and/or password arguments were not provided.",
-    );
-  }
-
-  cy.log(`LOGGING IN AS ${username} VIA API`);
-
-  cy.request({
-    method: "POST",
-    url: "/api/auth/login", // Assuming this is the correct endpoint
-    body: {
-      username: username, // Use the provided username
-      password: password, // Use the provided password
-    },
-    failOnStatusCode: false, // Handle failure manually
-  }).then((response) => {
-    // Explicitly check for 200 OK
-    if (response.status !== 200) {
-      throw new Error(
-        `API login failed for user ${username}. Status: ${response.status}. Body: ${JSON.stringify(response.body)}`,
-      );
-    }
-    cy.log(`API login successful for ${username}`);
-    // No need to assert here if we throw on failure.
-    // Cookie handling is usually automatic with cy.request
-  });
-});
+Cypress.Commands.add(
+  "loginByApi",
+  (username, password = Cypress.env("password")) => {
+    cy.log(`Logging in as ${username}`);
+    cy.request({
+      method: "POST",
+      url: "/api/auth/login",
+      body: { username, password },
+      failOnStatusCode: false, // Allow handling of 4xx/5xx responses
+    }).then((response) => {
+      if (response.status !== 200) {
+        // Log the error if login fails
+        cy.log(`Login failed: ${response.body.error || "Unknown error"}`);
+        // Optionally throw an error or handle it as needed
+        throw new Error(
+          `API login failed for user ${username}: ${response.body.error || response.status}`,
+        );
+      }
+      // Log success and potentially store session info if needed
+      cy.log("Login successful via API");
+      // The session cookie is automatically handled by the browser during cy.request
+      // No need to manually set cookies unless the app requires it differently
+    });
+  },
+);
 
 // --- Create Event via API Command ---
 Cypress.Commands.add("createEventViaApi", (eventData: Partial<any> = {}) => {

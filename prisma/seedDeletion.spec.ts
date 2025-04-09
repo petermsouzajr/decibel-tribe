@@ -2,12 +2,16 @@ import { describe, it, expect, vi, beforeEach, afterEach, Mock } from "vitest";
 
 // --- Pre-emptive Mocks (Run before module imports) ---
 const mockCypressEnv = {
-  verifiedUsername: "testUserVerified",
-  unverifiedUsername: "testUserUnverified",
-  noPostsUsername: "testUserNoPosts",
+  password: "MockPassword!",
+  testUserEmailDomain: "@testdomain.com", // Use a distinct domain for testing
+  verifiedUser: "mockUserVerified",
+  unverifiedUser: "mockUserUnverified",
+  noPostsUser: "mockUserNoPosts",
+  // Add other necessary keys if deletion logic depends on them implicitly
 };
 vi.mock("fs", () => ({
-  readFileSync: vi.fn().mockReturnValue(JSON.stringify(mockCypressEnv)), // Mock fs readFileSync globally first
+  // Ensure JSON.stringify is used for the mock return value
+  readFileSync: vi.fn().mockReturnValue(JSON.stringify(mockCypressEnv)),
 }));
 
 // Mock env vars needed by seedUtils during import
@@ -58,8 +62,9 @@ vi.mock("path", () => ({
 // --- Test Suite --- //
 
 // Dynamically import the module *after* mocks are set up
+// Note: Assuming the import path should be .mts based on other files
 const { deleteTestUsers, deleteTestUsersFromStreamChat } = await import(
-  "./seedDeletion.mjs"
+  "./seedDeletion.mts"
 );
 // Don't need to import fs again as it's mocked
 const { PrismaClient } = await import("@prisma/client");
@@ -70,31 +75,47 @@ const prismaMock = new PrismaClient();
 const streamChatMock = mockStreamChatInstance;
 
 describe("prisma/seedDeletion", () => {
-  // Use the same mock env data defined above
   const mockUserIds = ["id_verified", "id_unverified", "id_noposts"];
+  const testDomain = mockCypressEnv.testUserEmailDomain; // Get domain from mock env
 
   beforeEach(() => {
-    // Reset mocks before each test
     vi.clearAllMocks();
 
-    // Reset mocks to default *successful* states
-    (prismaMock.user.findMany as Mock).mockResolvedValue([
-      { id: mockUserIds[0] },
-      { id: mockUserIds[1] },
-      { id: mockUserIds[2] },
-    ]);
-    Object.values(prismaMock).forEach((model: any) => {
-      if (model && typeof model.deleteMany === "function") {
-        (model.deleteMany as Mock).mockResolvedValue({ count: 1 });
+    // Mock findMany based on the *new* query structure
+    (prismaMock.user.findMany as Mock).mockImplementation(async (args) => {
+      if (args.where?.email?.endsWith === testDomain) {
+        // Return users only if the query matches the expected domain filter
+        return [
+          { id: mockUserIds[0] },
+          { id: mockUserIds[1] },
+          { id: mockUserIds[2] },
+        ];
+      } else {
+        // Return empty array for unexpected queries
+        return [];
       }
     });
 
+    // Reset other deleteMany mocks (unchanged)
+    Object.values(prismaMock).forEach((model: any) => {
+      if (
+        model &&
+        model.deleteMany === "function" &&
+        model !== prismaMock.user
+      ) {
+        (model.deleteMany as Mock).mockResolvedValue({ count: 1 });
+      }
+    });
+    // Reset user deleteMany separately (unchanged)
+    (prismaMock.user.deleteMany as Mock).mockResolvedValue({ count: 3 });
+
+    // StreamChat mocks (unchanged)
     (streamChatMock.queryUsers as Mock).mockResolvedValue({
       users: mockUserIds.map((id) => ({ id })),
     });
     (streamChatMock.deleteUser as Mock).mockResolvedValue({});
 
-    // Ensure env vars are set for tests that might clear them
+    // Env vars (unchanged)
     process.env.NEXT_PUBLIC_STREAM_KEY = "test_key";
     process.env.STREAM_SECRET = "test_secret";
   });
@@ -103,18 +124,19 @@ describe("prisma/seedDeletion", () => {
 
   // --- deleteTestUsers Tests --- //
   describe("deleteTestUsers", () => {
-    it("should call findMany with correct username patterns", async () => {
-      await deleteTestUsers(prismaMock); // Pass prismaMock
+    it("should call findMany with correct email domain", async () => {
+      await deleteTestUsers(prismaMock);
       expect(prismaMock.user.findMany).toHaveBeenCalledOnce();
       const findArgs = (prismaMock.user.findMany as Mock).mock.calls[0][0];
-      expect(findArgs.where.OR).toEqual(
-        expect.arrayContaining([
-          { username: { contains: "testUserVerified" } },
-          { username: { contains: "testUserUnverified" } },
-          { username: { contains: "testUserNoPosts" } },
-        ]),
-      );
-      expect(findArgs.select).toEqual({ id: true });
+      // Check the new query structure
+      expect(findArgs).toEqual({
+        where: {
+          email: {
+            endsWith: testDomain,
+          },
+        },
+        select: { id: true },
+      });
     });
 
     it("should call deleteMany for all related entities and users if users found", async () => {
@@ -179,23 +201,34 @@ describe("prisma/seedDeletion", () => {
     });
 
     it("should return the list of deleted user IDs", async () => {
-      const result = await deleteTestUsers(prismaMock); // Pass prismaMock
+      const result = await deleteTestUsers(prismaMock);
       expect(result).toEqual(mockUserIds);
     });
 
     it("should not call deleteMany if no users are found", async () => {
-      (prismaMock.user.findMany as Mock).mockResolvedValue([]);
-      await deleteTestUsers(prismaMock); // Pass prismaMock
+      // Make findMany return empty for the specific domain query
+      (prismaMock.user.findMany as Mock).mockImplementation(async (args) => {
+        if (args.where?.email?.endsWith === testDomain) {
+          return [];
+        }
+        return []; // Default empty
+      });
+      await deleteTestUsers(prismaMock);
 
       expect(prismaMock.event.deleteMany).not.toHaveBeenCalled();
       expect(prismaMock.post.deleteMany).not.toHaveBeenCalled();
       expect(prismaMock.user.deleteMany).not.toHaveBeenCalled();
-      // ... check other deleteMany calls ...
     });
 
     it("should return an empty array if no users are found", async () => {
-      (prismaMock.user.findMany as Mock).mockResolvedValue([]);
-      const result = await deleteTestUsers(prismaMock); // Pass prismaMock
+      // Make findMany return empty for the specific domain query
+      (prismaMock.user.findMany as Mock).mockImplementation(async (args) => {
+        if (args.where?.email?.endsWith === testDomain) {
+          return [];
+        }
+        return []; // Default empty
+      });
+      const result = await deleteTestUsers(prismaMock);
       expect(result).toEqual([]);
     });
   });

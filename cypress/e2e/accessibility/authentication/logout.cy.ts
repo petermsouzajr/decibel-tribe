@@ -3,8 +3,7 @@ import { LoginPage } from "../../../pages/authentication/loginPage";
 
 describe.skip("[AuthTeam] Logout Page Accessibility [smoke]", () => {
   beforeEach(() => {
-    // @ts-ignore
-    cy.loginViaUi(); // Logs in via UI Flow
+    cy.loginByApi("testUserVerified");
     // Perform logout via the UI menu instead of visiting a non-existent page
     LogoutPage.openMenu();
     LogoutPage.clickLogout();

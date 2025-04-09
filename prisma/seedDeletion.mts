@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { StreamChat } from "stream-chat";
-import { cypressEnv } from "./seedUtils.mjs"; // Use .mjs extension
+import { cypressEnv } from "./seedUtils.mts"; // Adjusted import if necessary
 import {
   prisma as sharedPrisma, // Use aliases to avoid naming conflicts if needed locally
   streamChatClient as sharedStreamChatClient,
@@ -15,36 +15,35 @@ export async function deleteTestUsers(prismaClient: any): Promise<string[]> {
   }
   console.log("Deleting testUsers and data from Database...");
 
-  // Derive user types from the imported cypressEnv
-  const userTypes = Object.keys(cypressEnv)
-    .filter((key) => key.endsWith("Username"))
-    .map((key) => key.replace("Username", ""));
-
-  const partialUsernames = userTypes.map(
-    (userType) =>
-      `testUser${userType.charAt(0).toUpperCase() + userType.slice(1)}`,
-  );
+  // Get the unique test domain
+  const testDomain = cypressEnv.testUserEmailDomain;
+  if (!testDomain) {
+    console.error(
+      "testUserEmailDomain not found in cypress.env.json. Cannot delete by domain.",
+    );
+    return [];
+  }
 
   let userIds: string[] = [];
   try {
-    // Use the passed prismaClient
+    // Find users whose email ends with the test domain
     const usersToDelete = await prismaClient.user.findMany({
       where: {
-        OR: partialUsernames.map((partialName) => ({
-          username: {
-            contains: partialName,
-          },
-        })),
+        email: {
+          endsWith: testDomain,
+        },
       },
       select: {
         id: true,
       },
     });
 
-    userIds = usersToDelete.map((user: any) => user.id);
+    userIds = usersToDelete.map((user: { id: string }) => user.id);
 
     if (userIds.length === 0) {
-      console.log("...No matching test users found in DB to delete.");
+      console.log(
+        `...No matching test users found in DB with domain ${testDomain} to delete.`,
+      );
       return [];
     }
 
@@ -91,10 +90,10 @@ export async function deleteTestUsers(prismaClient: any): Promise<string[]> {
     });
 
     console.log(
-      `...${userIds.length} test users and related data deleted successfully from DB!`,
+      `...${userIds.length} test users (domain: ${testDomain}) and related data deleted successfully from DB!`,
     );
   } catch (error) {
-    console.error("Error deleting test users from DB:", error);
+    console.error("Error deleting test users from DB by domain:", error);
   } finally {
     // Disconnect is handled in the main script
   }

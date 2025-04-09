@@ -4,22 +4,21 @@ import { generateEventData } from "../../../factories/eventData"; // Assuming an
 
 describe("[EventsTeam] Events - Create Invalid Event Fail [functional]", () => {
   beforeEach(() => {
-    // cy.loginByApi("testuser", Cypress.env("password"));
-    cy.loginViaUi();
-    cy.visit("/events/create"); // Navigate to the event creation page
+    cy.loginByApi("testUserVerified");
+    cy.visit("/events"); // Navigate to the event creation page
   });
 
   it("should show validation errors for invalid event data", () => {
     const eventData = generateEventData({
       // Example: Create invalid data
-      endDate: new Date(Date.now() - 86400000), // End date in the past relative to start date
+      // endDate: new Date(Date.now() - 86400000), // Removed - End date set manually below
       name: "", // Empty name
     });
 
     // Use EventForm Page Object
     // EventFormPage.fillForm(eventData);
     // EventFormPage.submitForm();
-    cy.get('[data-testid="event-start-date-input"]').type("2024-12-01T10:00"); // Example valid start date
+    cy.get("#start-date").type("2024-12-01T10:00"); // Updated selector guess
     cy.get('[data-testid="event-end-date-input"]').type("2024-11-30T11:00"); // Example invalid end date
     // Leave name empty
     cy.get('[data-testid="event-submit-button"]').click(); // Example

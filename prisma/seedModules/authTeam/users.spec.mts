@@ -5,39 +5,51 @@ import { Prisma } from "@prisma/client";
 
 // Mock seedUtils dependencies
 const mockCypressEnv = {
-  verifiedUsername: "testUserVerified",
-  googleLoginUsername: "testUserGoogleLogin",
-  noAvatarUsername: "testUserNoAvatar",
-  noBioUsername: "testUserNoBio",
   password: "mockPassword1!",
+  testUserEmailDomain: "@mockdomain.com", // Add mock domain
+  verifiedUser: "testUserVerified",
+  googleLoginUser: "testUserGoogleLogin",
+  noAvatarUser: "testUserNoAvatar",
+  noBioUser: "testUserNoBio",
+  // NOTE: Keep this mock aligned with the keys actually used to derive characteristics
+  // in the seedUsers function and tested below.
 };
-vi.mock("../../seedUtils.mjs", async (importOriginal) => ({
-  faker: {
-    string: {
-      numeric: vi.fn(() => "1234567890"),
-      alphanumeric: vi.fn(() => "abcdefghij"),
+const MOCK_USER_COUNT = 4; // Number of user keys in mockCypressEnv above (excluding password/domain)
+
+vi.mock("../../seedUtils.mts", async (importOriginal) => {
+  // ... existing faker mocks ...
+  const original = await importOriginal(); // Import original if needed for non-mocked parts
+  return {
+    ...(original as any), // Spread original exports first
+    faker: {
+      // Your existing faker mocks...
+      string: {
+        numeric: vi.fn(() => "1234567890"),
+        alphanumeric: vi.fn(() => "abcdefghij"),
+      },
+      image: {
+        avatarLegacy: vi.fn(() => "https://pravatar.cc/mock-avatar.jpg"),
+      },
+      number: {
+        int: vi.fn(() => 42),
+        float: vi.fn(),
+      },
+      lorem: {
+        sentence: vi.fn(() => "mock bio sentence"),
+      },
+      date: {
+        between: vi.fn(() => new Date("2023-01-01T12:00:00.000Z")),
+      },
+      helpers: { arrayElement: vi.fn(), shuffle: vi.fn() },
     },
-    image: {
-      avatarLegacy: vi.fn(() => "https://pravatar.cc/mock-avatar.jpg"),
-    },
-    number: {
-      int: vi.fn(() => 42), // Mock image number
-      float: vi.fn(), // Mock if needed elsewhere
-    },
-    lorem: {
-      sentence: vi.fn(() => "mock bio sentence"),
-    },
-    date: {
-      between: vi.fn(() => new Date("2023-01-01T12:00:00.000Z")),
-    },
-    helpers: { arrayElement: vi.fn(), shuffle: vi.fn() },
-    // Add other faker mocks if used by other parts of seedUsers
-  },
-  generateIdFromEntropySize: vi.fn((size) => `mockId_${size}`),
-  cypressEnv: mockCypressEnv,
-  prisma: mockPrismaClient,
-  streamChatClient: mockStreamClient,
-}));
+    generateIdFromEntropySize: vi.fn((size) => `mockId_${size}`),
+    cypressEnv: mockCypressEnv, // Use the updated mock env
+    prisma: mockPrismaClient, // Mock Prisma dependency within seedUtils
+    streamChatClient: mockStreamClient, // Mock Stream dependency within seedUtils
+    // Mock passwordHash or let it be mocked by the hasher argument if seedUsers uses it directly
+    // passwordHash: vi.fn(async (pw) => `hashed_${pw}`), // Example if needed
+  };
+});
 
 // Mock functions/clients passed as arguments
 const mockPrismaClient = {
@@ -54,88 +66,113 @@ const mockHasher = vi.fn();
 // --- Test Suite ---
 
 // Import mocked utils and the function to test
-const { prisma, streamChatClient } = await import("../../seedUtils.mjs");
-const { seedUsers } = await import("./users.mjs"); // Add .mjs extension
+// Note: These imports might now be redundant if fully mocked via vi.mock above,
+// but keep them if the test setup relies on specific instances from the mock factory.
+const { prisma, streamChatClient } = await import("../../seedUtils.mts");
+const { seedUsers } = await import("./users.mts"); // Use .mts extension
 
 describe("AuthTeam - seedUsers Module", () => {
   beforeEach(() => {
-    // Reset mocks before each test
     vi.clearAllMocks();
-
-    // Default successful mock implementations
-    (mockPrismaClient.user.createMany as Mock).mockResolvedValue({ count: 4 });
+    // Use MOCK_USER_COUNT for expected counts
+    (mockPrismaClient.user.createMany as Mock).mockResolvedValue({
+      count: MOCK_USER_COUNT,
+    });
     (mockStreamClient.upsertUsers as Mock).mockResolvedValue({});
     (mockHasher as Mock).mockResolvedValue("mockHashedPassword");
   });
 
   it("should generate correct user data based on cypressEnv", async () => {
     await seedUsers(mockPrismaClient, mockStreamClient, mockHasher);
-
     expect(mockPrismaClient.user.createMany).toHaveBeenCalledOnce();
     const createArgs = (mockPrismaClient.user.createMany as Mock).mock
       .calls[0][0];
     const createdData: Prisma.UserCreateInput[] = createArgs.data;
 
-    expect(createdData).toHaveLength(4); // Based on mockCypressEnv keys
+    // Use MOCK_USER_COUNT
+    expect(createdData).toHaveLength(MOCK_USER_COUNT);
 
-    // Check a regular verified user
+    // --- Check characteristics based on KEY logic used in seedUsers --- //
+
+    // Verified User (key: 'verifiedUser')
     const verifiedUser = createdData.find(
-      (u) => u.username === "testUserVerified",
+      (u) => u.username === mockCypressEnv.verifiedUser,
     );
     expect(verifiedUser?.passwordHash).toBe("mockHashedPassword");
-    expect(verifiedUser?.isVerified).toBe(true);
-    expect(verifiedUser?.googleId).toBeNull();
+    expect(verifiedUser?.isVerified).toBe(true); // Key does not contain 'unverified'
+    expect(verifiedUser?.googleId).toBeNull(); // Key is not 'googleLoginUser'
+    expect(verifiedUser?.email).toBe(
+      `${mockCypressEnv.verifiedUser.toLowerCase()}${mockCypressEnv.testUserEmailDomain}`,
+    );
     if (verifiedUser?.avatarUrl !== null) {
+      // Avatar is random, check if not null
       expect(verifiedUser?.avatarUrl).toEqual(
         expect.stringContaining("pravatar.cc"),
       );
     }
-    expect(verifiedUser?.bio).toBe("mock bio sentence");
+    expect(verifiedUser?.bio).toBe("mock bio sentence"); // Key does not contain 'noBio'
 
-    // Check Google login user
+    // Google Login User (key: 'googleLoginUser')
     const googleUser = createdData.find(
-      (u) => u.username === "testUserGoogleLogin",
+      (u) => u.username === mockCypressEnv.googleLoginUser,
     );
-    expect(googleUser?.passwordHash).toBeNull();
-    expect(googleUser?.isVerified).toBe(true);
-    expect(googleUser?.googleId).toBe("1234567890abcdefghij");
+    expect(googleUser?.passwordHash).toBeNull(); // Key is 'googleLoginUser'
+    expect(googleUser?.isVerified).toBe(true); // Key does not contain 'unverified'
+    expect(googleUser?.googleId).toBe("1234567890abcdefghij"); // Key is 'googleLoginUser'
+    expect(googleUser?.email).toBe(
+      `${mockCypressEnv.googleLoginUser.toLowerCase()}${mockCypressEnv.testUserEmailDomain}`,
+    );
 
-    // Check No Avatar user
+    // No Avatar User (key: 'noAvatarUser')
     const noAvatarUser = createdData.find(
-      (u) => u.username === "testUserNoAvatar",
+      (u) => u.username === mockCypressEnv.noAvatarUser,
     );
-    expect(noAvatarUser?.avatarUrl).toBeNull();
+    expect(noAvatarUser?.avatarUrl).toBeNull(); // Key contains 'noavatar'
+    expect(noAvatarUser?.email).toBe(
+      `${mockCypressEnv.noAvatarUser.toLowerCase()}${mockCypressEnv.testUserEmailDomain}`,
+    );
 
-    // Check No Bio user
-    const noBioUser = createdData.find((u) => u.username === "testUserNoBio");
-    expect(noBioUser?.bio).toBeNull();
+    // No Bio User (key: 'noBioUser')
+    const noBioUser = createdData.find(
+      (u) => u.username === mockCypressEnv.noBioUser,
+    );
+    expect(noBioUser?.bio).toBeNull(); // Key contains 'nobio'
+    expect(noBioUser?.email).toBe(
+      `${mockCypressEnv.noBioUser.toLowerCase()}${mockCypressEnv.testUserEmailDomain}`,
+    );
   });
 
   it("should call hasher for non-Google users", async () => {
     await seedUsers(mockPrismaClient, mockStreamClient, mockHasher);
-    // Hasher is called once before the loop for all non-Google users
-    expect(mockHasher).toHaveBeenCalledTimes(1);
+    expect(mockHasher).toHaveBeenCalledTimes(1); // Called once before loop
     expect(mockHasher).toHaveBeenCalledWith(mockCypressEnv.password);
   });
 
   it("should call streamClient.upsertUsers with correct data", async () => {
     await seedUsers(mockPrismaClient, mockStreamClient, mockHasher);
-
     expect(mockStreamClient.upsertUsers).toHaveBeenCalledOnce();
     const streamArgs = (mockStreamClient.upsertUsers as Mock).mock.calls[0][0];
-    expect(streamArgs).toHaveLength(4);
+    // Use MOCK_USER_COUNT
+    expect(streamArgs).toHaveLength(MOCK_USER_COUNT);
 
     const verifiedStreamUser = streamArgs.find(
-      (u: any) => u.name === "testUserVerified",
+      (u: any) => u.name === mockCypressEnv.verifiedUser,
     );
     expect(verifiedStreamUser?.id).toBeDefined();
-    expect(verifiedStreamUser?.email).toBe("testuserverified@example.com");
-    expect(verifiedStreamUser?.image).toBeDefined(); // Should have avatar
+    expect(verifiedStreamUser?.email).toBe(
+      `${mockCypressEnv.verifiedUser.toLowerCase()}${mockCypressEnv.testUserEmailDomain}`,
+    );
+    if (verifiedStreamUser?.image !== null) {
+      // Check if avatar exists
+      expect(verifiedStreamUser?.image).toEqual(
+        expect.stringContaining("pravatar.cc"),
+      );
+    }
 
     const noAvatarStreamUser = streamArgs.find(
-      (u: any) => u.name === "testUserNoAvatar",
+      (u: any) => u.name === mockCypressEnv.noAvatarUser,
     );
-    expect(noAvatarStreamUser?.image).toBeNull();
+    expect(noAvatarStreamUser?.image).toBeNull(); // Key 'noAvatarUser' means no image
   });
 
   it("should return correctly structured CreatedUser data", async () => {
@@ -144,28 +181,30 @@ describe("AuthTeam - seedUsers Module", () => {
       mockStreamClient,
       mockHasher,
     );
-
-    expect(result).toHaveLength(4);
+    // Use MOCK_USER_COUNT
+    expect(result).toHaveLength(MOCK_USER_COUNT);
     const verifiedResultUser = result.find(
-      (u: any) => u.username === "testUserVerified",
+      (u: any) => u.username === mockCypressEnv.verifiedUser,
     );
     expect(verifiedResultUser).toEqual({
       id: expect.any(String),
-      username: "testUserVerified",
-      email: "testuserverified@example.com",
+      username: mockCypressEnv.verifiedUser,
+      email: `${mockCypressEnv.verifiedUser.toLowerCase()}${mockCypressEnv.testUserEmailDomain}`,
       isVerified: true,
       createdAt: expect.any(Date),
-      displayName: "testUserVerified",
-      avatarUrl:
-        verifiedResultUser?.avatarUrl === null
-          ? null
-          : expect.stringContaining("pravatar.cc"),
+      displayName: mockCypressEnv.verifiedUser,
+      avatarUrl: expect.any(String), // Or null, depending on mock randomness
       bio: "mock bio sentence",
       passwordHash: "mockHashedPassword",
       pendingEmail: null,
       googleId: null,
     });
-    // Can add more checks for other user types in return value
+    // Adjust avatarUrl expectation if mock randomness is controlled
+    if (verifiedResultUser?.avatarUrl !== null) {
+      expect(verifiedResultUser?.avatarUrl).toEqual(
+        expect.stringContaining("pravatar.cc"),
+      );
+    }
   });
 
   it("should return empty array if prisma create fails", async () => {
@@ -174,20 +213,17 @@ describe("AuthTeam - seedUsers Module", () => {
     const consoleErrorSpy = vi
       .spyOn(console, "error")
       .mockImplementation(() => {});
-
     const result = await seedUsers(
       mockPrismaClient,
       mockStreamClient,
       mockHasher,
     );
-
     expect(result).toEqual([]);
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       "Error creating users in DB:",
       dbError,
     );
-    expect(mockStreamClient.upsertUsers).not.toHaveBeenCalled(); // Should not proceed to Stream
-
+    expect(mockStreamClient.upsertUsers).not.toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
   });
 
@@ -197,20 +233,17 @@ describe("AuthTeam - seedUsers Module", () => {
     const consoleErrorSpy = vi
       .spyOn(console, "error")
       .mockImplementation(() => {});
-
     const result = await seedUsers(
       mockPrismaClient,
       mockStreamClient,
       mockHasher,
     );
-
-    expect(result).toHaveLength(4); // DB creation succeeded
-    expect(mockPrismaClient.user.createMany).toHaveBeenCalledOnce(); // DB call happened
+    expect(result).toHaveLength(MOCK_USER_COUNT);
+    expect(mockPrismaClient.user.createMany).toHaveBeenCalledOnce();
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       "Failed to add users to StreamChat:",
       streamError.message,
     );
-
     consoleErrorSpy.mockRestore();
   });
 
@@ -230,16 +263,13 @@ describe("AuthTeam - seedUsers Module", () => {
     const consoleWarnSpy = vi
       .spyOn(console, "warn")
       .mockImplementation(() => {});
-
     const result = await seedUsers(mockPrismaClient, null, mockHasher);
-
-    expect(result).toHaveLength(4); // DB creation should still succeed
+    expect(result).toHaveLength(MOCK_USER_COUNT);
     expect(mockPrismaClient.user.createMany).toHaveBeenCalledOnce();
     expect(mockStreamClient.upsertUsers).not.toHaveBeenCalled();
     expect(consoleWarnSpy).toHaveBeenCalledWith(
       "Stream Chat client not available. Skipping Stream Chat user upsert.",
     );
-
     consoleWarnSpy.mockRestore();
   });
 });
