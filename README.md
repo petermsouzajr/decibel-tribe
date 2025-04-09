@@ -1,43 +1,92 @@
 # Decibel Tribe
 
-## Stay Human
+**Decibel Tribe:** The social network for musicians and industry pros. Find collaborators (drummers, photographers, bookers, merch), connect with peers, plan tours, and explore dating, all within a community that puts music first, DECIBEL TRIBE. Stay Human!
 
-to install dependencies
-`npm install`
+## Getting Started
 
-view local prisma db
-`npm prisma studio`
+Follow these steps to set up the project for local development.
 
-to send new db model info to the db
-`npm prisma db push`
+### Prerequisites
 
-to run local dev
-`npm run dev`
+- Node.js (See `.nvmrc` or `package.json` for version. Using [nvm](https://github.com/nvm-sh/nvm) is recommended.)
+- npm (comes with Node.js)
+- Git
+- Access to a running PostgreSQL database instance.
 
-## Testing and Code Coverage
+### Installation & Setup
 
-### Unit/Integration Tests (Vitest)
+1.  **Clone the repository:**
 
-To run Vitest tests and generate a coverage report:
+    ```bash
+    git clone https://github.com/petermsouzajr/decibel-tribe.git
+    cd decibel-tribe
+    ```
+
+2.  **Install dependencies:**
+
+    ```bash
+    npm install
+    ```
+
+3.  **Set up Environment Variables:**
+
+    - Copy the example file: `cp .env.example .env`
+    - **Edit `.env`** and fill in all required values, especially:
+      - `POSTGRES_PRISMA_URL` (for migrations/Prisma Client)
+      - `POSTGRES_URL_NON_POOLING` (for Prisma Studio/direct connections)
+      - Stream Chat keys (`NEXT_PUBLIC_STREAM_KEY`, `STREAM_SECRET`)
+      - Lucia secret (`LUCIA_SECRET_KEY`)
+      - Google OAuth credentials (if needed for local testing)
+      - UploadThing keys
+      - _(Add any other critical env vars needed)_
+
+4.  **Database Setup:**
+
+    - Ensure your PostgreSQL database is running and accessible via the connection URL in `.env`.
+    - Apply migrations to set up the schema:
+      ```bash
+      npx prisma migrate dev
+      ```
+    - (Optional, but recommended for development) Seed the database with test data:
+      ```bash
+      npm run db:seed
+      ```
+
+5.  **(Optional) View Database:**
+    You can use Prisma Studio to view your local database:
+    ```bash
+    npx prisma studio
+    ```
+
+## Running Locally
+
+Once setup is complete, start the development server:
 
 ```bash
-npm run test -- --coverage
+npm run dev
 ```
 
-This uses the `test` script defined in `package.json` and passes the `--coverage` flag to Vitest. Reports are generated in the `./coverage/vitest/` directory.
+The application should be accessible at `http://localhost:3000` (or the port specified in your `.env` or Next.js config).
 
-### End-to-End Tests (Cypress)
+## Testing
 
-To run Cypress tests with code coverage instrumentation:
+This project uses [Vitest](https://vitest.dev/) for unit, integration, and seed tests, and [Cypress](https://www.cypress.io/) for End-to-End (E2E) tests.
 
-```bash
-npm run cy:run:coverage
-```
+- **Run all developer-focused tests (Vitest - Unit, Integration, Seed):**
+  ```bash
+  npm run dev:test:all
+  ```
+- **Run comprehensive developer checks (Lint, Types, Tests, Build):**
+  This is the recommended command to run before committing or pushing changes.
+  ```bash
+  npm run dev:check:all
+  ```
 
-This command uses `start-server-and-test` to:
+For more detailed information on specific testing commands (watch mode, UI, coverage, Cypress tests), please see the [CONTRIBUTING.md](./CONTRIBUTING.md) guide.
 
-1. Start the Next.js development server with code instrumentation enabled (`BABEL_ENV=instrumented`).
-2. Wait for the server to be ready on `http://localhost:3000`.
-3. Execute the `npm run cypress:run` command (which runs your Cypress tests).
+## Contributing
 
-Coverage reports are generated in the `./coverage/cypress/` directory (raw data in `.nyc_output/`).
+Contributions are welcome! Please read our contribution guidelines and code of conduct before submitting pull requests.
+
+- **[CONTRIBUTING.md](./CONTRIBUTING.md)**
+- **[CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)**
