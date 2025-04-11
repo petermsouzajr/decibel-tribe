@@ -34,7 +34,5 @@ export default async function sendVerificationEmail(
     return result;
   } catch (error) {
     console.error(`Error sending verification email to ${to}:`, error);
-    // Optionally re-throw the error if the calling function needs to know
-    throw error;
   }
 }

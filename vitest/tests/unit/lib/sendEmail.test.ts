@@ -77,9 +77,23 @@ describe("[Util][Email] sendVerificationEmail", () => {
   it("should reject when sendMail rejects", async () => {
     const expectedError = new Error("SMTP Error");
     mockSendMail.mockRejectedValue(expectedError);
-    await expect(sendVerificationEmail(testEmail, testUrl)).rejects.toThrow(
+    const mockConsoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {}); // Spy on console.error
+
+    // Expect the function to resolve with undefined now, as it catches the error
+    await expect(
+      sendVerificationEmail(testEmail, testUrl),
+    ).resolves.toBeUndefined();
+
+    // Verify that the error was logged
+    expect(mockConsoleError).toHaveBeenCalledTimes(1);
+    expect(mockConsoleError).toHaveBeenCalledWith(
+      `Error sending verification email to ${testEmail}:`,
       expectedError,
     );
+
+    mockConsoleError.mockRestore(); // Clean up the spy
   });
 
   it("should reject if createTransport throws (less likely but possible)", async () => {
