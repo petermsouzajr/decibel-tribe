@@ -1,7 +1,7 @@
 import React from "react";
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
-// import userEvent from '@testing-library/user-event'; // Skipped for now
+import { render, screen, fireEvent, act } from "@testing-library/react";
+import userEvent from "@testing-library/user-event"; // Uncommented
 import { PasswordInput } from "@/components/PasswordInput"; // Updated import
 
 describe("[Core][Component] PasswordInput", () => {
@@ -17,26 +17,34 @@ describe("[Core][Component] PasswordInput", () => {
     expect(showButton).toBeInTheDocument();
   });
 
-  it.skip("should toggle input type to text when show button is clicked", async () => {
-    // Requires user-event
-    // render(<PasswordInput placeholder="Enter" />);
-    // const input = screen.getByPlaceholderText('Enter');
-    // const showButton = screen.getByTitle('Show password');
-    // await userEvent.click(showButton);
-    // expect(input).toHaveAttribute('type', 'text');
-    // expect(screen.getByTitle('Hide password')).toBeInTheDocument();
+  it("should toggle input type to text when show button is clicked", async () => {
+    // Uncommented test implementation
+    const user = userEvent.setup();
+    render(<PasswordInput placeholder="Enter" />);
+    const input = screen.getByPlaceholderText("Enter");
+    const showButton = screen.getByTitle("Show password");
+    await act(async () => {
+      await user.click(showButton);
+    });
+    expect(input).toHaveAttribute("type", "text");
+    expect(screen.getByTitle("Hide password")).toBeInTheDocument();
   });
 
-  it.skip("should toggle input type back to password when clicked again", async () => {
-    // Requires user-event
-    // render(<PasswordInput placeholder="Enter" />);
-    // const showButton = screen.getByTitle('Show password');
-    // await userEvent.click(showButton); // Click once to show
-    // const hideButton = screen.getByTitle('Hide password');
-    // await userEvent.click(hideButton); // Click again to hide
-    // const input = screen.getByPlaceholderText('Enter');
-    // expect(input).toHaveAttribute('type', 'password');
-    // expect(screen.getByTitle('Show password')).toBeInTheDocument();
+  it("should toggle input type back to password when clicked again", async () => {
+    // Uncommented test implementation
+    const user = userEvent.setup();
+    render(<PasswordInput placeholder="Enter" />);
+    const showButton = screen.getByTitle("Show password");
+    await act(async () => {
+      await user.click(showButton); // Click once to show
+    });
+    const hideButton = screen.getByTitle("Hide password");
+    await act(async () => {
+      await user.click(hideButton); // Click again to hide
+    });
+    const input = screen.getByPlaceholderText("Enter");
+    expect(input).toHaveAttribute("type", "password");
+    expect(screen.getByTitle("Show password")).toBeInTheDocument();
   });
 
   it("should forward ref to the input element", () => {

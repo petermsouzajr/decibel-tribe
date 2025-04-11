@@ -31,7 +31,61 @@ describe("Calendar Page", () => {
     },
   };
 
-  const renderPage = () =>
+  const renderPage = async () => {
+    const renderResult = render(
+      <SessionProvider value={mockSession}>
+        <QueryClientProvider client={queryClient}>
+          <Page
+            searchParams={{
+              q: undefined,
+            }}
+          />
+        </QueryClientProvider>
+      </SessionProvider>,
+    );
+    // Wait for the fetch call triggered by the component
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+    // Wait for the calendar to actually render after loading
+    await screen.findByText(/Sun/i); // Wait for a stable element post-load
+    return renderResult;
+  };
+
+  beforeEach(() => {
+    queryClient = new QueryClient();
+    // Mock fetch to return empty array by default
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve([]),
+    });
+  });
+
+  it("should render the calendar even if no events are returned", async () => {
+    //@ts-ignore
+    global.fetch.mockImplementationOnce(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve([]),
+      }),
+    );
+
+    await renderPage();
+
+    const dayName = await screen.findByText(/Sun/i);
+    const dayNumber = await screen.findByText(/15/i);
+    expect(dayName).toBeInTheDocument();
+    expect(dayNumber).toBeInTheDocument();
+  });
+
+  it("should display an error message when the API call fails", async () => {
+    // Mock fetch specifically for this test to return an error
+    //@ts-ignore
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: false,
+      }),
+    );
+
+    // Render the component directly for this test case
     render(
       <SessionProvider value={mockSession}>
         <QueryClientProvider client={queryClient}>
@@ -44,46 +98,13 @@ describe("Calendar Page", () => {
       </SessionProvider>,
     );
 
-  beforeEach(() => {
-    queryClient = new QueryClient();
-    global.fetch = vi.fn();
-  });
-
-  it("should render the calendar even if no events are returned", async () => {
-    //@ts-ignore
-    global.fetch.mockImplementationOnce(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve([]),
-      }),
-    );
-
-    renderPage();
-
-    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
-
-    const dayName = await screen.findByText(/Sun/i);
-    const dayNumber = await screen.findByText(/15/i);
-    expect(dayName).toBeInTheDocument();
-    expect(dayNumber).toBeInTheDocument();
-  });
-
-  it("should display an error message when the API call fails", async () => {
-    //@ts-ignore
-    global.fetch.mockImplementationOnce(() =>
-      Promise.resolve({
-        ok: false,
-      }),
-    );
-
-    renderPage();
-
+    // Wait specifically for the error message to appear
     const errorMessage = await screen.findByText(/Failed to fetch events/i);
     expect(errorMessage).toBeInTheDocument();
   });
 
-  it("should match snapshot", () => {
-    renderPage();
+  it("should match snapshot", async () => {
+    await renderPage();
     expect(document.body).toMatchSnapshot();
   });
 });

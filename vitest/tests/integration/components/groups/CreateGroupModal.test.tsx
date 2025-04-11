@@ -1,7 +1,7 @@
 // src/components/groups/CreateGroupModal.test.tsx
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
@@ -73,30 +73,33 @@ describe("[Groups][Component] CreateGroupModal", () => {
   const mockInvalidateQueries = vi.fn();
   const mockMutate = vi.fn();
   let mockOnClose: () => void;
+  let capturedOptions: any = {}; // To store options passed to useMutation
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockOnClose = vi.fn();
 
-    // Default implementation for useMutation (returns mockMutate)
-    mockUseMutationHook.mockReturnValue({
-      // Keep the basic structure
-      mutate: mockMutate,
-      mutateAsync: vi.fn().mockResolvedValue(undefined),
-      data: undefined,
-      error: null,
-      isError: false,
-      isIdle: true,
-      isPaused: false,
-      isSuccess: false,
-      status: "idle",
-      isPending: false,
-      reset: vi.fn(),
-      context: undefined,
-      failureCount: 0,
-      failureReason: null,
-      submittedAt: 0,
-      variables: undefined,
+    // Mock useMutation to capture options and return mockMutate
+    mockUseMutationHook.mockImplementation((options: any) => {
+      capturedOptions = options; // Capture component's onSuccess/onError
+      return {
+        mutate: mockMutate,
+        mutateAsync: vi.fn().mockResolvedValue(undefined),
+        data: undefined,
+        error: null,
+        isError: false,
+        isIdle: true,
+        isPaused: false,
+        isSuccess: false,
+        status: "idle",
+        isPending: false,
+        reset: vi.fn(),
+        context: undefined,
+        failureCount: 0,
+        failureReason: null,
+        submittedAt: 0,
+        variables: undefined,
+      };
     });
 
     mockUseQueryClientHook.mockReturnValue({
@@ -106,14 +109,13 @@ describe("[Groups][Component] CreateGroupModal", () => {
       cancelQueries: vi.fn(),
     } as any);
 
-    // Default implementation for mockMutate (ASYNC Success)
-    mockMutate.mockImplementation(async (_variables, options) => {
-      try {
-        const data = await Promise.resolve({ id: "new-group-id" }); // Simulate async success
-        options?.onSuccess?.(data, _variables, undefined); // Call onSuccess AFTER await
-      } catch (error) {
-        options?.onError?.(error as Error, _variables, undefined);
-      }
+    // Default mockMutate: Simulate success, then call captured onSuccess
+    mockMutate.mockImplementation(async (variables) => {
+      // Simulate API call delay/success
+      await Promise.resolve(); // Minimal delay simulation
+      const mockData = { id: "new-group-id" };
+      // Manually call component's onSuccess if captured
+      capturedOptions.onSuccess?.(mockData, variables, undefined);
     });
   });
 
@@ -152,7 +154,7 @@ describe("[Groups][Component] CreateGroupModal", () => {
     expect(mockOnClose).not.toHaveBeenCalled();
   });
 
-  it.skip("should call createGroup mutation with form data on valid submit", async () => {
+  it("should call createGroup mutation with form data on valid submit", async () => {
     const user = userEvent.setup();
     renderModal();
     const nameInput = screen.getByLabelText(/group name/i);
@@ -163,17 +165,19 @@ describe("[Groups][Component] CreateGroupModal", () => {
     await user.type(nameInput, testName);
     await user.type(descriptionInput, testDescription);
 
-    // Act
-    await user.click(submitButton);
+    // Act - Wrap click in act
+    await act(async () => {
+      await user.click(submitButton);
+    });
 
-    // Assert mutation call
+    // Assert mutation call - Only expect the first argument (values)
     expect(mockMutate).toHaveBeenCalledTimes(1);
     expect(mockMutate).toHaveBeenCalledWith(
       expect.objectContaining({
         name: testName,
         description: testDescription,
       }),
-    ); // Remove assertion for second 'options' argument
+    );
 
     // Assert onClose is called via onSuccess (needs waitFor)
     await waitFor(() => {
@@ -181,30 +185,46 @@ describe("[Groups][Component] CreateGroupModal", () => {
     });
   });
 
-  it.skip("should show error toast if createGroup mutation fails", async () => {
+  it("should show error toast if createGroup mutation fails", async () => {
     const user = userEvent.setup();
+    const { toast: mockToastFn } = await import("@/components/ui/use-toast");
     renderModal();
     const errorMessage = "Failed to create group";
+    const error = new Error(errorMessage);
 
-    // Configure mockMutate to reject and call onError (ASYNC Error)
-    mockMutate.mockImplementation(async (_variables, options) => {
+    // Override mockMutate for this test: Simulate failure, then call captured onError
+    mockMutate.mockImplementation(async (variables) => {
       try {
-        await Promise.reject(new Error(errorMessage)); // Simulate async failure
-      } catch (error) {
-        // REMOVED: mockUseMutationHook.mockReturnValueOnce(...)
-        options?.onError?.(error as Error, _variables, undefined); // Call onError AFTER await/catch
+        // Simulate API call delay/failure
+        await Promise.reject(error);
+      } catch (e) {
+        // Manually call component's onError if captured
+        // This simulates React Query calling the onError callback
+        capturedOptions.onError?.(error, variables, undefined);
       }
     });
 
     const nameInput = screen.getByLabelText(/group name/i);
-    const descriptionInput = screen.getByLabelText(/description/i); // Adjusted label
+    const descriptionInput = screen.getByLabelText(/description \(optional\)/i);
     await user.type(nameInput, "Error Group");
     await user.type(descriptionInput, "This group will fail.");
 
-    // Act
-    await user.click(screen.getByRole("button", { name: /create group/i }));
+    // Act - Wrap click in act
+    await act(async () => {
+      await user.click(screen.getByRole("button", { name: /create group/i }));
+    });
 
-    // We will rely on onClose *not* being called as indirect proof onError was likely hit
+    // Assert the DESTRUCTIVE toast was called (needs waitFor)
+    await waitFor(() => {
+      expect(mockToastFn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variant: "destructive",
+          description: errorMessage,
+        }),
+      );
+    });
+
+    // Assert modal did NOT close and queries were not invalidated
     expect(mockInvalidateQueries).not.toHaveBeenCalled();
     expect(mockOnClose).not.toHaveBeenCalled();
   });

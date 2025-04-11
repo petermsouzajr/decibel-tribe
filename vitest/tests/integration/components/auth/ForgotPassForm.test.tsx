@@ -1,7 +1,7 @@
 // src/components/auth/ForgotPassForm.test.tsx
 import React from "react";
 import { describe, it, expect, vi, beforeEach, MockedFunction } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ForgotPassForm from "@/app/(auth)/forgot-pass/forgotPassForm"; // Correct component path casing
 import { resendVerification } from "@/app/(auth)/forgot-pass/actions"; // Action to mock
@@ -78,10 +78,12 @@ describe("[Auth][Component] ForgotPasswordForm", () => {
     // Fill form
     await user.type(credentialInput, testCredential);
 
-    // Submit
-    await user.click(submitButton);
+    // Wrap only the submit click in act
+    await act(async () => {
+      await user.click(submitButton);
+    });
 
-    // Assert action was called
+    // Wait for action call after act
     await waitFor(() => {
       expect(mockResendVerification).toHaveBeenCalledTimes(1);
     });
@@ -107,10 +109,12 @@ describe("[Auth][Component] ForgotPasswordForm", () => {
     // Fill form
     await user.type(credentialInput, testCredential);
 
-    // Submit
-    await user.click(submitButton);
+    // Wrap only the submit click in act
+    await act(async () => {
+      await user.click(submitButton);
+    });
 
-    // Assert success message appears
+    // Wait for success message after act
     expect(
       await screen.findByText(
         `Verification email sent! Check your inbox at ${testCredential}.`,
@@ -140,10 +144,12 @@ describe("[Auth][Component] ForgotPasswordForm", () => {
     // Fill form
     await user.type(credentialInput, testCredential);
 
-    // Submit
-    await user.click(submitButton);
+    // Wrap only the submit click in act
+    await act(async () => {
+      await user.click(submitButton);
+    });
 
-    // Assert server error message appears
+    // Wait for the error message outside the act block
     expect(await screen.findByText(errorMessage)).toBeInTheDocument();
 
     // Assert success message does NOT appear

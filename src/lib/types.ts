@@ -322,6 +322,7 @@ export type PostData = {
   content: string;
   userId: string;
   createdAt: Date;
+  updatedAt: Date;
   groupId: string | null;
 
   // Nested relations from getPostDataInclude(userId)

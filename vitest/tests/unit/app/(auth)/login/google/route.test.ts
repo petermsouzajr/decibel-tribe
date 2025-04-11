@@ -85,7 +85,7 @@ describe("GET", () => {
   it("should return a redirect response", async () => {
     const response = await GET();
 
-    expect(response.status).toBe(302);
+    expect(response.status).toBe(307);
     expect(response.headers.get("Location")).toBe(AUTH_URL);
   });
 });

@@ -11,12 +11,6 @@ describe("[Core][Hooks] useDebounce", () => {
     vi.useRealTimers();
   });
 
-  // TODO: [Core] Implement test cases for useDebounce
-  // Test initial value
-  // Test value update after delay
-  // Test value doesn't update before delay
-  // Test changing value multiple times within delay period
-
   it("should return the initial value immediately", () => {
     const { result } = renderHook(() => useDebounce("initial", 500));
     expect(result.current).toBe("initial");

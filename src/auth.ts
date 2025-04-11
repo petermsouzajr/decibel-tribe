@@ -59,8 +59,34 @@ export const validateRequest = cache(
       };
     }
 
-    const result = await lucia.validateSession(sessionId);
+    let result:
+      | { user: User; session: Session }
+      | { user: null; session: null };
+    try {
+      result = await lucia.validateSession(sessionId);
+    } catch (error) {
+      console.error("Error validating session:", error);
+      // Clear potentially invalid cookie
+      const sessionCookie = lucia.createBlankSessionCookie();
+      try {
+        cookies().set(
+          sessionCookie.name,
+          sessionCookie.value,
+          sessionCookie.attributes,
+        );
+      } catch (cookieError) {
+        console.error(
+          "Error setting blank cookie after validation error:",
+          cookieError,
+        );
+      }
+      return {
+        user: null,
+        session: null,
+      };
+    }
 
+    // Separate try-catch for cookie setting logic (as before)
     try {
       if (result.session && result.session.fresh) {
         const sessionCookie = lucia.createSessionCookie(result.session.id);

@@ -131,7 +131,7 @@ export default function ChangePasswordDialog({
             />
 
             <DialogFooter>
-              <LoadingButton type="submit" loading={false}>
+              <LoadingButton type="submit" loading={mutation.isPending}>
                 {isSettingPassword ? "Set Password" : "Change Password"}
               </LoadingButton>
             </DialogFooter>

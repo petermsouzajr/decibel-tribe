@@ -214,7 +214,6 @@ describe("[Chat][Component] NewChatDialog", () => {
     expect(screen.queryByText(/no users found/i)).not.toBeInTheDocument();
   });
 
-  // TODO: Adjust loading/error tests if necessary
   it("should display loading state during search", async () => {
     // Test needs adjustment: maybe mock queryUsers with a pending promise
     // and find the loader via its specific mock (added next)

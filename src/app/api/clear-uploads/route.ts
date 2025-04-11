@@ -37,20 +37,30 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    new UTApi().deleteFiles(
-      unusedMedia.map(
-        (m) =>
-          m.url.split(`/a/${process.env.NEXT_PUBLIC_UPLOADTHING_APP_ID}/`)[1],
-      ),
-    );
+    if (unusedMedia.length > 0) {
+      await utapi.deleteFiles(
+        unusedMedia
+          .map((m) => {
+            const urlParts = m.url.split(
+              `/${process.env.NEXT_PUBLIC_UPLOADTHING_APP_ID}/`,
+            );
+            // Basic check to handle potential inconsistencies in URL format (e.g., /f/ vs /a/)
+            // A more robust regex might be better in the long run
+            return urlParts.length > 1
+              ? urlParts[urlParts.length - 1]
+              : undefined;
+          })
+          .filter((key): key is string => !!key), // Filter out undefined keys
+      );
 
-    await prisma.media.deleteMany({
-      where: {
-        id: {
-          in: unusedMedia.map((m) => m.id),
+      await prisma.media.deleteMany({
+        where: {
+          id: {
+            in: unusedMedia.map((m) => m.id),
+          },
         },
-      },
-    });
+      });
+    }
 
     return new Response();
   } catch (error) {

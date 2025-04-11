@@ -133,12 +133,7 @@ describe("[API][Auth] login action", () => {
     expect(mockRedirect).not.toHaveBeenCalled();
   });
 
-  // - User not found
-  // - Incorrect password
-  // - Unverified user
-  // - Session creation error
-
-  // TODO: Test invalid username
+  // Test invalid username
   it("should return error if user not found", async () => {
     // Arrange
     const credentials = { username: "nosuchuser", password: "password123" };
@@ -167,7 +162,7 @@ describe("[API][Auth] login action", () => {
     expect(mockResendVerification).not.toHaveBeenCalled();
   });
 
-  // TODO: Test invalid password
+  // Test invalid password
   it("should return error on incorrect password", async () => {
     // Arrange
     const credentials = { username: "testuser", password: "wrongpassword" };
@@ -240,7 +235,7 @@ describe("[API][Auth] login action", () => {
     expect(mockRedirect).not.toHaveBeenCalled();
   });
 
-  // TODO: Test session creation failure
+  // Test session creation failure
   it("should return generic error if session creation fails", async () => {
     // Arrange
     const credentials = { username: "testuser", password: "password123" };
@@ -272,11 +267,4 @@ describe("[API][Auth] login action", () => {
     expect(mockSetCookie).not.toHaveBeenCalled();
     expect(mockRedirect).not.toHaveBeenCalled();
   });
-
-  // TODO: Add tests for edge cases (e.g., input validation handled by Zod?)
-
-  // Remove placeholder test
-  // it('placeholder test', () => {
-  //   expect(true).toBe(true);
-  // });
 });

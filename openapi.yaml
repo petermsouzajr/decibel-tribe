@@ -1,0 +1,2027 @@
+openapi: 3.0.3
+info:
+  title: Decibel Tribe API
+  description: API specification for the Decibel Tribe application.
+  version: 0.1.0
+servers:
+  - url: /api
+    description: Local development server
+
+paths:
+  /posts/for-you:
+    get:
+      summary: Get 'For You' posts feed
+      description: Retrieves a paginated feed of public posts (not in groups). Requires authentication.
+      tags:
+        - Posts
+      parameters:
+        - name: cursor
+          in: query
+          description: Optional cursor for pagination (ID of the last post from the previous page).
+          required: false
+          schema:
+            type: string
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: A page of posts.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostsPage"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /posts/following:
+    get:
+      summary: Get posts from followed users
+      description: Retrieves a paginated feed of public posts (not in groups) only from users the authenticated user follows. Requires authentication.
+      tags:
+        - Posts
+      parameters:
+        - name: cursor
+          in: query
+          description: Optional cursor for pagination (ID of the last post from the previous page).
+          required: false
+          schema:
+            type: string
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: A page of posts from followed users.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostsPage"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /posts/{postId}:
+    parameters:
+      - name: postId
+        in: path
+        required: true
+        description: The ID of the post to operate on.
+        schema:
+          type: string
+    get:
+      summary: Get a specific post by ID
+      description: Retrieves the details of a single post. Allows anonymous access but includes user-specific details (likes, dislikes, bookmarks) if authenticated.
+      tags:
+        - Posts
+      security: [] # Allows anonymous access
+      responses:
+        "200":
+          description: The requested post details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostData"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    patch:
+      summary: Update a post
+      description: Updates the content of an existing post. Requires authentication and user must be the owner of the post.
+      tags:
+        - Posts
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  description: The new content for the post.
+              required:
+                - content
+      responses:
+        "200":
+          description: The updated post details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostData"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      summary: Delete a post
+      description: Deletes an existing post. Requires authentication and user must be the owner of the post.
+      tags:
+        - Posts
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Post successfully deleted. Returns the deleted post data.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostData" # Code returns deleted post
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /search:
+    get:
+      summary: Perform a global search
+      description: Searches across users, posts, and events based on a query string. Requires authentication. Returns public/accessible items.
+      tags:
+        - Search
+      parameters:
+        - name: q
+          in: query
+          description: The search query string.
+          required: true
+          schema:
+            type: string
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Combined search results.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/UserWithFollowerStatus"
+                  posts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PostData"
+                  events:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/EventData"
+        "400":
+          description: Missing required query parameter 'q'.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Query is required
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /groups:
+    post:
+      summary: Create a new group
+      description: Creates a new group with the authenticated user as the owner and initial admin member.
+      tags:
+        - Groups
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: The name of the group (min 3 characters).
+                  minLength: 3
+                description:
+                  type: string
+                  nullable: true
+                  description: An optional description for the group.
+              required:
+                - name
+      responses:
+        "201":
+          description: Group created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupData"
+        "400":
+          description: Invalid input (e.g., name too short).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                nameTooShort:
+                  value:
+                    error: Group name must be at least 3 characters long.
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /groups/my-groups:
+    get:
+      summary: Get groups the user is a member of
+      description: Retrieves a paginated list of groups that the authenticated user has joined (or owns).
+      tags:
+        - Groups
+      parameters:
+        - name: cursor
+          in: query
+          description: Optional cursor for pagination (ID of the last group from the previous page).
+          required: false
+          schema:
+            type: string
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: A page of the user's groups.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupsPage" # Define this schema
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /groups/{groupId}:
+    parameters:
+      - name: groupId
+        in: path
+        required: true
+        description: The ID of the group to operate on.
+        schema:
+          type: string
+    get:
+      summary: Get specific group details
+      description: Retrieves details for a specific group. Requires authentication and user must be a member.
+      tags:
+        - Groups
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Group details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupData"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError" # Used for non-members
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    patch:
+      summary: Update group details
+      description: Updates the name or description of a specific group. Requires authentication and user must be the owner.
+      tags:
+        - Groups
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 3
+                description:
+                  type: string
+                  nullable: true
+              # Allow updating one or both
+      responses:
+        "200":
+          description: Group details updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupData"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError" # Used for non-owners
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      summary: Delete a group
+      description: Deletes a specific group. Requires authentication and user must be the owner.
+      tags:
+        - Groups
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Group deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Group deleted successfully
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError" # Used for non-owners
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /groups/{groupId}/add-user:
+    post:
+      summary: Invite a user to a group
+      description: Sends an invitation (creates a pending GroupMember record) for a specified user to join the group. Requires authentication, and the authenticated user must be the group owner.
+      tags:
+        - Groups
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          description: The ID of the group to invite the user to.
+          schema:
+            type: string
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                  description: The ID of the user to invite.
+              required:
+                - userId
+      responses:
+        "200":
+          description: User invite created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User added to the group successfully. # Actual code may return GroupMember
+        "400":
+          description: Bad Request (e.g., missing userId, user already a member or invited).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                missingUserId:
+                  value: { error: "User ID is required." }
+                alreadyMember:
+                  value: { error: "User is already a member of the group." }
+                alreadyInvited:
+                  value: { error: "User has already been invited." }
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError" # Used for non-owners
+        "404":
+          $ref: "#/components/responses/NotFoundError" # Group or User not found
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /events:
+    get:
+      summary: Get events (user or public)
+      description: Retrieves a list of events. If the 'user' query parameter (username) is provided, it fetches events related to that user (respecting calendar privacy). Otherwise, it fetches events related to the authenticated user (created or attending published events). Requires authentication if no username is provided or to check private calendar.
+      tags:
+        - Events
+      parameters:
+        - name: user
+          in: query
+          description: Optional username to filter events for a specific user.
+          required: false
+          schema:
+            type: string
+      security:
+        - cookieAuth: [] # Required for own events or checking other users' privacy
+      responses:
+        "200":
+          description: A list of events matching the criteria.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EventData"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          description: User specified in the query parameter not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: User not found
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      summary: Create a new event
+      description: Creates a new event record associated with the authenticated user.
+      tags:
+        - Events
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEventInput" # Use a specific input schema
+      responses:
+        "201":
+          description: Event created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventData"
+        "400":
+          description: Invalid input data.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      summary: Delete event or remove attendee (un-RSVP) - Deprecated?
+      description: >
+        (Seems deprecated by DELETE /events/{eventId} and PATCH /events/{eventId} with action=unattend)
+        Deletes an event if the authenticated user is the owner,
+        or removes the authenticated user from the attendee list (un-RSVP) if they are not the owner.
+        Requires the event ID to be passed as a query parameter.
+      tags:
+        - Events
+      deprecated: true
+      parameters:
+        - name: eventId
+          in: query
+          description: The ID of the event to delete or un-RSVP from.
+          required: true
+          schema:
+            type: string
+      security:
+        - cookieAuth: []
+      responses:
+        "204":
+          description: Event successfully deleted or attendee successfully removed (No Content).
+        "400":
+          description: Missing required `eventId` query parameter.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Event ID is required
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          description: Event not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Event not found
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    patch:
+      summary: Update an event - Deprecated?
+      description: (Seems deprecated by PATCH /events/{eventId}) Updates the details of an existing event. Requires authentication, and the user must be the owner of the event. Requires eventId in the body.
+      tags:
+        - Events
+      deprecated: true
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEventInput" # Requires eventId within
+      responses:
+        "200":
+          description: Event updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventData"
+        "400":
+          description: Invalid input data (e.g., missing eventId).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError" # User is not the owner
+        "404":
+          description: Event not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Event not found
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    put:
+      summary: Update a specific event (with cancellation notification) - Deprecated?
+      description: >
+        (Seems deprecated by PUT /events/{eventId})
+        Updates the details of a specific event by ID.
+        Requires authentication, and the user must be the owner of the event.
+        If the `isCancelled` field changes from `false` to `true`,
+        it sends `EVENT_CANCELLED` notifications to attendees (excluding the owner).
+      tags:
+        - Events
+      deprecated: true
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEventInput" # Expects event fields to update
+      responses:
+        "200":
+          description: Event updated successfully. Returns the updated event data.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventData"
+        "400":
+          $ref: "#/components/responses/BadRequestError" # For invalid input
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError" # User is not the owner
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /events/for-you:
+    get:
+      summary: Get public events feed ("For You")
+      description: Retrieves a paginated feed of public, published, and non-cancelled events, ordered by date. Requires authentication.
+      tags:
+        - Events
+      parameters:
+        - name: cursor
+          in: query
+          description: Optional cursor for pagination (ID of the last event from the previous page).
+          required: false
+          schema:
+            type: string
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: A page of public events.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventsPage"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /events/following:
+    get:
+      summary: Get events feed from followed users
+      description: Retrieves a paginated feed of public, published, and non-cancelled events created by users the authenticated user follows, ordered by date. Requires authentication.
+      tags:
+        - Events
+      parameters:
+        - name: cursor
+          in: query
+          description: Optional cursor for pagination (ID of the last event from the previous page).
+          required: false
+          schema:
+            type: string
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: A page of events from followed users.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventsPage"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /events/{eventId}:
+    parameters:
+      - name: eventId
+        in: path
+        required: true
+        description: The ID of the event.
+        schema:
+          type: string
+          format: uuid # Assuming event IDs are UUIDs
+    get:
+      summary: Get a specific event by ID
+      description: Retrieves the details of a single event. Requires authentication. Returns 403 if the event is a draft and the user is not the owner. Includes attendee count and basic creator info.
+      tags:
+        - Events
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: The requested event details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventData"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: User does not have permission to view this draft event.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized # Actual error message from code
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    patch:
+      summary: Update event details or Attend/Unattend
+      description: >
+        Updates the details of an existing event OR adds/removes the authenticated user as an attendee.
+        Requires authentication. User must be the owner to update event details.
+        To update details, provide the fields to update in the request body.
+        To attend/unattend, provide `{"action": "attend"}` or `{"action": "unattend"}` in the request body.
+      tags:
+        - Events
+        - Attendees
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/UpdateEventInput" # Schema for updating details (fields optional)
+                - $ref: "#/components/schemas/EventActionInput" # Schema for attend/unattend action
+      responses:
+        "200":
+          description: Event updated or Attend/Unattend action successful. Returns the updated event data or attendee record.
+          content:
+            application/json:
+              schema:
+                oneOf: # Response depends on action
+                  - $ref: "#/components/schemas/EventData" # If update
+                  - $ref: "#/components/schemas/EventAttendee" # If attend/unattend
+        "400":
+          description: Invalid input data or invalid action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                invalidData: { value: { error: "Invalid data", details: [] } }
+                invalidAction: { value: { error: "Invalid action" } }
+                alreadyAttending: { value: { error: "User is already an attendee of this event" } }
+                notAttending: { value: { error: "User is not an attendee of this event" } }
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError" # User is not the owner for update
+        "404":
+          $ref: "#/components/responses/NotFoundError" # Event not found
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    put:
+      summary: Update event details (with cancellation notification)
+      description: >
+        Updates the details of a specific event by ID using PUT semantics (potentially full replacement, though current code behaves like PATCH).
+        Requires authentication, and the user must be the owner of the event.
+        If the `isCancelled` field changes from `false` to `true`,
+        it sends `EVENT_CANCELLED` notifications to attendees (excluding the owner).
+      tags:
+        - Events
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEventInput" # Expects event fields to update
+      responses:
+        "200":
+          description: Event updated successfully. Returns the updated event data.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventData"
+        "400":
+          $ref: "#/components/responses/BadRequestError" # For invalid input
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError" # User is not the owner
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      summary: Delete an event
+      description: Deletes a specific event. Requires authentication, and the user must be the owner of the event.
+      tags:
+        - Events
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Event deleted successfully. Returns the deleted event data.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventData"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError" # User is not the owner
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /events/{eventId}/attendees:
+    parameters:
+      - name: eventId
+        in: path
+        required: true
+        description: The ID of the event.
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get event attendees
+      description: Retrieves a list of users attending a specific event. Used by client to check if current user is attending. Requires authentication.
+      tags:
+        - Events
+        - Attendees
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: A list of event attendee records, including basic user details.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EventAttendeeWithUser" # Includes UserSummary
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          description: Event not found (although code might return empty list [] instead).
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {}
+              example: []
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    # POST removed - handled by PATCH /events/{eventId} with action=attend
+
+  /auth/logout:
+    post:
+      summary: Log out the current user
+      description: Invalidates the user's current session, clears the session cookie, and redirects the user to the login page. This is typically triggered by a user action (e.g., clicking a logout button) that invokes the corresponding server action.
+      tags:
+        - Authentication
+      security:
+        - cookieAuth: [] # Requires an active session to invalidate
+      responses:
+        "302": # Server actions often result in redirects
+          description: Redirects to the login page upon successful logout.
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Contains the URL to redirect to (`/login`).
+        "401":
+          description: Unauthorized - No active session found to invalidate.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /notifications:
+    get:
+      summary: Get user notifications
+      description: Retrieves a paginated list of notifications for the authenticated user, ordered by most recent first.
+      tags:
+        - Notifications
+      parameters:
+        - name: cursor
+          in: query
+          description: Optional cursor for pagination (ID of the last notification from the previous page).
+          required: false
+          schema:
+            type: string
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: A page of notifications.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationsPage"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /notifications/unread-count:
+    get:
+      summary: Get unread notification count
+      description: Retrieves the count of notifications for the authenticated user that are marked as unread.
+      tags:
+        - Notifications
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: The count of unread notifications.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unreadCount:
+                    type: integer
+                    example: 5
+                    description: The number of unread notifications.
+                required:
+                  - unreadCount
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /notifications/mark-as-read:
+    patch:
+      summary: Mark all notifications as read
+      description: Updates the status of all unread notifications for the authenticated user to 'read'.
+      tags:
+        - Notifications
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Notifications successfully marked as read.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Notifications marked as read
+                required:
+                  - message
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /users/{userId}:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        description: The ID of the target user.
+        schema:
+          type: string
+    get:
+      summary: Get user profile data
+      description: Retrieves public profile data for a user, including follower status relative to the authenticated user. Requires authentication.
+      tags:
+        - Users
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: User profile data.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserWithFollowerStatus" # Based on getUserDataSelect
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    # Follow sub-resource
+    follow:
+      post:
+        summary: Follow a user
+        description: Creates a follow relationship where the authenticated user follows the user specified by `{userId}`. Creates a notification for the followed user.
+        tags:
+          - Users
+          - Followers
+        security:
+          - cookieAuth: []
+        responses:
+          "200":
+            description: Follow operation successful. Returns the created follow record.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/FollowRecord" # Define this
+          "400":
+            description: Bad request (e.g., trying to follow self, already following).
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+          "401":
+            $ref: "#/components/responses/UnauthorizedError"
+          "404":
+            description: Target user not found.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+          "500":
+            $ref: "#/components/responses/InternalServerError"
+      delete:
+        summary: Unfollow a user
+        description: Removes a follow relationship where the authenticated user follows the user specified by `{userId}`.
+        tags:
+          - Users
+          - Followers
+        security:
+          - cookieAuth: []
+        responses:
+          "200":
+            description: Unfollow operation successful. Returns the deleted follow record.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/FollowRecord"
+          "400":
+            description: Bad request (e.g., trying to unfollow self, not following).
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+          "401":
+            $ref: "#/components/responses/UnauthorizedError"
+          "404":
+            description: Target user not found.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+          "500":
+            $ref: "#/components/responses/InternalServerError"
+
+  /users/preferences:
+    get:
+      summary: Get user preferences
+      description: Retrieves the preferences for the authenticated user. Requires authentication.
+      tags:
+        - Users
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: User preferences retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPreferences"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          description: User preferences not found (might return defaults or empty object).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPreferences" # Or Error schema if code throws 404
+              example:
+                # Default preferences might be returned if none exist
+                theme: "system"
+                notificationsEnabled: true
+                calendar: "PRIVATE"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    patch:
+      summary: Update user preferences
+      description: Updates or creates the preferences for the authenticated user. Requires authentication. Partial updates are allowed.
+      tags:
+        - Users
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserPreferencesInput" # Use input schema with optional fields
+      responses:
+        "200":
+          description: User preferences updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPreferences"
+        "400":
+          description: Invalid input data for preferences.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /get-token:
+    get:
+      summary: Get Stream Chat token
+      description: Generates a short-lived token for the authenticated user to connect to Stream Chat. Requires authentication.
+      tags:
+        - Authentication
+        - Chat
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Stream Chat token generated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /send-verification:
+    get:
+      summary: Verify email address
+      description: Verifies a user's email address using a token provided in the query parameter. Creates a session and redirects on success.
+      tags:
+        - Authentication
+      parameters:
+        - name: token
+          in: query
+          required: true
+          description: The email verification token.
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Verification successful, user logged in and redirected to /. The Location header will be '/'.
+          headers:
+            Location:
+              schema:
+                type: string
+                example: /
+        "400":
+          description: Redirects to /login if the token is missing or invalid (No JSON body).
+          headers:
+            Location:
+              schema:
+                type: string
+                example: /login
+        "404":
+          description: Redirects to /login if the token is not found or expired (No JSON body).
+          headers:
+            Location:
+              schema:
+                type: string
+                example: /login
+        "500":
+          description: Redirects to /login if an internal server error occurred (No JSON body).
+          headers:
+            Location:
+              schema:
+                type: string
+                example: /login
+
+  /clear-expired-tokens:
+    get:
+      summary: Clear expired email verification tokens (Cron)
+      description: Deletes expired email verification tokens from the database. Requires cron job authentication.
+      tags:
+        - Cron
+      security:
+        - cronAuth: []
+      responses:
+        "200":
+          description: Expired tokens cleared successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CronSuccessResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError" # Reusing standard Unauthorized
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /clear-unverified-users:
+    get:
+      summary: Clear old unverified users (Cron)
+      description: Deletes unverified users (not signed up via Google) older than 14 days and also clears expired verification tokens associated with them. Requires cron job authentication.
+      tags:
+        - Cron
+      security:
+        - cronAuth: []
+      responses:
+        "200":
+          description: Cleanup successful. Reports counts of deleted tokens and users.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CronClearUnverifiedResponse" # More specific response
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/login:
+    post:
+      summary: User login
+      description: Authenticates a user with username and password, returning a session cookie object on success.
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful. Session cookie is set via Set-Cookie header, response body confirms success.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Login successful
+          headers:
+            Set-Cookie:
+              $ref: "#/components/headers/SessionCookie" # Reference header definition
+        "401":
+          description: Invalid username or password.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Invalid username or password
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/callback/google:
+    get:
+      summary: Google OAuth callback
+      description: Handles the callback from Google OAuth flow. Validates state, exchanges code for token, fetches user info, logs in or creates user, sets session, and redirects to /.
+      tags:
+        - Authentication
+      parameters:
+        - name: code
+          in: query
+          required: true
+          description: The authorization code provided by Google.
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          description: The state parameter for CSRF protection. Must match the 'state' cookie.
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Authentication successful, user logged in and redirected to /. The Location header will be '/'.
+          headers:
+            Location:
+              schema:
+                type: string
+                example: /
+            Set-Cookie:
+              $ref: "#/components/headers/SessionCookie" # Session cookie is set on success
+        "400":
+          description: Invalid request (missing parameters, state mismatch, or OAuth error like invalid_grant). Redirects to /login. (No JSON body)
+          headers:
+            Location:
+              schema:
+                type: string
+                example: /login
+        "500":
+          description: Internal server error during token exchange, user lookup/creation, or session creation. Redirects to /login. (No JSON body)
+          headers:
+            Location:
+              schema:
+                type: string
+                example: /login
+
+  /clear-uploads:
+    get:
+      summary: Clear unused media uploads (Cron)
+      description: Deletes media files from storage and database that are not associated with any post and are older than 24 hours. Requires cron job authentication.
+      tags:
+        - Cron
+      security:
+        - cronAuth: []
+      responses:
+        "200":
+          description: Unused uploads cleared successfully. Reports count of deleted items.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CronClearUploadsResponse" # Specific response
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /messages/unread-count:
+    get:
+      summary: Get unread message count
+      description: Retrieves the total count of unread messages for the authenticated user from Stream Chat. Requires authentication.
+      tags:
+        - Messages
+        - Chat
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Unread message count retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageCountInfo"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  schemas:
+    # ---------- Basic & Common Schemas ----------
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: A message describing the error.
+      required:
+        - error
+
+    UserSummary: # Basic user info used for embedding (based on getUserDataSelect)
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        displayName:
+          type: string
+          nullable: true
+        avatarUrl:
+          type: string
+          format: url
+          nullable: true
+        createdAt: # Added from getUserDataSelect
+          type: string
+          format: date-time
+        isAdmin: # Added from getUserDataSelect
+          type: boolean
+        _count: # Added from getUserDataSelect
+          type: object
+          properties:
+            posts:
+              type: integer
+              description: Count of posts by this user.
+            followers:
+              type: integer
+              description: Count of users following this user.
+            following:
+              type: integer
+              description: Count of users this user is following.
+          required: [posts, followers, following]
+      required:
+        - id
+        - username
+        - createdAt
+        - isAdmin
+        - _count
+
+    UserWithFollowerStatus: # Full user profile data (extends UserSummary, adds isFollowedByMe)
+      allOf:
+        - $ref: "#/components/schemas/UserSummary"
+        - type: object
+          properties:
+            isFollowedByMe:
+              type: boolean
+              description: Indicates if the logged-in user follows this user. Only present if logged in.
+          # required: [isFollowedByMe] # Only present if logged in, so not strictly required
+
+    Media: # Attachment type
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+          format: url
+        type:
+          type: string
+          enum: [IMAGE, VIDEO] # Based on Prisma schema
+        postId:
+          type: string
+          nullable: true # May not be associated yet during upload
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - url
+        - type
+        - createdAt
+        - updatedAt
+
+    # ---------- Post Related Schemas ----------
+    PostData: # Represents a single post with included data (based on getPostDataInclude)
+      type: object
+      properties:
+        id:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        userId:
+          type: string
+        groupId:
+          type: string
+          nullable: true
+        user: # Embedded user data
+          $ref: "#/components/schemas/UserWithFollowerStatus"
+        attachments: # Array of media objects
+          type: array
+          items:
+            $ref: "#/components/schemas/Media"
+        Group: # Embedded group data (if post belongs to a group)
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+          required: [id, name]
+        _count: # Counts for post interactions
+          type: object
+          properties:
+            likes:
+              type: integer
+            dislikes:
+              type: integer
+            comments:
+              type: integer
+          required: [likes, dislikes, comments]
+        # Conditional fields (only included if user is logged in)
+        likes:
+          type: array
+          description: Included if user is logged in; contains an entry if the user liked the post.
+          items:
+            type: object
+            properties:
+              userId:
+                type: string
+            required: [userId]
+        dislikes:
+          type: array
+          description: Included if user is logged in; contains an entry if the user disliked the post.
+          items:
+            type: object
+            properties:
+              userId:
+                type: string
+            required: [userId]
+        bookmarks:
+          type: array
+          description: Included if user is logged in; contains an entry if the user bookmarked the post.
+          items:
+            type: object
+            properties:
+              userId:
+                type: string
+            required: [userId]
+      required:
+        - id
+        - content
+        - createdAt
+        - updatedAt
+        - userId
+        - user
+        - attachments
+        - _count
+
+    PostsPage: # Represents a paginated list of posts
+      type: object
+      properties:
+        posts:
+          type: array
+          items:
+            $ref: "#/components/schemas/PostData"
+        nextCursor:
+          type: string
+          nullable: true
+          description: The cursor to use to fetch the next page, or null if no more pages.
+      required:
+        - posts
+
+    # ---------- Event Related Schemas ----------
+    EventAttendee: # Basic attendee record
+      type: object
+      properties:
+        userId:
+          type: string
+        eventId:
+          type: string
+      required: [userId, eventId]
+
+    EventAttendeeWithUser: # Attendee record including UserSummary
+       allOf:
+        - $ref: "#/components/schemas/EventAttendee"
+        - type: object
+          properties:
+            user:
+              $ref: "#/components/schemas/UserSummary"
+          required: [user]
+
+    EventData: # Represents event details (based on getEventDataInclude)
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        location:
+          type: string
+        url:
+          type: string
+          format: url
+          nullable: true
+        when:
+          type: string
+          format: date-time
+        startTime:
+          type: string
+          pattern: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$' # HH:mm format
+          example: "14:30"
+        endTime:
+          type: string
+          pattern: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$' # HH:mm format
+          example: "16:00"
+        performers:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [DRAFT, PUBLISHED] # Based on Prisma schema/usage
+        visibility:
+          type: string
+          enum: [PRIVATE, PUBLIC] # Based on Prisma schema/usage
+        isCancelled:
+          type: boolean
+        createdById:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        createdBy: # Embedded user data (owner)
+          $ref: "#/components/schemas/UserSummary" # Uses getUserDataSelect
+        attendees: # List of attendees with user details
+          type: array
+          items:
+            $ref: "#/components/schemas/EventAttendeeWithUser" # Uses getUserDataSelect for user
+        _count: # Count of attendees
+          type: object
+          properties:
+            attendees:
+              type: integer
+          required: [attendees]
+      required:
+        - id
+        - title
+        - location
+        - when
+        - startTime
+        - endTime
+        - performers
+        - status
+        - visibility
+        - isCancelled
+        - createdById
+        - createdAt
+        - updatedAt
+        - createdBy
+        - attendees
+        - _count
+
+    CreateEventInput: # Schema for POST /events request body
+       type: object
+       properties:
+         title:
+           type: string
+         location:
+           type: string
+         description:
+           type: string
+           nullable: true
+         url:
+           type: string
+           format: url
+           nullable: true
+         when:
+           type: string
+           format: date-time
+         startTime:
+           type: string
+           pattern: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$' # HH:mm format
+         endTime:
+           type: string
+           pattern: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$' # HH:mm format
+         performers:
+           type: array
+           items:
+             type: string
+         status:
+           type: string
+           enum: [DRAFT, PUBLISHED]
+         visibility:
+           type: string
+           enum: [PRIVATE, PUBLIC]
+       required:
+         - title
+         - location
+         - when
+         - startTime
+         - endTime
+         - performers
+         - status
+         - visibility
+
+    UpdateEventInput: # Schema for PATCH/PUT /events/{eventId} request body (update case)
+       type: object
+       properties:
+         title:
+           type: string
+         location:
+           type: string
+         description:
+           type: string
+           nullable: true
+         url:
+           type: string
+           format: url
+           nullable: true
+         when:
+           type: string
+           format: date-time
+         startTime:
+           type: string
+           pattern: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$' # HH:mm format
+         endTime:
+           type: string
+           pattern: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$' # HH:mm format
+         performers:
+           type: array
+           items:
+             type: string
+         status:
+           type: string
+           enum: [DRAFT, PUBLISHED]
+         visibility:
+           type: string
+           enum: [PRIVATE, PUBLIC]
+         isCancelled: # Added for PUT handler, optional for PATCH
+           type: boolean
+       # No fields are strictly required for PATCH, any subset can be provided
+       # PUT might imply all fields, but current code doesn't enforce
+
+    EventActionInput: # Schema for PATCH /events/{eventId} request body (action case)
+      type: object
+      properties:
+        action:
+          type: string
+          enum: [attend, unattend]
+      required:
+        - action
+
+    EventsPage: # Represents a paginated list of events
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventData"
+        nextCursor:
+          type: string
+          nullable: true
+          description: The cursor to use to fetch the next page, or null if no more pages.
+      required:
+        - events
+
+    # ---------- Group Related Schemas ----------
+    GroupMember: # Basic group member info
+      type: object
+      properties:
+        userId:
+          type: string
+        groupId:
+          type: string
+        role:
+          type: string
+          enum: [MEMBER, ADMIN] # Based on Prisma schema
+        acceptedInvite:
+          type: boolean
+      required: [userId, groupId, role, acceptedInvite]
+
+    GroupMemberWithUser: # Group member info including UserSummary
+      allOf:
+        - $ref: "#/components/schemas/GroupMember"
+        - type: object
+          properties:
+            user:
+              $ref: "#/components/schemas/UserSummary"
+          required: [user]
+
+    GroupData: # Represents group details (needs verification against API includes)
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        ownerId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        # Included fields based on likely Prisma queries:
+        owner:
+          $ref: "#/components/schemas/UserSummary" # Assuming owner details are included
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupMemberWithUser" # Assuming members with user details are included
+        _count:
+          type: object
+          properties:
+            members:
+              type: integer
+            posts:
+              type: integer
+      required:
+        - id
+        - name
+        - ownerId
+        - createdAt
+        - updatedAt
+        # Required status of includes depends on actual API response
+
+    GroupsPage: # Represents a paginated list of groups
+      type: object
+      properties:
+        groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupData" # Or potentially a GroupSummary
+        nextCursor:
+          type: string
+          nullable: true
+          description: The cursor to use to fetch the next page, or null if no more pages.
+      required:
+        - groups
+
+    # ---------- Notification Schemas ----------
+    NotificationData: # Represents a single notification (define based on Prisma model + includes)
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [FOLLOW, EVENT_ATTEND, EVENT_CANCELLED, GROUP_INVITE] # Example types
+        userId:
+          type: string # Recipient User ID
+        emitterId:
+          type: string # User ID of the person who caused the notification
+        emitterUser: # Embedded emitter user data
+          $ref: "#/components/schemas/UserSummary"
+        postId:
+          type: string
+          nullable: true
+        post: # Embedded post data (if relevant)
+          $ref: "#/components/schemas/PostData" # Might be too heavy, maybe PostSummary?
+        eventId:
+          type: string
+          nullable: true
+        event: # Embedded event data (if relevant)
+          $ref: "#/components/schemas/EventData" # Might be too heavy, maybe EventSummary?
+        groupId:
+          type: string
+          nullable: true
+        group: # Embedded group data (if relevant)
+          $ref: "#/components/schemas/GroupData" # Might be too heavy, maybe GroupSummary?
+        read:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - type
+        - userId
+        - emitterId
+        - emitterUser
+        - read
+        - createdAt
+
+    NotificationsPage: # Paginated list of notifications
+      type: object
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationData"
+        nextCursor:
+          type: string
+          nullable: true
+      required:
+        - notifications
+
+    # ---------- User/Auth Schemas ----------
+    UserPreferences: # Based on Prisma model UserPreference
+      type: object
+      properties:
+        userId:
+          type: string
+        theme:
+          type: string
+          enum: [light, dark, system]
+          default: system
+        notificationsEnabled:
+          type: boolean
+          default: true
+        calendar:
+          type: string
+          enum: [PUBLIC, PRIVATE] # From search results
+          default: PRIVATE
+      required:
+        - userId
+        - theme
+        - notificationsEnabled
+        - calendar
+
+    UserPreferencesInput: # For PATCH /users/preferences
+      type: object
+      properties:
+        theme:
+          type: string
+          enum: [light, dark, system]
+        notificationsEnabled:
+          type: boolean
+        calendar:
+          type: string
+          enum: [PUBLIC, PRIVATE]
+      # All fields optional for PATCH
+
+    FollowRecord: # Response from POST/DELETE follow/unfollow
+      type: object
+      properties:
+        followerId:
+          type: string
+        followingId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [followerId, followingId, createdAt]
+
+    TokenResponse: # For GET /get-token
+      type: object
+      properties:
+        token:
+          type: string
+          description: The short-lived Stream Chat authentication token.
+      required:
+        - token
+
+    MessageCountInfo: # For GET /messages/unread-count
+      type: object
+      properties:
+        unreadCount:
+          type: integer
+          format: int32
+          description: The total number of unread messages from Stream Chat.
+      required:
+        - unreadCount
+
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required:
+        - username
+        - password
+
+    # LoginResponse removed - success indicated by 200 OK + Set-Cookie header
+
+    # ---------- Cron Job Schemas ----------
+    CronSuccessResponse: # Generic success response for cron jobs
+      type: object
+      properties:
+        message:
+          type: string
+          description: A message indicating the result of the cron job execution.
+          example: Operation successful.
+      required:
+        - message
+
+    CronClearUnverifiedResponse: # Specific response for clearing users/tokens
+       type: object
+       properties:
+         deletedTokensCount:
+           type: integer
+         deletedUsersCount:
+           type: integer
+         message:
+           type: string
+           example: Deleted 2 token(s) and 1 user(s).
+       required: [deletedTokensCount, deletedUsersCount, message]
+
+    CronClearUploadsResponse: # Specific response for clearing uploads
+      type: object
+      properties:
+        deletedCount:
+          type: integer
+        message:
+          type: string
+          example: Deleted 5 unused media uploads.
+      required: [deletedCount, message]
+
+  # ---------- Headers ----------
+  headers:
+    SessionCookie:
+      description: Session cookie set by the server upon successful login or session validation. Actual cookie attributes (HttpOnly, Secure, Path, Expires/Max-Age, SameSite) depend on Lucia configuration and environment.
+      schema:
+        type: string # Value is the Set-Cookie header string
+        example: auth_session=abcdef12345...; Path=/; HttpOnly; Secure; SameSite=Lax
+
+  # ---------- Security Schemes ----------
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_session # Use the actual session cookie name from lucia config
+      description: Authentication cookie obtained via login or OAuth callback. Send requests with `credentials: 'include'` on the client.
+    cronAuth: # New scheme for cron job Bearer token
+      type: http
+      scheme: bearer
+      bearerFormat: plain # Assuming the secret is used directly
+      description: Bearer token authentication required for cron job endpoints (using CRON_SECRET environment variable value).
+
+  # ---------- Standard Responses ----------
+  responses:
+    UnauthorizedError:
+      description: Authentication information is missing or invalid (e.g., no session cookie, invalid session).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: Unauthorized
+    ForbiddenError:
+      description: Authenticated user does not have permission to perform the action (e.g., not owner, not admin, not group member).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: Forbidden
+    NotFoundError:
+      description: The requested resource (e.g., post, event, user, group) was not found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: Not Found # Message might be more specific like "Post not found"
+    BadRequestError:
+       description: The request is invalid (e.g., missing required parameters, invalid data format, validation error).
+       content:
+         application/json:
+           schema:
+             $ref: "#/components/schemas/Error" # Or a more detailed validation error schema
+           example:
+             error: Invalid input # Or validation details
+    InternalServerError:
+      description: An unexpected error occurred on the server.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: Internal server error

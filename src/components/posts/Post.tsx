@@ -85,6 +85,11 @@ export default function Post({ post }: PostProps) {
               suppressHydrationWarning
             >
               {formatRelativeDate(post.createdAt)}
+              {post.updatedAt &&
+                post.updatedAt.getTime() >
+                  post.createdAt.getTime() + 1000 * 60 && (
+                  <span className="pl-1 text-xs">(Edited)</span>
+                )}
             </Link>
           </div>
           {post.user.id === user.id ? (

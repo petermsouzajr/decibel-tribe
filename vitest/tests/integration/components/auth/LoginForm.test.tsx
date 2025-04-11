@@ -1,7 +1,7 @@
 // src/components/auth/LoginForm.test.tsx
 import React from "react";
 import { describe, it, expect, vi, beforeEach, MockedFunction } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import LoginForm from "@/app/(auth)/login/LoginForm"; // Correct component path
 import { login } from "@/app/(auth)/login/actions"; // Action to mock
@@ -74,10 +74,12 @@ describe("[Auth][Component] LoginForm", () => {
     await user.type(usernameInput, testUsername);
     await user.type(passwordInput, testPassword);
 
-    // Submit
-    await user.click(submitButton);
+    // Wrap only the submit click in act
+    await act(async () => {
+      await user.click(submitButton);
+    });
 
-    // Assert action was called with correct values
+    // Wait for the action call *after* the act block
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledTimes(1);
     });
@@ -104,10 +106,12 @@ describe("[Auth][Component] LoginForm", () => {
     await user.type(usernameInput, "testuser");
     await user.type(passwordInput, "wrongpassword");
 
-    // Submit
-    await user.click(submitButton);
+    // Wrap only the submit click in act
+    await act(async () => {
+      await user.click(submitButton);
+    });
 
-    // Assert server error message appears
+    // Wait for the error message outside the act block
     const errorElement = await screen.findByText(errorMessage);
     expect(errorElement).toBeInTheDocument();
   });

@@ -53,10 +53,22 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
       take: pageSize + 1,
       cursor: cursor ? { id: cursor } : undefined,
+      skip: cursor ? 1 : undefined,
     });
 
-    const nextCursor = posts.length > pageSize ? posts[pageSize].id : null;
+    // Adjust nextCursor calculation based on whether skip was used
+    let nextCursor: string | null = null;
+    if (posts.length > pageSize) {
+      if (cursor) {
+        // If we skipped the cursor, the extra item is at index pageSize - 1
+        nextCursor = posts[pageSize - 1].id;
+      } else {
+        // If we didn't skip, the extra item is at index pageSize
+        nextCursor = posts[pageSize].id;
+      }
+    }
 
+    // Slice always takes the first pageSize items
     const typedPosts = posts.slice(0, pageSize) as PostData[];
 
     const data: PostsPage = {

@@ -1,23 +1,95 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 // Import the function to test - assuming default export
 import sendVerificationEmail from "@/lib/sendEmail";
 
-// Mock the email sending library (e.g., Resend)
-vi.mock("resend", () => ({
-  Resend: vi.fn(() => ({
-    emails: {
-      send: vi.fn(),
-    },
-  })),
+// --- Mocks ---
+
+// Hoist mock function variables
+const { mockSendMail, mockCreateTransport } = vi.hoisted(() => ({
+  mockSendMail: vi.fn(),
+  mockCreateTransport: vi.fn(),
 }));
 
-describe("[Auth][Email] Send Email Function", () => {
-  // TODO: [Auth] Implement test cases for sendVerificationEmail
-  // Test successful sending (mock resend.emails.send to resolve)
-  // Test error handling (mock resend.emails.send to reject)
-  // Verify correct parameters passed to resend.emails.send
+// Mock nodemailer
+vi.mock("nodemailer", () => ({
+  default: {
+    createTransport: mockCreateTransport,
+  },
+}));
 
-  it("should have basic placeholder test", () => {
-    expect(true).toBe(true); // Placeholder
+// --- End Mocks ---
+
+describe("[Util][Email] sendVerificationEmail", () => {
+  const testEmail = "test@example.com";
+  const testUrl = "http://localhost:3000/verify?token=12345";
+  const mockTransporter = { sendMail: mockSendMail };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    // Default behavior: createTransport returns the mock transporter
+    mockCreateTransport.mockReturnValue(mockTransporter);
+    // Default behavior: sendMail resolves successfully
+    mockSendMail.mockResolvedValue("Email sent successfully");
+
+    // Mock process.env if needed (e.g., for the 'from' address)
+    process.env.EMAIL_USERNAME = "noreply@decibeltribe.com";
+  });
+
+  it("should call createTransport with correct config", async () => {
+    await sendVerificationEmail(testEmail, testUrl);
+    expect(mockCreateTransport).toHaveBeenCalledTimes(1);
+    expect(mockCreateTransport).toHaveBeenCalledWith({
+      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.EMAIL_USERNAME,
+        pass: process.env.EMAIL_PASSWORD, // Assumes EMAIL_PASSWORD is set in env
+      },
+    });
+  });
+
+  it("should call sendMail with correct parameters", async () => {
+    await sendVerificationEmail(testEmail, testUrl);
+    expect(mockSendMail).toHaveBeenCalledTimes(1);
+    expect(mockSendMail).toHaveBeenCalledWith({
+      from: `"Decibel Tribe" <${process.env.EMAIL_USERNAME}>`,
+      to: testEmail,
+      subject: "Verify your email",
+      text: `Please click the link below to verify your email: ${testUrl}`,
+      html: expect.stringContaining(testUrl), // Check if URL is in HTML
+    });
+    // More specific HTML check if needed
+    expect(mockSendMail.mock.calls[0][0].html).toContain(
+      `<a href="${testUrl}">`,
+    );
+  });
+
+  it("should resolve when sendMail resolves", async () => {
+    const expectedResult = "Success Info";
+    mockSendMail.mockResolvedValue(expectedResult);
+    await expect(sendVerificationEmail(testEmail, testUrl)).resolves.toBe(
+      expectedResult,
+    );
+  });
+
+  it("should reject when sendMail rejects", async () => {
+    const expectedError = new Error("SMTP Error");
+    mockSendMail.mockRejectedValue(expectedError);
+    await expect(sendVerificationEmail(testEmail, testUrl)).rejects.toThrow(
+      expectedError,
+    );
+  });
+
+  it("should reject if createTransport throws (less likely but possible)", async () => {
+    const expectedError = new Error("Transport config error");
+    mockCreateTransport.mockImplementation(() => {
+      throw expectedError;
+    });
+    await expect(sendVerificationEmail(testEmail, testUrl)).rejects.toThrow(
+      expectedError,
+    );
+    expect(mockSendMail).not.toHaveBeenCalled(); // Ensure sendMail wasn't reached
   });
 });

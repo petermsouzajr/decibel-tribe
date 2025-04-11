@@ -103,7 +103,4 @@ describe("[Social][Hooks] useFollowerInfo", () => {
       `/api/users/${userId}/followers`,
     );
   });
-
-  // TODO: [Social] Test scenarios with different initial states if relevant.
-  // TODO: [Social] Test refetching behavior if specific logic depends on it.
 });

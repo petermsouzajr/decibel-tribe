@@ -6,10 +6,10 @@ import { slugify } from "@/lib/utils";
 import { OAuth2RequestError } from "arctic";
 import { generateIdFromEntropySize } from "lucia";
 import { cookies } from "next/headers";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { randomInt } from "crypto";
 
-const generateUniqueUsername = async (baseUsername: any, prisma: any) => {
+const generateUniqueUsername = async (baseUsername: string, prisma: any) => {
   let username = baseUsername;
   let isUnique = false;
 
@@ -69,6 +69,28 @@ export async function GET(req: NextRequest) {
     });
 
     if (existingUser) {
+      if (!existingUser.googleId) {
+        try {
+          await prisma.user.update({
+            where: {
+              id: existingUser.id,
+            },
+            data: {
+              googleId: googleUser.id,
+            },
+          });
+        } catch (updateError) {
+          console.error(
+            "Failed to link Google ID to existing user:",
+            updateError,
+          );
+          return NextResponse.json(
+            { error: "Internal server error during Google account linking" },
+            { status: 500 },
+          );
+        }
+      }
+
       const session = await lucia.createSession(existingUser.id, {});
       const sessionCookie = lucia.createSessionCookie(session.id);
       cookies().set(
@@ -76,16 +98,6 @@ export async function GET(req: NextRequest) {
         sessionCookie.value,
         sessionCookie.attributes,
       );
-      if (!existingUser.googleId) {
-        await prisma.user.update({
-          where: {
-            id: existingUser.id,
-          },
-          data: {
-            googleId: googleUser.id,
-          },
-        });
-      }
 
       return new Response(null, {
         status: 302,
@@ -132,14 +144,16 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error(error);
+    console.error("Google OAuth Callback Error:", error);
     if (error instanceof OAuth2RequestError) {
-      return new Response(null, {
-        status: 400,
-      });
+      return NextResponse.json(
+        { error: "Invalid OAuth request", details: error.message },
+        { status: 400 },
+      );
     }
-    return new Response(null, {
-      status: 500,
-    });
+    return NextResponse.json(
+      { error: "Internal server error during Google login" },
+      { status: 500 },
+    );
   }
 }

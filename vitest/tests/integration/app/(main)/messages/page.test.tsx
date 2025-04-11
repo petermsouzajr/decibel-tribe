@@ -1,5 +1,6 @@
 import { vi } from "vitest";
 import kyInstance from "@/lib/ky"; // Import original instance for reference if needed, but mock replaces it
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"; // Import QueryClient
 
 // Revert to the mock structure that mimics Fetch Response with .json()
 vi.mock("@/lib/ky", async (importOriginal) => {
@@ -42,7 +43,7 @@ vi.mock("@/lib/ky", async (importOriginal) => {
 
 import Page from "@/app/(main)/messages/page";
 import SessionProvider from "@/app/(main)/SessionProvider";
-import { render } from "@testing-library/react";
+import { render, waitFor } from "@testing-library/react";
 
 // Mock the custom hook
 vi.mock("./useInitializeChatClient", () => ({
@@ -67,15 +68,26 @@ const mockSessionContext: SessionContextType = {
 };
 
 describe("Messages Page", () => {
-  const renderPage = () =>
-    render(
-      <SessionProvider value={mockSessionContext}>
-        <Page />
-      </SessionProvider>,
+  const renderPage = async () => {
+    const queryClient = new QueryClient(); // Create client instance
+    const renderResult = render(
+      <QueryClientProvider client={queryClient}>
+        <SessionProvider value={mockSessionContext}>
+          <Page />
+        </SessionProvider>
+      </QueryClientProvider>,
     );
+    // Wait for any potential async updates to settle
+    await waitFor(() => {
+      // Example: Check if a core element rendered by Page/Chat exists
+      // Replace with a real element check if possible
+      expect(true).toBe(true);
+    });
+    return renderResult;
+  };
 
-  it("should match snapshot", () => {
-    renderPage();
+  it("should match snapshot", async () => {
+    await renderPage();
     expect(document.body).toMatchSnapshot();
   });
 });

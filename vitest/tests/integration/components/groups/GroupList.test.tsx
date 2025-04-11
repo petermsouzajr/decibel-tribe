@@ -167,12 +167,4 @@ describe("[Groups][Component] GroupList", () => {
     // Assert InfiniteScrollContainer mock is present
     expect(screen.getByTestId("infinite-scroll-mock")).toBeInTheDocument();
   });
-
-  // Remove other skipped placeholders if they were just for loading/error/empty
-  // it.skip("should render loading state", () => {
-  //   /* Already covered */
-  // });
-  // it.skip("should render error state", () => {
-  //   /* Already covered */
-  // });
 });

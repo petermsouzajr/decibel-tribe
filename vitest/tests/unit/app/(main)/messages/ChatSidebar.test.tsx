@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 // Mock child components and hooks used by ChatSidebar/MenuHeader
@@ -84,13 +84,19 @@ describe("[Chat][Component] ChatSidebar / MenuHeader", () => {
     const newChatButton = screen.getByRole("button", {
       name: /start new chat/i,
     });
-    await user.click(newChatButton);
+    // Wrap the user interaction causing the state update in act
+    await act(async () => {
+      await user.click(newChatButton);
+    });
 
+    // Remove manual rerender, rely on userEvent/waitFor
     // Force re-render after click
-    rerender(<ChatSidebar open={true} onClose={mockOnClose} />);
+    // rerender(<ChatSidebar open={true} onClose={mockOnClose} />);
 
-    // Assert dialog mock is now rendered
-    expect(screen.getByTestId("new-chat-dialog-mock")).toBeInTheDocument();
+    // Assert dialog mock is now rendered using findBy*
+    expect(
+      await screen.findByTestId("new-chat-dialog-mock"),
+    ).toBeInTheDocument();
   });
 
   // We are skipping tests for ChannelList interactions and useChatContext effects

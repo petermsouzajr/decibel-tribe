@@ -30,15 +30,15 @@ exports[`Edit Event Page > should match snapshot 1`] = `
               class="flex w-full justify-around"
             >
               <span
-                class="w-16 cursor-pointer text-muted-foreground font-bold underline"
+                class="w-16 cursor-pointer text-muted-foreground opacity-80"
               >
                 PRIVATE
               </span>
               <button
-                aria-checked="false"
+                aria-checked="true"
                 aria-describedby=":rk:-form-item-description"
                 aria-invalid="false"
-                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out bg-muted-foreground"
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out bg-primary"
                 id=":rk:-form-item"
                 name="visibility"
                 role="switch"
@@ -50,11 +50,11 @@ exports[`Edit Event Page > should match snapshot 1`] = `
                   Toggle Visibility
                 </span>
                 <span
-                  class="inline-block h-4 w-4 transform rounded-full bg-white transition translate-x-1"
+                  class="inline-block h-4 w-4 transform rounded-full bg-white transition translate-x-6"
                 />
               </button>
               <span
-                class="w-16 cursor-pointer text-primary opacity-80"
+                class="w-16 cursor-pointer text-primary font-bold underline"
               >
                 PUBLIC
               </span>
@@ -151,7 +151,7 @@ exports[`Edit Event Page > should match snapshot 1`] = `
             class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             id=":rp:-form-item"
             type="date"
-            value="2024-09-30"
+            value="2025-04-11"
           />
         </div>
         <div

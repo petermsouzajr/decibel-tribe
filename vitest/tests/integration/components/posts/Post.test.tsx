@@ -133,7 +133,7 @@ const mockPostData: PostData = {
   id: "post-1",
   content: "This is a test post content.",
   createdAt: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
-  // updatedAt: new Date(Date.now() - 1000 * 60 * 5), // Removed, not in PostData type
+  updatedAt: new Date(Date.now() - 1000 * 60 * 5), // Add updatedAt, same as createdAt
   userId: mockPostUser.id,
   groupId: null,
   user: mockPostUser, // Should conform to UserWithFollowerStatus now
@@ -367,7 +367,47 @@ describe("[Social][Component] Post", () => {
     expect(screen.getByText("LikeButton Mock")).toBeInTheDocument();
   });
 
-  // TODO: [Social] Test case: Content Expansion (long content, click show more/less)
-  // TODO: [Social] Test case: Attachments (shows MediaPreviews)
-  // TODO: [Social] Test case: Comment Toggle (click comment button shows/hides Comments Mock)
+  // Test for Edited status
+  it("should display (Edited) if updatedAt is different from createdAt", async () => {
+    // Arrange: Create post data with a different updatedAt
+    const createdAt = new Date(Date.now() - 1000 * 60 * 15); // 15 mins ago
+    const updatedAt = new Date(createdAt.getTime() + 1000 * 60 * 10); // 10 mins after creation (5 mins ago)
+    const mockPostEdited: PostData = {
+      ...mockPostData,
+      createdAt: createdAt,
+      updatedAt: updatedAt, // Ensure updatedAt is passed
+    };
+
+    // Import the actual utility function for this specific test
+    // This overrides the global mock setup in beforeEach for this test only
+    const actualUtils =
+      await vi.importActual<typeof import("@/lib/utils")>("@/lib/utils");
+    vi.mocked(formatRelativeDate).mockImplementation(
+      actualUtils.formatRelativeDate,
+    );
+
+    // Act
+    renderWithClient(<Post post={mockPostEdited} />);
+
+    // Assert
+    // Verify that the "(Edited)" text is now rendered
+    expect(screen.getByText("(Edited)")).toBeInTheDocument();
+
+    // Optional: Verify the original date is still rendered correctly if needed
+    // const expectedDateString = actualUtils.formatRelativeDate(createdAt);
+    // expect(screen.getByText(new RegExp(expectedDateString))).toBeInTheDocument();
+  });
+
+  it("should NOT display (Edited) if updatedAt is same as createdAt", () => {
+    // Arrange: Use standard mockPostData where updatedAt is effectively the same as createdAt
+    // Ensure the global mock is active (it is by default from beforeEach)
+    (formatRelativeDate as any).mockReturnValue("5 minutes ago"); // Reaffirm global mock if needed
+
+    // Act
+    renderWithClient(<Post post={mockPostData} />);
+
+    // Assert
+    expect(screen.queryByText("(Edited)")).not.toBeInTheDocument();
+    expect(screen.getByText("5 minutes ago")).toBeInTheDocument(); // Check the mocked date is shown
+  });
 });

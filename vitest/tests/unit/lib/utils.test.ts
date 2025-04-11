@@ -1,12 +1,17 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach, Mock } from "vitest";
 // Import functions to test from utils.ts
 import {
   formatRelativeDate,
   formatNumber,
   cn /* ... other utils ... */,
   slugify,
+  getEvent,
 } from "@/lib/utils";
 import { formatDate, formatDistanceToNowStrict } from "date-fns";
+import prisma from "@/lib/prisma";
+import { notFound } from "next/navigation";
+import { cache } from "react";
+import { getEventDataInclude, EventData, UserData } from "@/lib/types";
 
 // Mock date-fns functions
 vi.mock("date-fns", async (importOriginal) => {
@@ -18,17 +23,72 @@ vi.mock("date-fns", async (importOriginal) => {
   };
 });
 
-describe("[Core][Utils] Utility Functions", () => {
-  // TODO: [Core] Implement test cases for utility functions
-  // Test formatRelativeDate with various date inputs.
-  // Test cn with different class combinations.
+// Mock prisma (specific methods needed by tested functions)
+vi.mock("@/lib/prisma", () => ({
+  default: {
+    event: {
+      findUnique: vi.fn(),
+    },
+  },
+}));
 
+// Mock next/navigation
+vi.mock("next/navigation", () => ({
+  notFound: vi.fn(() => {
+    throw new Error("NotFoundCalled");
+  }), // Throw error to simulate notFound behavior
+}));
+
+// Mock react cache
+vi.mock("react", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react")>();
+  return {
+    ...actual,
+    cache: vi.fn((fn) => fn), // Mock cache to just return the function
+  };
+});
+
+// Mock getEventDataInclude
+const mockIncludeObject = {
+  createdBy: { select: expect.any(Object) }, // Use expect.any or a mock UserDataSelect
+  attendees: { select: expect.any(Object) }, // Use expect.any or a mock UserDataSelect
+  _count: { select: { attendees: true } },
+};
+vi.mock("@/lib/types", async (importOriginal) => {
+  const actualTypes = await importOriginal<typeof import("@/lib/types")>();
+  return {
+    ...actualTypes,
+    getEventDataInclude: vi.fn((id) => mockIncludeObject),
+  };
+});
+
+describe("[Core][Utils] Utility Functions", () => {
   it("should have basic placeholder test", () => {
     expect(true).toBe(true); // Placeholder
   });
 
   // describe('formatRelativeDate', () => { ... });
   // describe('cn', () => { ... });
+});
+
+describe("[Core][Utils] cn", () => {
+  it("should merge class names correctly", () => {
+    expect(cn("p-4", "bg-red-500")).toBe("p-4 bg-red-500");
+  });
+
+  it("should handle conditional classes", () => {
+    expect(cn("p-4", { "bg-red-500": true, "text-white": false })).toBe(
+      "p-4 bg-red-500",
+    );
+  });
+
+  it("should override conflicting classes with tailwind-merge", () => {
+    expect(cn("p-4 bg-red-500", "p-6")).toBe("bg-red-500 p-6"); // p-6 overrides p-4
+  });
+
+  it("should handle null and undefined inputs", () => {
+    expect(cn("p-4", null, undefined, "bg-red-500")).toBe("p-4 bg-red-500");
+  });
 });
 
 describe("[Core][Utils] formatRelativeDate", () => {
@@ -50,7 +110,7 @@ describe("[Core][Utils] formatRelativeDate", () => {
     const date = new Date("2024-03-15T11:55:00Z"); // 5 minutes ago
     const expectedFormat = "yyyy-MM-dd HH:mm:ss";
     const expectedOutput = "2024-03-15 11:55:00"; // Example output
-    (formatDate as any).mockReturnValue(expectedOutput);
+    (formatDate as Mock).mockReturnValue(expectedOutput);
 
     const result = formatRelativeDate(date);
 
@@ -62,7 +122,7 @@ describe("[Core][Utils] formatRelativeDate", () => {
   it('should use "d MMM" format for dates over 24 hours ago but in the same year', () => {
     vi.setSystemTime(new Date("2024-03-15T10:00:00Z"));
     const date = new Date("2024-03-10T10:00:00Z"); // 5 days ago in same year
-    (formatDate as any).mockReturnValue("10 Mar");
+    (formatDate as Mock).mockReturnValue("10 Mar");
 
     const result = formatRelativeDate(date);
 
@@ -75,7 +135,7 @@ describe("[Core][Utils] formatRelativeDate", () => {
   it('should use "d MMM, yyyy" format for dates in a different year', () => {
     vi.setSystemTime(new Date("2024-03-15T10:00:00Z"));
     const date = new Date("2023-12-25T10:00:00Z"); // Previous year
-    (formatDate as any).mockReturnValue("25 Dec, 2023");
+    (formatDate as Mock).mockReturnValue("25 Dec, 2023");
 
     const result = formatRelativeDate(date);
 
@@ -83,8 +143,6 @@ describe("[Core][Utils] formatRelativeDate", () => {
     expect(formatDate).toHaveBeenCalledWith(date, "d MMM, yyyy");
     expect(result).toBe("25 Dec, 2023");
   });
-
-  // TODO: [Core] Test edge case around 24 hours
 });
 
 describe("[Core][Utils] formatNumber", () => {
@@ -151,48 +209,85 @@ describe("[Core][Utils] slugify", () => {
 });
 
 describe("[Core][Utils] getEvent", () => {
+  const mockPrismaFindUnique = vi.mocked(prisma.event.findUnique);
+  const mockNotFound = vi.mocked(notFound);
+  const mockGetEventDataInclude = vi.mocked(getEventDataInclude);
+
+  const mockUserData: Partial<UserData> = {
+    id: "user-123",
+    username: "creator",
+    displayName: "Event Creator",
+    avatarUrl: null,
+  };
+  const mockEvent: EventData = {
+    id: "event-123",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    title: "Mock Event Title",
+    location: "Mock Location",
+    description: "Mock description",
+    url: null,
+    when: new Date(),
+    startTime: "10:00",
+    endTime: "12:00",
+    performers: ["Performer 1"],
+    createdById: mockUserData.id!,
+    isCancelled: false,
+    visibility: "PUBLIC",
+    status: "ACTIVE",
+    createdBy: mockUserData as UserData,
+    attendees: [],
+    _count: { attendees: 0 },
+  };
+
   beforeEach(() => {
-    // Mock prisma, notFound, getEventDataInclude, cache?
-    vi.mock("@/lib/prisma", () => ({
-      default: { event: { findUnique: vi.fn() } },
-    }));
-    vi.mock("next/navigation", () => ({ notFound: vi.fn() }));
-    vi.mock("@/lib/types", async (importOriginal) => {
-      const actualTypes = await importOriginal<typeof import("@/lib/types")>();
-      return {
-        ...actualTypes,
-        getEventDataInclude: vi.fn((id) => ({
-          include: {
-            /* Mock include structure based on actual function if needed */
-          },
-        })),
-      };
-    });
-    vi.mock("react", async (importOriginal) => {
-      const actual = await importOriginal<typeof import("react")>();
-      return { ...actual, cache: vi.fn((fn) => fn) }; // Mock cache to just return the function
-    });
-    vi.resetModules(); // Reset modules to re-import with mocks
+    vi.resetAllMocks();
   });
 
-  it.skip("should return event data if found", async () => {
-    // const { getEvent } = await import('./utils'); // Import after mocks
-    // const prisma = (await import('@/lib/prisma')).default;
-    // const notFound = (await import('next/navigation')).notFound;
-    // (prisma.event.findUnique as any).mockResolvedValue({ id: 'event-1', title: 'Mock Event' });
-    // const result = await getEvent('event-1', 'user-1');
-    // expect(result.title).toBe('Mock Event');
-    // expect(notFound).not.toHaveBeenCalled();
-    /* TODO */
+  it("should call prisma.event.findUnique with correct args", async () => {
+    const eventId = "event-123";
+    const userId = "user-456";
+    // mockGetEventDataInclude is already mocked globally to return mockIncludeObject
+    mockPrismaFindUnique.mockResolvedValue(mockEvent); // Use the more complete mock
+
+    await getEvent(eventId, userId);
+
+    expect(mockGetEventDataInclude).toHaveBeenCalledWith(userId);
+    expect(mockPrismaFindUnique).toHaveBeenCalledWith({
+      where: { id: eventId },
+      include: mockIncludeObject,
+    });
   });
 
-  it.skip("should call notFound if event is not found", async () => {
-    // const { getEvent } = await import('./utils');
-    // const prisma = (await import('@/lib/prisma')).default;
-    // const { notFound } = await import('next/navigation');
-    // (prisma.event.findUnique as any).mockResolvedValue(null);
-    // await expect(getEvent('event-1', 'user-1')).rejects.toThrow(); // Or check if notFound was called
-    // expect(notFound).toHaveBeenCalled();
-    /* TODO */
+  it("should return event data if found", async () => {
+    const eventId = "event-found";
+    const userId = "user-found";
+    const specificMockEvent = { ...mockEvent, id: eventId }; // Use the base mock structure
+    mockPrismaFindUnique.mockResolvedValue(specificMockEvent);
+
+    const result = await getEvent(eventId, userId);
+
+    expect(result).toEqual(specificMockEvent);
+    expect(mockNotFound).not.toHaveBeenCalled();
+  });
+
+  it("should call notFound if event is not found", async () => {
+    const eventId = "event-not-found";
+    const userId = "user-not-found";
+    mockPrismaFindUnique.mockResolvedValue(null);
+
+    await expect(getEvent(eventId, userId)).rejects.toThrow("NotFoundCalled");
+
+    expect(mockNotFound).toHaveBeenCalledTimes(1);
+  });
+
+  it("should re-throw other errors from prisma", async () => {
+    const eventId = "event-error";
+    const userId = "user-error";
+    const dbError = new Error("Database connection lost");
+    mockPrismaFindUnique.mockRejectedValue(dbError);
+
+    await expect(getEvent(eventId, userId)).rejects.toThrow(dbError);
+    expect(mockNotFound).not.toHaveBeenCalled();
   });
 });

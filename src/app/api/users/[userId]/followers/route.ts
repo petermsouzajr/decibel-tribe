@@ -107,6 +107,13 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    if (userId === loggedInUser.id) {
+      return NextResponse.json(
+        { error: "Cannot follow yourself" },
+        { status: 400 },
+      );
+    }
+
     await prisma.$transaction([
       prisma.follow.upsert({
         where: {
@@ -130,7 +137,7 @@ export async function POST(
       }),
     ]);
 
-    return NextResponse.json({ message: "Follow successful" });
+    return NextResponse.json({ message: "Follow successful" }, { status: 201 });
   } catch (error) {
     console.error("Error following user:", error);
     return NextResponse.json(

@@ -80,6 +80,4 @@ describe("[Core][Hooks] useScrollDirection", () => {
     simulateScroll(95); // Small scroll up
     expect(result.current).toBe("down"); // Should remain 'down'
   });
-
-  // TODO: [Core] Test cleanup logic (event listener removal) if possible/necessary.
 });

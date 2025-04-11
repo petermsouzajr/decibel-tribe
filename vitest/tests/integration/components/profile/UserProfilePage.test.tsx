@@ -36,6 +36,13 @@ vi.mock("@/app/(main)/users/[username]/UpdatePasswordButton", () => ({
   default: () => <div data-testid="update-password-button-mock"></div>,
 }));
 
+// Mock for the UserPostsFeed component
+// vi.mock("@/app/(main)/users/[username]/UserPostsFeed", () => ({
+//   default: ({ userId }: { userId: string }) => (
+//     <div data-testid="user-posts-feed-mock">Posts for {userId}</div>
+//   ),
+// }));
+
 // Import component AFTER mocks
 import UserProfilePage from "@/app/(main)/users/[username]/UserProfilePage";
 
@@ -116,10 +123,6 @@ describe("[Profile][Component] UserProfilePage", () => {
     expect(screen.queryByText("Set Password")).not.toBeInTheDocument(); // Check set password button not shown
   });
 
-  it.skip("should render follower/following counts (using mocked FollowerCount)", () => {
-    /* TODO */
-  });
-
   it("should render EditProfileButton when viewing own profile", () => {
     // Arrange & Act
     render(
@@ -141,14 +144,5 @@ describe("[Profile][Component] UserProfilePage", () => {
     ).toBeInTheDocument();
     expect(screen.queryByTestId("follow-button-mock")).not.toBeInTheDocument();
     expect(screen.queryByText("Set Password")).not.toBeInTheDocument(); // Still shouldn't show if password hash exists
-  });
-
-  it.skip("should render FollowButton when viewing another user profile", () => {
-    /* This is partially covered by the first test, but could be more specific */
-    /* TODO */
-  });
-
-  it.skip("should render user posts feed (e.g., UserPosts component)", () => {
-    /* TODO */
   });
 });

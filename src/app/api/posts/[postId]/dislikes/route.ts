@@ -132,6 +132,18 @@ export async function POST(
     return NextResponse.json({ message: "Post disliked" });
   } catch (error) {
     console.error("Error disliking post:", error);
+
+    // Check for Prisma P2025 error (Record Not Found)
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === "P2025"
+    ) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    // Fallback to generic 500 error
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

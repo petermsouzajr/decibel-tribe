@@ -1,6 +1,6 @@
 # Decibel Tribe
 
-**Decibel Tribe:** The social network for musicians and industry pros. Find collaborators (drummers, photographers, bookers, merch), connect with peers, plan tours, and explore dating, all within a community that puts music first, DECIBEL TRIBE. Stay Human!
+**Decibel Tribe:** The social network for musicians and industry pros. Find collaborators (drummers, photographers, bookers, merch), connect with peers, plan tours, and explore dating, all within a community that puts music first, DECIBEL TRIBE! Stay Human!
 
 ## Getting Started
 

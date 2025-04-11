@@ -1,5 +1,6 @@
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
+import path from "path";
 
 export default defineConfig(async () => {
   const { default: tsconfigPaths } = await import("vite-tsconfig-paths");
@@ -28,5 +29,11 @@ export default defineConfig(async () => {
       },
     },
     plugins: [react(), tsconfigPaths()],
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
+        "@vitest-setup": path.resolve(__dirname, "./vitest/tests"),
+      },
+    },
   };
 });

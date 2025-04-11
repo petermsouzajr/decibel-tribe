@@ -58,6 +58,8 @@ const mockToastFn = vi.fn();
 vi.mock("@/components/ui/use-toast", () => ({
   useToast: () => ({ toast: mockToastFn }),
 }));
+// Export the mock function for use in tests
+export { mockToastFn };
 
 // Mock prisma client globally (adding more methods)
 vi.mock("@/lib/prisma", () => ({
@@ -112,3 +114,17 @@ vi.mock("@/lib/prisma", () => ({
 afterEach(() => {
   cleanup();
 });
+
+// --- JSDOM API Mocks ---
+
+// Mock for URL.createObjectURL (needed for image previews/uploads)
+if (typeof window !== "undefined" && !URL.createObjectURL) {
+  URL.createObjectURL = vi.fn(
+    (obj) => `blob:mock/${obj?.type || "unknown"}/${Math.random()}`,
+  );
+}
+
+// Mock for URL.revokeObjectURL (pair to createObjectURL)
+if (typeof window !== "undefined" && !URL.revokeObjectURL) {
+  URL.revokeObjectURL = vi.fn();
+}

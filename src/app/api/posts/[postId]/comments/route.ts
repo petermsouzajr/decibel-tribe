@@ -38,6 +38,7 @@ export async function GET(
       include: getCommentDataInclude(loggedInUserId), // Pass potentially undefined ID
       orderBy: { createdAt: "asc" },
       take: -pageSize - 1,
+      skip: cursor ? 1 : undefined,
       cursor: cursor ? { id: cursor } : undefined,
     });
 
@@ -92,23 +93,67 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Original POST logic using user
     const { content } = await req.json();
 
-    const comment = await prisma.comment.create({
-      data: {
-        content,
-        postId,
-        userId: user.id,
-      },
-      include: getCommentDataInclude(user.id), // Pass user ID
-    });
+    // Add content validation check
+    if (!content || typeof content !== "string" || content.trim() === "") {
+      return NextResponse.json(
+        { error: "Content is required" },
+        { status: 400 },
+      );
+    }
 
-    // ... (rest of POST logic, e.g., notifications)
+    // Transaction to create comment and potentially notification
+    const [comment, postAuthor] = await Promise.all([
+      prisma.comment.create({
+        data: {
+          content: content.trim(), // Trim content
+          postId,
+          userId: user.id,
+        },
+        include: getCommentDataInclude(user.id),
+      }),
+      prisma.post.findUnique({
+        // Find post author
+        where: { id: postId },
+        select: { userId: true },
+      }),
+    ]);
 
-    return NextResponse.json(comment as CommentData, { status: 201 }); // Use NextResponse and type assertion
+    // --- Notification Logic ---
+    if (postAuthor && postAuthor.userId !== user.id) {
+      // Only notify if commenter is not the post author
+      try {
+        const existingNotification = await prisma.notification.findFirst({
+          where: {
+            type: "COMMENT",
+            issuerId: user.id,
+            postId: postId,
+            recipientId: postAuthor.userId,
+          },
+        });
+
+        if (!existingNotification) {
+          await prisma.notification.create({
+            data: {
+              type: "COMMENT",
+              issuerId: user.id,
+              recipientId: postAuthor.userId,
+              postId: postId,
+            },
+          });
+        }
+      } catch (notificationError) {
+        // Log error but don't fail the request
+        console.error("Failed to create notification:", notificationError);
+      }
+    }
+    // --- End Notification Logic ---
+
+    return NextResponse.json(comment as CommentData, { status: 201 });
   } catch (error) {
     console.error("Error creating comment:", error);
+    // Keep generic 500 fallback
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

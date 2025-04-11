@@ -193,18 +193,15 @@ describe("AuthTeam - seedUsers Module", () => {
       isVerified: true,
       createdAt: expect.any(Date),
       displayName: mockCypressEnv.verifiedUser,
-      avatarUrl: expect.any(String), // Or null, depending on mock randomness
+      avatarUrl:
+        verifiedResultUser?.avatarUrl === null
+          ? null
+          : expect.stringContaining("pravatar.cc"),
       bio: "mock bio sentence",
       passwordHash: "mockHashedPassword",
       pendingEmail: null,
       googleId: null,
     });
-    // Adjust avatarUrl expectation if mock randomness is controlled
-    if (verifiedResultUser?.avatarUrl !== null) {
-      expect(verifiedResultUser?.avatarUrl).toEqual(
-        expect.stringContaining("pravatar.cc"),
-      );
-    }
   });
 
   it("should return empty array if prisma create fails", async () => {

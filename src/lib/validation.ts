@@ -24,8 +24,15 @@ export type resetPasswordValues = z.infer<typeof resetPasswordSchema>;
 
 export const loginSchema = z.object({
   username: z.string().max(50, "Must be less than 50 characters").optional(),
-  email: z.string().max(50, "Must be less than 50 characters").optional(),
-  password: requiredString.max(50, "Must be less than 50 characters"),
+  email: z
+    .string()
+    .email("Invalid email")
+    .max(50, "Must be less than 50 characters")
+    .optional(),
+  password: z
+    .string()
+    .max(50, "Must be less than 50 characters")
+    .min(1, "Required"),
 });
 
 export type LoginValues = z.infer<typeof loginSchema>;
@@ -38,18 +45,28 @@ export const createPostSchema = z.object({
 export const updateUserProfileSchema = z.object({
   displayName: requiredString.max(50, "Must be less than 50 characters"),
   bio: z.string().max(200, "Must be at most 200 characters").optional(),
+  websiteUrl: z
+    .string()
+    .max(200, "Must be less than 200 characters")
+    .url({ message: "Invalid url" })
+    .optional()
+    .or(z.literal("")),
   instruments: z
     .array(z.string())
-    .max(15, "You can select up to 15 instruments"),
-  skills: z.array(z.string()).max(15, "You can select up to 15 skills"),
+    .max(15, "You can select up to 15 instruments")
+    .optional(),
+  skills: z
+    .array(z.string())
+    .max(15, "You can select up to 15 skills")
+    .optional(),
   visibility: z.enum(["PUBLIC", "PRIVATE"]),
 });
 
 export type UpdateUserProfileValues = z.infer<typeof updateUserProfileSchema>;
 
 export const updateEmailSchema = z.object({
-  currentPassword: z.string().min(1, "Current password is required"),
-  newEmail: z.string().email("Invalid email address"),
+  currentPassword: z.string().trim().min(1, "Current password is required"),
+  newEmail: requiredString.email("Invalid email address"),
 });
 
 export type UpdateEmailValues = z.infer<typeof updateEmailSchema>;
@@ -70,7 +87,10 @@ export const changePasswordSchema = z
 
 export type ChangePasswordValues = z.infer<typeof changePasswordSchema>;
 
-export const createEventSchema = z.object({
+// --- Event Schemas ---
+
+// Define the base object structure first
+const baseEventObject = z.object({
   title: z
     .string()
     .max(100, { message: "Title cannot exceed 100 characters" })
@@ -89,9 +109,13 @@ export const createEventSchema = z.object({
     .optional(),
   when: z.preprocess(
     (arg) => (typeof arg === "string" ? new Date(arg) : arg),
-    z.date().min(new Date(new Date().setHours(0, 0, 0, 0)), {
-      message:
-        "Can not create events in the past, date must be today or in the future",
+    z.date({
+      errorMap: (issue, ctx) => {
+        if (issue.code === z.ZodIssueCode.invalid_date) {
+          return { message: "Invalid date format" };
+        }
+        return { message: ctx.defaultError };
+      },
     }),
   ),
   startTime: z.string().min(1, { message: "Start time is required" }),
@@ -102,8 +126,48 @@ export const createEventSchema = z.object({
   isCancelled: z.boolean(),
 });
 
+// Now create the final createEventSchema by adding the refinement
+export const createEventSchema = baseEventObject.refine(
+  (data) => {
+    if (data.startTime && data.endTime) {
+      const isEndTimeAfterStart = data.endTime > data.startTime;
+      console.log(
+        `DEBUG TIME COMPARE: Start=${data.startTime}, End=${data.endTime}, IsAfter=${isEndTimeAfterStart}`,
+      );
+      return isEndTimeAfterStart;
+    }
+    return true;
+  },
+  {
+    message: "End time must be after start time",
+    path: ["endTime"],
+  },
+);
+
 export type CreateEventValues = z.infer<typeof createEventSchema>;
+
+// Schema for updating an event (PATCH)
+// Apply .partial() to the base object *before* the refinement
+export const updateEventSchema = baseEventObject
+  .partial()
+  // Add refinement: if title exists, it must not be empty
+  .refine(
+    (data) => {
+      // If title is present in the partial data, it must have a length > 0
+      return data.title === undefined || data.title.trim().length > 0;
+    },
+    {
+      message: "Title cannot be empty",
+      path: ["title"], // Associate error with title field
+    },
+  );
+
+export type UpdateEventValues = z.infer<typeof updateEventSchema>;
+
+// --- Comment Schema ---
 
 export const createCommentSchema = z.object({
   content: requiredString,
 });
+
+export type CreateCommentValues = z.infer<typeof createCommentSchema>;

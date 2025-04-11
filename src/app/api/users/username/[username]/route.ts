@@ -10,65 +10,65 @@ export async function GET(
   { params }: { params: { username: string } },
 ) {
   try {
-    // Direct session validation
     const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
-    if (!sessionId) {
-      // Allow unauthenticated access for public profiles, but mark as null user
-      const user = await prisma.user.findUnique({
-        where: { username: params.username },
-        select: getUserDataSelect(null),
-      });
-      if (!user)
-        return NextResponse.json({ error: "User not found" }, { status: 404 });
-      return NextResponse.json(user);
+    let loggedInUserId: string | null = null;
+
+    if (sessionId) {
+      try {
+        const { user, session } = await lucia.validateSession(sessionId);
+        if (session) {
+          if (session.fresh) {
+            // Session is fresh, generate new cookie
+            const sessionCookie = lucia.createSessionCookie(session.id);
+            cookies().set(
+              sessionCookie.name,
+              sessionCookie.value,
+              sessionCookie.attributes,
+            );
+          }
+          // Session is valid, set the user ID for the select query
+          loggedInUserId = user.id;
+        } else {
+          // Session is invalid, invalidate cookie
+          const sessionCookie = lucia.createBlankSessionCookie();
+          cookies().set(
+            sessionCookie.name,
+            sessionCookie.value,
+            sessionCookie.attributes,
+          );
+        }
+      } catch (validationError) {
+        // Error during validation, treat as unauthenticated
+        console.error("Session validation error:", validationError);
+        // Invalidate cookie just in case
+        const sessionCookie = lucia.createBlankSessionCookie();
+        cookies().set(
+          sessionCookie.name,
+          sessionCookie.value,
+          sessionCookie.attributes,
+        );
+      }
     }
 
-    const { user: loggedInUser, session } =
-      await lucia.validateSession(sessionId);
-
-    if (!session) {
-      const sessionCookie = lucia.createBlankSessionCookie();
-      cookies().set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-      // Allow unauthenticated access for public profiles, but mark as null user
-      const user = await prisma.user.findUnique({
-        where: { username: params.username },
-        select: getUserDataSelect(null),
-      });
-      if (!user)
-        return NextResponse.json({ error: "User not found" }, { status: 404 });
-      return NextResponse.json(user);
-    }
-
-    if (session && session.fresh) {
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      cookies().set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-    }
-    // --- End direct session validation
-
-    // Now we have a loggedInUser, fetch profile data including follow status
+    // Perform database query using the determined loggedInUserId (null if no valid session)
     const user = await prisma.user.findUnique({
       where: { username: params.username },
-      select: getUserDataSelect(loggedInUser?.id), // Use loggedInUser?.id
+      select: getUserDataSelect(loggedInUserId), // Pass null or the user ID
     });
 
+    // Check if user was found
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // User found, return data
     return NextResponse.json(user);
   } catch (error) {
+    // Catch errors from database query or unexpected issues
     console.error("Error in GET /api/users/username/[username]:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
-    ); // Use NextResponse
+    );
   }
 }

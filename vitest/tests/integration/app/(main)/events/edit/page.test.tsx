@@ -31,42 +31,94 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-// NOTE: Skipping entire suite due to persistent timeout errors and complex mocking required.
+// Mock Mutation Hooks
+const mockMutateFn = vi.fn();
+vi.mock("../../calendar/mutations", () => ({
+  useAddEventMutation: vi.fn(() => ({
+    mutate: mockMutateFn,
+    isPending: false,
+  })),
+  useEditEventMutation: vi.fn(() => ({
+    mutate: mockMutateFn,
+    isPending: false,
+  })),
+}));
+
 describe("Edit Event Page", () => {
   let queryClient: QueryClient;
-  const fixedDate = new Date("2024-09-30T10:00:00.000Z");
+  // Comment out fixedDate as it's not used with real timers
+  // const fixedDate = new Date("2024-09-30T10:00:00.000Z");
 
   beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(fixedDate);
+    // Use real timers
+    // vi.useFakeTimers();
+    // vi.setSystemTime(fixedDate);
     queryClient = new QueryClient();
     vi.clearAllMocks();
+
+    // Explicitly resolve mocks within beforeEach
     vi.mocked(validateRequest).mockResolvedValue({
       user: { id: "user-1" } as any,
       session: null,
     });
-    vi.mocked(prisma.event.findUnique).mockResolvedValue(null);
-    vi.mocked(mockGet).mockReturnValue(null);
+    vi.mocked(prisma.event.findUnique).mockResolvedValue(null); // Default: creating new event
+    vi.mocked(mockGet).mockReturnValue(null); // Default: no eventId search param
+
     // Mock global fetch for this test suite
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ calendarPreference: "google" }), // Mock calendar preference response
+    global.fetch = vi.fn().mockImplementation((url) => {
+      if (url === "/api/users/preferences") {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ calendarPreference: "PUBLIC" }), // Mock pref fetch success
+        });
+      }
+      // Mock event fetch (adjust mock data as needed for tests)
+      if (url.startsWith("/api/events/")) {
+        const currentEventId = mockGet("id"); // Get ID from mocked searchParams
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              id: currentEventId || "new-event-id", // Use ID from params or fallback
+              title: "Mock Event Title",
+              location: "Mock Location",
+              description: "Mock Description",
+              url: "",
+              when: new Date().toISOString(), // Or provide a reasonable default date string
+              startTime: "10:00",
+              endTime: "11:00",
+              performers: ["Mock Performer"],
+              status: "DRAFT",
+              visibility: "PRIVATE",
+              isCancelled: false,
+            }),
+        });
+      }
+      // Default fallback for any other fetch calls
+      return Promise.resolve({ ok: false, status: 404 });
     });
   });
 
   afterEach(() => {
-    vi.useRealTimers();
+    // Use real timers
+    // vi.useRealTimers();
   });
 
-  const renderPage = () =>
-    render(
+  const renderPage = async () => {
+    const renderResult = render(
       <QueryClientProvider client={queryClient}>
         <EventFormPage />
       </QueryClientProvider>,
     );
+    // Remove timer advancement
+    // await vi.runAllTimers();
+    // Wait for a key element to ensure initial async updates complete
+    await screen.findByRole("heading", { name: /Create New Event/i });
+    return renderResult;
+  };
 
-  it("should render the form heading", () => {
-    renderPage();
+  it("should render the form heading", async () => {
+    await renderPage(); // Await the render helper
 
     const pageTitle = screen.getByRole("heading", {
       name: /Create New Event/i,
@@ -75,8 +127,8 @@ describe("Edit Event Page", () => {
     expect(pageTitle).toBeInTheDocument();
   });
 
-  it("should render the event form", () => {
-    renderPage();
+  it("should render the event form", async () => {
+    await renderPage(); // Await the render helper
 
     const titleLabel = screen.getByLabelText(/Title/i);
     const startTimeLabel = screen.getByLabelText(/Start Time/i);
@@ -85,8 +137,8 @@ describe("Edit Event Page", () => {
     expect(startTimeLabel).toBeInTheDocument();
   });
 
-  it("should match snapshot", () => {
-    renderPage();
+  it("should match snapshot", async () => {
+    await renderPage(); // Await the render helper
     expect(document.body).toMatchSnapshot();
   });
 });

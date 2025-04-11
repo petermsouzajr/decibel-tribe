@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Page from "@/app/(main)/events/page";
 import SessionProvider from "@/app/(main)/SessionProvider";
@@ -29,11 +29,11 @@ vi.mock("next/navigation", () => ({
 
 describe("Events Page", () => {
   let queryClient: QueryClient;
-  const fixedDate = new Date("2024-09-30T10:00:00.000Z"); // Set a fixed date
+  // const fixedDate = new Date("2024-09-30T10:00:00.000Z"); // Comment out
 
   beforeEach(() => {
-    vi.useFakeTimers(); // Enable fake timers
-    vi.setSystemTime(fixedDate); // Set system time
+    // vi.useFakeTimers(); // Comment out
+    // vi.setSystemTime(fixedDate); // Comment out
     queryClient = new QueryClient();
     vi.clearAllMocks();
     // Remove kyInstance mock call
@@ -49,7 +49,7 @@ describe("Events Page", () => {
 
     global.innerWidth = 1024;
     window.dispatchEvent(new Event("resize"));
-    vi.useRealTimers(); // Restore real timers
+    // vi.useRealTimers(); // Comment out - Incorrect placement
   });
 
   const mockSession = {
@@ -71,40 +71,44 @@ describe("Events Page", () => {
     },
   };
 
-  const renderPage = () =>
-    render(
+  const renderPage = async () => {
+    const renderResult = render(
       <SessionProvider value={mockSession}>
         <QueryClientProvider client={queryClient}>
           <Page />
         </QueryClientProvider>
       </SessionProvider>,
     );
+    // Wait for the fetch call triggered by the component
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+    return renderResult;
+  };
 
   // NOTE: Skipping test due to timeout, likely from unmocked async data fetch for heading/calendar.
-  it("should render the events page heading", () => {
-    renderPage();
+  it("should render the events page heading", async () => {
+    await renderPage();
 
     const heading = screen.getByRole("heading", { name: /Events/i });
     expect(heading).toBeInTheDocument();
   });
 
-  it("should render the events tab 'For you'", () => {
-    renderPage();
+  it("should render the events tab 'For you'", async () => {
+    await renderPage();
 
     const forYouTab = screen.getByRole("tab", { name: /For you/i });
     expect(forYouTab).toBeInTheDocument();
   });
 
-  it("should render th events tab 'Following'", () => {
-    renderPage();
+  it("should render th events tab 'Following'", async () => {
+    await renderPage();
 
     const followingTab = screen.getByRole("tab", { name: /Following/i });
     expect(followingTab).toBeInTheDocument();
   });
 
   // NOTE: Skipping test due to timeout, likely from unmocked async data fetch for heading/calendar.
-  it("should render the event calendar", () => {
-    renderPage();
+  it("should render the event calendar", async () => {
+    await renderPage();
 
     // Check for elements that should exist regardless of the specific month
     const yourCalendarHeading = screen.getByText(/Your Calendar/i);
@@ -116,19 +120,21 @@ describe("Events Page", () => {
     expect(dayHeader).toBeInTheDocument();
   });
 
-  it("should match snapshot", () => {
-    renderPage();
+  it("should match snapshot", async () => {
+    await renderPage();
     expect(document.body).toMatchSnapshot();
   });
 
-  // Mock the date to ensure deterministic snapshots
+  // Mock the date to ensure deterministic snapshots - Remove this block
+  /*
   beforeEach(() => {
     vi.useFakeTimers();
     // Set a fixed date based on the original snapshot value
-    vi.setSystemTime(new Date("2025-04-03T00:00:00.000Z"));
+    vi.setSystemTime(new Date("2025-04-03T00:00:00.000Z")); 
   });
 
   afterEach(() => {
     vi.useRealTimers();
   });
+  */
 });

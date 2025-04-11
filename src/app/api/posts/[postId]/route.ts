@@ -159,7 +159,8 @@ export async function DELETE(
 
     await prisma.post.delete({ where: { id: postId } });
 
-    return NextResponse.json({ message: "Post deleted" }); // Use NextResponse
+    // Return 204 No Content using new NextResponse for empty body
+    return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error("Error deleting post:", error);
     return NextResponse.json(

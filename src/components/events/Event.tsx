@@ -49,31 +49,32 @@ export default function EventDetails({ event }: EventDetailsProps) {
     const fetchAttendees = async () => {
       try {
         setLoading(true);
-
         const response = await fetch(`/api/events/${event.id}/attendees`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          cache: "no-store",
         });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch attendees");
+        if (response.ok) {
+          const data = await response.json();
+          setIsAttendee(data.some((att: any) => att.user.id === user?.id));
+        } else {
+          console.error("Failed to fetch attendees:", response.status);
+          toast({
+            variant: "destructive",
+            description: "Failed to check attendance. Please try again.",
+          });
+          setIsAttendee(false);
         }
-        const attendees = await response.json();
-
-        const isUserAttendee = attendees.some(
-          (attendee: { userId: string }) => attendee.userId === user.id,
-        );
-        setIsAttendee(isUserAttendee);
       } catch (error) {
-        console.error("Error fetching attendees:", error);
+        console.error("Failed to fetch attendees:", error);
+        setIsAttendee(false);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
-    fetchAttendees();
-  }, [event.id, user.id]);
+    if (user) {
+      fetchAttendees();
+    }
+  }, [event.id, user, toast]);
 
   const handleAddAttendee = async () => {
     try {
@@ -85,7 +86,11 @@ export default function EventDetails({ event }: EventDetailsProps) {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to add attendee");
+        toast({
+          variant: "destructive",
+          description: "Failed to add event to calendar. Please try again.",
+        });
+        return;
       }
 
       toast({
@@ -94,6 +99,10 @@ export default function EventDetails({ event }: EventDetailsProps) {
       setIsAttendee(true);
     } catch (error) {
       console.error("Failed to add attendee:", error);
+      toast({
+        variant: "destructive",
+        description: "An error occurred. Please try again.",
+      });
     }
   };
 
@@ -103,7 +112,12 @@ export default function EventDetails({ event }: EventDetailsProps) {
         method: "DELETE",
       });
       if (!response.ok) {
-        throw new Error("Failed to remove attendee");
+        toast({
+          variant: "destructive",
+          description:
+            "Failed to remove event from calendar. Please try again.",
+        });
+        return;
       }
       toast({
         description: "Event removed from your Calendar",
@@ -111,6 +125,10 @@ export default function EventDetails({ event }: EventDetailsProps) {
       setIsAttendee(false);
     } catch (error) {
       console.error("Failed to remove attendee:", error);
+      toast({
+        variant: "destructive",
+        description: "An error occurred. Please try again.",
+      });
     }
   };
 

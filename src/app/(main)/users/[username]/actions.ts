@@ -20,7 +20,7 @@ export async function updateUserProfile(values: UpdateUserProfileValues) {
 
   const updatedUser = await prisma.$transaction(async (tx) => {
     const instrumentIds = await Promise.all(
-      validatedValues.instruments.map(async (instrumentName) => {
+      (validatedValues.instruments ?? []).map(async (instrumentName) => {
         const instrument = await tx.instrument.upsert({
           where: { name: instrumentName },
           update: {},
@@ -31,7 +31,7 @@ export async function updateUserProfile(values: UpdateUserProfileValues) {
     );
 
     const skillIds = await Promise.all(
-      validatedValues.skills.map(async (skillName) => {
+      (validatedValues.skills ?? []).map(async (skillName) => {
         const skill = await tx.skill.upsert({
           where: { name: skillName },
           update: {},

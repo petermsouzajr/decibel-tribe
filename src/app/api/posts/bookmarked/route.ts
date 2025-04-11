@@ -54,9 +54,17 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
       take: pageSize + 1,
       cursor: cursor ? { id: cursor } : undefined,
+      skip: cursor ? 1 : undefined,
     });
 
-    const nextCursor = posts.length > pageSize ? posts[pageSize].id : null;
+    let nextCursor: string | null = null;
+    if (posts.length > pageSize) {
+      if (cursor) {
+        nextCursor = posts[pageSize - 1].id;
+      } else {
+        nextCursor = posts[pageSize].id;
+      }
+    }
 
     // Explicitly assert the type of the fetched posts array
     const typedPosts = posts.slice(0, pageSize) as PostData[];
