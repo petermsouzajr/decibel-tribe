@@ -120,8 +120,18 @@ describe("Events Page", () => {
     expect(dayHeader).toBeInTheDocument();
   });
 
-  it("should match snapshot", async () => {
+  it("should match snapshot and contain key static elements", async () => {
     await renderPage();
+
+    // Check for key static elements
+    expect(
+      screen.getByRole("heading", { name: /Events/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /For you/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Following/i })).toBeInTheDocument();
+    expect(screen.getByText(/Your Calendar/i)).toBeInTheDocument(); // Assuming this text is static
+
+    // Keep snapshot for broader structural check
     expect(document.body).toMatchSnapshot();
   });
 

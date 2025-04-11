@@ -137,8 +137,21 @@ describe("Edit Event Page", () => {
     expect(startTimeLabel).toBeInTheDocument();
   });
 
-  it("should match snapshot", async () => {
+  it("should match snapshot and contain key static elements", async () => {
     await renderPage(); // Await the render helper
+
+    // Check for key static elements
+    expect(
+      screen.getByRole("heading", { name: /Create New Event/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/Title/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Location/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/When/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Start Time/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/End Time/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Performer 1/i)).toBeInTheDocument();
+
+    // Keep snapshot for broader structural check
     expect(document.body).toMatchSnapshot();
   });
 });
