@@ -42,6 +42,8 @@ vi.mock("@prisma/client", () => {
 });
 
 // Define the mock instance for StreamChat
+// const mockStreamChatInstance = vi.fn(); // Remove this line
+// Instead, define it as an object with mock methods
 const mockStreamChatInstance = {
   queryUsers: vi.fn(),
   deleteUser: vi.fn(),
@@ -62,9 +64,8 @@ vi.mock("path", () => ({
 // --- Test Suite --- //
 
 // Dynamically import the module *after* mocks are set up
-// Note: Assuming the import path should be .mts based on other files
 const { deleteTestUsers, deleteTestUsersFromStreamChat } = await import(
-  "./seedDeletion.mts"
+  "./seedDeletion.js"
 );
 // Don't need to import fs again as it's mocked
 const { PrismaClient } = await import("@prisma/client");
@@ -73,6 +74,8 @@ const { PrismaClient } = await import("@prisma/client");
 const prismaMock = new PrismaClient();
 // Use the mock instance variable directly
 const streamChatMock = mockStreamChatInstance;
+
+import { cypressEnv } from "./seedUtils.js"; // Ensure this uses .js extension
 
 describe("prisma/seedDeletion", () => {
   const mockUserIds = ["id_verified", "id_unverified", "id_noposts"];

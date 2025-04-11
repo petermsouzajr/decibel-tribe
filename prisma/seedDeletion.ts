@@ -4,8 +4,7 @@ import {
   cypressEnv,
   prisma as sharedPrisma,
   streamChatClient as sharedStreamChatClient,
-  // @ts-ignore // Allow build despite TS2307, runtime should resolve .js correctly
-} from "./seedUtils.mts"; // Changed extension to .mts
+} from "./seedUtils.js"; // Add .js extension
 
 const prisma = new PrismaClient();
 

@@ -1,6 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    "target": "ES2022",
     "noEmit": false,
     "outDir": "./dist",
     "rootDir": "prisma",
@@ -11,15 +12,10 @@
     "sourceMap": false,
     "types": [],
     "noImplicitAny": true,
-    "incremental": false
+    "incremental": false,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": false
   },
-  "include": ["prisma/**/*.mts"],
-  "exclude": [
-    "node_modules",
-    "src",
-    "cypress",
-    "tests",
-    "dist",
-    "**/*.spec.mts"
-  ]
+  "include": ["prisma/**/*.ts"],
+  "exclude": ["node_modules", "src", "cypress", "tests", "dist", "**/*.spec.ts"]
 }

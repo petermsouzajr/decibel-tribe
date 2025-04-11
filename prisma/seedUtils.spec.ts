@@ -32,7 +32,7 @@ const {
   proportionateRandom,
   accountDataGenerator,
   passwordHash,
-} = await import("./seedUtils.mjs");
+} = await import("./seedUtils.js");
 
 describe("Seed Utils Helpers", () => {
   beforeEach(() => {
