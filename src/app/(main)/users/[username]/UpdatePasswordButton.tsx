@@ -16,7 +16,7 @@ export default function UpdatePasswordButton({
 
   return (
     <>
-      <Button variant="outline" onClick={() => setShowDialog(true)}>
+      <Button variant="outline" className="w-full py-6 text-lg" onClick={() => setShowDialog(true)}>
         Update Password
       </Button>
       <UpdatePasswordDialog

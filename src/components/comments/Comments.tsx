@@ -11,7 +11,7 @@ interface CommentsProps {
 }
 
 export default function Comments({ post }: CommentsProps) {
-  const { data, fetchNextPage, hasNextPage, isFetching, status } =
+  const { data, fetchNextPage, hasNextPage, isFetching, status, refetch } =
     useInfiniteQuery({
       queryKey: ["comments", post.id],
       queryFn: ({ pageParam }) =>
@@ -30,6 +30,12 @@ export default function Comments({ post }: CommentsProps) {
     });
 
   const comments = data?.pages.flatMap((page) => page.comments) || [];
+
+  const handleReply = (commentId: string) => {
+    console.log("handleReply called for commentId:", commentId);
+    // Don't refetch immediately - let the user complete their reply first
+    // The reply will be added to the UI optimistically or after successful submission
+  };
 
   return (
     <div className="space-y-3">
@@ -55,7 +61,7 @@ export default function Comments({ post }: CommentsProps) {
       )}
       <div className="divide-y">
         {comments.map((comment) => (
-          <Comment key={comment.id} comment={comment} />
+          <Comment key={comment.id} comment={comment} onReply={handleReply} />
         ))}
       </div>
     </div>

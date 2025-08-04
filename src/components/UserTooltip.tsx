@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "@/app/(main)/SessionProvider";
-import { FollowerInfo, UserData } from "@/lib/types";
+import { FollowerInfo, UserData, UserWithFollowerStatus } from "@/lib/types";
 import Link from "next/link";
 import { PropsWithChildren } from "react";
 import FollowButton from "./FollowButton";
@@ -16,18 +16,26 @@ import {
 import UserAvatar from "./UserAvatar";
 
 interface UserTooltipProps extends PropsWithChildren {
-  user: UserData;
+  user: UserData | UserWithFollowerStatus;
 }
 
 export default function UserTooltip({ children, user }: UserTooltipProps) {
   const { user: loggedInUser } = useSession();
 
-  const followerState: FollowerInfo = {
-    followers: user._count.followers,
-    isFollowedByUser: !!user.followers.some(
-      ({ followerId }) => followerId === loggedInUser.id,
-    ),
+  const hasFollowerData = (
+    u: UserData | UserWithFollowerStatus,
+  ): u is UserWithFollowerStatus => {
+    return (u as UserWithFollowerStatus).followers !== undefined;
   };
+
+  const followerState: FollowerInfo | undefined = hasFollowerData(user)
+    ? {
+        followers: user._count.followers,
+        isFollowedByUser: user.followers?.some(
+          ({ followerId }) => followerId === loggedInUser.id,
+        ),
+      }
+    : undefined;
 
   return (
     <TooltipProvider>
@@ -39,7 +47,7 @@ export default function UserTooltip({ children, user }: UserTooltipProps) {
               <Link href={`/users/${user.username}`}>
                 <UserAvatar size={70} avatarUrl={user.avatarUrl} />
               </Link>
-              {loggedInUser.id !== user.id && (
+              {loggedInUser && loggedInUser.id !== user.id && followerState && (
                 <FollowButton userId={user.id} initialState={followerState} />
               )}
             </div>

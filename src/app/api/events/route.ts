@@ -1,14 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateRequest } from "@/auth";
+import { cookies } from "next/headers";
+import { lucia } from "@/auth";
 import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { updateEventSchema } from "@/lib/validation";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const username = searchParams.get("user") ?? undefined;
 
   try {
-    const { user: loggedInUser } = await validateRequest();
+    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    if (!sessionId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const { user: loggedInUser, session } =
+      await lucia.validateSession(sessionId);
+    if (!session) {
+      const sessionCookie = lucia.createBlankSessionCookie();
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session && session.fresh) {
+      const sessionCookie = lucia.createSessionCookie(session.id);
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+    }
 
     let eventConditions: Prisma.EventWhereInput = {};
     if (username) {
@@ -87,6 +111,11 @@ export async function GET(req: NextRequest) {
       },
       include: {
         attendees: {
+          where: {
+            user: {
+              deletedAt: null, // Filter out deleted users from attendees
+            },
+          },
           select: {
             user: {
               select: {
@@ -113,7 +142,33 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { user: loggedInUser } = await validateRequest();
+    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    if (!sessionId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const { user: loggedInUser, session } =
+      await lucia.validateSession(sessionId);
+    if (!session) {
+      const sessionCookie = lucia.createBlankSessionCookie();
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session && session.fresh) {
+      const sessionCookie = lucia.createSessionCookie(session.id);
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+    }
+
+    if (!loggedInUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const {
       title,
@@ -172,7 +227,29 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const { user: loggedInUser } = await validateRequest();
+    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    if (!sessionId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const { user: loggedInUser, session } =
+      await lucia.validateSession(sessionId);
+    if (!session) {
+      const sessionCookie = lucia.createBlankSessionCookie();
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session && session.fresh) {
+      const sessionCookie = lucia.createSessionCookie(session.id);
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+    }
 
     if (!loggedInUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -223,25 +300,42 @@ export async function DELETE(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const { user: loggedInUser } = await validateRequest();
-
+    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    if (!sessionId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const { user: loggedInUser, session } =
+      await lucia.validateSession(sessionId);
+    if (!session) {
+      const sessionCookie = lucia.createBlankSessionCookie();
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session && session.fresh) {
+      const sessionCookie = lucia.createSessionCookie(session.id);
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+    }
     if (!loggedInUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const {
-      eventId,
-      title,
-      location,
-      description,
-      url,
-      when,
-      startTime,
-      endTime,
-      performers,
-      status,
-      visibility,
-      isCancelled,
-    } = await req.json();
+
+    const { searchParams } = new URL(req.url);
+    const eventId = searchParams.get("eventId");
+
+    if (!eventId) {
+      return NextResponse.json(
+        { error: "Event ID is required" },
+        { status: 400 },
+      );
+    }
 
     const event = await prisma.event.findUnique({
       where: { id: eventId },
@@ -255,26 +349,30 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    let rawData;
+    try {
+      rawData = await req.json();
+    } catch (error) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    const validationResult = updateEventSchema.safeParse(rawData);
+
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: validationResult.error.errors },
+        { status: 400 },
+      );
+    }
+
     const updatedEvent = await prisma.event.update({
       where: { id: eventId },
-      data: {
-        title,
-        location,
-        description,
-        url,
-        when,
-        startTime,
-        endTime,
-        performers,
-        status,
-        visibility,
-        isCancelled,
-      },
+      data: validationResult.data,
     });
 
     return NextResponse.json(updatedEvent);
-  } catch (error) {
-    console.error(error);
+  } catch (error: any) {
+    console.error("Error updating event:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
@@ -284,7 +382,29 @@ export async function PATCH(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    const { user: loggedInUser } = await validateRequest();
+    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    if (!sessionId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const { user: loggedInUser, session } =
+      await lucia.validateSession(sessionId);
+    if (!session) {
+      const sessionCookie = lucia.createBlankSessionCookie();
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session && session.fresh) {
+      const sessionCookie = lucia.createSessionCookie(session.id);
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+    }
 
     if (!loggedInUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

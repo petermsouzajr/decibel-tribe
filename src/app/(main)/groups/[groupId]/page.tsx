@@ -82,7 +82,7 @@ export default function GroupPage({ params: { groupId } }: PageProps) {
     if (groupStatus === "error") {
       router.push("/groups");
     }
-  }, [groupStatus]);
+  }, [groupStatus, router]);
 
   if (groupStatus === "pending") {
     return <p>Loading group...</p>;

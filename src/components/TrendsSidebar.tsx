@@ -1,6 +1,6 @@
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
-import { getUserDataSelect } from "@/lib/types";
+import { getUserDataSelect, UserWithFollowerStatus } from "@/lib/types";
 import { formatNumber } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { unstable_cache } from "next/cache";
@@ -22,24 +22,27 @@ export default function TrendsSidebar() {
 }
 
 async function WhoToFollow() {
-  const { user } = await validateRequest();
+  const { user: loggedInUser } = await validateRequest();
 
-  if (!user) return null;
+  if (!loggedInUser) return null;
 
-  const usersToFollow = await prisma.user.findMany({
+  const usersToFollowResult = await prisma.user.findMany({
     where: {
       NOT: {
-        id: user.id,
+        id: loggedInUser.id,
       },
       followers: {
         none: {
-          followerId: user.id,
+          followerId: loggedInUser.id,
         },
       },
+      deletedAt: null, // Filter out deleted users
     },
-    select: getUserDataSelect(user.id),
+    select: getUserDataSelect(loggedInUser.id),
     take: 5,
   });
+
+  const usersToFollow = usersToFollowResult as UserWithFollowerStatus[];
 
   return (
     <div className="space-y-5 rounded-2xl bg-card p-5 shadow-sm">
@@ -67,7 +70,7 @@ async function WhoToFollow() {
             initialState={{
               followers: user._count.followers,
               isFollowedByUser: user.followers.some(
-                ({ followerId }) => followerId === user.id,
+                ({ followerId }) => followerId === loggedInUser.id,
               ),
             }}
           />

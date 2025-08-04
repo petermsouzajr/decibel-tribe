@@ -1,35 +1,74 @@
-import { validateRequest } from "@/auth";
+// import { validateRequest } from "@/auth";
+import { lucia } from "@/auth"; // Import lucia
+import { cookies } from "next/headers"; // Import cookies
 import prisma from "@/lib/prisma";
 import { getUserDataSelect } from "@/lib/types";
+import { NextRequest, NextResponse } from "next/server"; // Import NextResponse
 
 export async function GET(
-  req: Request,
-  { params: { username } }: { params: { username: string } },
+  req: NextRequest,
+  { params }: { params: { username: string } },
 ) {
   try {
-    const { user: loggedInUser } = await validateRequest();
+    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    let loggedInUserId: string | null = null;
 
-    if (!loggedInUser) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    if (sessionId) {
+      try {
+        const { user, session } = await lucia.validateSession(sessionId);
+        if (session) {
+          if (session.fresh) {
+            // Session is fresh, generate new cookie
+            const sessionCookie = lucia.createSessionCookie(session.id);
+            cookies().set(
+              sessionCookie.name,
+              sessionCookie.value,
+              sessionCookie.attributes,
+            );
+          }
+          // Session is valid, set the user ID for the select query
+          loggedInUserId = user.id;
+        } else {
+          // Session is invalid, invalidate cookie
+          const sessionCookie = lucia.createBlankSessionCookie();
+          cookies().set(
+            sessionCookie.name,
+            sessionCookie.value,
+            sessionCookie.attributes,
+          );
+        }
+      } catch (validationError) {
+        // Error during validation, treat as unauthenticated
+        console.error("Session validation error:", validationError);
+        // Invalidate cookie just in case
+        const sessionCookie = lucia.createBlankSessionCookie();
+        cookies().set(
+          sessionCookie.name,
+          sessionCookie.value,
+          sessionCookie.attributes,
+        );
+      }
     }
 
-    const user = await prisma.user.findFirst({
-      where: {
-        username: {
-          equals: username,
-          mode: "insensitive",
-        },
-      },
-      select: getUserDataSelect(loggedInUser.id),
+    // Perform database query using the determined loggedInUserId (null if no valid session)
+    const user = await prisma.user.findUnique({
+      where: { username: params.username },
+      select: getUserDataSelect(loggedInUserId), // Pass null or the user ID
     });
 
+    // Check if user was found
     if (!user) {
-      return Response.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    return Response.json(user);
+    // User found, return data
+    return NextResponse.json(user);
   } catch (error) {
-    console.error(error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+    // Catch errors from database query or unexpected issues
+    console.error("Error in GET /api/users/username/[username]:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

@@ -1,0 +1,685 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Events Page > should match snapshot 1`] = `
+<body>
+  <div>
+    <main
+      class="flex w-full min-w-0 gap-5"
+    >
+      <div
+        class="w-full min-w-0 space-y-5"
+      >
+        <div
+          class="rounded-2xl bg-card p-5 shadow-sm"
+        >
+          <h1
+            class="text-center text-2xl font-bold"
+          >
+            Events
+          </h1>
+        </div>
+        <div
+          data-orientation="horizontal"
+          dir="ltr"
+        >
+          <div
+            aria-orientation="horizontal"
+            class="inline-flex h-12 w-full items-center justify-center gap-1 rounded-md bg-card p-1 text-muted-foreground shadow-sm z-9 sticky top-0"
+            data-orientation="horizontal"
+            role="tablist"
+            style="outline: none;"
+            tabindex="0"
+          >
+            <button
+              aria-controls="radix-:rc:-content-events-for-you"
+              aria-selected="true"
+              class="inline-flex h-full flex-1 items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:font-bold data-[state=active]:text-foreground"
+              data-orientation="horizontal"
+              data-radix-collection-item=""
+              data-state="active"
+              id="radix-:rc:-trigger-events-for-you"
+              role="tab"
+              tabindex="-1"
+              type="button"
+            >
+              For you
+            </button>
+            <button
+              aria-controls="radix-:rc:-content-events-following"
+              aria-selected="false"
+              class="inline-flex h-full flex-1 items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:font-bold data-[state=active]:text-foreground"
+              data-orientation="horizontal"
+              data-radix-collection-item=""
+              data-state="inactive"
+              id="radix-:rc:-trigger-events-following"
+              role="tab"
+              tabindex="-1"
+              type="button"
+            >
+              Following
+            </button>
+          </div>
+          <div
+            aria-labelledby="radix-:rc:-trigger-events-for-you"
+            class="mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            data-orientation="horizontal"
+            data-state="active"
+            id="radix-:rc:-content-events-for-you"
+            role="tabpanel"
+            style="animation-duration: 0s;"
+            tabindex="0"
+          >
+            <p
+              class="text-center text-muted-foreground"
+            >
+              No events found.
+            </p>
+          </div>
+          <div
+            aria-labelledby="radix-:rc:-trigger-events-following"
+            class="mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            data-orientation="horizontal"
+            data-state="inactive"
+            hidden=""
+            id="radix-:rc:-content-events-following"
+            role="tabpanel"
+            tabindex="0"
+          />
+        </div>
+      </div>
+      <div
+        class="sticky top-[5.25rem] hidden h-fit w-72 flex-none space-y-5 md:block lg:w-80"
+      >
+        <div
+          class="container mx-auto p-4"
+        >
+          <h2
+            class="justify-left mx-auto inline-flex h-12 w-full items-center gap-3 rounded-md bg-card p-4 text-xl font-bold text-muted-foreground shadow-sm"
+          >
+            <a
+              class="flex items-center gap-3"
+              href="/users/testuser"
+            >
+              <div
+                class="flex items-center px-3"
+              >
+                <img
+                  alt="User avatar"
+                  class="aspect-square h-fit flex-none rounded-full bg-secondary object-cover"
+                  data-nimg="1"
+                  decoding="async"
+                  height="48"
+                  loading="lazy"
+                  src="/_next/image?url=https%3A%2F%2Fexample.com%2Favatar.png&w=96&q=75"
+                  srcset="/_next/image?url=https%3A%2F%2Fexample.com%2Favatar.png&w=48&q=75 1x, /_next/image?url=https%3A%2F%2Fexample.com%2Favatar.png&w=96&q=75 2x"
+                  style="color: transparent;"
+                  width="48"
+                />
+              </div>
+              <span>
+                Your Calendar
+              </span>
+            </a>
+          </h2>
+          <div
+            class="m-3 mx-auto flex items-center justify-center gap-8 rounded-md bg-card p-1 text-muted-foreground shadow-sm"
+          >
+            <button
+              class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-8 px-4 py-2"
+            >
+              &lt;
+            </button>
+            <input
+              class="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 w-auto text-center"
+              type="date"
+              value="2025-04-11"
+            />
+            <button
+              class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-8 px-4 py-2"
+            >
+              &gt;
+            </button>
+          </div>
+          <div
+            class="grid grid-cols-7 gap-2"
+          >
+            <div
+              class="text-center font-bold text-muted-foreground"
+            >
+              Sun
+            </div>
+            <div
+              class="text-center font-bold text-muted-foreground"
+            >
+              Mon
+            </div>
+            <div
+              class="text-center font-bold text-muted-foreground"
+            >
+              Tue
+            </div>
+            <div
+              class="text-center font-bold text-muted-foreground"
+            >
+              Wed
+            </div>
+            <div
+              class="text-center font-bold text-muted-foreground"
+            >
+              Thu
+            </div>
+            <div
+              class="text-center font-bold text-muted-foreground"
+            >
+              Fri
+            </div>
+            <div
+              class="text-center font-bold text-muted-foreground"
+            >
+              Sat
+            </div>
+            <div
+              class="rounded-md border p-2 text-center"
+            />
+            <div
+              class="rounded-md border p-2 text-center"
+            />
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              1
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              2
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              3
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              4
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              5
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              6
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              7
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              8
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              9
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              10
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground bg-primary-foreground"
+            >
+              11
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              12
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              13
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              14
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              15
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              16
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              17
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              18
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              19
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              20
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              21
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              22
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              23
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              24
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              25
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              26
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              27
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              28
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              29
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              30
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+`;
+
+exports[`Events Page > should match snapshot and contain key static elements 1`] = `
+<body>
+  <div>
+    <main
+      class="flex w-full min-w-0 gap-5"
+    >
+      <div
+        class="w-full min-w-0 space-y-5"
+      >
+        <div
+          class="rounded-2xl bg-card p-5 shadow-sm"
+        >
+          <h1
+            class="text-center text-2xl font-bold"
+          >
+            Events
+          </h1>
+        </div>
+        <div
+          data-orientation="horizontal"
+          dir="ltr"
+        >
+          <div
+            aria-orientation="horizontal"
+            class="inline-flex h-12 w-full items-center justify-center gap-1 rounded-md bg-card p-1 text-muted-foreground shadow-sm z-9 sticky top-0"
+            data-orientation="horizontal"
+            role="tablist"
+            style="outline: none;"
+            tabindex="0"
+          >
+            <button
+              aria-controls="radix-:rc:-content-events-for-you"
+              aria-selected="true"
+              class="inline-flex h-full flex-1 items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:font-bold data-[state=active]:text-foreground"
+              data-orientation="horizontal"
+              data-radix-collection-item=""
+              data-state="active"
+              id="radix-:rc:-trigger-events-for-you"
+              role="tab"
+              tabindex="-1"
+              type="button"
+            >
+              For you
+            </button>
+            <button
+              aria-controls="radix-:rc:-content-events-following"
+              aria-selected="false"
+              class="inline-flex h-full flex-1 items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:font-bold data-[state=active]:text-foreground"
+              data-orientation="horizontal"
+              data-radix-collection-item=""
+              data-state="inactive"
+              id="radix-:rc:-trigger-events-following"
+              role="tab"
+              tabindex="-1"
+              type="button"
+            >
+              Following
+            </button>
+          </div>
+          <div
+            aria-labelledby="radix-:rc:-trigger-events-for-you"
+            class="mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            data-orientation="horizontal"
+            data-state="active"
+            id="radix-:rc:-content-events-for-you"
+            role="tabpanel"
+            style="animation-duration: 0s;"
+            tabindex="0"
+          >
+            <p
+              class="text-center text-muted-foreground"
+            >
+              No events found.
+            </p>
+          </div>
+          <div
+            aria-labelledby="radix-:rc:-trigger-events-following"
+            class="mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            data-orientation="horizontal"
+            data-state="inactive"
+            hidden=""
+            id="radix-:rc:-content-events-following"
+            role="tabpanel"
+            tabindex="0"
+          />
+        </div>
+      </div>
+      <div
+        class="sticky top-[5.25rem] hidden h-fit w-72 flex-none space-y-5 md:block lg:w-80"
+      >
+        <div
+          class="container mx-auto p-4"
+        >
+          <h2
+            class="justify-left mx-auto inline-flex h-12 w-full items-center gap-3 rounded-md bg-card p-4 text-xl font-bold text-muted-foreground shadow-sm"
+          >
+            <a
+              class="flex items-center gap-3"
+              href="/users/testuser"
+            >
+              <div
+                class="flex items-center px-3"
+              >
+                <img
+                  alt="User avatar"
+                  class="aspect-square h-fit flex-none rounded-full bg-secondary object-cover"
+                  data-nimg="1"
+                  decoding="async"
+                  height="48"
+                  loading="lazy"
+                  src="/_next/image?url=https%3A%2F%2Fexample.com%2Favatar.png&w=96&q=75"
+                  srcset="/_next/image?url=https%3A%2F%2Fexample.com%2Favatar.png&w=48&q=75 1x, /_next/image?url=https%3A%2F%2Fexample.com%2Favatar.png&w=96&q=75 2x"
+                  style="color: transparent;"
+                  width="48"
+                />
+              </div>
+              <span>
+                Your Calendar
+              </span>
+            </a>
+          </h2>
+          <div
+            class="m-3 mx-auto flex items-center justify-center gap-8 rounded-md bg-card p-1 text-muted-foreground shadow-sm"
+          >
+            <button
+              class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-8 px-4 py-2"
+            >
+              &lt;
+            </button>
+            <input
+              class="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 w-auto text-center"
+              type="date"
+              value="2025-04-11"
+            />
+            <button
+              class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-8 px-4 py-2"
+            >
+              &gt;
+            </button>
+          </div>
+          <div
+            class="grid grid-cols-7 gap-2"
+          >
+            <div
+              class="text-center font-bold text-muted-foreground"
+            >
+              Sun
+            </div>
+            <div
+              class="text-center font-bold text-muted-foreground"
+            >
+              Mon
+            </div>
+            <div
+              class="text-center font-bold text-muted-foreground"
+            >
+              Tue
+            </div>
+            <div
+              class="text-center font-bold text-muted-foreground"
+            >
+              Wed
+            </div>
+            <div
+              class="text-center font-bold text-muted-foreground"
+            >
+              Thu
+            </div>
+            <div
+              class="text-center font-bold text-muted-foreground"
+            >
+              Fri
+            </div>
+            <div
+              class="text-center font-bold text-muted-foreground"
+            >
+              Sat
+            </div>
+            <div
+              class="rounded-md border p-2 text-center"
+            />
+            <div
+              class="rounded-md border p-2 text-center"
+            />
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              1
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              2
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              3
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              4
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              5
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              6
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              7
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              8
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              9
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              10
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground bg-primary-foreground"
+            >
+              11
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              12
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              13
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              14
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              15
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              16
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              17
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              18
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              19
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              20
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              21
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              22
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              23
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              24
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              25
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              26
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              27
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              28
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              29
+            </div>
+            <div
+              class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+            >
+              30
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+`;

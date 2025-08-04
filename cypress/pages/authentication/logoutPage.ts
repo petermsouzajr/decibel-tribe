@@ -4,6 +4,7 @@ export const LogoutPage = {
   elements: {
     menuButton: () => cy.get('button[aria-haspopup="menu"]'),
     logoutOption: () => cy.get("div").contains("Logout"),
+    confirmLogoutButton: () => cy.get('button[type="submit"]'),
   },
 
   visit(): void {

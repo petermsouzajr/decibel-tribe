@@ -26,5 +26,13 @@ export default async function sendVerificationEmail(
     `,
   };
 
-  return transporter.sendMail(mailOptions);
+  // Add try...catch for better error logging
+  try {
+    // Return the result of sendMail on success
+    const result = await transporter.sendMail(mailOptions);
+    console.log(`Verification email sent successfully to ${to}`);
+    return result;
+  } catch (error) {
+    console.error(`Error sending verification email to ${to}:`, error);
+  }
 }

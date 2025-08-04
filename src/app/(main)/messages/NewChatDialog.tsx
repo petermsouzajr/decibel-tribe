@@ -105,7 +105,10 @@ export default function NewChatDialog({
             />
           </div>
           {!!selectedUsers.length && (
-            <div className="mt-4 flex flex-wrap gap-2 p-2">
+            <div
+              className="mt-4 flex flex-wrap gap-2 p-2"
+              data-testid="selected-users-container"
+            >
               {selectedUsers.map((user) => (
                 <SelectedUserTag
                   key={user.id}
@@ -182,7 +185,12 @@ function UserResult({ user, selected, onClick }: UserResultProps) {
           <p className="text-muted-foreground">@{user.username}</p>
         </div>
       </div>
-      {selected && <Check className="size-5 text-green-500" />}
+      {selected && (
+        <Check
+          className="size-5 text-green-500"
+          data-testid="user-result-check"
+        />
+      )}
     </button>
   );
 }

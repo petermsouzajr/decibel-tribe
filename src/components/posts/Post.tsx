@@ -85,6 +85,11 @@ export default function Post({ post }: PostProps) {
               suppressHydrationWarning
             >
               {formatRelativeDate(post.createdAt)}
+              {post.updatedAt &&
+                post.updatedAt.getTime() >
+                  post.createdAt.getTime() + 1000 * 60 && (
+                  <span className="pl-1 text-xs">(Edited)</span>
+                )}
             </Link>
           </div>
           {post.user.id === user.id ? (
@@ -97,9 +102,10 @@ export default function Post({ post }: PostProps) {
               userId={post.user.id}
               initialState={{
                 followers: post.user._count.followers,
-                isFollowedByUser: post.user.followers.some(
-                  ({ followerId }) => followerId === user.id,
-                ),
+                isFollowedByUser:
+                  post.user.followers?.some(
+                    (follower) => follower.followerId === user.id,
+                  ) ?? false,
               }}
             />
           )}
@@ -209,7 +215,8 @@ interface MediaPreviewProps {
 function MediaPreview({ media }: MediaPreviewProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleImageClick = () => {
+  const handleImageClick = (event: any) => {
+    event.preventDefault();
     setIsModalOpen(true);
   };
 
@@ -241,7 +248,10 @@ function MediaPreview({ media }: MediaPreviewProps) {
         <video
           src={media.url}
           controls
+          width={500}
+          height={500}
           className="mx-auto size-fit max-h-[30rem] cursor-pointer rounded-2xl"
+          onClick={handleImageClick}
         />
         {isModalOpen && (
           <ImageModal mediaUrl={media.url} onClose={closeModal} />
@@ -270,12 +280,25 @@ function ImageModal({ mediaUrl, onClose }: ImageModalProps) {
       >
         <X size={24} />
       </button>
-      <Image
-        src={mediaUrl}
-        alt="Full View"
-        className="max-h-full max-w-full"
-        onClick={(e) => e.stopPropagation()}
-      />
+      {!mediaUrl.includes("img") ? (
+        <video
+          src={mediaUrl}
+          controls
+          width={500}
+          height={500}
+          className="max-h-full max-w-full"
+          onClick={(e) => e.stopPropagation()}
+        />
+      ) : (
+        <Image
+          src={mediaUrl}
+          alt="Full View"
+          className="max-h-full max-w-full"
+          onClick={(e) => e.stopPropagation()}
+          width={500}
+          height={500}
+        />
+      )}
     </div>
   );
 }

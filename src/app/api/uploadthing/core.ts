@@ -18,6 +18,13 @@ export const fileRouter = {
       return { user };
     })
     .onUploadComplete(async ({ metadata, file }) => {
+      console.log("UploadThing avatar onUploadComplete called with file:", file);
+      
+      if (!file.url) {
+        console.error("UploadThing error: file.url is undefined for avatar");
+        throw new UploadThingError("Avatar upload failed - no URL returned");
+      }
+
       const oldAvatarUrl = metadata.user.avatarUrl;
 
       if (oldAvatarUrl) {
@@ -48,6 +55,7 @@ export const fileRouter = {
         }),
       ]);
 
+      console.log("Avatar updated successfully:", newAvatarUrl);
       return { avatarUrl: newAvatarUrl };
     }),
   attachment: f({
@@ -62,6 +70,13 @@ export const fileRouter = {
       return {};
     })
     .onUploadComplete(async ({ file }) => {
+      console.log("UploadThing onUploadComplete called with file:", file);
+      
+      if (!file.url) {
+        console.error("UploadThing error: file.url is undefined");
+        throw new UploadThingError("File upload failed - no URL returned");
+      }
+
       const media = await prisma.media.create({
         data: {
           url: file.url.replace(
@@ -72,6 +87,7 @@ export const fileRouter = {
         },
       });
 
+      console.log("Media created with ID:", media.id);
       return { mediaId: media.id };
     }),
 } satisfies FileRouter;

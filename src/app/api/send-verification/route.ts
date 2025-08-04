@@ -3,12 +3,14 @@ import { lucia } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const token = searchParams.get("token");
+export async function GET(request: NextRequest) {
+  const url = new URL(request.url);
+  const token = url.searchParams.get("token");
+
+  const redirectUrl = new URL("/", url.origin);
 
   if (!token) {
-    return NextResponse.redirect(new URL("/", req.url));
+    return NextResponse.redirect(redirectUrl);
   }
 
   try {
@@ -22,7 +24,7 @@ export async function GET(req: NextRequest) {
     });
 
     if (!verificationRecord) {
-      return NextResponse.redirect(new URL("/", req.url));
+      return NextResponse.redirect(new URL("/", request.url));
     }
 
     const user = await prisma.user.update({
@@ -43,9 +45,9 @@ export async function GET(req: NextRequest) {
       sessionCookie.attributes,
     );
 
-    return NextResponse.redirect(new URL("/", req.url));
+    return NextResponse.redirect(new URL("/", request.url));
   } catch (error) {
     console.error("Verification failed", error);
-    return NextResponse.redirect(new URL("/", req.url));
+    return NextResponse.redirect(new URL("/", request.url));
   }
 }

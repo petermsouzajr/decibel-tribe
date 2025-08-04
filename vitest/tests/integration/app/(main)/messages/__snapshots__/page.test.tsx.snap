@@ -1,0 +1,164 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Messages Page > should match snapshot 1`] = `
+<body>
+  <div>
+    <main
+      class="relative w-full overflow-hidden rounded-2xl bg-card shadow-sm"
+    >
+      <div
+        class="absolute bottom-0 top-0 flex w-full"
+      >
+        <div
+          class="size-full flex-col border-e md:flex md:w-72 flex"
+        >
+          <div
+            class="flex items-center gap-3 p-2"
+          >
+            <div
+              class="h-full md:hidden"
+            >
+              <button
+                class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10"
+              >
+                <svg
+                  class="lucide lucide-x size-5"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M18 6 6 18"
+                  />
+                  <path
+                    d="m6 6 12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <h1
+              class="me-auto text-xl font-bold md:ms-2"
+            >
+              Messages
+            </h1>
+            <button
+              class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10"
+              title="Start new chat"
+            >
+              <svg
+                class="lucide lucide-mail-plus size-5"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h8"
+                />
+                <path
+                  d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"
+                />
+                <path
+                  d="M19 16v6"
+                />
+                <path
+                  d="M16 19h6"
+                />
+              </svg>
+            </button>
+          </div>
+          <div
+            class="str-chat str-chat__theme-light str-chat-channel-list str-chat__channel-list str-chat__channel-list-react str-chat-channel-list--open"
+          >
+            <div
+              class="str-chat__channel-search str-chat__channel-search--inline"
+              data-testid="channel-search"
+            >
+              <input
+                class="str-chat__channel-search-input"
+                data-testid="search-input"
+                placeholder="Search"
+                type="text"
+                value=""
+              />
+            </div>
+            <div
+              class="str-chat__loading-channels"
+            >
+              <div
+                class="str-chat__loading-channels-item str-chat__channel-preview-loading"
+              >
+                <div
+                  class="str-chat__loading-channels-avatar"
+                />
+                <div
+                  class="str-chat__loading-channels-meta str-chat__channel-preview-end-loading"
+                >
+                  <div
+                    class="str-chat__loading-channels-username"
+                  />
+                  <div
+                    class="str-chat__loading-channels-status"
+                  />
+                </div>
+              </div>
+              <div
+                class="str-chat__loading-channels-item str-chat__channel-preview-loading"
+              >
+                <div
+                  class="str-chat__loading-channels-avatar"
+                />
+                <div
+                  class="str-chat__loading-channels-meta str-chat__channel-preview-end-loading"
+                >
+                  <div
+                    class="str-chat__loading-channels-username"
+                  />
+                  <div
+                    class="str-chat__loading-channels-status"
+                  />
+                </div>
+              </div>
+              <div
+                class="str-chat__loading-channels-item str-chat__channel-preview-loading"
+              >
+                <div
+                  class="str-chat__loading-channels-avatar"
+                />
+                <div
+                  class="str-chat__loading-channels-meta str-chat__channel-preview-end-loading"
+                >
+                  <div
+                    class="str-chat__loading-channels-username"
+                  />
+                  <div
+                    class="str-chat__loading-channels-status"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="w-full md:block hidden"
+        >
+          <div
+            class="str-chat str-chat__theme-light str-chat-channel str-chat__channel"
+          />
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+`;

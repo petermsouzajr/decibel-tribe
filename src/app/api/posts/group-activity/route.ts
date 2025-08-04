@@ -1,56 +1,73 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateRequest } from "@/auth";
+import { lucia } from "@/auth";
+import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
-import { getPostDataInclude } from "@/lib/types";
+import { getPostDataInclude, PostsPage, PostData } from "@/lib/types";
+
+// Opt out of static generation
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
-    const { user } = await validateRequest();
-
+    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    if (!sessionId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const { user, session } = await lucia.validateSession(sessionId);
+    if (!session) {
+      const sessionCookie = lucia.createBlankSessionCookie();
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session && session.fresh) {
+      const sessionCookie = lucia.createSessionCookie(session.id);
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+    }
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
     const pageSize = 10;
-    const cursor = req.nextUrl.searchParams.get("cursor");
 
-    const groupMemberships = await prisma.groupMember.findMany({
+    const userGroups = await prisma.groupMember.findMany({
       where: { userId: user.id, acceptedInvite: true },
       select: { groupId: true },
     });
-    const groupIds = groupMemberships.map((membership) => membership.groupId);
+
+    const groupIds = userGroups.map((g) => g.groupId);
 
     const posts = await prisma.post.findMany({
       where: {
         groupId: { in: groupIds },
       },
-      include: {
-        ...getPostDataInclude(user.id),
-        Group: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
+      include: getPostDataInclude(user.id),
       orderBy: { createdAt: "desc" },
       take: pageSize + 1,
-      skip: cursor ? 1 : 0,
-      ...(cursor && {
-        cursor: {
-          id: cursor,
-        },
-      }),
+      cursor: cursor ? { id: cursor } : undefined,
     });
 
     const hasNextPage = posts.length > pageSize;
-    const nextCursor = hasNextPage ? posts[posts.length - 1].id : null;
+    const nextCursor = hasNextPage ? posts[pageSize].id : null;
 
-    if (hasNextPage) posts.pop();
+    const typedPosts = posts.slice(0, pageSize) as PostData[];
 
-    return NextResponse.json({ posts, nextCursor });
+    const data: PostsPage = {
+      posts: typedPosts,
+      nextCursor,
+    };
+
+    return NextResponse.json(data);
   } catch (error) {
-    console.error("Error fetching group activity posts:", error);
+    console.error("Error fetching group activity:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

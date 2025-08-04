@@ -1,13 +1,15 @@
 import prisma from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: Request) {
+// Opt out of static generation
+export const dynamic = "force-dynamic";
+
+export async function GET(request: NextRequest) {
   try {
-    const authHeader = req.headers.get("Authorization");
-
+    // Check for cron job authorization (simple header check)
+    const authHeader = request.headers.get("Authorization");
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return new Response(JSON.stringify({ message: "Unauthorized" }), {
-        status: 401,
-      });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const currentDate = new Date();
 

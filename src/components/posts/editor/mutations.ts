@@ -1,6 +1,6 @@
 import { useSession } from "@/app/(main)/SessionProvider";
 import { useToast } from "@/components/ui/use-toast";
-import { PostsPage } from "@/lib/types";
+import { PostsPage, PostData, UserWithFollowerStatus } from "@/lib/types";
 import {
   InfiniteData,
   QueryFilters,
@@ -18,34 +18,36 @@ export function useSubmitPostMutation() {
 
   const mutation = useMutation({
     mutationFn: submitPost,
-    onSuccess: async (newPost, variables) => {
+    onSuccess: async (newPost: PostData, variables) => {
       const isPublicPost = !variables.groupId;
 
       if (isPublicPost) {
         const queryFilter = {
           queryKey: ["post-feed"],
-          predicate(query) {
+          predicate(query: any) {
             return (
               query.queryKey.includes("for-you") ||
               (query.queryKey.includes("user-posts") &&
                 query.queryKey.includes(user.id))
             );
           },
-        } satisfies QueryFilters;
+        } as QueryFilters;
 
-        await queryClient.cancelQueries(queryFilter);
+        await queryClient.cancelQueries(queryFilter as QueryFilters);
 
         queryClient.setQueriesData<InfiniteData<PostsPage, string | null>>(
-          queryFilter,
-          (oldData) => {
+          { queryKey: queryFilter.queryKey },
+          (oldData): InfiniteData<PostsPage, string | null> | undefined => {
+            const typedNewPost = newPost as PostData;
             const firstPage = oldData?.pages[0];
 
             if (firstPage) {
+              const existingPosts = firstPage.posts as PostData[];
               return {
                 pageParams: oldData.pageParams,
                 pages: [
                   {
-                    posts: [newPost, ...firstPage.posts],
+                    posts: [typedNewPost, ...existingPosts],
                     nextCursor: firstPage.nextCursor,
                   },
                   ...oldData.pages.slice(1),
@@ -56,7 +58,7 @@ export function useSubmitPostMutation() {
                 pageParams: [],
                 pages: [
                   {
-                    posts: [newPost],
+                    posts: [typedNewPost],
                     nextCursor: null,
                   },
                 ],
@@ -67,9 +69,7 @@ export function useSubmitPostMutation() {
 
         queryClient.invalidateQueries({
           queryKey: queryFilter.queryKey,
-          predicate(query) {
-            return queryFilter.predicate(query) && !query.state.data;
-          },
+          predicate: queryFilter.predicate,
         });
       } else {
         const groupId = variables.groupId;
@@ -79,15 +79,17 @@ export function useSubmitPostMutation() {
 
         queryClient.setQueryData<InfiniteData<PostsPage>>(
           queryKey,
-          (oldData) => {
+          (oldData): InfiniteData<PostsPage> | undefined => {
+            const typedNewPost = newPost as PostData;
             const firstPage = oldData?.pages[0];
 
             if (firstPage) {
+              const existingPosts = firstPage.posts as PostData[];
               return {
                 pageParams: oldData.pageParams,
                 pages: [
                   {
-                    posts: [newPost, ...firstPage.posts],
+                    posts: [typedNewPost, ...existingPosts],
                     nextCursor: firstPage.nextCursor,
                   },
                   ...oldData.pages.slice(1),
@@ -98,7 +100,7 @@ export function useSubmitPostMutation() {
                 pageParams: [],
                 pages: [
                   {
-                    posts: [newPost],
+                    posts: [typedNewPost],
                     nextCursor: null,
                   },
                 ],

@@ -10,7 +10,7 @@ import {
 import { Heart, ThumbsUp } from "lucide-react";
 import { useToast } from "../ui/use-toast";
 
-interface LikeButtonProps {
+export interface LikeButtonProps {
   postId: string;
   initialState: LikeInfo;
 }
@@ -28,11 +28,12 @@ export default function LikeButton({ postId, initialState }: LikeButtonProps) {
       kyInstance.get(`/api/posts/${postId}/likes`).json<LikeInfo>(),
     initialData: initialState,
     staleTime: Infinity,
+    enabled: !!postId,
   });
 
   const { mutate } = useMutation({
     mutationFn: () =>
-      data.isLikedByUser
+      data?.isLikedByUser
         ? kyInstance.delete(`/api/posts/${postId}/likes`)
         : kyInstance.post(`/api/posts/${postId}/likes`),
     onMutate: async () => {
@@ -58,8 +59,23 @@ export default function LikeButton({ postId, initialState }: LikeButtonProps) {
     },
   });
 
+  if (!data) {
+    return (
+      <button className="flex items-center gap-2" disabled>
+        <ThumbsUp className="size-4 animate-pulse" />
+        <span className="text-xs font-medium tabular-nums">-</span>
+      </button>
+    );
+  }
+
+  const ariaLabel = data.isLikedByUser ? "Unlike post" : "Like post";
+
   return (
-    <button onClick={() => mutate()} className="flex items-center gap-2">
+    <button
+      onClick={() => mutate()}
+      className="flex items-center gap-2"
+      aria-label={ariaLabel}
+    >
       <ThumbsUp
         className={cn(
           "size-4",

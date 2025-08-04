@@ -1,26 +1,32 @@
-import { validateRequest } from "@/auth";
+// import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
-import { getPostDataInclude, PostsPage } from "@/lib/types";
-import { NextRequest } from "next/server";
+import { getPostDataInclude, PostsPage, PostData } from "@/lib/types";
+import { NextRequest, NextResponse } from "next/server";
+import { validateRequest } from "@/auth";
 
 export async function GET(
   req: NextRequest,
-  { params: { userId } }: { params: { userId: string } },
+  { params }: { params: { userId: string } },
 ) {
   try {
-    const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
+    const { user: loggedInUser, session } = await validateRequest();
 
-    const pageSize = 10;
-
-    const { user } = await validateRequest();
-
-    if (!user) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    if (!loggedInUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
+    const pageSize = 10;
+
     const posts = await prisma.post.findMany({
-      where: { userId },
-      include: getPostDataInclude(user.id),
+      where: {
+        userId: params.userId,
+        groupId: null,
+        user: {
+          deletedAt: null, // Filter out posts from deleted users
+        },
+      },
+      include: getPostDataInclude(loggedInUser.id),
       orderBy: { createdAt: "desc" },
       take: pageSize + 1,
       cursor: cursor ? { id: cursor } : undefined,
@@ -28,14 +34,16 @@ export async function GET(
 
     const nextCursor = posts.length > pageSize ? posts[pageSize].id : null;
 
-    const data: PostsPage = {
-      posts: posts.slice(0, pageSize),
-      nextCursor,
-    };
+    const typedPosts = posts.slice(0, pageSize) as PostData[];
 
-    return Response.json(data);
+    const data: PostsPage = { posts: typedPosts, nextCursor };
+
+    return NextResponse.json(data);
   } catch (error) {
-    console.error(error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+    console.error("Error fetching user posts:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

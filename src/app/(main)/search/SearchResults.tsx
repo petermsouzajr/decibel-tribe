@@ -6,15 +6,22 @@ import Post from "@/components/posts/Post";
 import PostsLoadingSkeleton from "@/components/posts/PostsLoadingSkeleton";
 import User from "@/components/posts/User";
 import kyInstance from "@/lib/ky";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { EventData, PostData, UserWithFollowerStatus } from "@/lib/types";
+import { InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
 interface SearchResultsProps {
   query: string;
-  type: "users/posts" | "instruments/skills" | "events";
 }
 
-export default function SearchResults({ query, type }: SearchResultsProps) {
+interface SearchApiResponse {
+  users: UserWithFollowerStatus[];
+  posts: PostData[];
+  events: EventData[];
+  nextCursor: string | null;
+}
+
+export default function SearchResults({ query }: SearchResultsProps) {
   const {
     data,
     fetchNextPage,
@@ -22,8 +29,14 @@ export default function SearchResults({ query, type }: SearchResultsProps) {
     isFetching,
     isFetchingNextPage,
     status,
-  } = useInfiniteQuery({
-    queryKey: ["search-results", query, type],
+  } = useInfiniteQuery<
+    SearchApiResponse,
+    Error,
+    InfiniteData<SearchApiResponse>,
+    [string, string],
+    string | null
+  >({
+    queryKey: ["search-results", query],
     queryFn: ({ pageParam }) =>
       kyInstance
         .get("/api/search", {
@@ -32,52 +45,39 @@ export default function SearchResults({ query, type }: SearchResultsProps) {
             ...(pageParam ? { cursor: pageParam } : {}),
           },
         })
-        .json(),
-    initialPageParam: null as string | null,
-    getNextPageParam: (lastPage: any) => lastPage.nextCursor,
+        .json<SearchApiResponse>(),
+    initialPageParam: null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
     gcTime: 0,
   });
 
   const results =
-    type === "users/posts"
-      ? data?.pages.flatMap((page: any) => {
-          const combined = [];
-          if (page.users) {
-            combined.push(
-              ...page.users.map((user: any) => ({ ...user, _type: "user" })),
-            );
-          }
-          if (page.posts) {
-            combined.push(
-              ...page.posts.map((post: any) => ({ ...post, _type: "post" })),
-            );
-          }
-          return combined;
-        }) || []
-      : type === "instruments/skills"
-        ? data?.pages.flatMap((page: any) => {
-            const combined = [];
-            if (page.usersWithSkills) {
-              combined.push(
-                ...page.usersWithSkills.map((user: any) => ({
-                  ...user,
-                  _type: "skill",
-                })),
-              );
-            }
-            if (page.usersWithInstruments) {
-              combined.push(
-                ...page.usersWithInstruments.map((user: any) => ({
-                  ...user,
-                  _type: "instrument",
-                })),
-              );
-            }
-            return combined;
-          }) || []
-        : data?.pages.flatMap((page: any) =>
-            page.events.map((event: any) => ({ ...event, _type: "event" })),
-          ) || [];
+    data?.pages.flatMap((page) => {
+      const combined: (
+        | (UserWithFollowerStatus & { _type: "user" })
+        | (PostData & { _type: "post" })
+        | (EventData & { _type: "event" })
+      )[] = [];
+      if (page.users) {
+        combined.push(
+          ...page.users.map((user) => ({ ...user, _type: "user" as const })),
+        );
+      }
+      if (page.posts) {
+        combined.push(
+          ...page.posts.map((post) => ({ ...post, _type: "post" as const })),
+        );
+      }
+      if (page.events) {
+        combined.push(
+          ...page.events.map((event) => ({
+            ...event,
+            _type: "event" as const,
+          })),
+        );
+      }
+      return combined;
+    }) || [];
 
   if (status === "pending") {
     return <PostsLoadingSkeleton />;
@@ -87,7 +87,7 @@ export default function SearchResults({ query, type }: SearchResultsProps) {
     if (!query) {
       return (
         <p className="text-center text-muted-foreground">
-          Search for bands, musicians, and event labor.
+          Search for bands, musicians, posts, and events.
         </p>
       );
     }
@@ -111,21 +111,13 @@ export default function SearchResults({ query, type }: SearchResultsProps) {
       className="space-y-5"
       onBottomReached={() => hasNextPage && !isFetching && fetchNextPage()}
     >
-      {results.map((item: any) => {
-        if (type === "users/posts") {
-          if (item._type === "user") {
-            return <User key={item.id} user={item} />;
-          } else if (item._type === "post") {
-            return <Post key={item.id} post={item} />;
-          }
-        } else if (type === "instruments/skills") {
-          if (item._type === "skill") {
-            return <User key={item.id} user={item} />;
-          } else if (item._type === "instrument") {
-            return <User key={item.id} user={item} />;
-          }
-        } else if (type === "events") {
-          return <EventDetails key={item.id} event={item} />;
+      {results.map((item) => {
+        if (item._type === "user") {
+          return <User key={`user-${item.id}`} user={item} />;
+        } else if (item._type === "post") {
+          return <Post key={`post-${item.id}`} post={item} />;
+        } else if (item._type === "event") {
+          return <EventDetails key={`event-${item.id}`} event={item} />;
         }
         return null;
       })}

@@ -1,22 +1,46 @@
-import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
-import {
-  EventsPage,
-  getEventDataInclude,
-  getPostDataInclude,
-  PostsPage,
-} from "@/lib/types";
-import { NextRequest } from "next/server";
+import { EventsPage, getEventDataInclude } from "@/lib/types";
+import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { lucia } from "@/auth";
+
+// Opt out of static generation
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
     const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
 
     const pageSize = 10;
-    const { user } = await validateRequest();
-    if (!user) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+
+    // Direct session validation
+    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    if (!sessionId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const { user, session } = await lucia.validateSession(sessionId);
+    if (!session) {
+      const sessionCookie = lucia.createBlankSessionCookie();
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session && session.fresh) {
+      const sessionCookie = lucia.createSessionCookie(session.id);
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+    }
+    // --- End direct session validation
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const events = await prisma.event.findMany({
       where: {
         status: "PUBLISHED",

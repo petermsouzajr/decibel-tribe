@@ -1,13 +1,15 @@
 import prisma from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: Request) {
+// Opt out of static generation
+export const dynamic = "force-dynamic";
+
+export async function GET(request: NextRequest) {
   try {
-    const authHeader = req.headers.get("Authorization");
+    const authHeader = request.headers.get("Authorization");
 
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return new Response(JSON.stringify({ message: "Unauthorized" }), {
-        status: 401,
-      });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const expiredVerifications = await prisma.emailVerification.findMany({
@@ -31,16 +33,19 @@ export async function GET(req: Request) {
       });
     }
 
-    return new Response(
-      JSON.stringify({
+    return NextResponse.json(
+      {
         message: `${expiredVerifications.length} expired verification token(s) deleted.`,
-      }),
+      },
       { status: 200 },
     );
   } catch (error) {
     console.error("Error deleting expired verification tokens:", error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-    });
+    return NextResponse.json(
+      JSON.stringify({ error: "Internal server error" }),
+      {
+        status: 500,
+      },
+    );
   }
 }

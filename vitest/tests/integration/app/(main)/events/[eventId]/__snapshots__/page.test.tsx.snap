@@ -1,0 +1,11 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Event Details Page > should match snapshot 1`] = `
+<body>
+  <div>
+    <div>
+      Mocked Event Details Page
+    </div>
+  </div>
+</body>
+`;

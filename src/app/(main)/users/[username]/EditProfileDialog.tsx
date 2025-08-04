@@ -39,6 +39,8 @@ import Select, { CSSObjectWithLabel } from "react-select";
 import { useTheme } from "next-themes";
 import skillsList from "../../../../data/skillsList.json";
 import instrumentList from "../../../../data/instrumentList.json";
+import { useToast } from "@/components/ui/use-toast";
+
 interface UserWithVisibility extends UserData {
   visibility: "PUBLIC" | "PRIVATE";
 }
@@ -140,6 +142,7 @@ export default function EditProfileDialog({
 
   const mutation = useUpdateProfileMutation();
   const { theme } = useTheme();
+  const { toast } = useToast();
 
   const [croppedAvatar, setCroppedAvatar] = useState<Blob | null>(null);
 
@@ -193,6 +196,13 @@ export default function EditProfileDialog({
         onSuccess: () => {
           setCroppedAvatar(null);
           onOpenChange(false);
+        },
+        onError: (error) => {
+          toast({
+            variant: "destructive",
+            title: "Error updating profile",
+            description: error.message || "An unknown error occurred",
+          });
         },
       },
     );
@@ -274,6 +284,7 @@ export default function EditProfileDialog({
                       render={({ field }) => (
                         <Select
                           {...field}
+                          inputId={field.name + "-select-input"}
                           isMulti
                           options={instrumentOptions}
                           components={animatedComponents}
@@ -281,7 +292,7 @@ export default function EditProfileDialog({
                           classNamePrefix="select"
                           styles={getCustomStyles(theme)}
                           value={instrumentOptions.filter((instrument) =>
-                            field.value.includes(instrument.value),
+                            (field.value ?? []).includes(instrument.value),
                           )}
                           onChange={(selectedOptions) => {
                             field.onChange(
@@ -309,6 +320,7 @@ export default function EditProfileDialog({
                       render={({ field }) => (
                         <Select
                           {...field}
+                          inputId={field.name + "-select-input"}
                           isMulti
                           options={skillOptions}
                           components={animatedComponents}
@@ -316,7 +328,7 @@ export default function EditProfileDialog({
                           classNamePrefix="select"
                           styles={getCustomStyles(theme)}
                           value={skillOptions.filter((skill) =>
-                            field.value.includes(skill.value),
+                            (field.value ?? []).includes(skill.value),
                           )}
                           onChange={(selectedOptions) => {
                             field.onChange(
@@ -349,37 +361,31 @@ interface AvatarInputProps {
 }
 
 function AvatarInput({ src, onImageCropped }: AvatarInputProps) {
-  const [imageToCrop, setImageToCrop] = useState<File>();
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [imageToCrop, setImageToCrop] = useState<File | null>(null);
 
   function onImageSelected(image: File | undefined) {
     if (!image) return;
+    setImageToCrop(image);
+  }
 
-    Resizer.imageFileResizer(
-      image,
-      1024,
-      1024,
-      "WEBP",
-      100,
-      0,
-      (uri) => setImageToCrop(uri as File),
-      "file",
-    );
+  function onCropDialogClose() {
+    setImageToCrop(null);
   }
 
   return (
     <>
       <input
+        ref={inputRef}
         type="file"
         accept="image/*"
-        onChange={(e) => onImageSelected(e.target.files?.[0])}
-        ref={fileInputRef}
         className="sr-only hidden"
+        data-testid="avatar-upload-input"
+        onChange={(e) => onImageSelected(e.target.files?.[0])}
       />
       <button
         type="button"
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => inputRef.current?.click()}
         className="group relative block"
       >
         <Image
@@ -398,12 +404,7 @@ function AvatarInput({ src, onImageCropped }: AvatarInputProps) {
           src={URL.createObjectURL(imageToCrop)}
           cropAspectRatio={1}
           onCropped={onImageCropped}
-          onClose={() => {
-            setImageToCrop(undefined);
-            if (fileInputRef.current) {
-              fileInputRef.current.value = "";
-            }
-          }}
+          onClose={onCropDialogClose}
         />
       )}
     </>

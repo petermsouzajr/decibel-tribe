@@ -46,6 +46,7 @@ export default function Page() {
           className="hidden w-1/2 object-cover md:block"
           width={1024}
           height={1792}
+          priority
         />
       </div>
     </main>

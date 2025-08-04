@@ -8,9 +8,13 @@ import { createCommentSchema } from "@/lib/validation";
 export async function submitComment({
   post,
   content,
+  parentId,
+  mediaIds,
 }: {
   post: PostData;
   content: string;
+  parentId?: string;
+  mediaIds?: string[];
 }) {
   const { user } = await validateRequest();
 
@@ -24,6 +28,9 @@ export async function submitComment({
         content: contentValidated,
         postId: post.id,
         userId: user.id,
+        parentId,
+        // TODO: Add media support to comments when database schema is updated
+        // mediaIds: mediaIds || [],
       },
       include: getCommentDataInclude(user.id),
     }),
@@ -57,8 +64,13 @@ export async function deleteComment(id: string) {
 
   if (comment.userId !== user.id) throw new Error("Unauthorized");
 
-  const deletedComment = await prisma.comment.delete({
+  // Use soft delete instead of hard delete
+  const deletedComment = await prisma.comment.update({
     where: { id },
+    data: {
+      isDeleted: true,
+      deletedAt: new Date(),
+    },
     include: getCommentDataInclude(user.id),
   });
 

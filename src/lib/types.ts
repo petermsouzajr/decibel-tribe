@@ -1,7 +1,7 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, NotificationType, Media } from "@prisma/client";
 
-export function getUserDataSelect(loggedInUserId: string) {
-  return {
+export function getUserDataSelect(loggedInUserId?: string | null) {
+  const select = {
     id: true,
     username: true,
     displayName: true,
@@ -10,6 +10,7 @@ export function getUserDataSelect(loggedInUserId: string) {
     createdAt: true,
     email: true,
     passwordHash: true,
+    deletedAt: true, // Include deletedAt field
     userPreferences: {
       select: {
         calendar: true,
@@ -35,14 +36,6 @@ export function getUserDataSelect(loggedInUserId: string) {
         },
       },
     },
-    followers: {
-      where: {
-        followerId: loggedInUserId,
-      },
-      select: {
-        followerId: true,
-      },
-    },
     _count: {
       select: {
         posts: true,
@@ -50,6 +43,22 @@ export function getUserDataSelect(loggedInUserId: string) {
       },
     },
   } satisfies Prisma.UserSelect;
+
+  if (loggedInUserId) {
+    return {
+      ...select,
+      followers: {
+        where: {
+          followerId: loggedInUserId,
+        },
+        select: {
+          followerId: true,
+        },
+      },
+    } satisfies Prisma.UserSelect;
+  }
+
+  return select;
 }
 
 export type UserData = Prisma.UserGetPayload<{
@@ -90,41 +99,21 @@ export type EventData = Prisma.EventGetPayload<{
   include: ReturnType<typeof getEventDataInclude>;
 }>;
 
-export function getPostDataInclude(loggedInUserId: string) {
-  return {
+export function getPostDataInclude(loggedInUserId?: string | null) {
+  const include = {
     user: {
       select: getUserDataSelect(loggedInUserId),
     },
     attachments: true,
-    likes: {
-      where: {
-        userId: loggedInUserId,
-      },
-      select: {
-        userId: true,
-      },
-    },
-    dislikes: {
-      where: {
-        userId: loggedInUserId,
-      },
-      select: {
-        userId: true,
-      },
-    },
-    bookmarks: {
-      where: {
-        userId: loggedInUserId,
-      },
-      select: {
-        userId: true,
-      },
-    },
     _count: {
       select: {
         likes: true,
         dislikes: true,
-        comments: true,
+        comments: {
+          where: {
+            parentId: null, // Only count top-level comments
+          },
+        },
       },
     },
     Group: {
@@ -134,84 +123,96 @@ export function getPostDataInclude(loggedInUserId: string) {
       },
     },
   } satisfies Prisma.PostInclude;
-}
 
-export type PostData = Prisma.PostGetPayload<{
-  include: ReturnType<typeof getPostDataInclude>;
-}>;
-
-export interface PostsPage {
-  posts: PostData[];
-  nextCursor: string | null;
-}
-
-export function getGroupMemberSelect() {
-  return {
-    userId: true,
-    groupId: true,
-    role: true,
-    joinedAt: true,
-    group: {
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        ownerId: true,
+  if (loggedInUserId) {
+    return {
+      ...include,
+      likes: {
+        where: {
+          userId: loggedInUserId,
+        },
+        select: {
+          userId: true,
+        },
       },
-    },
-    user: {
-      select: {
-        id: true,
-        username: true,
-        displayName: true,
+      dislikes: {
+        where: {
+          userId: loggedInUserId,
+        },
+        select: {
+          userId: true,
+        },
       },
-    },
-    acceptedInvite: true,
-  } satisfies Prisma.GroupMemberSelect;
+      bookmarks: {
+        where: {
+          userId: loggedInUserId,
+        },
+        select: {
+          userId: true,
+        },
+      },
+    } satisfies Prisma.PostInclude;
+  }
+
+  return include;
 }
 
-export type GroupMembershipData = Prisma.GroupMemberGetPayload<{
-  include: ReturnType<typeof getGroupMemberSelect>;
-}>;
+export type UserWithFollowerStatus = {
+  id: string;
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+  bio: string | null;
+  createdAt: Date;
+  email: string | null;
+  passwordHash: string | null;
+  deletedAt: Date | null; // Include deletedAt field
+  userPreferences: {
+    calendar: string;
+  } | null;
+  userInstruments: {
+    instrument: {
+      id: string;
+      name: string;
+    };
+  }[];
+  userSkills: {
+    skill: {
+      id: string;
+      name: string;
+    };
+  }[];
+  _count: {
+    posts: number;
+    followers: number;
+  };
+  // The conditionally included field:
+  followers: {
+    followerId: string;
+  }[];
+};
 
-export function getCommentDataInclude(loggedInUserId: string) {
-  return {
-    user: {
-      select: getUserDataSelect(loggedInUserId),
-    },
-  } satisfies Prisma.CommentInclude;
-}
+export interface NotificationData {
+  id: string;
+  recipientId: string;
+  issuerId: string;
+  postId: string | null;
+  type: NotificationType; // Correctly imported type
+  read: boolean;
+  eventId: string | null;
+  createdAt: Date;
 
-export type CommentData = Prisma.CommentGetPayload<{
-  include: ReturnType<typeof getCommentDataInclude>;
-}>;
-
-export interface CommentsPage {
-  comments: CommentData[];
-  previousCursor: string | null;
-}
-
-export const notificationsInclude = {
-  issuer: {
-    select: getUserDataSelect("issuerUserId"),
-  },
+  issuer: UserWithFollowerStatus;
   post: {
-    select: {
-      content: true,
-    },
-  },
+    id: string;
+    content: string;
+  } | null;
   event: {
-    select: {
-      title: true,
-      location: true,
-      id: true,
-    },
-  },
-} satisfies Prisma.NotificationInclude;
-
-export type NotificationData = Prisma.NotificationGetPayload<{
-  include: typeof notificationsInclude;
-}>;
+    id: string;
+    title: string;
+    location: string;
+  } | null;
+}
 
 export interface NotificationsPage {
   notifications: NotificationData[];
@@ -244,6 +245,7 @@ export interface NotificationCountInfo {
 export interface MessageCountInfo {
   unreadCount: number;
 }
+
 export interface Event {
   id: string;
   title: string;
@@ -313,4 +315,146 @@ export interface EditState {
   editedTitle: string;
   editedStartTime: string;
   editedEndTime: string;
+}
+
+// Helper type to get the payload structure from getPostDataInclude
+// Ensures we include likes, dislikes, bookmarks conditionally
+type PostPayloadCreator<T extends string | null | undefined> =
+  Prisma.PostGetPayload<{ include: ReturnType<typeof getPostDataInclude> }>;
+
+// Manually define PostData to ensure the user field has the correct type
+export type PostData = {
+  id: string;
+  content: string;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  groupId: string | null;
+
+  // Nested relations from getPostDataInclude(userId)
+  user: UserWithFollowerStatus;
+  attachments: Media[]; // Use the imported Media type
+  _count: {
+    likes: number;
+    dislikes: number;
+    comments: number;
+  };
+  Group: {
+    id: string;
+    name: string;
+  } | null;
+
+  // Conditionally included relations (present when loggedInUserId is provided)
+  likes: { userId: string }[];
+  dislikes: { userId: string }[];
+  bookmarks: { userId: string }[];
+};
+
+export interface PostsPage {
+  posts: PostData[];
+  nextCursor: string | null;
+}
+
+export function getGroupMemberSelect() {
+  return {
+    userId: true,
+    groupId: true,
+    role: true,
+    joinedAt: true,
+    group: {
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        ownerId: true,
+      },
+    },
+    user: {
+      select: {
+        id: true,
+        username: true,
+        displayName: true,
+      },
+    },
+    acceptedInvite: true,
+  } satisfies Prisma.GroupMemberSelect;
+}
+
+export type GroupMembershipData = Prisma.GroupMemberGetPayload<{
+  include: ReturnType<typeof getGroupMemberSelect>;
+}>;
+
+export function getCommentDataInclude(loggedInUserId?: string | null) {
+  return {
+    user: {
+      select: getUserDataSelect(loggedInUserId),
+    },
+    parent: {
+      select: {
+        id: true,
+        content: true,
+        user: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+          },
+        },
+      },
+    },
+    replies: {
+      include: {
+        user: {
+          select: getUserDataSelect(loggedInUserId),
+        },
+        replies: {
+          include: {
+            user: {
+              select: getUserDataSelect(loggedInUserId),
+            },
+          },
+        },
+      },
+    },
+    likes: loggedInUserId ? {
+      where: {
+        userId: loggedInUserId,
+      },
+      select: {
+        isLike: true,
+      },
+    } : false,
+    _count: {
+      select: {
+        replies: true,
+        likes: {
+          where: {
+            isLike: true,
+          },
+        },
+      },
+    },
+  } satisfies Prisma.CommentInclude;
+}
+
+export type CommentData = Prisma.CommentGetPayload<{
+  include: ReturnType<typeof getCommentDataInclude>;
+}>;
+
+export interface CommentsPage {
+  comments: CommentData[];
+  previousCursor: string | null;
+}
+
+export interface CommentLikeInfo {
+  likes: number;
+  isLikedByUser: boolean;
+}
+
+export interface CommentInteractionData {
+  id: string;
+  commentId: string;
+  userId: string;
+  isLike: boolean;
+  createdAt: Date;
 }

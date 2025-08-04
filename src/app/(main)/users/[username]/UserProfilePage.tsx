@@ -10,7 +10,9 @@ import Linkify from "@/components/Linkify";
 import EditProfileButton from "./EditProfileButton";
 import UpdateEmailButton from "./UpdateEmailButton";
 import UpdatePasswordButton from "./UpdatePasswordButton";
+import DeleteAccountDialog from "@/components/DeleteAccountDialog";
 import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
 
 interface UserProfilePageProps {
   user: UserData;
@@ -26,11 +28,15 @@ export default function UserProfilePage({
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(
     !user.passwordHash,
   );
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const handlePasswordDialogClose = () => setIsPasswordDialogOpen(false);
 
   const instruments = user.userInstruments.map((ui) => ui.instrument.name);
   const skills = user.userSkills.map((us) => us.skill.name);
+
+  // Check if user is deleted
+  const isDeleted = user.deletedAt !== null;
 
   return (
     <>
@@ -43,7 +49,7 @@ export default function UserProfilePage({
       )}
       <div className="h-fit w-full space-y-5 rounded-2xl bg-card p-5 shadow-sm">
         <UserAvatar
-          avatarUrl={user.avatarUrl}
+          avatarUrl={isDeleted ? "/assets/avatar-placeholder.png" : user.avatarUrl}
           size={250}
           className="mx-auto size-full max-h-60 max-w-60 rounded-full"
         />
@@ -52,16 +58,16 @@ export default function UserProfilePage({
             <div className="space-y-3">
               <div className="flex flex-col">
                 <h1 className="break-words text-3xl font-bold">
-                  {user.displayName}
+                  {isDeleted ? "Deleted User" : user.displayName}
                 </h1>
                 <div className="break-words text-muted-foreground">
-                  @{user.username}
+                  {isDeleted ? "[Account Deleted]" : `@${user.username}`}
                 </div>
               </div>
               <div>
                 Member since {formatDate(user.createdAt, "MMM d, yyyy")}
               </div>
-              {user.id === loggedInUserId && user.userPreferences && (
+              {user.id === loggedInUserId && user.userPreferences && !isDeleted && (
                 <div className="flex items-center gap-3">
                   Your Calendar Visibility:{" "}
                   {user.userPreferences.calendar === "PUBLIC"
@@ -69,19 +75,19 @@ export default function UserProfilePage({
                     : "Private"}
                 </div>
               )}
-              {user.id === loggedInUserId && (
+              {user.id === loggedInUserId && !isDeleted && (
                 <div className="flex items-center gap-3">
                   Email on file: {user.email}
                 </div>
               )}
             </div>
           </div>
-          {user.id !== loggedInUserId && (
+          {user.id !== loggedInUserId && !isDeleted && (
             <FollowButton userId={user.id} initialState={followerInfo} />
           )}
         </div>
 
-        {user.bio && (
+        {user.bio && !isDeleted && (
           <>
             <hr />
             <Linkify>
@@ -91,7 +97,7 @@ export default function UserProfilePage({
             </Linkify>
           </>
         )}
-        {user.id === loggedInUserId && !user.passwordHash ? (
+        {user.id === loggedInUserId && !user.passwordHash && !isDeleted ? (
           <div className="h-fit w-full space-y-5 rounded-2xl bg-card p-5 shadow-sm">
             <Button
               onClick={() => setIsPasswordDialogOpen(true)}
@@ -102,21 +108,41 @@ export default function UserProfilePage({
           </div>
         ) : (
           <>
-            {user.id === loggedInUserId && (
-              <div className="flex flex-wrap justify-around">
-                <div className="flex">
-                  <EditProfileButton user={user} />
+            {user.id === loggedInUserId && !isDeleted && (
+              <div className="space-y-4">
+                <div className="rounded-lg border bg-card p-4">
+                  <h3 className="mb-3 text-lg font-semibold">Account Settings</h3>
+                  <div className="space-y-3">
+                    <div className="w-full ">
+                      <EditProfileButton user={user} />
+                    </div>
+                    <div className="w-full">
+                      <UpdateEmailButton user={user} />
+                    </div>
+                    <div className="w-full">
+                      <UpdatePasswordButton user={user} />
+                    </div>
+                  </div>
                 </div>
-                <div className="flex">
-                  <UpdateEmailButton user={user} />
-                </div>
-                <div className="flex">
-                  <UpdatePasswordButton user={user} />
+                
+                <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4">
+                  <h3 className="mb-3 text-lg font-semibold text-destructive">Danger Zone</h3>
+                  <p className="mb-3 text-sm text-muted-foreground">
+                    Once you delete your account, there is no going back. Please be certain.
+                  </p>
+                  <Button
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                    variant="destructive"
+                    className="flex items-center gap-2"
+                  >
+                    <Trash2 className="size-4" />
+                    Delete Account
+                  </Button>
                 </div>
               </div>
             )}
 
-            {(instruments.length > 0 || skills.length > 0) && (
+            {(instruments.length > 0 || skills.length > 0) && !isDeleted && (
               <div className="mx-auto flex size-full justify-between rounded-2xl border-2 bg-card p-5 shadow-sm">
                 {instruments.length > 0 && (
                   <div className="h-full">
@@ -147,6 +173,11 @@ export default function UserProfilePage({
           </>
         )}
       </div>
+      
+      <DeleteAccountDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      />
     </>
   );
 }

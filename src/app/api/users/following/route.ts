@@ -1,12 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateRequest } from "@/auth";
+import { lucia } from "@/auth";
+import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { getUserDataSelect } from "@/lib/types";
 
+// Opt out of static generation
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   try {
-    const { user: loggedInUser } = await validateRequest();
-
+    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    if (!sessionId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const { user: loggedInUser, session } =
+      await lucia.validateSession(sessionId);
+    if (!session) {
+      const sessionCookie = lucia.createBlankSessionCookie();
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session && session.fresh) {
+      const sessionCookie = lucia.createSessionCookie(session.id);
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+    }
     if (!loggedInUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -33,6 +58,9 @@ export async function GET(req: NextRequest) {
     const following = await prisma.follow.findMany({
       where: {
         followerId: userIdToFetch,
+        following: {
+          deletedAt: null, // Filter out deleted users
+        },
       },
       select: {
         following: {
@@ -40,7 +68,6 @@ export async function GET(req: NextRequest) {
         },
       },
       take: pageSize + 1,
-      skip: cursor ? 1 : 0,
       ...(cursor && {
         cursor: {
           followerId_followingId: {
@@ -54,12 +81,33 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    const users = following.map((f) => f.following);
+    // Determine pagination based on the *original* fetch count FIRST
+    const hasNextPage = following.length > pageSize;
+    // Calculate nextCursor based on the *last* item fetched (pageSize-th index) IF there was a next page
+    const nextCursor = hasNextPage ? following[pageSize].following.id : null;
 
-    const hasNextPage = users.length > pageSize;
-    const nextCursor = hasNextPage ? users[users.length - 1].id : null;
+    // Determine the list to return. Start with the original list.
+    let itemsToReturn = following;
 
-    if (hasNextPage) users.pop();
+    // Handle manual cursor skip. Check if the first item matches the cursor.
+    const skippedCursorItem =
+      cursor &&
+      itemsToReturn.length > 0 &&
+      itemsToReturn[0].following.id === cursor;
+    if (skippedCursorItem) {
+      // If we skipped, the list now starts from the second item.
+      itemsToReturn = itemsToReturn.slice(1);
+    }
+
+    // Ensure the final list has at most `pageSize` items.
+    // If we originally had a next page, but didn't skip the cursor item,
+    // the list still has N+1 items, so remove the last one.
+    if (hasNextPage && !skippedCursorItem) {
+      itemsToReturn.pop(); // Remove the extra item only if we didn't skip
+    }
+
+    // Map the final list
+    const users = itemsToReturn.map((f) => f.following);
 
     return NextResponse.json({ users, nextCursor });
   } catch (error) {

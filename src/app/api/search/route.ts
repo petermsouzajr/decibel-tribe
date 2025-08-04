@@ -1,13 +1,20 @@
-import { validateRequest } from "@/auth";
+// import { validateRequest } from "@/auth";
+import { lucia } from "@/auth"; // Import lucia
+import { cookies } from "next/headers"; // Import cookies
 import prisma from "@/lib/prisma";
 import {
   getEventDataInclude,
   getPostDataInclude,
   getUserDataSelect,
+  PostData,
+  UserWithFollowerStatus,
 } from "@/lib/types";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server"; // Import NextResponse
 import { parse, isValid, addDays } from "date-fns";
 import { Prisma } from "@prisma/client";
+
+// Opt out of static generation
+export const dynamic = "force-dynamic";
 
 async function fetchValidEvents(loggedInUserId: string, username?: string) {
   let eventConditions: Prisma.EventWhereInput = {};
@@ -155,136 +162,103 @@ function filterEvents(events: any[], q: string) {
 
 export async function GET(req: NextRequest) {
   try {
-    const q = req.nextUrl.searchParams.get("q") || "";
+    const query = req.nextUrl.searchParams.get("q");
+    // const category = req.nextUrl.searchParams.get("category") || "users"; // Category not used currently?
 
-    const pageSize = 10;
+    if (!query) {
+      return NextResponse.json({ error: "Query is required" }, { status: 400 });
+    }
 
-    const { user } = await validateRequest();
+    // Direct session validation
+    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    if (!sessionId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { user, session } = await lucia.validateSession(sessionId);
+
+    if (!session) {
+      const sessionCookie = lucia.createBlankSessionCookie();
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (session && session.fresh) {
+      const sessionCookie = lucia.createSessionCookie(session.id);
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+    }
+    // --- End direct session validation
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    if (typeof q !== "string") {
-      throw new Error("Invalid query");
-    }
 
-    const searchQuery = q.trim();
+    const pageSize = 10;
+    const searchQuery = query.trim();
 
     const posts = await prisma.post.findMany({
       where: {
         OR: [
+          { content: { contains: searchQuery, mode: "insensitive" } },
           {
-            content: {
-              contains: q,
-              mode: "insensitive",
+            user: {
+              displayName: { contains: searchQuery, mode: "insensitive" },
+              deletedAt: null, // Filter out posts from deleted users
             },
           },
           {
-            user: {
-              displayName: {
-                contains: q,
-                mode: "insensitive",
-              },
-            },
-          },
-          {
-            user: {
-              username: {
-                contains: q,
-                mode: "insensitive",
-              },
+            user: { 
+              username: { contains: searchQuery, mode: "insensitive" },
+              deletedAt: null, // Filter out posts from deleted users
             },
           },
         ],
+        user: {
+          deletedAt: null, // Filter out posts from deleted users
+        },
       },
+      // Ensure include uses the logged-in user ID
       include: getPostDataInclude(user.id),
       orderBy: { createdAt: "desc" },
-      take: pageSize + 1,
+      take: pageSize,
     });
 
     const users = await prisma.user.findMany({
       where: {
         OR: [
-          {
-            username: {
-              contains: q,
-              mode: "insensitive",
-            },
-          },
-          {
-            displayName: {
-              contains: q,
-              mode: "insensitive",
-            },
-          },
-          {
-            email: {
-              contains: q,
-              mode: "insensitive",
-            },
-          },
-          {
-            bio: {
-              contains: q,
-              mode: "insensitive",
-            },
-          },
+          { username: { contains: searchQuery, mode: "insensitive" } },
+          { displayName: { contains: searchQuery, mode: "insensitive" } },
         ],
+        deletedAt: null, // Filter out deleted users
       },
+      // Ensure include uses the logged-in user ID
       select: getUserDataSelect(user.id),
-      orderBy: { createdAt: "desc" },
-      take: pageSize + 1,
+      take: pageSize,
     });
 
-    const allEvents = await fetchValidEvents(user.id);
-    const filteredEvents = filterEvents(allEvents, q);
+    const events = await fetchValidEvents(user.id);
+    const filteredEvents = filterEvents(events, searchQuery);
 
-    const usersWithSkills = await prisma.user.findMany({
-      where: {
-        userSkills: {
-          some: {
-            skill: {
-              name: {
-                contains: q,
-                mode: "insensitive",
-              },
-            },
-          },
-        },
-      },
-      select: getUserDataSelect(user.id),
-      take: pageSize + 1,
-    });
-
-    const usersWithInstruments = await prisma.user.findMany({
-      where: {
-        userInstruments: {
-          some: {
-            instrument: {
-              name: {
-                contains: q,
-                mode: "insensitive",
-              },
-            },
-          },
-        },
-      },
-      select: getUserDataSelect(user.id),
-      take: pageSize + 1,
-    });
-
-    const nextCursor = posts.length > pageSize ? posts[pageSize].id : null;
+    // --- Assert types before returning ---
+    const typedUsers = users as UserWithFollowerStatus[];
+    const typedPosts = posts as PostData[];
+    // EventData type might need similar assertion if used directly
 
     return NextResponse.json({
-      posts: posts.slice(0, pageSize),
-      users: users.slice(0, pageSize),
-      events: filteredEvents.slice(0, pageSize),
-      usersWithSkills: usersWithSkills.slice(0, pageSize),
-      usersWithInstruments: usersWithInstruments.slice(0, pageSize),
-      nextCursor,
+      users: typedUsers,
+      posts: typedPosts,
+      events: filteredEvents.slice(0, pageSize), // Assuming EventData typing is handled elsewhere or simple
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error in GET /api/search:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

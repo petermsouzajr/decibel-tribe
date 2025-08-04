@@ -6,7 +6,30 @@ import { slugify } from "@/lib/utils";
 import { OAuth2RequestError } from "arctic";
 import { generateIdFromEntropySize } from "lucia";
 import { cookies } from "next/headers";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { randomInt } from "crypto";
+
+const generateUniqueUsername = async (baseUsername: string, prisma: any) => {
+  let username = baseUsername;
+  let isUnique = false;
+
+  while (!isUnique) {
+    const existingUser = await prisma.user.findUnique({
+      where: {
+        username,
+      },
+    });
+
+    if (!existingUser) {
+      isUnique = true;
+    } else {
+      const randomSuffix = randomInt(1000, 9999);
+      username = `${baseUsername}${randomSuffix}`;
+    }
+  }
+
+  return username;
+};
 
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get("code");
@@ -39,13 +62,35 @@ export async function GET(req: NextRequest) {
       })
       .json<{ id: string; name: string; email: string }>();
 
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await prisma.user.findFirst({
       where: {
-        googleId: googleUser.id,
+        OR: [{ googleId: googleUser.id }, { email: googleUser.email }],
       },
     });
 
     if (existingUser) {
+      if (!existingUser.googleId) {
+        try {
+          await prisma.user.update({
+            where: {
+              id: existingUser.id,
+            },
+            data: {
+              googleId: googleUser.id,
+            },
+          });
+        } catch (updateError) {
+          console.error(
+            "Failed to link Google ID to existing user:",
+            updateError,
+          );
+          return NextResponse.json(
+            { error: "Internal server error during Google account linking" },
+            { status: 500 },
+          );
+        }
+      }
+
       const session = await lucia.createSession(existingUser.id, {});
       const sessionCookie = lucia.createSessionCookie(session.id);
       cookies().set(
@@ -53,6 +98,7 @@ export async function GET(req: NextRequest) {
         sessionCookie.value,
         sessionCookie.attributes,
       );
+
       return new Response(null, {
         status: 302,
         headers: {
@@ -62,13 +108,14 @@ export async function GET(req: NextRequest) {
     }
 
     const userId = generateIdFromEntropySize(10);
-    const username = slugify(googleUser.name);
+    const baseUsername = slugify(googleUser.name);
+    const uniqueUsername = await generateUniqueUsername(baseUsername, prisma);
 
     await prisma.$transaction(async (tx) => {
       await tx.user.create({
         data: {
           id: userId,
-          username,
+          username: uniqueUsername,
           displayName: googleUser.name,
           googleId: googleUser.id,
           email: googleUser.email,
@@ -77,8 +124,8 @@ export async function GET(req: NextRequest) {
       });
       await streamServerClient.upsertUser({
         id: userId,
-        username,
-        name: username,
+        username: uniqueUsername,
+        name: uniqueUsername,
       });
     });
 
@@ -97,14 +144,16 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error(error);
+    console.error("Google OAuth Callback Error:", error);
     if (error instanceof OAuth2RequestError) {
-      return new Response(null, {
-        status: 400,
-      });
+      return NextResponse.json(
+        { error: "Invalid OAuth request", details: error.message },
+        { status: 400 },
+      );
     }
-    return new Response(null, {
-      status: 500,
-    });
+    return NextResponse.json(
+      { error: "Internal server error during Google login" },
+      { status: 500 },
+    );
   }
 }

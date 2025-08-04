@@ -1,47 +1,81 @@
-import { validateRequest } from "@/auth";
+// import { validateRequest } from "@/auth";
+import { lucia } from "@/auth";
+import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
-import { getPostDataInclude, PostsPage } from "@/lib/types";
-import { NextRequest } from "next/server";
+import { getPostDataInclude, PostsPage, PostData } from "@/lib/types";
+import { NextRequest, NextResponse } from "next/server";
+
+// Opt out of static generation
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
     const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
-
     const pageSize = 10;
 
-    const { user } = await validateRequest();
-
-    if (!user) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    // Direct session validation
+    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    if (!sessionId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const { user, session } = await lucia.validateSession(sessionId);
+    if (!session) {
+      const sessionCookie = lucia.createBlankSessionCookie();
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session && session.fresh) {
+      const sessionCookie = lucia.createSessionCookie(session.id);
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+    }
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const followingUserIds = await prisma.follow
+      .findMany({
+        where: { followerId: user.id },
+        select: { followingId: true },
+      })
+      .then((res) => res.map((follow) => follow.followingId));
 
     const posts = await prisma.post.findMany({
       where: {
         user: {
-          followers: {
-            some: {
-              followerId: user.id,
-            },
-          },
+          followers: { some: { followerId: user.id } },
+          deletedAt: null, // Filter out posts from deleted users
         },
         groupId: null,
       },
+      include: getPostDataInclude(user.id),
       orderBy: { createdAt: "desc" },
       take: pageSize + 1,
       cursor: cursor ? { id: cursor } : undefined,
-      include: getPostDataInclude(user.id),
     });
 
-    const nextCursor = posts.length > pageSize ? posts[pageSize].id : null;
+    const nextCursor = posts.length > pageSize ? posts[pageSize - 1].id : null;
+
+    const typedPosts = posts.slice(0, pageSize) as PostData[];
 
     const data: PostsPage = {
-      posts: posts.slice(0, pageSize),
+      posts: typedPosts,
       nextCursor,
     };
 
-    return Response.json(data);
+    return NextResponse.json(data);
   } catch (error) {
-    console.error(error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+    console.error("Error fetching following posts:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

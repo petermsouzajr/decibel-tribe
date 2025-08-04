@@ -1,16 +1,40 @@
-import { validateRequest } from "@/auth";
+// import { validateRequest } from "@/auth";
+import { lucia } from "@/auth";
+import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
-import { FollowerInfo } from "@/lib/types";
+import { FollowerInfo, getUserDataSelect } from "@/lib/types";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
-  req: Request,
+  req: NextRequest,
   { params: { userId } }: { params: { userId: string } },
 ) {
   try {
-    const { user: loggedInUser } = await validateRequest();
-
+    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    if (!sessionId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const { user: loggedInUser, session } =
+      await lucia.validateSession(sessionId);
+    if (!session) {
+      const sessionCookie = lucia.createBlankSessionCookie();
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session && session.fresh) {
+      const sessionCookie = lucia.createSessionCookie(session.id);
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+    }
     if (!loggedInUser) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const user = await prisma.user.findUnique({
@@ -33,7 +57,7 @@ export async function GET(
     });
 
     if (!user) {
-      return Response.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const data: FollowerInfo = {
@@ -41,22 +65,53 @@ export async function GET(
       isFollowedByUser: !!user.followers.length,
     };
 
-    return Response.json(data);
+    return NextResponse.json(data);
   } catch (error) {
-    console.error(error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+    console.error("Error fetching follower info:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
 export async function POST(
-  req: Request,
+  req: NextRequest,
   { params: { userId } }: { params: { userId: string } },
 ) {
   try {
-    const { user: loggedInUser } = await validateRequest();
-
+    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    if (!sessionId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const { user: loggedInUser, session } =
+      await lucia.validateSession(sessionId);
+    if (!session) {
+      const sessionCookie = lucia.createBlankSessionCookie();
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session && session.fresh) {
+      const sessionCookie = lucia.createSessionCookie(session.id);
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+    }
     if (!loggedInUser) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (userId === loggedInUser.id) {
+      return NextResponse.json(
+        { error: "Cannot follow yourself" },
+        { status: 400 },
+      );
     }
 
     await prisma.$transaction([
@@ -82,22 +137,46 @@ export async function POST(
       }),
     ]);
 
-    return new Response();
+    return NextResponse.json({ message: "Follow successful" }, { status: 201 });
   } catch (error) {
-    console.error(error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+    console.error("Error following user:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
 export async function DELETE(
-  req: Request,
+  req: NextRequest,
   { params: { userId } }: { params: { userId: string } },
 ) {
   try {
-    const { user: loggedInUser } = await validateRequest();
-
+    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    if (!sessionId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const { user: loggedInUser, session } =
+      await lucia.validateSession(sessionId);
+    if (!session) {
+      const sessionCookie = lucia.createBlankSessionCookie();
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session && session.fresh) {
+      const sessionCookie = lucia.createSessionCookie(session.id);
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+    }
     if (!loggedInUser) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await prisma.$transaction([
@@ -116,9 +195,12 @@ export async function DELETE(
       }),
     ]);
 
-    return new Response();
+    return NextResponse.json({ message: "Unfollow successful" });
   } catch (error) {
-    console.error(error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+    console.error("Error unfollowing user:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

@@ -1,16 +1,40 @@
-import { validateRequest } from "@/auth";
+// import { validateRequest } from "@/auth";
+import { lucia } from "@/auth";
+import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { LikeInfo } from "@/lib/types";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
-  req: Request,
+  req: NextRequest,
   { params: { postId } }: { params: { postId: string } },
 ) {
   try {
-    const { user: loggedInUser } = await validateRequest();
-
+    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    if (!sessionId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const { user: loggedInUser, session } =
+      await lucia.validateSession(sessionId);
+    if (!session) {
+      const sessionCookie = lucia.createBlankSessionCookie();
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session && session.fresh) {
+      const sessionCookie = lucia.createSessionCookie(session.id);
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+    }
     if (!loggedInUser) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const post = await prisma.post.findUnique({
@@ -33,7 +57,7 @@ export async function GET(
     });
 
     if (!post) {
-      return Response.json({ error: "Post not found" }, { status: 404 });
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
     const data: LikeInfo = {
@@ -41,22 +65,46 @@ export async function GET(
       isLikedByUser: !!post.likes.length,
     };
 
-    return Response.json(data);
+    return NextResponse.json(data);
   } catch (error) {
-    console.error(error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+    console.error("Error fetching like info:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
 export async function POST(
-  req: Request,
+  req: NextRequest,
   { params: { postId } }: { params: { postId: string } },
 ) {
   try {
-    const { user: loggedInUser } = await validateRequest();
-
+    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    if (!sessionId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const { user: loggedInUser, session } =
+      await lucia.validateSession(sessionId);
+    if (!session) {
+      const sessionCookie = lucia.createBlankSessionCookie();
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session && session.fresh) {
+      const sessionCookie = lucia.createSessionCookie(session.id);
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+    }
     if (!loggedInUser) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const post = await prisma.post.findUnique({
@@ -67,7 +115,7 @@ export async function POST(
     });
 
     if (!post) {
-      return Response.json({ error: "Post not found" }, { status: 404 });
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
     await prisma.$transaction([
@@ -84,69 +132,69 @@ export async function POST(
         },
         update: {},
       }),
-      ...(loggedInUser.id !== post.userId
-        ? [
-            prisma.notification.create({
-              data: {
-                issuerId: loggedInUser.id,
-                recipientId: post.userId,
-                postId,
-                type: "LIKE",
-              },
-            }),
-          ]
-        : []),
-    ]);
-
-    return new Response();
-  } catch (error) {
-    console.error(error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
-
-export async function DELETE(
-  req: Request,
-  { params: { postId } }: { params: { postId: string } },
-) {
-  try {
-    const { user: loggedInUser } = await validateRequest();
-
-    if (!loggedInUser) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const post = await prisma.post.findUnique({
-      where: { id: postId },
-      select: {
-        userId: true,
-      },
-    });
-
-    if (!post) {
-      return Response.json({ error: "Post not found" }, { status: 404 });
-    }
-
-    await prisma.$transaction([
-      prisma.like.deleteMany({
+      prisma.dislike.deleteMany({
         where: {
           userId: loggedInUser.id,
           postId,
         },
       }),
-      prisma.notification.deleteMany({
-        where: {
-          issuerId: loggedInUser.id,
-          recipientId: post.userId,
-          postId,
-          type: "LIKE",
-        },
-      }),
     ]);
 
-    return new Response();
+    return NextResponse.json({ message: "Post liked" });
   } catch (error) {
-    console.error(error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+    console.error("Error liking post:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params: { postId } }: { params: { postId: string } },
+) {
+  try {
+    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    if (!sessionId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const { user: loggedInUser, session } =
+      await lucia.validateSession(sessionId);
+    if (!session) {
+      const sessionCookie = lucia.createBlankSessionCookie();
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session && session.fresh) {
+      const sessionCookie = lucia.createSessionCookie(session.id);
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+    }
+    if (!loggedInUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    await prisma.like.deleteMany({
+      where: {
+        userId: loggedInUser.id,
+        postId,
+      },
+    });
+
+    return NextResponse.json({ message: "Like removed" });
+  } catch (error) {
+    console.error("Error removing like:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

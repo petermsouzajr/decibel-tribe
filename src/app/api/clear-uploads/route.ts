@@ -1,12 +1,18 @@
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { UTApi } from "uploadthing/server";
 
-export async function GET(req: Request) {
+// Opt out of static generation
+export const dynamic = "force-dynamic";
+
+const utapi = new UTApi();
+
+export async function GET(request: NextRequest) {
   try {
-    const authHeader = req.headers.get("Authorization");
+    const authHeader = request.headers.get("Authorization");
 
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return Response.json(
+      return NextResponse.json(
         { message: "Invalid authorization header" },
         { status: 401 },
       );
@@ -31,20 +37,30 @@ export async function GET(req: Request) {
       },
     });
 
-    new UTApi().deleteFiles(
-      unusedMedia.map(
-        (m) =>
-          m.url.split(`/a/${process.env.NEXT_PUBLIC_UPLOADTHING_APP_ID}/`)[1],
-      ),
-    );
+    if (unusedMedia.length > 0) {
+      await utapi.deleteFiles(
+        unusedMedia
+          .map((m) => {
+            const urlParts = m.url.split(
+              `/${process.env.NEXT_PUBLIC_UPLOADTHING_APP_ID}/`,
+            );
+            // Basic check to handle potential inconsistencies in URL format (e.g., /f/ vs /a/)
+            // A more robust regex might be better in the long run
+            return urlParts.length > 1
+              ? urlParts[urlParts.length - 1]
+              : undefined;
+          })
+          .filter((key): key is string => !!key), // Filter out undefined keys
+      );
 
-    await prisma.media.deleteMany({
-      where: {
-        id: {
-          in: unusedMedia.map((m) => m.id),
+      await prisma.media.deleteMany({
+        where: {
+          id: {
+            in: unusedMedia.map((m) => m.id),
+          },
         },
-      },
-    });
+      });
+    }
 
     return new Response();
   } catch (error) {

@@ -1,5 +1,10 @@
 import { useToast } from "@/components/ui/use-toast";
-import { PostsPage } from "@/lib/types";
+import {
+  PostsPage,
+  PostData,
+  UserWithFollowerStatus,
+  UserData,
+} from "@/lib/types";
 import { useUploadThing } from "@/lib/uploadthing";
 import { UpdateUserProfileValues } from "@/lib/validation";
 import {
@@ -9,13 +14,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import {
-  updateUserPassword,
-  updateUserEmail,
-  updateUserProfile,
-} from "./actions";
-import { validateRequest } from "@/auth";
-import prisma from "@/lib/prisma";
+import { updateUserProfile } from "./actions";
 
 export function useUpdateProfileMutation() {
   const { toast } = useToast();
@@ -42,37 +41,32 @@ export function useUpdateProfileMutation() {
     onSuccess: async ([updatedUser, uploadResult]) => {
       const newAvatarUrl = uploadResult?.[0].serverData.avatarUrl;
 
-      const queryFilter: QueryFilters = {
-        queryKey: ["post-feed"],
-      };
+      const queryKey = ["user-profile", updatedUser.id];
+      const queryFilter: QueryFilters = { queryKey };
 
       await queryClient.cancelQueries(queryFilter);
 
-      queryClient.setQueriesData<InfiniteData<PostsPage, string | null>>(
-        queryFilter,
-        (oldData) => {
-          if (!oldData) return;
-
-          return {
-            pageParams: oldData.pageParams,
-            pages: oldData.pages.map((page) => ({
-              nextCursor: page.nextCursor,
-              posts: page.posts.map((post) => {
-                if (post.user.id === updatedUser.id) {
-                  return {
-                    ...post,
-                    user: {
-                      ...updatedUser,
-                      avatarUrl: newAvatarUrl || updatedUser.avatarUrl,
-                    },
-                  };
-                }
-                return post;
-              }),
-            })),
+      queryClient.setQueryData<UserData>(
+        queryKey,
+        (oldProfileData: UserData | undefined): UserData => {
+          const finalUserData = {
+            ...(oldProfileData || {}),
+            ...updatedUser,
+            avatarUrl: newAvatarUrl ?? updatedUser.avatarUrl,
           };
+          return finalUserData as UserData;
         },
       );
+
+      // Invalidate post feeds instead of trying to update optimistically with incomplete user data
+      await queryClient.invalidateQueries({
+        queryKey: ["post-feed", "for-you"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["post-feed", "user", updatedUser.id],
+      });
+      // Also invalidate the main user profile query to ensure freshness, though setQueryData is often sufficient
+      await queryClient.invalidateQueries({ queryKey: queryKey });
 
       router.refresh();
 
@@ -185,4 +179,33 @@ export function useUpdateEmailMutation() {
   });
 
   return mutation;
+}
+
+function updateUserDataInPostPages(
+  oldData: InfiniteData<PostsPage, string | null> | undefined,
+  updatedUser: UserWithFollowerStatus,
+): InfiniteData<PostsPage, string | null> | undefined {
+  if (!oldData) return undefined;
+  return {
+    pageParams: oldData.pageParams,
+    pages: oldData.pages.map((page: PostsPage): PostsPage => {
+      return {
+        nextCursor: page.nextCursor,
+        posts: page.posts.map((post: PostData): PostData => {
+          if (post.user.id === updatedUser.id) {
+            const newUser: UserWithFollowerStatus = {
+              ...(post.user as UserWithFollowerStatus),
+              ...updatedUser,
+              avatarUrl: updatedUser.avatarUrl,
+            };
+            return {
+              ...post,
+              user: newUser,
+            } as PostData;
+          }
+          return post as PostData;
+        }),
+      };
+    }),
+  };
 }
