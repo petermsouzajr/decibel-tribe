@@ -109,7 +109,11 @@ export function getPostDataInclude(loggedInUserId?: string | null) {
       select: {
         likes: true,
         dislikes: true,
-        comments: true,
+        comments: {
+          where: {
+            parentId: null, // Only count top-level comments
+          },
+        },
       },
     },
     Group: {
@@ -385,6 +389,51 @@ export function getCommentDataInclude(loggedInUserId?: string | null) {
     user: {
       select: getUserDataSelect(loggedInUserId),
     },
+    parent: {
+      select: {
+        id: true,
+        content: true,
+        user: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+          },
+        },
+      },
+    },
+    replies: {
+      include: {
+        user: {
+          select: getUserDataSelect(loggedInUserId),
+        },
+        replies: {
+          include: {
+            user: {
+              select: getUserDataSelect(loggedInUserId),
+            },
+          },
+        },
+      },
+    },
+    likes: loggedInUserId ? {
+      where: {
+        userId: loggedInUserId,
+      },
+      select: {
+        isLike: true,
+      },
+    } : false,
+    _count: {
+      select: {
+        replies: true,
+        likes: {
+          where: {
+            isLike: true,
+          },
+        },
+      },
+    },
   } satisfies Prisma.CommentInclude;
 }
 
@@ -395,4 +444,17 @@ export type CommentData = Prisma.CommentGetPayload<{
 export interface CommentsPage {
   comments: CommentData[];
   previousCursor: string | null;
+}
+
+export interface CommentLikeInfo {
+  likes: number;
+  isLikedByUser: boolean;
+}
+
+export interface CommentInteractionData {
+  id: string;
+  commentId: string;
+  userId: string;
+  isLike: boolean;
+  createdAt: Date;
 }

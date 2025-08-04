@@ -109,6 +109,7 @@ const mockPostUser = {
   passwordHash: "", // Placeholder
   emailVerified: true,
   googleId: null,
+  deletedAt: null,
   followerCount: 0,
   followingCount: 0,
   isFollowing: false,

@@ -80,6 +80,7 @@ describe("SocialTeam - seedPublicComments Module", () => {
       googleId: null,
       avatarUrl: null,
       bio: null,
+      deletedAt: null,
     },
     {
       id: "user2",
@@ -94,6 +95,7 @@ describe("SocialTeam - seedPublicComments Module", () => {
       googleId: null,
       avatarUrl: null,
       bio: null,
+      deletedAt: null,
     },
     {
       id: "userNC",
@@ -108,6 +110,7 @@ describe("SocialTeam - seedPublicComments Module", () => {
       googleId: null,
       avatarUrl: null,
       bio: null,
+      deletedAt: null,
     },
   ];
 

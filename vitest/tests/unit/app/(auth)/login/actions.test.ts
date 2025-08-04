@@ -110,7 +110,10 @@ describe("[API][Auth] login action", () => {
     mockLuciaCreateSessionCookie.mockReturnValue(mockCookie);
 
     // Act
-    const result = await login(credentials, true);
+    const formData = new FormData();
+    formData.append("username", credentials.username);
+    formData.append("password", credentials.password);
+    const result = await login(formData);
 
     // Assert
     // Check intermediate steps first
@@ -140,11 +143,13 @@ describe("[API][Auth] login action", () => {
     mockPrismaFindFirst.mockResolvedValue(null); // User does not exist
 
     // Act
-    const result = await login(credentials, true);
+    const formData = new FormData();
+    formData.append("username", credentials.username);
+    formData.append("password", credentials.password);
+    const result = await login(formData);
 
     // Assert
-    expect(result.error).toBe("Incorrect username or password");
-    expect(result.sessionCookie).toBeUndefined();
+    expect(result.error).toBe("Invalid username or password");
     expect(mockPrismaFindFirst).toHaveBeenCalledWith({
       where: {
         OR: [
@@ -177,7 +182,10 @@ describe("[API][Auth] login action", () => {
     mockBcryptCompare.mockResolvedValue(false);
 
     // Act
-    const result = await login(credentials, true);
+    const formData = new FormData();
+    formData.append("username", credentials.username);
+    formData.append("password", credentials.password);
+    const result = await login(formData);
 
     // Assert
     // Check intermediate steps
@@ -188,8 +196,7 @@ describe("[API][Auth] login action", () => {
     );
 
     // Check final result
-    expect(result.error).toBe("Incorrect username or password");
-    expect(result.sessionCookie).toBeUndefined();
+    expect(result.error).toBe("Invalid username or password");
 
     // Ensure subsequent steps were not reached
     expect(mockLuciaCreateSession).not.toHaveBeenCalled();
@@ -215,12 +222,14 @@ describe("[API][Auth] login action", () => {
     mockResendVerification.mockResolvedValue(undefined); // Mock the resend action
 
     // Act
-    const result = await login(credentials, true);
+    const formData = new FormData();
+    formData.append("username", credentials.username);
+    formData.append("password", credentials.password);
+    const result = await login(formData);
 
     // Assert
     expect(result.error).toContain("Your account is not verified."); // Check for specific message
     expect(result.error).toContain(credentials.username); // Check if email is mentioned
-    expect(result.sessionCookie).toBeUndefined();
 
     expect(mockPrismaFindFirst).toHaveBeenCalledWith({
       where: { OR: expect.any(Array) },
@@ -251,11 +260,13 @@ describe("[API][Auth] login action", () => {
     mockLuciaCreateSession.mockRejectedValue(new Error("Session DB error")); // Session creation fails
 
     // Act
-    const result = await login(credentials, true);
+    const formData = new FormData();
+    formData.append("username", credentials.username);
+    formData.append("password", credentials.password);
+    const result = await login(formData);
 
     // Assert
     expect(result.error).toBe("Something went wrong. Please try again.");
-    expect(result.sessionCookie).toBeUndefined();
 
     // Verify calls up to the point of failure
     expect(mockPrismaFindFirst).toHaveBeenCalled();

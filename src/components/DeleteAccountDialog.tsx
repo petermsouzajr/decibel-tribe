@@ -166,10 +166,10 @@ export default function DeleteAccountDialog({
                 </h4>
                 <ul className="text-sm space-y-1 text-muted-foreground">
                   <li>• All your posts and comments will be removed</li>
-                  <li>• You'll be removed from all groups</li>
+                  <li>• You&apos;ll be removed from all groups</li>
                   <li>• All your likes, dislikes, and bookmarks will be deleted</li>
                   <li>• Your profile will no longer be visible to other users</li>
-                  <li>• You'll be logged out immediately</li>
+                  <li>• You&apos;ll be logged out immediately</li>
                 </ul>
               </div>
 

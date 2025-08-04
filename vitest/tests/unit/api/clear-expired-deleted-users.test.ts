@@ -45,11 +45,7 @@ describe("POST /api/clear-expired-deleted-users", () => {
     // Import the route handler
     const { POST } = await import("@/app/api/clear-expired-deleted-users/route");
     
-    const request = new NextRequest("http://localhost:3000/api/clear-expired-deleted-users", {
-      method: "POST",
-    });
-
-    const response = await POST(request);
+    const response = await POST();
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -75,11 +71,7 @@ describe("POST /api/clear-expired-deleted-users", () => {
 
     const { POST } = await import("@/app/api/clear-expired-deleted-users/route");
     
-    const request = new NextRequest("http://localhost:3000/api/clear-expired-deleted-users", {
-      method: "POST",
-    });
-
-    const response = await POST(request);
+    const response = await POST();
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -97,11 +89,7 @@ describe("POST /api/clear-expired-deleted-users", () => {
 
     const { POST } = await import("@/app/api/clear-expired-deleted-users/route");
     
-    const request = new NextRequest("http://localhost:3000/api/clear-expired-deleted-users", {
-      method: "POST",
-    });
-
-    const response = await POST(request);
+    const response = await POST();
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -115,11 +103,7 @@ describe("POST /api/clear-expired-deleted-users", () => {
 
     const { POST } = await import("@/app/api/clear-expired-deleted-users/route");
     
-    const request = new NextRequest("http://localhost:3000/api/clear-expired-deleted-users", {
-      method: "POST",
-    });
-
-    const response = await POST(request);
+    const response = await POST();
     const data = await response.json();
 
     expect(response.status).toBe(500);
@@ -135,11 +119,7 @@ describe("POST /api/clear-expired-deleted-users", () => {
 
     const { POST } = await import("@/app/api/clear-expired-deleted-users/route");
     
-    const request = new NextRequest("http://localhost:3000/api/clear-expired-deleted-users", {
-      method: "POST",
-    });
-
-    const response = await POST(request);
+    const response = await POST();
     const data = await response.json();
 
     expect(response.status).toBe(200);

@@ -39,6 +39,7 @@ model User {
   dislikes              Dislike[]
   bookmarks             Bookmark[]
   comments              Comment[]
+  commentLikes          CommentLike[]
   receivedNotifications Notification[]   @relation("Recipient")
   issuedNotifications   Notification[]   @relation("Issuer")
   userInstruments       UserInstrument[]
@@ -191,16 +192,46 @@ enum MediaType {
 }
 
 model Comment {
-  id      String @id @default(cuid())
-  content String
-  userId  String
-  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  postId  String
-  post    Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
-
+  id        String   @id @default(cuid())
+  content   String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  // New fields for threading and editing
+  parentId  String?  // For replies
+  parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
+  
+  // Comment likes relation
+  likes     CommentLike[]
+  
+  isEdited  Boolean  @default(false)
+  editedAt  DateTime?
+  
+  // Soft delete for moderation
+  isDeleted Boolean  @default(false)
+  deletedAt DateTime?
+  
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   @@map("comments")
+}
+
+model CommentLike {
+  id        String @id @default(cuid())
+  commentId String
+  comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isLike    Boolean // true for like, false for dislike
+  
+  createdAt DateTime @default(now())
+
+  @@unique([commentId, userId])
+  @@map("comment_likes")
 }
 
 model Like {

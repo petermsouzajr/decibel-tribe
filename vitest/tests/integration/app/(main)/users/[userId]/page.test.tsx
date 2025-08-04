@@ -40,6 +40,7 @@ const mockUserData = {
   pendingEmail: null,
   passwordHash: "hashed_password",
   isVerified: false,
+  deletedAt: null,
   posts: [],
   likes: [],
   bookmarks: [],

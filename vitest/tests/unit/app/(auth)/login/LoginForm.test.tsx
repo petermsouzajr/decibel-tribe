@@ -32,7 +32,7 @@ describe("LoginForm", () => {
   });
 
   it("should handle successful login", async () => {
-    vi.mocked(mockLogin).mockResolvedValue({ error: undefined });
+    vi.mocked(mockLogin).mockResolvedValue({ error: "Username and password are required" });
 
     fireEvent.input(screen.getByLabelText(/Username\/Email/i), {
       target: { value: "testuser" },

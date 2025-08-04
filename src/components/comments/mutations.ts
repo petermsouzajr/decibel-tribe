@@ -16,36 +16,11 @@ export function useSubmitCommentMutation(postId: string) {
   const mutation = useMutation({
     mutationFn: submitComment,
     onSuccess: async (newComment) => {
+      console.log("Comment created successfully:", newComment);
       const queryKey: QueryKey = ["comments", postId];
 
-      await queryClient.cancelQueries({ queryKey });
-
-      queryClient.setQueryData<InfiniteData<CommentsPage, string | null>>(
-        queryKey,
-        (oldData) => {
-          const firstPage = oldData?.pages[0];
-
-          if (firstPage) {
-            return {
-              pageParams: oldData.pageParams,
-              pages: [
-                {
-                  previousCursor: firstPage.previousCursor,
-                  comments: [...firstPage.comments, newComment],
-                },
-                ...oldData.pages.slice(1),
-              ],
-            };
-          }
-        },
-      );
-
-      queryClient.invalidateQueries({
-        queryKey,
-        predicate(query) {
-          return !query.state.data;
-        },
-      });
+      // Invalidate and refetch the comments to show the new comment
+      await queryClient.invalidateQueries({ queryKey });
 
       toast({
         description: "Comment created",
@@ -99,6 +74,58 @@ export function useDeleteCommentMutation() {
       toast({
         variant: "destructive",
         description: "Failed to delete comment. Please try again.",
+      });
+    },
+  });
+
+  return mutation;
+}
+
+export function useReplyToCommentMutation() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async ({ commentId, content, mediaIds }: { 
+      commentId: string; 
+      content: string; 
+      mediaIds?: string[]; 
+    }) => {
+      const response = await fetch(`/api/comments/${commentId}/reply`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content, mediaIds }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to post reply");
+      }
+
+      return response.json();
+    },
+    onSuccess: async (response, variables) => {
+      console.log("Reply created successfully:", response);
+      console.log("Reply data:", response.reply);
+      console.log("Post ID:", response.postId);
+      
+      // Invalidate the comments query to refetch and show the new reply
+      // We need to invalidate the parent post's comments
+      const queryKey: QueryKey = ["comments", response.postId];
+      console.log("Invalidating query key:", queryKey);
+      await queryClient.invalidateQueries({ queryKey });
+
+      toast({
+        description: "Reply posted successfully",
+      });
+    },
+    onError(error) {
+      console.error(error);
+      toast({
+        variant: "destructive",
+        description: "Failed to post reply. Please try again.",
       });
     },
   });

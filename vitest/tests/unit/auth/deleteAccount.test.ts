@@ -48,6 +48,8 @@ describe("deleteUserAccount", () => {
     passwordHash: "hashedPassword",
     deletedAt: null,
     createdAt: new Date(),
+    avatarUrl: null,
+    googleId: null,
   };
 
   const mockFormData = {
@@ -64,6 +66,7 @@ describe("deleteUserAccount", () => {
       // Mock session validation
       vi.mocked(validateRequest).mockResolvedValue({
         user: mockUser,
+        session: { id: "session123" } as any,
       });
 
       vi.mocked(bcrypt.compare).mockResolvedValue(true);
@@ -82,6 +85,7 @@ describe("deleteUserAccount", () => {
     it("should fail if password is incorrect", async () => {
       vi.mocked(validateRequest).mockResolvedValue({
         user: mockUser,
+        session: { id: "session123" } as any,
       });
 
       vi.mocked(bcrypt.compare).mockResolvedValue(false);
@@ -96,6 +100,7 @@ describe("deleteUserAccount", () => {
       const deletedUser = { ...mockUser, deletedAt: new Date() };
       vi.mocked(validateRequest).mockResolvedValue({
         user: deletedUser,
+        session: { id: "session123" } as any,
       });
 
       vi.mocked(bcrypt.compare).mockResolvedValue(true);
@@ -109,6 +114,7 @@ describe("deleteUserAccount", () => {
     it("should fail if confirmation is not checked", async () => {
       vi.mocked(validateRequest).mockResolvedValue({
         user: mockUser,
+        session: { id: "session123" } as any,
       });
 
       const result = await deleteUserAccount({
@@ -123,6 +129,7 @@ describe("deleteUserAccount", () => {
     it("should fail if password is missing", async () => {
       vi.mocked(validateRequest).mockResolvedValue({
         user: mockUser,
+        session: { id: "session123" } as any,
       });
 
       const result = await deleteUserAccount({
@@ -246,6 +253,8 @@ describe("exportUserData", () => {
     passwordHash: "hashedPassword",
     deletedAt: null,
     createdAt: new Date(),
+    avatarUrl: null,
+    googleId: null,
     posts: [],
     events: [],
     groups: [],
@@ -266,6 +275,7 @@ describe("exportUserData", () => {
   it("should successfully export user data", async () => {
     vi.mocked(validateRequest).mockResolvedValue({
       user: mockUser,
+      session: { id: "session123" } as any,
     });
 
     vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
@@ -282,6 +292,7 @@ describe("exportUserData", () => {
   it("should fail if user is not authenticated", async () => {
     vi.mocked(validateRequest).mockResolvedValue({
       user: null,
+      session: null,
     });
 
     const result = await exportUserData();
@@ -293,6 +304,7 @@ describe("exportUserData", () => {
   it("should handle database errors gracefully", async () => {
     vi.mocked(validateRequest).mockResolvedValue({
       user: mockUser,
+      session: { id: "session123" } as any,
     });
 
     vi.mocked(prisma.user.findUnique).mockRejectedValue(new Error("Database error"));

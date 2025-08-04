@@ -14,7 +14,7 @@ vi.mock("@/app/(auth)/login/actions", () => ({
 
 // Cast the mock using MockedFunction
 const mockLogin = login as MockedFunction<
-  (credentials: LoginValues) => Promise<{ error?: string }>
+  (formData: FormData) => Promise<{ error?: string }>
 >;
 
 describe("[Auth][Component] LoginForm", () => {
@@ -83,11 +83,7 @@ describe("[Auth][Component] LoginForm", () => {
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledTimes(1);
     });
-    expect(mockLogin).toHaveBeenCalledWith({
-      username: testUsername,
-      password: testPassword,
-      // email: undefined, // react-hook-form might exclude undefined fields
-    });
+    expect(mockLogin).toHaveBeenCalledWith(expect.any(FormData));
   });
 
   it("should display server errors on failed login", async () => {

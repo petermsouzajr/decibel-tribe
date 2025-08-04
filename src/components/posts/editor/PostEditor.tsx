@@ -54,6 +54,7 @@ export default function PostEditor({
         placeholder: "Post it here!",
       }),
     ],
+    immediatelyRender: false,
   });
 
   const input =

@@ -1,5 +1,5 @@
 import { CommentData } from "@/lib/types";
-import { MoreHorizontal, Trash2 } from "lucide-react";
+import { Edit, MoreHorizontal, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "../ui/button";
 import {
@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import DeleteCommentDialog from "./DeleteCommentDialog";
+import CommentEditDialog from "./CommentEditDialog";
 
 interface CommentMoreButtonProps {
   comment: CommentData;
@@ -20,6 +21,12 @@ export default function CommentMoreButton({
   className,
 }: CommentMoreButtonProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+
+  // Check if comment is within edit window (5 minutes)
+  const editWindow = 5 * 60 * 1000; // 5 minutes in milliseconds
+  const timeSinceCreation = Date.now() - comment.createdAt.getTime();
+  const canEdit = timeSinceCreation <= editWindow;
 
   return (
     <>
@@ -30,6 +37,14 @@ export default function CommentMoreButton({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
+          {canEdit && (
+            <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
+              <span className="flex items-center gap-3">
+                <Edit className="size-4" />
+                Edit
+              </span>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={() => setShowDeleteDialog(true)}>
             <span className="flex items-center gap-3 text-destructive">
               <Trash2 className="size-4" />
@@ -42,6 +57,11 @@ export default function CommentMoreButton({
         comment={comment}
         open={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
+      />
+      <CommentEditDialog
+        comment={comment}
+        open={showEditDialog}
+        onClose={() => setShowEditDialog(false)}
       />
     </>
   );

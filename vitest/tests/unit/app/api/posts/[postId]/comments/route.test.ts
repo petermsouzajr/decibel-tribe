@@ -96,6 +96,12 @@ describe("API Route: /api/posts/[postId]/comments", () => {
     postId: postId,
     userId: `user_${i}`,
     createdAt: new Date(Date.now() - (7 - i) * 60000),
+    deletedAt: null,
+    parentId: null,
+    isEdited: false,
+    editedAt: null,
+    isDeleted: false,
+    updatedAt: new Date(Date.now() - (7 - i) * 60000),
     user: {
       id: `user_${i}`,
       username: `user${i}`,
@@ -104,16 +110,19 @@ describe("API Route: /api/posts/[postId]/comments", () => {
       email: `user${i}@test.com`,
       passwordHash: null,
       bio: null,
+      deletedAt: null,
       createdAt: new Date(),
       userInstruments: [],
       userSkills: [],
       userPreferences: null,
       _count: { followers: 0, following: 0, posts: 0 },
     },
+    parent: null,
+    replies: [],
     likes: [],
     post: { userId: postAuthorId },
     isLiked: false,
-    _count: { likes: 0 },
+    _count: { likes: 0, replies: 0 },
   }));
 
   // --- Implement async beforeAll for Mock Setup ---

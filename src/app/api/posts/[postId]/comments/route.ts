@@ -36,6 +36,8 @@ export async function GET(
     const comments = await prisma.comment.findMany({
       where: { 
         postId,
+        parentId: null, // Only fetch top-level comments (not replies)
+        isDeleted: false, // Filter out deleted comments
         user: {
           deletedAt: null, // Filter out comments from deleted users
         },
@@ -47,12 +49,17 @@ export async function GET(
       cursor: cursor ? { id: cursor } : undefined,
     });
 
+    console.log("Database query result - comments found:", comments.length);
+    console.log("Sample comment data:", comments[0] ? { id: comments[0].id, isDeleted: comments[0].isDeleted, content: comments[0].content.substring(0, 50) } : "No comments");
+
     const previousCursor = comments.length > pageSize ? comments[0].id : null;
 
     const data: CommentsPage = {
       comments: comments.length > pageSize ? comments.slice(1) : comments,
       previousCursor,
     };
+
+    console.log("API returning comments:", data.comments.map(c => ({ id: c.id, isDeleted: c.isDeleted, content: c.content.substring(0, 50) })));
 
     return NextResponse.json(data);
   } catch (error) {

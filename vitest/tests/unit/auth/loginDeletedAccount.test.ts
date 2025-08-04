@@ -40,9 +40,16 @@ describe("login with deleted accounts", () => {
   const mockUser = {
     id: "user123",
     username: "testuser",
+    displayName: "Test User",
     email: "test@example.com",
+    pendingEmail: null,
     passwordHash: "hashedpassword",
+    isVerified: true,
+    googleId: null,
+    avatarUrl: null,
+    bio: null,
     deletedAt: null,
+    createdAt: new Date(),
   };
 
   beforeEach(() => {

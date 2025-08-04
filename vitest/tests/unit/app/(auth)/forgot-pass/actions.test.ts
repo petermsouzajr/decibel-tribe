@@ -40,6 +40,7 @@ describe("Password Reset Actions", () => {
       passwordHash: null,
       avatarUrl: null,
       bio: null,
+      deletedAt: null,
       createdAt: new Date(),
     });
 

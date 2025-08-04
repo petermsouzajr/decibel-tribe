@@ -62,6 +62,7 @@ const createMockNotification = (
     passwordHash: "",
     emailVerified: true,
     googleId: null,
+    deletedAt: null,
     userPreferences: null,
     userInstruments: [],
     userSkills: [],

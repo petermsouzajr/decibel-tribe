@@ -114,6 +114,7 @@ describe("API Route: /api/posts/[postId]", () => {
       createdAt: new Date(),
       email: "author@test.com",
       passwordHash: null,
+      deletedAt: null,
       userPreferences: null,
       userInstruments: [],
       userSkills: [],

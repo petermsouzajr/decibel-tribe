@@ -94,6 +94,7 @@ describe("API Route: GET /api/posts/following", () => {
       createdAt: new Date(),
       email: `followed_user_${(i % 2) + 1}@test.com`,
       passwordHash: "mock_hash",
+      deletedAt: null,
       isFollowing: false, // These might need adjustment based on actual use
       isFollowedBy: false,
       userPreferences: null,
