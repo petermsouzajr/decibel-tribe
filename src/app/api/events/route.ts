@@ -111,6 +111,11 @@ export async function GET(req: NextRequest) {
       },
       include: {
         attendees: {
+          where: {
+            user: {
+              deletedAt: null, // Filter out deleted users from attendees
+            },
+          },
           select: {
             user: {
               select: {

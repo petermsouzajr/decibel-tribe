@@ -22,6 +22,9 @@ export async function GET(
       where: {
         userId: params.userId,
         groupId: null,
+        user: {
+          deletedAt: null, // Filter out posts from deleted users
+        },
       },
       include: getPostDataInclude(loggedInUser.id),
       orderBy: { createdAt: "desc" },

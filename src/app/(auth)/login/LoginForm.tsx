@@ -16,9 +16,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { login } from "./actions";
+import DeletedAccountRecoveryDialog from "@/components/DeletedAccountRecoveryDialog";
 
 export default function LoginForm() {
   const [error, setError] = useState<string>();
+  const [deletedAccountInfo, setDeletedAccountInfo] = useState<{
+    username: string;
+    password: string;
+    deletedAt: Date;
+    daysRemaining?: number;
+    isExpired: boolean;
+    userId: string;
+  } | null>(null);
 
   const [isPending, startTransition] = useTransition();
 
@@ -32,9 +41,49 @@ export default function LoginForm() {
 
   async function onSubmit(values: LoginValues) {
     setError(undefined);
+    setDeletedAccountInfo(null);
+    
     startTransition(async () => {
-      const { error } = await login(values);
-      if (error) setError(error);
+      try {
+        // Create FormData for the login action
+        const formData = new FormData();
+        formData.append("username", values.username || "");
+        formData.append("password", values.password);
+        
+        const result = await login(formData);
+        
+        if (result?.error) {
+          if (result.error === "ACCOUNT_DELETED_WITHIN_GRACE_PERIOD") {
+            setDeletedAccountInfo({
+              username: values.username || "",
+              password: values.password,
+              deletedAt: new Date(result.deletedAt || ""),
+              daysRemaining: result.daysRemaining,
+              isExpired: false,
+              userId: result.userId || "",
+            });
+          } else if (result.error === "ACCOUNT_DELETED_EXPIRED") {
+            setDeletedAccountInfo({
+              username: values.username || "",
+              password: values.password,
+              deletedAt: new Date(result.deletedAt || ""),
+              isExpired: true,
+              userId: result.userId || "",
+            });
+          } else {
+            setError(result.error);
+          }
+        }
+        // If no error is returned, login was successful and redirect will happen
+      } catch (error: any) {
+        // Check if this is a Next.js redirect error (successful login)
+        if (error?.digest?.includes('NEXT_REDIRECT')) {
+          // This is a successful login - the redirect will happen automatically
+          return;
+        }
+        // Handle other errors
+        setError("An error occurred during login");
+      }
     });
   }
 
@@ -72,6 +121,19 @@ export default function LoginForm() {
           Log in
         </LoadingButton>
       </form>
+      
+      {deletedAccountInfo && (
+        <DeletedAccountRecoveryDialog
+          open={!!deletedAccountInfo}
+          onOpenChange={(open) => !open && setDeletedAccountInfo(null)}
+          username={deletedAccountInfo.username}
+          password={deletedAccountInfo.password}
+          deletedAt={deletedAccountInfo.deletedAt}
+          daysRemaining={deletedAccountInfo.daysRemaining}
+          isExpired={deletedAccountInfo.isExpired}
+          userId={deletedAccountInfo.userId}
+        />
+      )}
     </Form>
   );
 }

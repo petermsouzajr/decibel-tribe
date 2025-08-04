@@ -21,7 +21,14 @@ export default async function MenuBar({ className }: MenuBarProps) {
         read: false,
       },
     }),
-    (await streamServerClient.getUnreadCount(user.id)).total_unread_count,
+    (async () => {
+      try {
+        return (await streamServerClient.getUnreadCount(user.id)).total_unread_count;
+      } catch (error) {
+        console.error("StreamChat error in MenuBar:", error);
+        return 0; // Return 0 if StreamChat fails
+      }
+    })(),
   ]);
 
   return (

@@ -21,6 +21,7 @@ const getUser = cache(
           equals: username,
           mode: "insensitive",
         },
+        deletedAt: null, // Filter out deleted users
       },
       select: {
         ...getUserDataSelect(loggedInUserId),

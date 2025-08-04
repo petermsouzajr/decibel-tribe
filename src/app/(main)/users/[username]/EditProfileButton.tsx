@@ -14,7 +14,7 @@ export default function EditProfileButton({ user }: EditProfileButtonProps) {
 
   return (
     <>
-      <Button variant="outline" onClick={() => setShowDialog(true)}>
+      <Button variant="outline" className="w-full py-6 text-lg" onClick={() => setShowDialog(true)}>
         Edit profile
       </Button>
       <EditProfileDialog

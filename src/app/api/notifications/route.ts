@@ -49,6 +49,9 @@ export async function GET(req: NextRequest) {
     const notifications = await prisma.notification.findMany({
       where: {
         recipientId: user.id,
+        issuer: {
+          deletedAt: null, // Filter out notifications from deleted users
+        },
       },
       include: {
         issuer: {

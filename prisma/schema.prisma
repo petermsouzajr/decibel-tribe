@@ -30,6 +30,7 @@ model User {
   googleId              String?          @unique
   avatarUrl             String?
   bio                   String?
+  deletedAt             DateTime?        // Soft delete timestamp
   sessions              Session[]
   posts                 Post[]
   following             Follow[]         @relation("Following")

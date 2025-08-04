@@ -1,6 +1,18 @@
 // Sample Configuration File: Adjust values below to match your project's setup
-
-module.exports = {
+    
+// TypeScript type definition (will be ignored in JavaScript)
+/** @type {{
+  teamNames: string[];
+  testTypes: string[];
+  testCategories: string[];
+  googleSpreadsheetId: string;
+  googleKeyFilePath: string;
+  testData: string;
+  csvDownloadsPath: string;
+  weeklySummaryStartDay: string;
+}} */
+    
+const config = {
   // Uncomment the relevant teams or add your own in the Describe block or It block:
   //  describe('[oregano] Unit test our math functions', () => {
   //    context('math', () => {
@@ -46,7 +58,7 @@ module.exports = {
     "beta",
   ],
   // Google Spreadsheet URL: Replace with either the actual spreadsheet ID or an environment variable.
-  googleSpreadsheetId:
+  googleSpreadsheetUrl:
     "https://docs.google.com/spreadsheets/d/1oQ2Zm2kagt-MnxF7Dn98q8FbPb6gxcQJRYlzx9kx67U/edit?gid=0#gid=0",
   // Path to Google credentials file (service account JSON file): Replace with the file path or use an environment variable.
   googleKeyFilePath: "./googleCredentials.json",
@@ -59,3 +71,15 @@ module.exports = {
 
   weeklySummaryStartDay: "Monday",
 };
+
+// Universal export that works with both CommonJS and ES Modules
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = config;
+}
+if (typeof exports !== 'undefined') {
+  exports.default = config;
+}
+if (typeof window !== 'undefined') {
+  window.shadowReportConfig = config;
+}
+export default config;

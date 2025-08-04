@@ -48,6 +48,9 @@ export async function GET(req: NextRequest) {
     const posts = await prisma.post.findMany({
       where: {
         groupId: null,
+        user: {
+          deletedAt: null, // Filter out posts from deleted users
+        },
       },
       include: getPostDataInclude(user.id),
       orderBy: { createdAt: "desc" },

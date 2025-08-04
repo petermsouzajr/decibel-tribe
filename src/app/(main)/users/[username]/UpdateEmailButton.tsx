@@ -14,7 +14,7 @@ export default function UpdateEmailButton({ user }: UpdateEmailButtonProps) {
 
   return (
     <>
-      <Button variant="outline" onClick={() => setShowDialog(true)}>
+      <Button variant="outline" className="w-full py-6 text-lg" onClick={() => setShowDialog(true)}>
         Update Email
       </Button>
       <UpdateEmailDialog

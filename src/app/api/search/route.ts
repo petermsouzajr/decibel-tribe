@@ -211,12 +211,19 @@ export async function GET(req: NextRequest) {
           {
             user: {
               displayName: { contains: searchQuery, mode: "insensitive" },
+              deletedAt: null, // Filter out posts from deleted users
             },
           },
           {
-            user: { username: { contains: searchQuery, mode: "insensitive" } },
+            user: { 
+              username: { contains: searchQuery, mode: "insensitive" },
+              deletedAt: null, // Filter out posts from deleted users
+            },
           },
         ],
+        user: {
+          deletedAt: null, // Filter out posts from deleted users
+        },
       },
       // Ensure include uses the logged-in user ID
       include: getPostDataInclude(user.id),
@@ -230,6 +237,7 @@ export async function GET(req: NextRequest) {
           { username: { contains: searchQuery, mode: "insensitive" } },
           { displayName: { contains: searchQuery, mode: "insensitive" } },
         ],
+        deletedAt: null, // Filter out deleted users
       },
       // Ensure include uses the logged-in user ID
       select: getUserDataSelect(user.id),

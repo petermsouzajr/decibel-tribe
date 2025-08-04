@@ -1,73 +1,70 @@
 "use server";
 
 import { lucia } from "@/auth";
-import prisma from "@/lib/prisma";
-import { loginSchema, LoginValues } from "@/lib/validation";
-// import { verify } from "@node-rs/argon2";
-import { isRedirectError } from "next/dist/client/components/redirect";
 import { cookies } from "next/headers";
+import prisma from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
-import * as bcrypt from "bcryptjs";
-import { resendVerificationEmail } from "../sendVerification";
 
-export async function login(
-  credentials: LoginValues,
-  isTestEnvironment: boolean = false,
-): Promise<{ error?: string; sessionCookie?: any }> {
+export async function login(formData: FormData) {
+  const username = formData.get("username") as string;
+  const password = formData.get("password") as string;
+
+  if (!username || !password) {
+    return { error: "Username and password are required" };
+  }
+
   try {
-    const { username, password } = loginSchema.parse(credentials);
-    const existingUser = await prisma.user.findFirst({
+    // Find user by username or email
+    const user = await prisma.user.findFirst({
       where: {
         OR: [
-          {
-            email: {
-              equals: username,
-              mode: "insensitive",
-            },
-          },
-          {
-            username: {
-              equals: username,
-              mode: "insensitive",
-            },
-          },
+          { username: { equals: username, mode: "insensitive" } },
+          { email: { equals: username, mode: "insensitive" } },
         ],
       },
     });
 
-    if (!existingUser || !existingUser.passwordHash) {
-      console.log(
-        `Login attempt failed: User ${username} not found or no hash.`,
-      );
-      return {
-        error: "Incorrect username or password",
-      };
+    if (!user) {
+      return { error: "Invalid username or password" };
     }
 
-    if (!existingUser.isVerified) {
-      if (existingUser.email) {
-        await resendVerificationEmail(existingUser.email);
+    // Check if user is deleted
+    if (user.deletedAt) {
+      // Check if within grace period (90 days)
+      const gracePeriod = 90 * 24 * 60 * 60 * 1000; // 90 days in milliseconds
+      const timeSinceDeletion = Date.now() - user.deletedAt.getTime();
+      
+      if (timeSinceDeletion <= gracePeriod) {
+        // User is within grace period - offer reactivation
+        return { 
+          error: "ACCOUNT_DELETED_WITHIN_GRACE_PERIOD",
+          deletedAt: user.deletedAt?.toISOString(),
+          daysRemaining: Math.ceil((gracePeriod - timeSinceDeletion) / (24 * 60 * 60 * 1000)),
+          userId: user.id
+        };
+      } else {
+        // Grace period expired - offer fresh start
+        return { 
+          error: "ACCOUNT_DELETED_EXPIRED",
+          deletedAt: user.deletedAt?.toISOString(),
+          userId: user.id
+        };
       }
-      return {
-        error: `Your account is not verified. Please check your email at ${username} for a new verification link.`,
-      };
     }
 
-    const validPassword = await bcrypt.compare(
-      password,
-      existingUser.passwordHash,
-    );
-
-    if (!validPassword) {
-      console.log(
-        `Login attempt failed: Incorrect password for user ${username}.`,
-      );
-      return {
-        error: "Incorrect username or password",
-      };
+    // Verify password
+    if (!user.passwordHash) {
+      return { error: "Invalid username or password" };
     }
 
-    const session = await lucia.createSession(existingUser.id, {});
+    const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+    if (!isValidPassword) {
+      return { error: "Invalid username or password" };
+    }
+
+    // Create session
+    const session = await lucia.createSession(user.id, {});
     const sessionCookie = lucia.createSessionCookie(session.id);
     cookies().set(
       sessionCookie.name,
@@ -75,16 +72,9 @@ export async function login(
       sessionCookie.attributes,
     );
 
-    if (isTestEnvironment) {
-      return { sessionCookie };
-    }
-
-    return redirect("/");
+    redirect("/");
   } catch (error) {
-    if (isRedirectError(error)) throw error;
     console.error("Login error:", error);
-    return {
-      error: "Something went wrong. Please try again.",
-    };
+    return { error: "An error occurred during login" };
   }
 }

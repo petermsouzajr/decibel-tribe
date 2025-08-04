@@ -36,6 +36,7 @@ async function WhoToFollow() {
           followerId: loggedInUser.id,
         },
       },
+      deletedAt: null, // Filter out deleted users
     },
     select: getUserDataSelect(loggedInUser.id),
     take: 5,

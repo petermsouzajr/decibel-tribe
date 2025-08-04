@@ -61,6 +61,9 @@ export async function GET(req: NextRequest) {
     const followers = await prisma.follow.findMany({
       where: {
         followingId: userIdToFetch,
+        follower: {
+          deletedAt: null, // Filter out deleted users
+        },
       },
       select: {
         follower: {

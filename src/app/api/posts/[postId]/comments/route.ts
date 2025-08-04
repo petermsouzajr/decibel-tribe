@@ -34,7 +34,12 @@ export async function GET(
     const pageSize = 5;
 
     const comments = await prisma.comment.findMany({
-      where: { postId },
+      where: { 
+        postId,
+        user: {
+          deletedAt: null, // Filter out comments from deleted users
+        },
+      },
       include: getCommentDataInclude(loggedInUserId), // Pass potentially undefined ID
       orderBy: { createdAt: "asc" },
       take: -pageSize - 1,

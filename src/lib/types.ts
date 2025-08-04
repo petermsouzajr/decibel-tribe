@@ -10,6 +10,7 @@ export function getUserDataSelect(loggedInUserId?: string | null) {
     createdAt: true,
     email: true,
     passwordHash: true,
+    deletedAt: true, // Include deletedAt field
     userPreferences: {
       select: {
         calendar: true,
@@ -161,6 +162,7 @@ export type UserWithFollowerStatus = {
   createdAt: Date;
   email: string | null;
   passwordHash: string | null;
+  deletedAt: Date | null; // Include deletedAt field
   userPreferences: {
     calendar: string;
   } | null;

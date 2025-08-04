@@ -48,15 +48,27 @@ export async function GET(req: NextRequest) {
     }
 
     // Original route logic
-    const { total_unread_count } = await streamServerClient.getUnreadCount(
-      user.id,
-    );
+    try {
+      const { total_unread_count } = await streamServerClient.getUnreadCount(
+        user.id,
+      );
 
-    const data: MessageCountInfo = {
-      unreadCount: total_unread_count,
-    };
+      const data: MessageCountInfo = {
+        unreadCount: total_unread_count,
+      };
 
-    return NextResponse.json(data); // Use NextResponse
+      return NextResponse.json(data); // Use NextResponse
+    } catch (streamError: any) {
+      // Handle StreamChat errors (e.g., user deleted in StreamChat)
+      console.error("StreamChat error in unread count:", streamError);
+      
+      // Return zero unread count if StreamChat fails
+      const data: MessageCountInfo = {
+        unreadCount: 0,
+      };
+
+      return NextResponse.json(data);
+    }
   } catch (error) {
     console.error("Error in GET /api/messages/unread-count:", error);
     // Ensure catch block returns NextResponse
