@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
     const typedNotifications = notifications.slice(
       0,
       pageSize,
-    ) as NotificationData[];
+    ) as unknown as NotificationData[];
 
     const data: NotificationsPage = {
       notifications: typedNotifications, // Use the asserted array

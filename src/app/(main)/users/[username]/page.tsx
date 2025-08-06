@@ -1,6 +1,6 @@
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
-import { getUserDataSelect, UserWithFollowerStatus } from "@/lib/types";
+import { getUserDataSelect, UserData } from "@/lib/types";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
@@ -14,7 +14,7 @@ const getUser = cache(
   async (
     username: string,
     loggedInUserId: string,
-  ): Promise<UserWithFollowerStatus> => {
+  ): Promise<UserData> => {
     const user = await prisma.user.findFirst({
       where: {
         username: {
@@ -30,7 +30,7 @@ const getUser = cache(
 
     if (!user) notFound();
 
-    return user as UserWithFollowerStatus;
+    return user as any;
   },
 );
 
@@ -63,9 +63,9 @@ export default async function Page({ params: { username } }: PageProps) {
 
   const followerInfo = {
     followers: user._count.followers,
-    isFollowedByUser: user.followers.some(
-      ({ followerId }) => followerId === loggedInUser.id,
-    ),
+    isFollowedByUser: (user as any).followers?.some(
+      ({ followerId }: { followerId: string }) => followerId === loggedInUser.id,
+    ) ?? false,
   };
 
   return (

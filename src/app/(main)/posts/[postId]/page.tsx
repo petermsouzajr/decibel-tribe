@@ -32,7 +32,7 @@ const getPost = cache(
 
     if (!post) notFound();
 
-    return post as PostData;
+    return post as unknown as PostData;
   },
 );
 

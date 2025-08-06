@@ -78,7 +78,7 @@ export async function GET(
 
     if (hasNextPage) posts.pop();
 
-    const typedPosts = posts as PostData[];
+    const typedPosts = posts as unknown as PostData[];
 
     const data: PostsPage = { posts: typedPosts, nextCursor };
 

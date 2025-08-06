@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Slice always takes the first pageSize items
-    const typedPosts = posts.slice(0, pageSize) as PostData[];
+    const typedPosts = posts.slice(0, pageSize) as unknown as PostData[];
 
     const data: PostsPage = {
       posts: typedPosts,

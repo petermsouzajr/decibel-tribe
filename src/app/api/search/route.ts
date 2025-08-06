@@ -248,8 +248,8 @@ export async function GET(req: NextRequest) {
     const filteredEvents = filterEvents(events, searchQuery);
 
     // --- Assert types before returning ---
-    const typedUsers = users as UserWithFollowerStatus[];
-    const typedPosts = posts as PostData[];
+    const typedUsers = users as unknown as UserWithFollowerStatus[];
+    const typedPosts = posts as unknown as PostData[];
     // EventData type might need similar assertion if used directly
 
     return NextResponse.json({
