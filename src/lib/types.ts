@@ -11,11 +11,42 @@ export function getUserDataSelect(loggedInUserId?: string | null) {
     email: true,
     passwordHash: true,
     deletedAt: true, // Include deletedAt field
+    isDatingActive: true,
+    user_dating_profile: {
+      select: {
+        id: true,
+        age: true,
+        height: true,
+        heightUnit: true,
+        gender: true,
+        sexualOrientation: true,
+        coronavirusVaccinated: true,
+        religion: true,
+        location: true,
+      },
+    },
     userPreferences: {
       select: {
         calendar: true,
       },
     },
+            user_dating_preferences: {
+          select: {
+            id: true,
+            preferredGender: true,
+            preferredSexualOrientation: true,
+            preferredMinAge: true,
+            preferredMaxAge: true,
+            preferredMaxDistanceKm: true,
+            preferredDistanceUnit: true,
+            preferredMinHeight: true,
+            preferredMaxHeight: true,
+            preferredHeightUnit: true,
+            preferredCoronavirusVaccinated: true,
+            preferredReligions: true,
+          },
+        },
+
     userInstruments: {
       select: {
         instrument: {
@@ -167,6 +198,20 @@ export type UserWithFollowerStatus = {
   email: string | null;
   passwordHash: string | null;
   deletedAt: Date | null; // Include deletedAt field
+      isDatingActive: boolean;
+    user_dating_preferences: {
+      id: string;
+      preferredGender: string;
+      preferredSexualOrientation: string;
+      preferredMinAge: number;
+      preferredMaxAge: number;
+      preferredMaxDistanceKm: number;
+      preferredDistanceUnit: string;
+      preferredMinHeight: number | null;
+      preferredMaxHeight: number | null;
+      preferredCoronavirusVaccinated: string | null;
+      preferredReligions: string[];
+    } | null;
   userPreferences: {
     calendar: string;
   } | null;

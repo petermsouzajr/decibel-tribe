@@ -66,6 +66,7 @@
     "date-fns": "^3.6.0",
     "dotenv": "^16.4.5",
     "faker": "^6.6.6",
+    "framer-motion": "^12.23.12",
     "ky": "^1.4.0",
     "lucia": "^3.2.0",
     "lucide-react": "^0.402.0",

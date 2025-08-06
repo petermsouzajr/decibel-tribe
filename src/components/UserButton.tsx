@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   Bookmark,
   Check,
+  Heart,
   LogOutIcon,
   Monitor,
   Moon,
@@ -71,6 +72,14 @@ export default function UserButton({ className }: UserButtonProps) {
               Groups
             </DropdownMenuItem>
           </Link>
+          {user.isDatingActive && (
+            <Link href="/" className="sm:hidden">
+              <DropdownMenuItem>
+                <Heart className="mr-2 size-6" />
+                Dating
+              </DropdownMenuItem>
+            </Link>
+          )}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <Monitor className="mr-2 size-6" />

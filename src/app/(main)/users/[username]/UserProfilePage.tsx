@@ -10,6 +10,7 @@ import Linkify from "@/components/Linkify";
 import EditProfileButton from "./EditProfileButton";
 import UpdateEmailButton from "./UpdateEmailButton";
 import UpdatePasswordButton from "./UpdatePasswordButton";
+import DatingToggleButton from "./DatingToggleButton";
 import DeleteAccountDialog from "@/components/DeleteAccountDialog";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
@@ -121,6 +122,9 @@ export default function UserProfilePage({
                     </div>
                     <div className="w-full">
                       <UpdatePasswordButton user={user} />
+                    </div>
+                    <div className="w-full">
+                      <DatingToggleButton user={user} />
                     </div>
                   </div>
                 </div>

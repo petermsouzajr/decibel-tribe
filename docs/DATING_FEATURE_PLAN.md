@@ -125,3 +125,322 @@ This endpoint needs to:
 - "Undo" last decision feature.
 
 This plan provides a detailed roadmap for implementing the core dating functionality leveraging the existing structure and schema.
+
+---
+
+# Dating Feature Onboarding Plan
+
+## Objective
+
+Create a user-friendly, modal-based onboarding process for the dating feature on the Decibel Tribe web application, accessible at `/dating/onboarding`. The onboarding will guide users through enabling the dating feature, setting up their dating profile, and defining preferences after clicking the "Activate Dating" button. The process will leverage existing schema and components, ensuring seamless integration with the planned dating functionality.
+
+## User Flow Overview
+
+**User Action:** User clicks the "Activate Dating" button (e.g., on the main dashboard or profile page).
+**Redirect:** User is navigated to `/dating/onboarding`, where a full-screen modal sequence begins.
+
+**Modal Steps:**
+1. **Welcome:** Introduces the dating feature and prompts user to opt-in.
+2. **Profile Setup:** Collects dating-specific profile information (bio, age, gender, location).
+3. **Photo Upload:** Allows user to upload and manage profile photos.
+4. **Preferences:** Sets dating preferences (age range, gender, max distance).
+5. **Completion:** Confirms setup and redirects to the main dating "Deck" view (`/dating`).
+
+**Outcome:** User's dating profile is created/updated, preferences are saved, and they're ready to view potential matches.
+
+## Technical Implementation
+
+### 1. Route Setup
+
+**Route:** `/dating/onboarding`
+**Implementation:** Create a new page at `src/app/(main)/dating/onboarding/page.tsx`.
+**Purpose:** Hosts the modal-based onboarding flow, ensuring users complete setup before accessing the dating feature.
+
+**Access Control:**
+- Requires authentication (use existing auth middleware).
+- Check if the user has already completed onboarding (e.g., `User.datingProfileCompleted` boolean field in the schema). If completed, redirect to `/dating`.
+
+**Framework:** Built with React & Next.js, using Tailwind CSS for styling and Framer Motion for modal animations, consistent with your website's tech stack (React, Next.js, Tailwind CSS, TypeScript).
+
+### 2. Modal Structure
+
+**Component:** `DatingOnboardingModal.tsx` in `src/components/dating/`.
+
+**Behavior:**
+- Full-screen modal with a progress indicator (e.g., step 1/5, 2/5, etc.).
+- Each step is a distinct modal view with navigation buttons (Next, Back, Skip where applicable).
+- Uses Framer Motion for smooth transitions between steps (e.g., slide or fade animations).
+- Persists user input temporarily in local state, submitting to the backend only on completion to avoid partial saves.
+
+**Props:**
+- `currentStep`: Tracks the active step (1–5).
+- `onComplete`: Callback to redirect to `/dating` upon completion.
+- `onClose`: Option to exit onboarding (prompts confirmation to avoid data loss).
+
+### 3. Modal Steps Breakdown
+
+#### Step 1: Welcome
+
+**Purpose:** Introduce the dating feature and confirm opt-in.
+
+**Content:**
+- Header: "Welcome to Decibel Tribe Dating!"
+- Description: Brief overview (e.g., "Connect with like-minded music lovers. Set up your profile to start finding matches!").
+- Call-to-Action: Button labeled "Let's Get Started".
+
+**Functionality:**
+- Clicking "Let's Get Started" sets a flag (e.g., `User.datingEnabled = true`) via `updateDatingProfile` Server Action.
+- Optional "Skip" button redirects to the main site (no data saved).
+
+**UI:** Bold heading, short text, vibrant button styling with Tailwind CSS, and a subtle background animation (Framer Motion).
+
+#### Step 2: Profile Setup
+
+**Purpose:** Collect core dating profile details.
+
+**Content:**
+Form fields (via `DatingProfileForm.tsx`, reused from your plan):
+- Bio (textarea, max 200 characters).
+- Age (number input, 18–100).
+- Gender (select: Male, Female, Non-Binary, Other).
+- Location (input for zipcode or address, converted to lat/lon on backend).
+
+**Validation:** Real-time feedback (e.g., "Bio too long" or "Age required").
+
+**Functionality:**
+- Stores input in local state.
+- Submits to `updateDatingProfile` Server Action on "Next" (or temporarily saves for final submission).
+- "Back" button returns to Welcome step.
+
+**UI:** Clean form layout, Tailwind-styled inputs, error messages in red, and a progress bar (e.g., 2/5).
+
+#### Step 3: Photo Upload
+
+**Purpose:** Allow users to upload and manage profile photos.
+
+**Content:**
+Component: `PhotoManager.tsx` (reused from your plan).
+
+**Features:**
+- Upload button (integrates with UploadThing for file handling).
+- Preview of uploaded photos (max 5, as per typical dating app standards).
+- Option to set a primary photo or delete photos.
+
+**Guidance:** Text like "Upload at least one photo to continue" (minimum 1 photo required).
+
+**Functionality:**
+- Uses `uploadDatingPhoto`, `updateDatingPhoto`, and `deleteDatingPhoto` Server Actions.
+- Validates at least one photo before allowing "Next".
+- "Back" button returns to Profile Setup.
+
+**UI:** Grid layout for photo previews, drag-and-drop support, and clear buttons for actions.
+
+#### Step 4: Preferences
+
+**Purpose:** Set dating preferences to filter potential matches.
+
+**Content:**
+Form fields (via `DatingPreferencesForm.tsx`):
+- Preferred gender(s) (checkboxes: Male, Female, Non-Binary, Other).
+- Age range (two number inputs: minAge, maxAge).
+- Max distance (slider: 5–100 km).
+
+**Validation:** Ensure valid ranges (e.g., minAge < maxAge, maxDistance > 0).
+
+**Functionality:**
+- Stores input in local state.
+- Submits to `updateDatingProfile` Server Action (updates `UserDatingPreferences` model).
+- "Back" button returns to Photo Upload.
+
+**UI:** Intuitive form with sliders and checkboxes, Tailwind styling, and progress bar (4/5).
+
+#### Step 5: Completion
+
+**Purpose:** Confirm setup and transition to the dating feature.
+
+**Content:**
+- Header: "You're All Set!"
+- Message: "Your dating profile is ready. Start exploring matches now!"
+- Button: "Find Matches" (redirects to `/dating`).
+
+**Functionality:**
+- Submits all collected data (profile, photos, preferences) to the backend via `updateDatingProfile` Server Action.
+- Sets `User.datingProfileCompleted = true` to skip onboarding in the future.
+- Redirects to `/dating` to view the "Deck" of potential matches.
+- "Back" button returns to Preferences.
+
+**UI:** Celebratory design with a checkmark icon, vibrant button, and final progress bar (5/5).
+
+### 4. Backend Integration
+
+**Server Actions (reused from your plan):**
+- `updateDatingProfile`: Updates User (bio, age, gender, lat/lon) and UserDatingPreferences (preferred genders, age range, max distance).
+- `uploadDatingPhoto`, `updateDatingPhoto`, `deleteDatingPhoto`: Manage UserPhoto records.
+
+**Location Handling:**
+- If users input a zipcode or address, use a geocoding API (e.g., Google Maps Geocoding or OpenStreetMap) to convert to lat/lon for storage in `User.latitude` and `User.longitude`.
+- Cache results to minimize API calls (optional optimization).
+
+**Validation:**
+- Ensure all required fields (bio, age, gender, at least one photo) are provided before allowing completion.
+- Validate preferences (e.g., minAge ≥ 18, maxDistance ≤ 100 km).
+
+### 5. Frontend Implementation Details
+
+**Component Structure (`src/components/dating/DatingOnboardingModal.tsx`):**
+- Uses React `useState` for managing current step and form data.
+- Conditionally renders each step's content based on `currentStep`.
+- Framer Motion for animations (e.g., `AnimatePresence` for step transitions).
+- Tailwind CSS for responsive, modern styling (e.g., `bg-white rounded-lg p-6 max-w-md mx-auto`).
+
+**Navigation:**
+- "Next" button advances to the next step, validating input where needed.
+- "Back" button returns to the previous step, preserving input.
+- "Skip" (Welcome step only) or "Cancel" prompts a confirmation modal to avoid losing progress.
+
+**Progress Indicator:** A horizontal progress bar or step dots (e.g., `w-1/5 bg-blue-500` for completed steps) to show progress.
+
+### 6. UI/UX Considerations
+
+**Accessibility:** Use ARIA labels (e.g., `aria-label="Onboarding step 1 of 5"`) and keyboard navigation for forms and buttons.
+
+**Responsive Design:** Ensure modals are mobile-friendly (e.g., `max-w-md` for smaller screens).
+
+**Feedback:** Provide real-time validation feedback (e.g., red borders for invalid inputs) and loading states for Server Actions.
+
+**Visual Appeal:** Use Tailwind classes for a clean, modern look (e.g., `bg-gradient-to-r from-blue-500 to-purple-500` for headers) and Framer Motion for subtle animations (e.g., slide-in for modals).
+
+**Error Handling:** Display user-friendly error messages (e.g., "Failed to upload photo. Please try again.") and retry options.
+
+### 7. Integration with Dating Feature
+
+**Post-Onboarding Redirect:** After completion, redirect to `/dating` to display the `PotentialMatchCard.tsx` in the "Deck" view.
+
+**State Management:** Use local state during onboarding, only committing to the backend on the final step to ensure atomic updates.
+
+**Reusability:** Reuse `DatingProfileForm.tsx`, `DatingPreferencesForm.tsx`, and `PhotoManager.tsx` for both onboarding and profile editing (`/dating/profile`).
+
+**Progress Persistence:** If users exit mid-onboarding, prompt to save progress (optional) or restart on next visit.
+
+### 8. Testing--SKIP ALL TESTING
+
+**Unit Tests (Jest):**
+- Test `DatingOnboardingModal.tsx` for step transitions and state management.
+- Test form validation logic in `DatingProfileForm.tsx` and `DatingPreferencesForm.tsx`.
+- Mock Server Actions to ensure proper data submission.
+
+**E2E Tests (Cypress/Playwright, integrated with qa-shadow-report):**
+- Simulate the entire onboarding flow, from clicking "Activate Dating" to reaching `/dating`.
+- Verify modal navigation, form submissions, and photo uploads.
+- Ensure redirects and error handling work as expected.
+
+**Manual Testing:**
+- Test on multiple devices (desktop, mobile) for responsiveness.
+- Validate geocoding accuracy for location inputs.
+
+### 9. Future Enhancements (Out of Scope)--SKIP ALL
+
+- **Progress Saving:** Allow users to save partial progress and resume later.
+- **Tutorials:** Add tooltips or a guided tour for each step.
+- **Social Integration:** Option to import photos from social media.
+- **Analytics:** Track onboarding completion rates to optimize UX.
+
+## Implementation Notes
+
+**Tech Stack Alignment:** Leverages React, Next.js, TypeScript, Tailwind CSS, and Framer Motion, matching your website's stack.
+
+**Schema Integration:** Uses existing User, UserPhoto, and UserDatingPreferences models from your `prisma/schema.prisma`.
+
+**Security:** Enforce authentication for all Server Actions and validate inputs to prevent invalid data.
+
+**Performance:** Optimize photo uploads with UploadThing and cache geocoding results to reduce API calls.
+
+## Example Modal Component Outline
+
+```tsx
+// src/components/dating/DatingOnboardingModal.tsx
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import DatingProfileForm from './DatingProfileForm';
+import DatingPreferencesForm from './DatingPreferencesForm';
+import PhotoManager from './PhotoManager';
+
+interface OnboardingModalProps {
+  onComplete: () => void;
+  onClose: () => void;
+}
+
+const DatingOnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete, onClose }) => {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formData, setFormData] = useState({}); // Temporary state for form inputs
+
+  const handleNext = () => setCurrentStep((prev) => prev + 1);
+  const handleBack = () => setCurrentStep((prev) => prev - 1);
+
+  const steps = [
+    {
+      title: 'Welcome to Decibel Tribe Dating!',
+      content: (
+        <div>
+          <p>Connect with music lovers. Let's set up your profile!</p>
+          <button onClick={handleNext} className="bg-blue-500 text-white px-4 py-2 rounded">
+            Let's Get Started
+          </button>
+          <button onClick={onClose} className="text-gray-500">Skip</button>
+        </div>
+      ),
+    },
+    {
+      title: 'Create Your Profile',
+      content: <DatingProfileForm onSubmit={(data) => setFormData({ ...formData, profile: data })} />,
+    },
+    {
+      title: 'Add Your Photos',
+      content: <PhotoManager onUpload={(photos) => setFormData({ ...formData, photos })} />,
+    },
+    {
+      title: 'Set Your Preferences',
+      content: <DatingPreferencesForm onSubmit={(data) => setFormData({ ...formData, preferences: data })} />,
+    },
+    {
+      title: 'You're All Set!',
+      content: (
+        <div>
+          <p>Your dating profile is ready. Start exploring matches now!</p>
+          <button onClick={onComplete} className="bg-blue-500 text-white px-4 py-2 rounded">
+            Find Matches
+          </button>
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <motion.div className="fixed inset-0 bg-white p-6 max-w-md mx-auto rounded-lg" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <AnimatePresence>
+        <motion.div key={currentStep} initial={{ x: 100 }} animate={{ x: 0 }} exit={{ x: -100 }}>
+          <h2 className="text-2xl font-bold">{steps[currentStep - 1].title}</h2>
+          {steps[currentStep - 1].content}
+          <div className="flex justify-between mt-4">
+            {currentStep > 1 && (
+              <button onClick={handleBack} className="text-gray-500">Back</button>
+            )}
+            {currentStep < steps.length && (
+              <button onClick={handleNext} className="bg-blue-500 text-white px-4 py-2 rounded">Next</button>
+            )}
+          </div>
+          <div className="flex justify-center mt-4">
+            {steps.map((_, i) => (
+              <div key={i} className={`w-2 h-2 rounded-full mx-1 ${i < currentStep ? 'bg-blue-500' : 'bg-gray-300'}`} />
+            ))}
+          </div>
+        </motion.div>
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
+export default DatingOnboardingModal;
+```
+
+This plan provides a clear, actionable roadmap for implementing a modal-based onboarding process for the dating feature, integrated with your existing schema and tech stack.
