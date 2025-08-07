@@ -10,7 +10,6 @@ interface OnboardingData {
   bio: string;
   age: number;
   height: number;
-  heightUnit: string; // "inches" or "cm"
   gender: string;
   location: string;
   coronavirusVaccinated: string;
@@ -24,9 +23,7 @@ interface OnboardingData {
   preferredMaxAge: number;
   preferredMinHeight: number;
   preferredMaxHeight: number;
-  preferredHeightUnit: string; // "inches" or "cm"
   preferredMaxDistance: number;
-  preferredDistanceUnit: string; // "km" or "miles"
   preferredCoronavirusVaccinated: string;
   preferredReligions: string[];
 }
@@ -48,7 +45,6 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
     bio: (user as any).bio || "",
     age: existingProfile?.age || 0,
     height: existingProfile?.height || 0,
-    heightUnit: existingProfile?.heightUnit || "inches",
     gender: existingProfile?.gender || "",
     location: existingProfile?.location || "",
     coronavirusVaccinated: existingProfile?.coronavirusVaccinated || "",
@@ -62,9 +58,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
     preferredMaxAge: existingPreferences?.preferredMaxAge || 0,
     preferredMinHeight: existingPreferences?.preferredMinHeight || 0,
     preferredMaxHeight: existingPreferences?.preferredMaxHeight || 0,
-    preferredHeightUnit: existingPreferences?.preferredHeightUnit || "inches",
     preferredMaxDistance: existingPreferences?.preferredMaxDistanceKm || 0,
-    preferredDistanceUnit: existingPreferences?.preferredDistanceUnit || "miles",
     preferredCoronavirusVaccinated: existingPreferences?.preferredCoronavirusVaccinated || "",
     preferredReligions: existingPreferences?.preferredReligions || []
   });
@@ -75,7 +69,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
   // Validation functions for each step
   const isStep1Valid = () => {
     return formData.age >= 18 && 
-           formData.height > 0 &&
+           formData.height >= 12 && // Minimum 1 foot
            formData.gender !== "" && 
            formData.sexualOrientation !== "" && 
            formData.location.trim() !== "";
@@ -90,8 +84,8 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
     return formData.preferredMinAge >= 18 && 
            formData.preferredMaxAge >= 18 && 
            formData.preferredMaxAge > formData.preferredMinAge && 
-           formData.preferredMinHeight > 0 &&
-           formData.preferredMaxHeight > 0 &&
+           formData.preferredMinHeight >= 12 && // Minimum 1 foot
+           formData.preferredMaxHeight >= 12 && // Minimum 1 foot
            formData.preferredMaxHeight > formData.preferredMinHeight &&
            formData.preferredMaxDistance > 0;
   };
@@ -196,6 +190,11 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                       const numValue = parseInt(value) || 0;
                       setFormData({...formData, age: numValue});
                     }}
+                    onFocus={(e) => {
+                      if (formData.age === 0) {
+                        e.target.value = '';
+                      }
+                    }}
                     onBlur={(e) => {
                       const value = parseInt(e.target.value) || 0;
                       // Clear field if user enters value below 18
@@ -211,58 +210,74 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                   )}
                 </div>
               <div>
-                <div className="flex items-center mb-2">
-                  <label className="block text-sm text-gray-900 font-bold">
-                    Height {formData.height <= 0 && (
-                    <span className="text-red-500 text-md mt-1">*</span>
-                  )}
-                  </label>
-                  <div className="flex items-center space-x-2 ml-4">
-                    <span className={`text-gray-600 ${formData.heightUnit === "inches" ? "font-bold text-md" : "text-xs"}`}>Inches</span>
-                    <button
-                      type="button"
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        formData.heightUnit === "inches" 
-                          ? "bg-purple-600" 
-                          : "bg-gray-200"
-                      }`}
-                      onClick={() => setFormData({
-                        ...formData, 
-                        heightUnit: formData.heightUnit === "inches" ? "cm" : "inches"
-                      })}
-                    >
-                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        formData.heightUnit === "inches" 
-                          ? "translate-x-6" 
-                          : "translate-x-1"
-                      }`} />
-                    </button>
-                    <span className={`text-gray-600 ${formData.heightUnit === "cm" ? "font-bold text-md" : "text-xs"}`}>CM</span>
+                <label className="block text-sm text-gray-900 font-bold mb-2">
+                  Height {formData.height < 12 && (
+                  <span className="text-red-500 text-md mt-1">*</span>
+                )}
+                </label>
+                <div className="flex items-center space-x-2">
+                  <div className="flex-1">
+                    <input
+                      type="number"
+                      min="0"
+                      max="9"
+                      className={`w-full p-3 border rounded-lg ${formData.height < 12 ? 'border-red-500' : ''}`}
+                      value={Math.floor(formData.height / 12) === 0 ? '' : Math.floor(formData.height / 12)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const feet = parseInt(value) || 0;
+                        const inches = formData.height % 12;
+                        setFormData({...formData, height: feet * 12 + inches});
+                      }}
+                      onFocus={(e) => {
+                        if (Math.floor(formData.height / 12) === 0) {
+                          e.target.value = '';
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const value = parseInt(e.target.value) || 0;
+                        if (value < 0) {
+                          const inches = formData.height % 12;
+                          setFormData({...formData, height: inches});
+                        }
+                      }}
+                      placeholder="0"
+                    />
+                    <label className="text-xs text-gray-500 mt-1 block">Feet</label>
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="number"
+                      min="0"
+                      max="11"
+                      className={`w-full p-3 border rounded-lg ${formData.height < 12 ? 'border-red-500' : ''}`}
+                      value={formData.height % 12 === 0 ? '' : formData.height % 12}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const inches = parseInt(value) || 0;
+                        const feet = Math.floor(formData.height / 12);
+                        setFormData({...formData, height: feet * 12 + inches});
+                      }}
+                      onFocus={(e) => {
+                        if (formData.height % 12 === 0) {
+                          e.target.value = '';
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const value = parseInt(e.target.value) || 0;
+                        if (value < 0) {
+                          const feet = Math.floor(formData.height / 12);
+                          setFormData({...formData, height: feet * 12});
+                        }
+                      }}
+                      placeholder="0"
+                    />
+                    <label className="text-xs text-gray-500 mt-1 block">Inches</label>
                   </div>
                 </div>
-                <input
-                  type="number"
-                  min={formData.heightUnit === "inches" ? "48" : "122"}
-                  max={formData.heightUnit === "inches" ? "96" : "244"}
-                  required
-                  className={`w-full p-3 border rounded-lg ${formData.height <= 0 ? 'border-red-500' : ''}`}
-                  value={formData.height === 0 ? '' : formData.height}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    const numValue = parseInt(value) || 0;
-                    setFormData({...formData, height: numValue});
-                  }}
-                  onBlur={(e) => {
-                    const value = parseInt(e.target.value) || 0;
-                    const minHeight = formData.heightUnit === "inches" ? 48 : 122;
-                    if (value < minHeight) {
-                      setFormData({...formData, height: 0});
-                    }
-                  }}
-                />
-                {formData.height <= 0 && (
+                {formData.height < 12 && (
                   <p className="text-red-500 text-xs mt-1">
-                    {formData.height === 0 ? "Height is required" : `Height must be at least ${formData.heightUnit === "inches" ? "48 inches" : "122 cm"}`}
+                    Height must be at least 1 foot
                   </p>
                 )}
               </div>
@@ -460,6 +475,11 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                       const numValue = parseInt(value) || 0;
                       setFormData({...formData, preferredMinAge: numValue});
                     }}
+                    onFocus={(e) => {
+                      if (formData.preferredMinAge === 0) {
+                        e.target.value = '';
+                      }
+                    }}
                     onBlur={(e) => {
                       const value = parseInt(e.target.value) || 0;
                       // Clear field if user enters value below 18
@@ -493,6 +513,11 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                       const numValue = parseInt(value) || 0;
                       setFormData({...formData, preferredMaxAge: numValue});
                     }}
+                    onFocus={(e) => {
+                      if (formData.preferredMaxAge === 0) {
+                        e.target.value = '';
+                      }
+                    }}
                     onBlur={(e) => {
                       const value = parseInt(e.target.value) || 0;
                       // Clear field if user enters value below 18
@@ -512,139 +537,183 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <div className="flex items-center mb-2">
-                    <label className="block text-sm text-gray-900 font-bold">
-                      Minimum Height {formData.preferredMinHeight <= 0 && (
-                      <span className="text-red-500 text-md mt-1">*</span>
-                    )}
-                    </label>
-                    <div className="flex items-center space-x-2 ml-4">
-                      <span className={`text-gray-600 ${formData.preferredHeightUnit === "inches" ? "font-bold text-md" : "text-xs"}`}>Inches</span>
-                      <button
-                        type="button"
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          formData.preferredHeightUnit === "inches" 
-                            ? "bg-purple-600" 
-                            : "bg-gray-200"
-                        }`}
-                        onClick={() => setFormData({
-                          ...formData, 
-                          preferredHeightUnit: formData.preferredHeightUnit === "inches" ? "cm" : "inches"
-                        })}
-                      >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          formData.preferredHeightUnit === "inches" 
-                            ? "translate-x-6" 
-                            : "translate-x-1"
-                        }`} />
-                      </button>
-                      <span className={`text-gray-600 ${formData.preferredHeightUnit === "cm" ? "font-bold text-md" : "text-xs"}`}>CM</span>
+              <div>
+                <label className="block text-sm text-gray-900 font-bold mb-2">
+                  Preferred Height Range {(formData.preferredMinHeight < 12 || formData.preferredMaxHeight < 12) && (
+                  <span className="text-red-500 text-md mt-1">*</span>
+                )}
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Minimum Height */}
+                  <div className="space-y-2">
+                    <label className="text-xs text-gray-600">Minimum Height</label>
+                    <div className="flex items-center space-x-2">
+                      <div className="flex-1">
+                        <input
+                          type="number"
+                          min="0"
+                          max="9"
+                          className={`w-full p-3 border rounded-lg ${formData.preferredMinHeight < 12 ? 'border-red-500' : ''}`}
+                          value={Math.floor(formData.preferredMinHeight / 12) === 0 ? '' : Math.floor(formData.preferredMinHeight / 12)}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            const feet = parseInt(value) || 0;
+                            const inches = formData.preferredMinHeight % 12;
+                            setFormData({...formData, preferredMinHeight: feet * 12 + inches});
+                          }}
+                          onFocus={(e) => {
+                            if (Math.floor(formData.preferredMinHeight / 12) === 0) {
+                              e.target.value = '';
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const value = parseInt(e.target.value) || 0;
+                            if (value < 0) {
+                              const inches = formData.preferredMinHeight % 12;
+                              setFormData({...formData, preferredMinHeight: inches});
+                            }
+                          }}
+                          placeholder="0"
+                        />
+                        <label className="text-xs text-gray-500 mt-1 block">Feet</label>
+                      </div>
+                      <div className="flex-1">
+                        <input
+                          type="number"
+                          min="0"
+                          max="11"
+                          className={`w-full p-3 border rounded-lg ${formData.preferredMinHeight < 12 ? 'border-red-500' : ''}`}
+                          value={formData.preferredMinHeight % 12 === 0 ? '' : formData.preferredMinHeight % 12}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            const inches = parseInt(value) || 0;
+                            const feet = Math.floor(formData.preferredMinHeight / 12);
+                            setFormData({...formData, preferredMinHeight: feet * 12 + inches});
+                          }}
+                          onFocus={(e) => {
+                            if (formData.preferredMinHeight % 12 === 0) {
+                              e.target.value = '';
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const value = parseInt(e.target.value) || 0;
+                            if (value < 0) {
+                              const feet = Math.floor(formData.preferredMinHeight / 12);
+                              setFormData({...formData, preferredMinHeight: feet * 12});
+                            }
+                          }}
+                          placeholder="0"
+                        />
+                        <label className="text-xs text-gray-500 mt-1 block">Inches</label>
+                      </div>
                     </div>
                   </div>
-                  <input
-                    type="number"
-                    min={formData.preferredHeightUnit === "inches" ? "48" : "122"}
-                    max={formData.preferredHeightUnit === "inches" ? "96" : "244"}
-                    required
-                    className={`w-full p-3 border rounded-lg ${formData.preferredMinHeight <= 0 ? 'border-red-500' : ''}`}
-                    value={formData.preferredMinHeight === 0 ? '' : formData.preferredMinHeight}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      const numValue = parseInt(value) || 0;
-                      setFormData({...formData, preferredMinHeight: numValue});
-                    }}
-                    onBlur={(e) => {
-                      const value = parseInt(e.target.value) || 0;
-                      const minHeight = formData.preferredHeightUnit === "inches" ? 48 : 122;
-                      if (value < minHeight) {
-                        setFormData({...formData, preferredMinHeight: 0});
-                      }
-                    }}
-                  />
-                  {formData.preferredMinHeight <= 0 && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {formData.preferredMinHeight === 0 ? "Minimum height is required" : `Minimum height must be at least ${formData.preferredHeightUnit === "inches" ? "48 inches" : "122 cm"}`}
-                    </p>
-                  )}
+
+                  {/* Maximum Height */}
+                  <div className="space-y-2">
+                    <label className="text-xs text-gray-600">Maximum Height</label>
+                    <div className="flex items-center space-x-2">
+                      <div className="flex-1">
+                        <input
+                          type="number"
+                          min="0"
+                          max="8"
+                          className={`w-full p-3 border rounded-lg ${formData.preferredMaxHeight < 12 ? 'border-red-500' : ''}`}
+                          value={Math.floor(formData.preferredMaxHeight / 12) === 0 ? '' : Math.floor(formData.preferredMaxHeight / 12)}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            const feet = parseInt(value) || 0;
+                            const inches = formData.preferredMaxHeight % 12;
+                            setFormData({...formData, preferredMaxHeight: feet * 12 + inches});
+                          }}
+                          onFocus={(e) => {
+                            if (Math.floor(formData.preferredMaxHeight / 12) === 0) {
+                              e.target.value = '';
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const value = parseInt(e.target.value) || 0;
+                            if (value < 0) {
+                              const inches = formData.preferredMaxHeight % 12;
+                              setFormData({...formData, preferredMaxHeight: inches});
+                            }
+                          }}
+                          placeholder="0"
+                        />
+                        <label className="text-xs text-gray-500 mt-1 block">Feet</label>
+                      </div>
+                      <div className="flex-1">
+                        <input
+                          type="number"
+                          min="0"
+                          max="11"
+                          className={`w-full p-3 border rounded-lg ${formData.preferredMaxHeight < 12 ? 'border-red-500' : ''}`}
+                          value={formData.preferredMaxHeight % 12 === 0 ? '' : formData.preferredMaxHeight % 12}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            const inches = parseInt(value) || 0;
+                            const feet = Math.floor(formData.preferredMaxHeight / 12);
+                            setFormData({...formData, preferredMaxHeight: feet * 12 + inches});
+                          }}
+                          onFocus={(e) => {
+                            if (formData.preferredMaxHeight % 12 === 0) {
+                              e.target.value = '';
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const value = parseInt(e.target.value) || 0;
+                            if (value < 0) {
+                              const feet = Math.floor(formData.preferredMaxHeight / 12);
+                              setFormData({...formData, preferredMaxHeight: feet * 12});
+                            }
+                          }}
+                          placeholder="0"
+                        />
+                        <label className="text-xs text-gray-500 mt-1 block">Inches</label>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+                {(formData.preferredMinHeight < 12 || formData.preferredMaxHeight < 12) && (
+                  <p className="text-red-500 text-xs mt-1">
+                    Height range must be at least 1 foot
+                  </p>
+                )}
+                {(formData.preferredMinHeight >= 12 && formData.preferredMaxHeight >= 12 && formData.preferredMaxHeight <= formData.preferredMinHeight) && (
+                  <p className="text-red-500 text-md mt-2">Maximum height must be greater than minimum height</p>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm text-gray-900 font-bold mb-2">
-                    Maximum Height {formData.preferredMaxHeight <= 0 && (
+                    Maximum Distance (miles) {formData.preferredMaxDistance <= 0 && (
                     <span className="text-red-500 text-md mt-1">*</span>
                   )}
                   </label>
                   <input
                     type="number"
-                    min={formData.preferredHeightUnit === "inches" ? "48" : "122"}
-                    max={formData.preferredHeightUnit === "inches" ? "96" : "244"}
-                    required
-                    className={`w-full p-3 border rounded-lg ${formData.preferredMaxHeight <= 0 ? 'border-red-500' : ''}`}
-                    value={formData.preferredMaxHeight === 0 ? '' : formData.preferredMaxHeight}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      const numValue = parseInt(value) || 0;
-                      setFormData({...formData, preferredMaxHeight: numValue});
-                    }}
-                    onBlur={(e) => {
-                      const value = parseInt(e.target.value) || 0;
-                      const minHeight = formData.preferredHeightUnit === "inches" ? 48 : 122;
-                      if (value < minHeight) {
-                        setFormData({...formData, preferredMaxHeight: 0});
-                      }
-                    }}
-                  />
-                  {formData.preferredMaxHeight <= 0 && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {formData.preferredMaxHeight === 0 ? "Maximum height is required" : `Maximum height must be at least ${formData.preferredHeightUnit === "inches" ? "48 inches" : "122 cm"}`}
-                  </p>
-                  )}
-                  {(formData.preferredMinHeight > 0 && formData.preferredMaxHeight > 0 && formData.preferredMaxHeight <= formData.preferredMinHeight) && (
-                    <p className="text-red-500 text-md mt-2">Maximum height must be greater than minimum height</p>
-                  )}
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <div className="flex items-center mb-2">
-                    <label className="block text-sm text-gray-900 font-bold">
-                      Maximum Distance {formData.preferredMaxDistance <= 0 && (
-                      <span className="text-red-500 text-md mt-1">*</span>
-                    )}
-                    </label>
-                    <div className="flex items-center space-x-2 ml-4">
-                      <span className={`text-gray-600 ${formData.preferredDistanceUnit === "km" ? "font-bold text-md" : "text-xs"}`}>KM</span>
-                      <button
-                        type="button"
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          formData.preferredDistanceUnit === "miles" 
-                            ? "bg-purple-600" 
-                            : "bg-gray-200"
-                        }`}
-                        onClick={() => setFormData({
-                          ...formData, 
-                          preferredDistanceUnit: formData.preferredDistanceUnit === "km" ? "miles" : "km"
-                        })}
-                      >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          formData.preferredDistanceUnit === "miles" 
-                            ? "translate-x-6" 
-                            : "translate-x-1"
-                        }`} />
-                      </button>
-                      <span className={`text-gray-600 ${formData.preferredDistanceUnit === "miles" ? "font-bold text-md" : "text-xs"}`}>Miles</span>
-                    </div>
-                  </div>
-                  <input
-                    type="number"
                     min="1"
-                    max={formData.preferredDistanceUnit === "miles" ? "300" : "500"}
+                    max="300"
                     required
                     className={`w-full p-3 border rounded-lg ${formData.preferredMaxDistance <= 0 ? 'border-red-500' : ''}`}
                     value={formData.preferredMaxDistance === 0 ? '' : formData.preferredMaxDistance}
-                    onChange={(e) => setFormData({...formData, preferredMaxDistance: parseInt(e.target.value) || 0})}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const numValue = parseInt(value) || 0;
+                      setFormData({...formData, preferredMaxDistance: numValue});
+                    }}
+                    onFocus={(e) => {
+                      if (formData.preferredMaxDistance === 0) {
+                        e.target.value = '';
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const value = parseInt(e.target.value) || 0;
+                      if (value < 1) {
+                        setFormData({...formData, preferredMaxDistance: 0});
+                      }
+                    }}
                   />
                   {formData.preferredMaxDistance <= 0 && (
                     <p className="text-red-500 text-xs mt-1">Maximum distance is required</p>
@@ -730,7 +799,9 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                     </div>
                     <div>
                       <p className="text-sm text-gray-900 font-bold">Height</p>
-                      <p className="font-medium text-gray-900">{formData.height} {formData.heightUnit}</p>
+                      <p className="font-medium text-gray-900">
+                        {Math.floor(formData.height / 12)}&apos; {formData.height % 12}&quot;
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-900 font-bold">Location</p>
@@ -769,11 +840,13 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                     </div>
                     <div>
                       <p className="text-sm text-gray-900 font-bold">Height range</p>
-                      <p className="font-medium text-gray-900">{formData.preferredMinHeight} {formData.preferredHeightUnit} - {formData.preferredMaxHeight} {formData.preferredHeightUnit}</p>
+                      <p className="font-medium text-gray-900">
+                        {Math.floor(formData.preferredMinHeight / 12)}&apos; {formData.preferredMinHeight % 12}&quot; - {Math.floor(formData.preferredMaxHeight / 12)}&apos; {formData.preferredMaxHeight % 12}&quot;
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-900 font-bold">Max distance</p>
-                      <p className="font-medium text-gray-900">{formData.preferredMaxDistance} {formData.preferredDistanceUnit}</p>
+                      <p className="font-medium text-gray-900">{formData.preferredMaxDistance} miles</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-900 font-bold">Vaccination preference</p>

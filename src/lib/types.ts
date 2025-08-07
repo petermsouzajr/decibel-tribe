@@ -17,7 +17,6 @@ export function getUserDataSelect(loggedInUserId?: string | null) {
         id: true,
         age: true,
         height: true,
-        heightUnit: true,
         gender: true,
         sexualOrientation: true,
         coronavirusVaccinated: true,
@@ -38,10 +37,8 @@ export function getUserDataSelect(loggedInUserId?: string | null) {
             preferredMinAge: true,
             preferredMaxAge: true,
             preferredMaxDistanceKm: true,
-            preferredDistanceUnit: true,
             preferredMinHeight: true,
             preferredMaxHeight: true,
-            preferredHeightUnit: true,
             preferredCoronavirusVaccinated: true,
             preferredReligions: true,
           },
@@ -206,7 +203,6 @@ export type UserWithFollowerStatus = {
       preferredMinAge: number;
       preferredMaxAge: number;
       preferredMaxDistanceKm: number;
-      preferredDistanceUnit: string;
       preferredMinHeight: number | null;
       preferredMaxHeight: number | null;
       preferredCoronavirusVaccinated: string | null;
