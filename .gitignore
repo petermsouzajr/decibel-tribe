@@ -44,4 +44,4 @@ cypress.env.json
 vitest/failing_tests.log
 
 # million.js
-.million/
+.million/store.json

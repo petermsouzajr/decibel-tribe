@@ -22,6 +22,7 @@ model User {
   pendingEmail                    String?
   deletedAt                       DateTime?
   isDatingActive                  Boolean                  @default(false)
+  isAdmin                        Boolean                  @default(false)
   preferredUnits                  String?                  @default("metric")
   EmailVerification               EmailVerification[]
   groups                          GroupMember[]

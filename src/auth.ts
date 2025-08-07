@@ -22,6 +22,7 @@ export const lucia = new Lucia(adapter, {
       avatarUrl: databaseUserAttributes.avatarUrl,
       googleId: databaseUserAttributes.googleId,
       isDatingActive: databaseUserAttributes.isDatingActive,
+      isAdmin: databaseUserAttributes.isAdmin,
     };
   },
 });
@@ -40,6 +41,7 @@ interface DatabaseUserAttributes {
   avatarUrl: string | null;
   googleId: string | null;
   isDatingActive: boolean;
+  isAdmin: boolean;
 }
 
 export const google = new Google(
