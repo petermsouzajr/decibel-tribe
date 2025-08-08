@@ -55,6 +55,8 @@ const mockLuciaUser: User = {
   displayName: "Test User",
   avatarUrl: null,
   googleId: null,
+  isDatingActive: false,
+  isAdmin: false,
   // passwordHash is likely not part of the direct User type for sessions
   // bio, createdAt, _count, userInstruments, userSkills, userPreferences are likely Prisma fields, not Lucia User session fields
 };

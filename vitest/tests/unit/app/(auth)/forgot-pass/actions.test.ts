@@ -42,7 +42,10 @@ describe("Password Reset Actions", () => {
       bio: null,
       deletedAt: null,
       createdAt: new Date(),
-    });
+      isAdmin: false,
+      isDatingActive: false,
+      preferredUnits: null,
+    } as any);
 
     vi.mocked(resendVerificationEmail).mockResolvedValue({ error: "" });
 

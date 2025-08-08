@@ -109,6 +109,32 @@ This team owns the core application shell, navigation, shared UI components, bui
 - Build configuration, CI/CD pipelines, testing infrastructure setup.
 - Shared utility functions/hooks not specific to a feature team.
 
+### 9. AdminTeam (`[AdminTeam]`)
+
+This team owns platform-level administration features, moderation tooling, and policy enforcement.
+
+**Responsibilities:**
+
+- Admin Dashboard UI and data (stats, recent activity)
+- Global access control for admin-only areas (route guards, helpers in `src/lib/admin.ts`)
+- Abuse Reporting System end-to-end:
+  - Report database model and migrations (including relationships to users, posts, comments, groups, events)
+  - Report APIs (`/api/reports`, `/api/reports/[reportId]`): creation, listing, pagination, status updates
+  - Protections: per-user daily caps, cooldown between reports, duplicate detection
+  - Admin reports list and report detail views with moderation actions (status, notes)
+- Admin Users/Reports/Settings pages (pagination, filters, integration with real data sources)
+- Seed data for moderation scenarios (`prisma/seedModules/adminTeam/reports.ts` and spec tests)
+- Policy and configuration surfaces for moderation (e.g., in-memory or DB-backed settings via `/api/admin/settings`)
+
+**Key Code Areas:**
+
+- `src/app/admin/**` (dashboard, reports, users, settings)
+- `src/app/api/reports/**`, `src/app/api/admin/settings/route.ts`
+- `src/lib/admin.ts` (helpers, guards), `src/lib/reports.ts` (client helpers, if any)
+- `src/components/reports/**` (modal, button)
+- `prisma/schema.prisma` (Report model and relations), `scripts/add-report-schema.mjs` (safe setup)
+- `prisma/seedModules/adminTeam/**` (moderation seed data and tests)
+
 ## Collaboration and Boundaries
 
 While features may interact (e.g., a Post belonging to a Group, a User attending an Event), each team owns the primary implementation within their domain. Cross-team dependencies should be handled through clear data contracts, shared utility functions/types (owned by PlatformTeam or agreed upon), or well-defined API interactions. Avoid modifying code primarily owned by another team without consultation.

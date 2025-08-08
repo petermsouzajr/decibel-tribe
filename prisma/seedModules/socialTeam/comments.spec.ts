@@ -81,6 +81,9 @@ describe("SocialTeam - seedPublicComments Module", () => {
       avatarUrl: null,
       bio: null,
       deletedAt: null,
+      isAdmin: false,
+      isDatingActive: false,
+      preferredUnits: null,
     },
     {
       id: "user2",
@@ -96,6 +99,9 @@ describe("SocialTeam - seedPublicComments Module", () => {
       avatarUrl: null,
       bio: null,
       deletedAt: null,
+      isAdmin: false,
+      isDatingActive: false,
+      preferredUnits: null,
     },
     {
       id: "userNC",
@@ -111,6 +117,9 @@ describe("SocialTeam - seedPublicComments Module", () => {
       avatarUrl: null,
       bio: null,
       deletedAt: null,
+      isAdmin: false,
+      isDatingActive: false,
+      preferredUnits: null,
     },
   ];
 

@@ -25,6 +25,7 @@ import {
 import AddUserModal from "./AddUserModal";
 import DeleteGroupModal from "./DeleteGroupModal";
 import LeaveGroupModal from "./LeaveGroupModal";
+import ReportModal from "@/components/reports/ReportModal";
 
 interface PageProps {
   params: { groupId: string };
@@ -36,6 +37,7 @@ export default function GroupPage({ params: { groupId } }: PageProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   const { data: groupData, status: groupStatus } = useQuery({
     queryKey: ["group", groupId],
@@ -138,12 +140,24 @@ export default function GroupPage({ params: { groupId } }: PageProps) {
                     </DropdownMenuItem>
                   )}
                   {!isOwner && (
-                    <DropdownMenuItem onClick={() => setShowLeaveDialog(true)}>
-                      <span className="flex items-center gap-3 text-muted-foreground">
-                        <LucideExternalLink className="size-4" />
-                        Unjoin Group
-                      </span>
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem onClick={() => setShowLeaveDialog(true)}>
+                        <span className="flex items-center gap-3 text-muted-foreground">
+                          <LucideExternalLink className="size-4" />
+                          Unjoin Group
+                        </span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onSelect={() => {
+                          setShowReportModal(true);
+                        }}
+                      >
+                        <span className="flex items-center gap-3">
+                          <MoreHorizontal className="size-4" />
+                          Report Group
+                        </span>
+                      </DropdownMenuItem>
+                    </>
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -205,6 +219,12 @@ export default function GroupPage({ params: { groupId } }: PageProps) {
         onOpenChange={setShowLeaveDialog}
         groupId={groupId}
         groupName={groupData.name}
+      />
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        contentType="group"
+        targetId={groupId}
       />
     </main>
   );

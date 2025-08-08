@@ -87,33 +87,27 @@ describe("API Route: GET /api/posts/following", () => {
     user: {
       id: mockFollowingIds[i % mockFollowingIds.length],
       username: `followed_user_${(i % 2) + 1}`,
-      displayName: `Followed User ${(i % 2) + 1}`,
+      displayName: `User ${(i % 2) + 1}`,
       avatarUrl: null,
-      // Add other user fields if needed by getPostDataInclude or component
-      bio: "Mock bio",
+      bio: null,
       createdAt: new Date(),
-      email: `followed_user_${(i % 2) + 1}@test.com`,
-      passwordHash: "mock_hash",
+      email: `user${(i % 2) + 1}@test.com`,
+      passwordHash: null,
       deletedAt: null,
-      isFollowing: false, // These might need adjustment based on actual use
-      isFollowedBy: false,
       userPreferences: null,
       userInstruments: [],
       userSkills: [],
-      _count: {
-        followers: 0,
-        following: 0,
-        posts: 0,
-      },
+      isDatingActive: false,
+      user_dating_preferences: null,
+      _count: { posts: 0, followers: 0 },
       followers: [],
     },
-    group: null, // Assuming group posts aren't part of 'following' feed logic here
-    Group: null, // Add missing Group property (likely relation object)
-    attachments: [], // Assume empty for simplicity
-    likes: [], // Assume not liked by default
+    Group: null,
+    likes: [],
     dislikes: [],
-    bookmarks: [], // Assume not bookmarked by default
-    _count: { likes: 0, dislikes: 0, comments: i, bookmarks: 0 }, // Example counts
+    bookmarks: [],
+    _count: { likes: 0, dislikes: 0, comments: 0 },
+    attachments: [],
   }));
 
   const expectedPostFindManyWhereClause = {

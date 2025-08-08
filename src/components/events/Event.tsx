@@ -11,6 +11,9 @@ import { format as formatDate, parse, isValid, format } from "date-fns";
 import { Button } from "../ui/button";
 import Linkify from "../Linkify";
 import { useToast } from "@/components/ui/use-toast";
+import ReportModal from "@/components/reports/ReportModal";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
 
 interface EventDetailsProps {
   event: EventData;
@@ -28,6 +31,7 @@ export default function EventDetails({ event }: EventDetailsProps) {
     setIsExpanded(!isExpanded);
   };
   const { toast } = useToast();
+  const [showReportModal, setShowReportModal] = useState(false);
 
   const checkContentSize = () => {
     if (contentRef.current) {
@@ -214,7 +218,25 @@ export default function EventDetails({ event }: EventDetailsProps) {
               Updated: {formatRelativeDate(event.updatedAt)}
             </div>
           </div>
-          {renderEventActionButton()}
+          <div className="ml-auto flex items-center gap-2">
+            {renderEventActionButton()}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="rounded p-2 hover:bg-gray-100">
+                <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {event.createdBy.id !== user.id && (
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      setShowReportModal(true);
+                    }}
+                  >
+                    Report Event
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
 
@@ -285,6 +307,12 @@ export default function EventDetails({ event }: EventDetailsProps) {
           </ul>
         </div>
       </div>
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        contentType="event"
+        targetId={event.id}
+      />
     </article>
   );
 }

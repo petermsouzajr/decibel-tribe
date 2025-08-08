@@ -50,6 +50,9 @@ describe("login with deleted accounts", () => {
     bio: null,
     deletedAt: null,
     createdAt: new Date(),
+    isAdmin: false,
+    isDatingActive: false,
+    preferredUnits: null,
   };
 
   beforeEach(() => {

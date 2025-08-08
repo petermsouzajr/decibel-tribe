@@ -12,6 +12,8 @@ const mockUser: User = {
   displayName: "Test User",
   avatarUrl: null,
   googleId: null,
+  isDatingActive: false,
+  isAdmin: false,
 };
 const mockSession: Session = {
   id: mockSessionId,

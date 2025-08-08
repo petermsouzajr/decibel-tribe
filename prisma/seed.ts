@@ -35,6 +35,7 @@ import {
   seedNotifications,
   type CommentInput,
 } from "./seedModules/notificationsTeam/notifications.js";
+import { seedReports } from "./seedModules/adminTeam/reports.js";
 
 async function main() {
   // --- Deletion (outside transaction) ---
@@ -133,6 +134,24 @@ async function main() {
           createdEvents,
           createdAttendees,
         );
+
+        // --- AdminTeam: seed reports ---
+        const adminUsers = await tx.user.findMany({
+          where: { isAdmin: true },
+          select: { id: true },
+        });
+        const allUsers = await tx.user.findMany({ select: { id: true } });
+        const allPostIds = (await tx.post.findMany({ select: { id: true } })).map((p) => p.id);
+        const allGroupIds = (await tx.group.findMany({ select: { id: true } })).map((g) => g.id);
+        const allEventIds = (await tx.event.findMany({ select: { id: true } })).map((e) => e.id);
+
+        await seedReports(tx as any, {
+          adminUserIds: adminUsers.map((u) => u.id),
+          regularUserIds: allUsers.map((u) => u.id),
+          postIds: allPostIds,
+          groupIds: allGroupIds,
+          eventIds: allEventIds,
+        });
 
         console.log("Prisma transaction committed successfully.");
       },

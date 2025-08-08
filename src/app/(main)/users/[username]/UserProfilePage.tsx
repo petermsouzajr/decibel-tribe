@@ -14,6 +14,7 @@ import DatingToggleButton from "./DatingToggleButton";
 import DeleteAccountDialog from "@/components/DeleteAccountDialog";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
+import ReportButton from "@/components/reports/ReportButton";
 
 interface UserProfilePageProps {
   user: UserData;
@@ -84,7 +85,10 @@ export default function UserProfilePage({
             </div>
           </div>
           {user.id !== loggedInUserId && !isDeleted && (
-            <FollowButton userId={user.id} initialState={followerInfo} />
+            <div className="flex items-center gap-2">
+              <FollowButton userId={user.id} initialState={followerInfo} />
+              <ReportButton contentType="profile" targetId={user.id} variant="text" />
+            </div>
           )}
         </div>
 

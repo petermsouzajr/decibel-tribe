@@ -51,6 +51,11 @@ model User {
   user_photos                     user_photos[]
   userPreferences                 UserPreferences?
 
+  // Reports relations
+  reportsMade                     Report[]                 @relation("UserReports")
+  reportsReceived                 Report[]                 @relation("ReportedUser")
+  adminResolvedReports            Report[]                 @relation("AdminResolutions")
+
   @@map("users")
 }
 
@@ -64,6 +69,9 @@ model Group {
   members     GroupMember[]
   owner       User          @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   posts       Post[]
+
+  // Reports
+  reports     Report[]
 
   @@map("groups")
 }
@@ -137,6 +145,57 @@ model Session {
   @@map("sessions")
 }
 
+// Reports for content moderation
+enum ReportReason {
+  HARASSMENT
+  VIOLENCE
+  SPAM
+  INAPPROPRIATE_CONTENT
+  FAKE_PROFILE
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  INVESTIGATING
+  RESOLVED_ACTION_TAKEN
+  RESOLVED_NO_ACTION
+  DISMISSED
+}
+
+model Report {
+  id          String        @id @default(cuid())
+  reporterId  String
+  reportedId  String?
+  postId      String?
+  commentId   String?
+  messageId   String?
+  groupId     String?
+  eventId     String?
+
+  reason      ReportReason
+  description String?
+  status      ReportStatus  @default(PENDING)
+  adminNotes  String?
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  resolvedAt  DateTime?
+  resolvedBy  String?
+
+  reporter    User          @relation("UserReports", fields: [reporterId], references: [id])
+  reported    User?         @relation("ReportedUser", fields: [reportedId], references: [id])
+  post        Post?         @relation(fields: [postId], references: [id])
+  comment     Comment?      @relation(fields: [commentId], references: [id])
+  group       Group?        @relation(fields: [groupId], references: [id])
+  event       Event?        @relation(fields: [eventId], references: [id])
+  admin       User?         @relation("AdminResolutions", fields: [resolvedBy], references: [id])
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("reports")
+}
+
 model Follow {
   followerId  String
   followingId String
@@ -162,6 +221,9 @@ model Post {
   attachments         Media[]
   Group               Group?         @relation(fields: [groupId], references: [id])
   user                User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Reports
+  reports             Report[]
 
   @@map("posts")
 }
@@ -194,6 +256,7 @@ model Comment {
   replies   Comment[]     @relation("CommentReplies")
   post      Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
   user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reports   Report[]
 
   @@map("comments")
 }
@@ -280,6 +343,9 @@ model Event {
   attendees           EventAttendee[]
   createdBy           User            @relation("CreatedEvents", fields: [createdById], references: [id])
   linkedNotifications Notification[]
+
+  // Reports
+  reports             Report[]
 
   @@map("events")
 }

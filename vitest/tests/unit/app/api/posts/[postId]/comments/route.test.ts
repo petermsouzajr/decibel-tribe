@@ -85,10 +85,29 @@ describe("API Route: /api/posts/[postId]/comments", () => {
     attributes: {},
   };
   const mockCommentInclude = {
-    user: true,
+    user: {
+      select: {
+        id: true,
+        username: true,
+        displayName: true,
+        avatarUrl: true,
+        createdAt: true,
+        email: true,
+        passwordHash: true,
+        bio: true,
+        deletedAt: true,
+        isDatingActive: true,
+        user_dating_profile: true,
+        user_dating_preferences: true,
+        userPreferences: true,
+        userInstruments: true,
+        userSkills: true,
+        _count: true,
+      },
+    },
     post: { select: { userId: true } },
     likes: { where: { userId: loggedInUserId } },
-  };
+  } as any;
   // Define mockComments data here so it's accessible in beforeEach
   const mockComments: CommentData[] = Array.from({ length: 7 }, (_, i) => ({
     id: `comment_${i}`,
@@ -115,14 +134,15 @@ describe("API Route: /api/posts/[postId]/comments", () => {
       userInstruments: [],
       userSkills: [],
       userPreferences: null,
+      isDatingActive: false,
+      user_dating_profile: null as any,
+      user_dating_preferences: null,
       _count: { followers: 0, following: 0, posts: 0 },
     },
     parent: null,
     replies: [],
     likes: [],
-    post: { userId: postAuthorId },
-    isLiked: false,
-    _count: { likes: 0, replies: 0 },
+    _count: { replies: 0, likes: 0 },
   }));
 
   // --- Implement async beforeAll for Mock Setup ---

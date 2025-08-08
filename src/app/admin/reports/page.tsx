@@ -5,24 +5,28 @@ import LimitDropdown from "@/components/admin/LimitDropdown";
 
 async function getReports(page: number = 1, limit: number = 10) {
   try {
-    // For now, return empty array since Report model doesn't exist yet
-    // This will be updated when we implement the Report feature
+    const skip = (page - 1) * limit;
+    const [reports, totalReports] = await Promise.all([
+      (prisma as any).report.findMany({
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          reporter: { select: { username: true } },
+        },
+      }),
+      (prisma as any).report.count(),
+    ]);
     return {
-      reports: [],
-      totalReports: 0,
-      totalPages: 0,
+      reports,
+      totalReports,
+      totalPages: Math.ceil(totalReports / limit),
       currentPage: page,
-      limit
+      limit,
     };
   } catch (error) {
     console.error("Error fetching reports:", error);
-    return {
-      reports: [],
-      totalReports: 0,
-      totalPages: 0,
-      currentPage: page,
-      limit
-    };
+    return { reports: [], totalReports: 0, totalPages: 0, currentPage: page, limit };
   }
 }
 
@@ -107,7 +111,7 @@ export default async function AdminReports({
         <div className="divide-y divide-gray-200">
           {reports.length > 0 ? (
             reports.map((report: any) => (
-              <div key={report.id} className="px-6 py-4 hover:bg-gray-50">
+              <a href={`/admin/reports/${report.id}`} key={report.id} className="block px-6 py-4 hover:bg-gray-50">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3">
@@ -117,7 +121,7 @@ export default async function AdminReports({
                           {report.reason} Report
                         </p>
                         <p className="text-sm text-gray-500">
-                          Reported by <span className="font-medium">{report.reporterUsername}</span> • {timeAgo(report.createdAt)}
+                          Reported by <span className="font-medium">{report.reporter?.username ?? 'unknown'}</span> • {timeAgo(report.createdAt)}
                         </p>
                         <p className="text-sm text-gray-600 mt-1">
                             &quot;{report.description}&quot;
@@ -134,18 +138,9 @@ export default async function AdminReports({
                     }`}>
                       {report.status}
                     </span>
-                    
-                    <div className="flex space-x-1">
-                      <button className="p-1 text-green-600 hover:bg-green-50 rounded">
-                        <CheckCircle className="h-4 w-4" />
-                      </button>
-                      <button className="p-1 text-red-600 hover:bg-red-50 rounded">
-                        <XCircle className="h-4 w-4" />
-                      </button>
-                    </div>
                   </div>
                 </div>
-              </div>
+              </a>
             ))
           ) : (
             <div className="px-6 py-8 text-center">

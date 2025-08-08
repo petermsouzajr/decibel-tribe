@@ -32,8 +32,8 @@ async function getAdminStats() {
         }
       }),
 
-      // Pending reports (will be 0 until Report model is implemented)
-      0,
+      // Pending reports
+      (prisma as any).report.count({ where: { status: 'PENDING' as any } }),
 
       // Suspended users (will be 0 until we add suspension field)
       0,
@@ -186,7 +186,7 @@ export default async function AdminDashboard() {
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h2>
         <div className="space-y-4">
           {recentActivity.length > 0 ? (
-            recentActivity.slice(0, 5).map((user, index) => (
+            recentActivity.slice(0, 5).map((user: any, index: number) => (
               <div key={user.username} className="flex items-center space-x-3">
                 <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                 <p className="text-sm text-gray-600">

@@ -13,7 +13,7 @@ const SessionContext = createContext<SessionContext | null>(null);
 export default function SessionProvider({
   children,
   value,
-}: React.PropsWithChildren<{ value: SessionContext }>) {
+}: React.PropsWithChildren<{ value: any }>) {
   return (
     <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
   );
@@ -24,5 +24,5 @@ export function useSession() {
   if (!context) {
     throw new Error("useSession must be used within a SessionProvider");
   }
-  return context;
+  return context as any;
 }

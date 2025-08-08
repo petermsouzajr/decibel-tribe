@@ -16,6 +16,7 @@ import BookmarkButton from "./BookmarkButton";
 import LikeButton from "./LikeButton";
 import PostMoreButton from "./PostMoreButton";
 import FollowButton from "../FollowButton";
+import ReportButton from "@/components/reports/ReportButton";
 import DislikeButton from "./DislikeButton";
 
 interface PostProps {
@@ -92,23 +93,24 @@ export default function Post({ post }: PostProps) {
                 )}
             </Link>
           </div>
-          {post.user.id === user.id ? (
+          <div className="flex items-center gap-2">
+            {post.user.id !== user.id && (
+              <FollowButton
+                userId={post.user.id}
+                initialState={{
+                  followers: post.user._count.followers,
+                  isFollowedByUser:
+                    post.user.followers?.some(
+                      (follower) => follower.followerId === user.id,
+                    ) ?? false,
+                }}
+              />
+            )}
             <PostMoreButton
               post={post}
               className="transition-opacity group-hover/post:opacity-100"
             />
-          ) : (
-            <FollowButton
-              userId={post.user.id}
-              initialState={{
-                followers: post.user._count.followers,
-                isFollowedByUser:
-                  post.user.followers?.some(
-                    (follower) => follower.followerId === user.id,
-                  ) ?? false,
-              }}
-            />
-          )}
+          </div>
         </div>
       </div>
 
@@ -174,14 +176,17 @@ export default function Post({ post }: PostProps) {
             }}
           />
         </div>
-        <BookmarkButton
-          postId={post.id}
-          initialState={{
-            isBookmarkedByUser: post.bookmarks.some(
-              (bookmark) => bookmark.userId === user.id,
-            ),
-          }}
-        />
+        <div className="flex items-center gap-3">
+          {/* Kept report action in dots menu; optional inline flag here if desired */}
+          <BookmarkButton
+            postId={post.id}
+            initialState={{
+              isBookmarkedByUser: post.bookmarks.some(
+                (bookmark) => bookmark.userId === user.id,
+              ),
+            }}
+          />
+        </div>
       </div>
 
       {showComments && <Comments post={post} />}

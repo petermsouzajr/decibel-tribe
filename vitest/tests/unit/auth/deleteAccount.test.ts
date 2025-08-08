@@ -50,6 +50,8 @@ describe("deleteUserAccount", () => {
     createdAt: new Date(),
     avatarUrl: null,
     googleId: null,
+    isAdmin: false,
+    isDatingActive: false,
   };
 
   const mockFormData = {
@@ -255,6 +257,8 @@ describe("exportUserData", () => {
     createdAt: new Date(),
     avatarUrl: null,
     googleId: null,
+    isAdmin: false,
+    isDatingActive: false,
     posts: [],
     events: [],
     groups: [],
@@ -313,5 +317,30 @@ describe("exportUserData", () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toBe("Database error");
+  });
+
+  it("should export user data as JSON", async () => {
+    // ensure any user literals include new fields
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      ...mockUser,
+      posts: [],
+      events: [],
+      groups: [],
+      bookmarks: [],
+    } as any);
+
+    const result = await exportUserData();
+
+    expect(result.success).toBe(true);
+    expect(result.data).toContain("testuser");
+  });
+
+  it("should reactivate user account", async () => {
+    vi.mocked(prisma.user.update).mockResolvedValue({
+      ...mockUser,
+    } as any);
+
+    const result = await reactivateUserAccount(mockUser.id);
+    expect(result.success).toBe(true);
   });
 }); 

@@ -63,19 +63,17 @@ describe("API Route: GET /api/posts/group-activity", () => {
       userPreferences: null,
       userInstruments: [],
       userSkills: [],
+      isDatingActive: false,
+      user_dating_preferences: null,
+      _count: { posts: 0, followers: 0 },
       followers: [],
-      _count: { followers: 0, posts: 0 },
-    }, // Example UserData
+    },
+    Group: { id: "group-1", name: "Group 1" },
     likes: [],
-    bookmarks: [],
-    attachments: [],
     dislikes: [],
-    Group: {
-      id: mockGroupIds[i % mockGroupIds.length],
-      name: `Group ${(i % 2) + 1}`,
-      slug: `group-${(i % 2) + 1}`,
-    }, // Example GroupData
-    _count: { likes: i, comments: i * 2, bookmarks: i * 3, dislikes: i }, // Example counts
+    bookmarks: [],
+    _count: { likes: 0, dislikes: 0, comments: 0 },
+    attachments: [],
   }));
 
   // Define GET function type once
@@ -335,15 +333,17 @@ describe("API Route: GET /api/posts/group-activity", () => {
           userPreferences: null,
           userInstruments: [],
           userSkills: [],
+          isDatingActive: false,
+          user_dating_preferences: null,
+          _count: { posts: 0, followers: 0 },
           followers: [],
-          _count: { followers: 0, posts: 0 },
         },
+        Group: { id: "group-1", name: "Group 1" },
         likes: [],
-        bookmarks: [],
-        attachments: [],
         dislikes: [],
-        Group: { id: mockGroupIds[0], name: "G1", slug: "g1" },
-        _count: { likes: i, comments: i * 2, bookmarks: i * 3, dislikes: 0 },
+        bookmarks: [],
+        _count: { likes: 0, dislikes: 0, comments: 0 },
+        attachments: [],
       }),
     );
 

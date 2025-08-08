@@ -118,23 +118,18 @@ describe("API Route: /api/posts/[postId]", () => {
       userPreferences: null,
       userInstruments: [],
       userSkills: [],
-      _count: {
-        posts: 0,
-        followers: 0,
-      },
+      isDatingActive: false,
+      user_dating_preferences: null,
+      _count: { posts: 0, followers: 0 },
       followers: [],
     },
-    attachments: [],
+    Group: null,
     likes: [],
     dislikes: [],
     bookmarks: [],
-    _count: {
-      likes: 0,
-      dislikes: 0,
-      comments: 0,
-    },
+    _count: { likes: 0, dislikes: 0, comments: 0 },
+    attachments: [],
     groupId: null,
-    Group: null,
   };
 
   const mockLoggedInUser = { id: loggedInUserId };

@@ -55,22 +55,17 @@ const createMockNotification = (
     bio: "Issuer bio",
     _count: { followers: 5, posts: 0 },
     followers: [],
-    // Add other required fields for UserWithFollowerStatus if needed based on imports/usage
-    // Likely needs fields from UserData/Prisma User model
     createdAt: new Date(),
     email: "issuer@example.com",
     passwordHash: "",
-    emailVerified: true,
-    googleId: null,
     deletedAt: null,
     userPreferences: null,
     userInstruments: [],
     userSkills: [],
-    following: [],
-    followerCount: 5, // Add if UserWithFollowerStatus expects it
-    followingCount: 0, // Add if UserWithFollowerStatus expects it
-    isFollowing: false, // Add if UserWithFollowerStatus expects it
-  };
+    // Required new fields
+    isDatingActive: false,
+    user_dating_preferences: null,
+  } as any;
 
   const baseNotification = {
     id: `notif-${Math.random()}`,
@@ -101,7 +96,8 @@ const createMockNotification = (
 
 const mockUser = {
   id: "user-logged-in",
-  // add other fields if useSession().user needs them
+  isDatingActive: false,
+  isAdmin: false,
 };
 
 describe("[Notifications][Component] NotificationItem", () => {

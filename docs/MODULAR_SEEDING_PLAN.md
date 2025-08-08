@@ -43,7 +43,9 @@ prisma/
     │   └── notifications.ts # Handles creation of various notification types
     ├── mediaTeam/
     │   └── media.ts        # Handles creating media records linked to posts
-    └── messagingTeam/        # (Placeholder if chat seeding needed)
+     ├── adminTeam/            # Admin & moderation data (reports, admin users)
+     │   └── reports.ts
+     └── messagingTeam/        # (Placeholder if chat seeding needed)
         └── chats.ts
 ```
 
@@ -342,6 +344,7 @@ main()
   - `EventsTeam`: Owns `events.ts`, `eventAttendees.ts` under `eventsTeam/`.
   - `NotificationsTeam`: Owns `notifications.ts` under `notificationsTeam/`, coordinating with other teams on the triggers.
   - `MediaTeam`: Owns `media.ts` under `mediaTeam/`.
+  - `AdminTeam`: Owns `reports.ts` under `adminTeam/`. Responsible for seeding moderation reports and ensuring consistency for the reporting feature across the platform.
   - `PlatformTeam`: Owns the overall structure, `seedUtils.ts`, the main orchestration script (`seed.ts`), and the execution command in `package.json`.
 - **Maintenance:** Teams are responsible for updating their modules when their features change or require different seed data.
 - **Dependencies:** If a team adds a feature requiring new seed data that depends on another team's data, they must coordinate to ensure the necessary data is passed correctly in the main `seed.ts` orchestration script. The `PlatformTeam` can help facilitate this.

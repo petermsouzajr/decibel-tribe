@@ -36,9 +36,8 @@ const mockCreator: User = {
   displayName: "Event Creator",
   avatarUrl: null,
   googleId: null,
-  // userInstruments: [], // Removed unknown property
-  // userSkills: [], // Removed unknown property
-  // userPreferences: null, // Removed unknown property
+  isDatingActive: false,
+  isAdmin: false,
 };
 
 // mockCurrentUser remains lucia.User with googleId
@@ -48,6 +47,8 @@ const mockCurrentUser: User = {
   username: "currentUser",
   displayName: "Current User",
   avatarUrl: "/src/assets/avatar-placeholder.png",
+  isDatingActive: false,
+  isAdmin: false,
 };
 
 // Update EventData mock, casting createdBy to any to satisfy EventData type
@@ -325,7 +326,7 @@ describe("[Event][Component] EventDetails Display", () => {
     expect(showMoreButton).toBeInTheDocument();
     // Check that truncated text is shown (contains ...)
     // Note: The component logic adds '...' explicitly if length > 300
-    expect(screen.getByText(/\.\.\.$/)).toBeInTheDocument(); // Check for trailing '...'
+    expect(screen.getByText(/\.{3}$/)).toBeInTheDocument(); // Check for trailing '...'
 
     // Act: Click Show More
     await user.click(showMoreButton);
@@ -337,7 +338,7 @@ describe("[Event][Component] EventDetails Display", () => {
     // Check that full text is shown (no longer contains ... at the end)
     // We query for the specific text now which includes the full string.
     expect(screen.getByText(longDescription)).toBeInTheDocument();
-    expect(screen.queryByText(/\.\.\.$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\.{3}$/)).not.toBeInTheDocument();
 
     // Act: Click Show Less
     await user.click(showLessButton);
@@ -345,7 +346,7 @@ describe("[Event][Component] EventDetails Display", () => {
     // Assert: Collapsed state again
     expect(await screen.findByText(/show more/i)).toBeInTheDocument();
     expect(screen.queryByText(/show less/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/\.\.\.$/)).toBeInTheDocument(); // Check for trailing '...'
+    expect(screen.getByText(/\.{3}$/)).toBeInTheDocument(); // Check for trailing '...'
   });
 
   it("should display the correct initial button based on attendee fetch", async () => {
