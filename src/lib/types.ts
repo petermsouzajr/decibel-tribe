@@ -133,6 +133,35 @@ export function getPostDataInclude(loggedInUserId?: string | null) {
       select: getUserDataSelect(loggedInUserId),
     },
     attachments: true,
+    sharedFrom: {
+      select: {
+        id: true,
+        content: true,
+        createdAt: true,
+        user: { select: getUserDataSelect(loggedInUserId) },
+        attachments: true,
+        sharedCount: true,
+        _count: {
+          select: {
+            likes: true,
+            dislikes: true,
+            comments: { where: { parentId: null } },
+          },
+        },
+        ...(loggedInUserId
+          ? {
+              likes: {
+                where: { userId: loggedInUserId },
+                select: { userId: true },
+              },
+              dislikes: {
+                where: { userId: loggedInUserId },
+                select: { userId: true },
+              },
+            }
+          : {}),
+      },
+    },
     _count: {
       select: {
         likes: true,
@@ -371,10 +400,23 @@ export type PostData = {
   createdAt: Date;
   updatedAt: Date;
   groupId: string | null;
+  sharedFromId: string | null;
+  sharedCount: number;
 
   // Nested relations from getPostDataInclude(userId)
   user: UserWithFollowerStatus;
   attachments: Media[]; // Use the imported Media type
+  sharedFrom: {
+    id: string;
+    content: string;
+    createdAt: Date;
+    user: UserWithFollowerStatus;
+    attachments: Media[];
+    sharedCount: number;
+    _count: { likes: number; dislikes: number; comments: number };
+    likes: { userId: string }[];
+    dislikes: { userId: string }[];
+  } | null;
   _count: {
     likes: number;
     dislikes: number;

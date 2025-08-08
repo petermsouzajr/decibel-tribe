@@ -12,9 +12,11 @@ import PostDialogueTitleDropdown from "./PostDialogueTitleDropdown";
 interface PostDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  quote?: string;
+  sharedFromId?: string;
 }
 
-export default function PostDialog({ open, onOpenChange }: PostDialogProps) {
+export default function PostDialog({ open, onOpenChange, quote, sharedFromId }: PostDialogProps) {
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
 
   return (
@@ -26,7 +28,7 @@ export default function PostDialog({ open, onOpenChange }: PostDialogProps) {
           </DialogTitle>
           <DialogDescription></DialogDescription>
         </DialogHeader>
-        <PostEditor onOpenChange={onOpenChange} selectedGroup={selectedGroup} />
+        <PostEditor onOpenChange={onOpenChange} selectedGroup={selectedGroup} quote={quote} sharedFromId={sharedFromId} />
       </DialogContent>
     </Dialog>
   );

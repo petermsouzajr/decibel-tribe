@@ -19,11 +19,15 @@ import useMediaUpload, { Attachment } from "./useMediaUpload";
 interface PostEditorProps {
   onOpenChange: (open: boolean) => void;
   selectedGroup: string | null;
+  quote?: string; // optional text to append to the post on submit
+  sharedFromId?: string; // original post id when sharing
 }
 
 export default function PostEditor({
   onOpenChange,
   selectedGroup,
+  quote,
+  sharedFromId,
 }: PostEditorProps) {
   const { user } = useSession();
 
@@ -63,11 +67,15 @@ export default function PostEditor({
     }) || "";
 
   function onSubmit() {
+    // Do NOT append quoted content to the post body. The quote is rendered read-only above.
+    const combinedContent = (input || "").trim();
+
     mutation.mutate(
       {
-        content: input,
+        content: combinedContent,
         mediaIds: attachments.map((a) => a.mediaId).filter(Boolean) as string[],
         groupId: selectedGroup,
+        sharedFromId,
       } as { content: string; mediaIds: string[]; groupId: string | undefined },
       {
         onSuccess: () => {
@@ -110,6 +118,11 @@ export default function PostEditor({
           attachments={attachments}
           removeAttachment={removeAttachment}
         />
+      )}
+      {quote && (
+        <div className="rounded-md border bg-muted/30 p-3 text-sm whitespace-pre-wrap">
+          {quote}
+        </div>
       )}
       <div className="flex items-center justify-end gap-3">
         {isUploading && (

@@ -217,6 +217,9 @@ model Post {
   userId              String
   createdAt           DateTime       @default(now())
   groupId             String?
+  // Sharing
+  sharedFromId        String?
+  sharedCount         Int            @default(0)
   bookmarks           Bookmark[]
   comments            Comment[]
   dislikes            Dislike[]
@@ -225,6 +228,8 @@ model Post {
   attachments         Media[]
   Group               Group?         @relation(fields: [groupId], references: [id])
   user                User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sharedFrom          Post?          @relation("PostShares", fields: [sharedFromId], references: [id])
+  shares              Post[]         @relation("PostShares")
 
   // Reports
   reports             Report[]

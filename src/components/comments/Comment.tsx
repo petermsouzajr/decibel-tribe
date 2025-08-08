@@ -10,6 +10,9 @@ import UserTooltip from "../UserTooltip";
 import CommentMoreButton from "./CommentMoreButton";
 import CommentLikeButton from "./CommentLikeButton";
 import CommentReplyInput from "./CommentReplyInput";
+import { Repeat } from "lucide-react";
+import { useState as useReactState } from "react";
+import PostDialog from "@/app/(main)/PostDialogue";
 import FollowButton from "../FollowButton";
 
 interface CommentProps {
@@ -20,6 +23,7 @@ interface CommentProps {
 export default function Comment({ comment, onReply }: CommentProps) {
   const { user } = useSession();
   const [showReplyInput, setShowReplyInput] = useState(false);
+  const [repostOpen, setRepostOpen] = useReactState(false);
 
   const handleReply = () => {
     if (!user) return;
@@ -86,6 +90,16 @@ export default function Comment({ comment, onReply }: CommentProps) {
               <MessageSquare className="h-4 w-4 mr-1" />
               Reply
             </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setRepostOpen(true)}
+              className="h-8 px-2 text-muted-foreground hover:text-foreground"
+              aria-label="Repost"
+            >
+              <Repeat className="h-4 w-4 mr-1" />
+              Repost
+            </Button>
           </div>
 
           {/* Reply Input (kept inside row since it's related to this comment) */}
@@ -132,6 +146,11 @@ export default function Comment({ comment, onReply }: CommentProps) {
           ))}
         </div>
       )}
+      <PostDialog
+        open={repostOpen}
+        onOpenChange={setRepostOpen}
+        quote={`@${comment.user.username} • ${formatRelativeDate(comment.createdAt)}\n\n${comment.content}`}
+      />
     </div>
   );
 }

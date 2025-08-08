@@ -19,6 +19,8 @@ import FollowButton from "../FollowButton";
 import ReportButton from "@/components/reports/ReportButton";
 import BlockButton from "../BlockButton";
 import DislikeButton from "./DislikeButton";
+import { Repeat } from "lucide-react";
+import PostDialog from "@/app/(main)/PostDialogue";
 
 interface PostProps {
   post: PostData;
@@ -26,6 +28,7 @@ interface PostProps {
 
 export default function Post({ post }: PostProps) {
   const { user } = useSession();
+  const [repostOpen, setRepostOpen] = useState(false);
 
   const [showComments, setShowComments] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -153,7 +156,62 @@ export default function Post({ post }: PostProps) {
         </div>
       )}
 
-      <hr className="text-muted-foreground" />
+     
+
+      {post.sharedFrom && (
+        <div className="rounded-lg border-2 border-muted-foreground bg-card p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <UserTooltip user={post.sharedFrom.user}>
+              <Link href={`/users/${post.sharedFrom.user.username}`} className="flex items-center gap-2">
+                <UserAvatar avatarUrl={post.sharedFrom.user.avatarUrl} />
+                <span className="font-medium">{post.sharedFrom.user.displayName}</span>
+                <span className="text-muted-foreground">@{post.sharedFrom.user.username}</span>
+              </Link>
+            </UserTooltip>
+            <span className="ml-auto text-xs text-muted-foreground">{formatRelativeDate(post.sharedFrom.createdAt)}</span>
+          </div>
+          <Linkify>
+            <div className="whitespace-pre-wrap break-words">{post.sharedFrom.content}</div>
+          </Linkify>
+          {!!post.sharedFrom.attachments.length && (
+            <div className="pt-3">
+              <MediaPreviews attachments={post.sharedFrom.attachments as unknown as Media[]} />
+            </div>
+          )}
+          <div className="flex justify-between">
+          <div className="mt-3 flex items-center gap-5">
+            <LikeButton
+              postId={post.sharedFrom.id}
+              initialState={{ likes: 0, isLikedByUser: false }}
+            />
+            <CommentButton
+              post={post.sharedFrom as PostData}
+              onClick={() => setShowComments(!showComments)}
+            />
+            <DislikeButton
+              postId={post.sharedFrom.id}
+              initialState={{ dislikes: 0, isDislikedByUser: false }}
+            />
+            <button
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+              onClick={() => setRepostOpen(true)}
+              aria-label="Repost"
+            >
+              <Repeat className="h-5 w-5" />
+              <span className="text-xs font-medium tabular-nums">{post.sharedFrom.sharedCount ?? 0}</span>
+            </button>
+            </div>
+            <div className="flex items-center gap-3">
+            <BookmarkButton
+              postId={post.sharedFrom.id}
+              initialState={{ isBookmarkedByUser: false }}
+            />
+            </div>
+          </div>
+        </div>
+      )}
+
+<hr className="text-muted-foreground" />
       <div className="flex justify-between">
         <div className="size -2 flex items-center gap-5">
           <LikeButton
@@ -167,7 +225,7 @@ export default function Post({ post }: PostProps) {
             post={post}
             onClick={() => setShowComments(!showComments)}
           />
-          <DislikeButton
+            <DislikeButton
             postId={post.id}
             initialState={{
               dislikes: post._count.dislikes,
@@ -176,6 +234,14 @@ export default function Post({ post }: PostProps) {
               ),
             }}
           />
+            <button
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+              onClick={() => setRepostOpen(true)}
+              aria-label="Repost"
+            >
+              <Repeat className="h-5 w-5" />
+              <span className="text-xs font-medium tabular-nums">{post.sharedCount ?? 0}</span>
+            </button>
         </div>
         <div className="flex items-center gap-3">
           {/* Kept report action in dots menu; optional inline flag here if desired */}
@@ -191,6 +257,12 @@ export default function Post({ post }: PostProps) {
       </div>
 
       {showComments && <Comments post={post} />}
+      <PostDialog
+        open={repostOpen}
+        onOpenChange={setRepostOpen}
+        quote={`@${post.user.username} • ${formatRelativeDate(post.createdAt)}\n\n${post.content}`}
+        sharedFromId={post.id}
+      />
     </article>
   );
 }

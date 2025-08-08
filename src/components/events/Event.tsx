@@ -13,7 +13,8 @@ import Linkify from "../Linkify";
 import { useToast } from "@/components/ui/use-toast";
 import ReportModal from "@/components/reports/ReportModal";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Share2 } from "lucide-react";
+import PostDialog from "@/app/(main)/PostDialogue";
 
 interface EventDetailsProps {
   event: EventData;
@@ -170,6 +171,7 @@ export default function EventDetails({ event }: EventDetailsProps) {
     }
   };
 
+  const [shareOpen, setShareOpen] = useState(false);
   return (
     <article className="group/event space-y-3 rounded-2xl border-2 bg-card p-3 shadow-sm">
       <div className="flex justify-between gap-3">
@@ -234,6 +236,9 @@ export default function EventDetails({ event }: EventDetailsProps) {
                     Report Event
                   </DropdownMenuItem>
                 )}
+                <DropdownMenuItem onSelect={() => setShareOpen(true)}>
+                  Share as Post
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -312,6 +317,11 @@ export default function EventDetails({ event }: EventDetailsProps) {
         onClose={() => setShowReportModal(false)}
         contentType="event"
         targetId={event.id}
+      />
+      <PostDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        quote={`Event: ${event.title}\nWhen: ${format(event.when, "MMMM d, yyyy")} ${formatTime(event.startTime)} - ${formatTime(event.endTime)}\nWhere: ${event.location}${event.url ? "\n" + event.url : ""}`}
       />
     </article>
   );
