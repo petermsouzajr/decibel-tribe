@@ -49,7 +49,9 @@ export async function GET(req: NextRequest) {
       where: {
         groupId: null,
         user: {
-          deletedAt: null, // Filter out posts from deleted users
+          deletedAt: null,
+          // Hide posts authored by users blocked by the viewer
+          blocksReceived: { none: { blockerId: user.id } },
         },
       },
       include: getPostDataInclude(user.id),

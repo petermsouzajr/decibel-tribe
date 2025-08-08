@@ -4,12 +4,13 @@ import { formatRelativeDate } from "@/lib/utils";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "../ui/button";
-import { MessageSquare, ThumbsDown, ThumbsUp } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import UserAvatar from "../UserAvatar";
 import UserTooltip from "../UserTooltip";
 import CommentMoreButton from "./CommentMoreButton";
 import CommentLikeButton from "./CommentLikeButton";
 import CommentReplyInput from "./CommentReplyInput";
+import FollowButton from "../FollowButton";
 
 interface CommentProps {
   comment: CommentData;
@@ -46,7 +47,7 @@ export default function Comment({ comment, onReply }: CommentProps) {
   return (
     <div className="py-3">
       {/* Single comment row wrapper with its own hover group */}
-      <div className="group/comment-row flex gap-3">
+      <div className="group/comment-row flex gap-3 hover:bg-muted rounded-md">
         <span className="hidden sm:inline">
           <UserTooltip user={comment.user}>
             <Link href={`/users/${comment.user.username}`}>
@@ -99,10 +100,25 @@ export default function Comment({ comment, onReply }: CommentProps) {
           )}
         </div>
 
+        {/* Desktop: show Follow on hover (not on own comments); Mobile: hide */}
+        {comment.user.id !== user?.id && (
+          <div className="hidden sm:block opacity-0 transition-opacity group-hover/comment-row:opacity-100">
+            <FollowButton
+              userId={comment.user.id}
+              initialState={{
+                followers: comment.user._count.followers,
+                // Safe default; accurate state will be fetched/updated by FollowButton logic
+                isFollowedByUser: false,
+              }}
+            />
+          </div>
+        )}
         <CommentMoreButton
           comment={comment}
           isOwner={comment.user.id === user?.id}
-          className="ms-auto opacity-0 transition-opacity group-hover/comment-row:opacity-100"
+          className="ms-auto opacity-100 sm:opacity-0 transition-opacity sm:group-hover/comment-row:opacity-100"
+          targetUserId={comment.user.id !== user?.id ? comment.user.id : undefined}
+          initialIsFollowedByUser={false}
         />
       </div>
 

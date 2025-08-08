@@ -4,7 +4,8 @@ import { useState } from "react";
 import { UserData, FollowerInfo } from "@/lib/types";
 import ChangePasswordDialog from "./UpdatePasswordDialog";
 import { formatDate } from "date-fns";
-import FollowButton from "@/components/FollowButton";
+import UserQuickActions from "@/components/UserQuickActions";
+import BlockButton from "@/components/BlockButton";
 import UserAvatar from "@/components/UserAvatar";
 import Linkify from "@/components/Linkify";
 import EditProfileButton from "./EditProfileButton";
@@ -15,6 +16,7 @@ import DeleteAccountDialog from "@/components/DeleteAccountDialog";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import ReportButton from "@/components/reports/ReportButton";
+import BlockedUsersList from "./BlockedUsersList";
 
 interface UserProfilePageProps {
   user: UserData;
@@ -85,10 +87,11 @@ export default function UserProfilePage({
             </div>
           </div>
           {user.id !== loggedInUserId && !isDeleted && (
-            <div className="flex items-center gap-2">
-              <FollowButton userId={user.id} initialState={followerInfo} />
-              <ReportButton contentType="profile" targetId={user.id} variant="text" />
-            </div>
+            <UserQuickActions
+              userId={user.id}
+              initialFollowerInfo={followerInfo as any}
+              showReport
+            />
           )}
         </div>
 
@@ -133,6 +136,11 @@ export default function UserProfilePage({
                   </div>
                 </div>
                 
+                <div className="rounded-lg border bg-card p-4">
+                  <h3 className="mb-3 text-lg font-semibold">Blocked Users</h3>
+                  <BlockedUsersList userId={loggedInUserId} />
+                </div>
+
                 <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4">
                   <h3 className="mb-3 text-lg font-semibold text-destructive">Danger Zone</h3>
                   <p className="mb-3 text-sm text-muted-foreground">

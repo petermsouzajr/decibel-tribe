@@ -5,6 +5,7 @@ import { FollowerInfo, UserData, UserWithFollowerStatus } from "@/lib/types";
 import Link from "next/link";
 import { PropsWithChildren } from "react";
 import FollowButton from "./FollowButton";
+import BlockButton from "./BlockButton";
 import FollowerCount from "./FollowerCount";
 import Linkify from "./Linkify";
 import {
@@ -48,7 +49,10 @@ export default function UserTooltip({ children, user }: UserTooltipProps) {
                 <UserAvatar size={70} avatarUrl={user.avatarUrl} />
               </Link>
               {loggedInUser && loggedInUser.id !== user.id && followerState && (
-                <FollowButton userId={user.id} initialState={followerState} />
+                <>
+                  <FollowButton userId={user.id} initialState={followerState} />
+                  <BlockButton userId={user.id} />
+                </>
               )}
             </div>
             <div>

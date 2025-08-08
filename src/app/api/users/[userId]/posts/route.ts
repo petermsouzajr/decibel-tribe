@@ -23,7 +23,9 @@ export async function GET(
         userId: params.userId,
         groupId: null,
         user: {
-          deletedAt: null, // Filter out posts from deleted users
+          deletedAt: null,
+          // If the viewer blocked this author, return nothing
+          blocksReceived: { none: { blockerId: loggedInUser.id } },
         },
       },
       include: getPostDataInclude(loggedInUser.id),

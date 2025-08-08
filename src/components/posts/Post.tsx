@@ -17,6 +17,7 @@ import LikeButton from "./LikeButton";
 import PostMoreButton from "./PostMoreButton";
 import FollowButton from "../FollowButton";
 import ReportButton from "@/components/reports/ReportButton";
+import BlockButton from "../BlockButton";
 import DislikeButton from "./DislikeButton";
 
 interface PostProps {

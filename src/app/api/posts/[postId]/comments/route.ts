@@ -39,7 +39,8 @@ export async function GET(
         parentId: null, // Only fetch top-level comments (not replies)
         isDeleted: false, // Filter out deleted comments
         user: {
-          deletedAt: null, // Filter out comments from deleted users
+          deletedAt: null,
+          ...(loggedInUserId ? { blocksReceived: { none: { blockerId: loggedInUserId } } } : {}),
         },
       },
       include: getCommentDataInclude(loggedInUserId), // Pass potentially undefined ID

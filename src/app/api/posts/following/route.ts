@@ -51,7 +51,8 @@ export async function GET(req: NextRequest) {
       where: {
         user: {
           followers: { some: { followerId: user.id } },
-          deletedAt: null, // Filter out posts from deleted users
+          deletedAt: null,
+          blocksReceived: { none: { blockerId: user.id } },
         },
         groupId: null,
       },
