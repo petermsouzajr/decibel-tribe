@@ -28,9 +28,10 @@ interface PostProps {
 
 export default function Post({ post }: PostProps) {
   const { user } = useSession();
-  const [repostOpen, setRepostOpen] = useState(false);
+  const [repostTarget, setRepostTarget] = useState<PostData | null>(null);
 
   const [showComments, setShowComments] = useState(false);
+  const [showEmbeddedComments, setShowEmbeddedComments] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [showToggle, setShowToggle] = useState(false);
   const contentRef = useRef(null);
@@ -160,15 +161,33 @@ export default function Post({ post }: PostProps) {
 
       {post.sharedFrom && (
         <div className="rounded-lg border-2 border-muted-foreground bg-card p-3">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex gap-2 mb-2">
             <UserTooltip user={post.sharedFrom.user}>
-              <Link href={`/users/${post.sharedFrom.user.username}`} className="flex items-center gap-2">
+              <Link href={`/users/${post.sharedFrom.user.username}`}>
                 <UserAvatar avatarUrl={post.sharedFrom.user.avatarUrl} />
-                <span className="font-medium">{post.sharedFrom.user.displayName}</span>
-                <span className="text-muted-foreground">@{post.sharedFrom.user.username}</span>
               </Link>
             </UserTooltip>
-            <span className="ml-auto text-xs text-muted-foreground">{formatRelativeDate(post.sharedFrom.createdAt)}</span>
+            <div className="min-w-0 flex-1">
+              <UserTooltip user={post.sharedFrom.user}>
+                <Link href={`/users/${post.sharedFrom.user.username}`} className="block font-medium hover:underline">
+                  <div className="flex w-full flex-wrap items-center">
+                    <span className="max-w-[75%] flex-shrink truncate">
+                      {post.sharedFrom.user.displayName}
+                    </span>
+                    <span className="max-w-[25%] flex-shrink truncate pl-2 text-muted-foreground">
+                      @{post.sharedFrom.user.username}
+                    </span>
+                  </div>
+                </Link>
+              </UserTooltip>
+              <Link
+                href={`/posts/${post.sharedFrom.id}`}
+                className="block text-sm text-muted-foreground hover:underline"
+                suppressHydrationWarning
+              >
+                {formatRelativeDate(post.sharedFrom.createdAt)}
+              </Link>
+            </div>
           </div>
           <Linkify>
             <div className="whitespace-pre-wrap break-words">{post.sharedFrom.content}</div>
@@ -178,23 +197,103 @@ export default function Post({ post }: PostProps) {
               <MediaPreviews attachments={post.sharedFrom.attachments as unknown as Media[]} />
             </div>
           )}
+          {/* If the embedded post is itself a share, render a compact nested share */}
+          {post.sharedFrom.sharedFrom && (
+            <div className="mt-3 rounded-lg border border-muted-foreground bg-muted/5 p-3">
+              <div className="flex gap-2 mb-2">
+                <UserTooltip user={post.sharedFrom.sharedFrom.user}>
+                  <Link href={`/users/${post.sharedFrom.sharedFrom.user.username}`}>
+                    <UserAvatar avatarUrl={post.sharedFrom.sharedFrom.user.avatarUrl} />
+                  </Link>
+                </UserTooltip>
+                <div className="min-w-0 flex-1">
+                  <UserTooltip user={post.sharedFrom.sharedFrom.user}>
+                    <Link href={`/users/${post.sharedFrom.sharedFrom.user.username}`} className="block font-medium hover:underline">
+                      <div className="flex w-full flex-wrap items-center">
+                        <span className="max-w-[75%] flex-shrink truncate">
+                          {post.sharedFrom.sharedFrom.user.displayName}
+                        </span>
+                        <span className="max-w-[25%] flex-shrink truncate pl-2 text-muted-foreground">
+                          @{post.sharedFrom.sharedFrom.user.username}
+                        </span>
+                      </div>
+                    </Link>
+                  </UserTooltip>
+                  <Link href={`/posts/${post.sharedFrom.sharedFrom.id}`} className="block text-sm text-muted-foreground hover:underline" suppressHydrationWarning>
+                    {formatRelativeDate(post.sharedFrom.sharedFrom.createdAt)}
+                  </Link>
+                </div>
+              </div>
+              <Linkify>
+                <div className="whitespace-pre-wrap break-words">{post.sharedFrom.sharedFrom.content}</div>
+              </Linkify>
+              {!!post.sharedFrom.sharedFrom.attachments.length && (
+                <div className="pt-3">
+                  <MediaPreviews attachments={post.sharedFrom.sharedFrom.attachments as unknown as Media[]} />
+                </div>
+              )}
+              <div className="flex justify-between">
+                <div className="mt-3 flex items-center gap-5">
+                  <LikeButton
+                    postId={post.sharedFrom.sharedFrom.id}
+                    initialState={{
+                      likes: post.sharedFrom.sharedFrom._count.likes,
+                      isLikedByUser: (post.sharedFrom.sharedFrom.likes ?? []).some((l) => l.userId === user.id),
+                    }}
+                  />
+                  <CommentButton
+                    post={post.sharedFrom.sharedFrom as PostData}
+                    onClick={() => setShowEmbeddedComments((v) => !v)}
+                  />
+                  <DislikeButton
+                    postId={post.sharedFrom.sharedFrom.id}
+                    initialState={{
+                      dislikes: post.sharedFrom.sharedFrom._count.dislikes,
+                      isDislikedByUser: (post.sharedFrom.sharedFrom.dislikes ?? []).some((d) => d.userId === user.id),
+                    }}
+                  />
+                  <button
+                    className="flex items-center gap-2 text-foreground"
+                    onClick={() => setRepostTarget(post.sharedFrom!.sharedFrom as PostData)}
+                    aria-label="Repost"
+                  >
+                    <Repeat className="h-5 w-5" />
+                    <span className="text-xs font-medium tabular-nums">{post.sharedFrom.sharedFrom.sharedCount ?? 0}</span>
+                  </button>
+                </div>
+                <div className="flex items-center gap-3">
+                  <BookmarkButton
+                    postId={post.sharedFrom.sharedFrom.id}
+                    initialState={{ isBookmarkedByUser: false }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
           <div className="flex justify-between">
           <div className="mt-3 flex items-center gap-5">
             <LikeButton
               postId={post.sharedFrom.id}
-              initialState={{ likes: 0, isLikedByUser: false }}
+                initialState={{
+                  likes: post.sharedFrom._count.likes,
+                  isLikedByUser: (post.sharedFrom.likes ?? []).some((l) => l.userId === user.id),
+                }}
             />
             <CommentButton
               post={post.sharedFrom as PostData}
-              onClick={() => setShowComments(!showComments)}
+                onClick={() => setShowEmbeddedComments((v) => !v)}
             />
             <DislikeButton
               postId={post.sharedFrom.id}
-              initialState={{ dislikes: 0, isDislikedByUser: false }}
+                initialState={{
+                  dislikes: post.sharedFrom._count.dislikes,
+                  isDislikedByUser: (post.sharedFrom.dislikes ?? []).some((d) => d.userId === user.id),
+                }}
             />
+            {/* Repost for the embedded post (post.sharedFrom). This remains enabled. */}
             <button
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-              onClick={() => setRepostOpen(true)}
+              className="flex items-center gap-2 text-foreground"
+              onClick={() => setRepostTarget(post.sharedFrom as PostData)}
               aria-label="Repost"
             >
               <Repeat className="h-5 w-5" />
@@ -204,10 +303,15 @@ export default function Post({ post }: PostProps) {
             <div className="flex items-center gap-3">
             <BookmarkButton
               postId={post.sharedFrom.id}
-              initialState={{ isBookmarkedByUser: false }}
+                initialState={{ isBookmarkedByUser: false }}
             />
             </div>
           </div>
+          {showEmbeddedComments && (
+            <div className="mt-2">
+              <Comments post={post.sharedFrom as PostData} />
+            </div>
+          )}
         </div>
       )}
 
@@ -234,10 +338,12 @@ export default function Post({ post }: PostProps) {
               ),
             }}
           />
+            {/* Disable resharing if this post is itself a share of a share (level C). */}
             <button
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-              onClick={() => setRepostOpen(true)}
+              className="flex items-center gap-2 text-foreground disabled:opacity-50"
+              onClick={() => setRepostTarget(post)}
               aria-label="Repost"
+              disabled={!!(post.sharedFrom && post.sharedFrom.sharedFrom)}
             >
               <Repeat className="h-5 w-5" />
               <span className="text-xs font-medium tabular-nums">{post.sharedCount ?? 0}</span>
@@ -258,10 +364,12 @@ export default function Post({ post }: PostProps) {
 
       {showComments && <Comments post={post} />}
       <PostDialog
-        open={repostOpen}
-        onOpenChange={setRepostOpen}
-        quote={`@${post.user.username} • ${formatRelativeDate(post.createdAt)}\n\n${post.content}`}
-        sharedFromId={post.id}
+        open={!!repostTarget}
+        onOpenChange={(o) => {
+          if (!o) setRepostTarget(null);
+        }}
+        quote={`@${(repostTarget ?? post).user.username} • ${formatRelativeDate((repostTarget ?? post).createdAt)}\n\n${(repostTarget ?? post).content}`}
+        sharedFromId={(repostTarget ?? post).id}
       />
     </article>
   );

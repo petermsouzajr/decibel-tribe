@@ -128,57 +128,47 @@ export type EventData = Prisma.EventGetPayload<{
 }>;
 
 export function getPostDataInclude(loggedInUserId?: string | null) {
-  const include = {
-    user: {
-      select: getUserDataSelect(loggedInUserId),
-    },
-    attachments: true,
-    sharedFrom: {
-      select: {
-        id: true,
-        content: true,
-        createdAt: true,
-        user: { select: getUserDataSelect(loggedInUserId) },
-        attachments: true,
-        sharedCount: true,
-        _count: {
-          select: {
-            likes: true,
-            dislikes: true,
-            comments: { where: { parentId: null } },
-          },
+  const sharedSelect = (depth: number): any => {
+    const base: any = {
+      id: true,
+      content: true,
+      createdAt: true,
+      user: { select: getUserDataSelect(loggedInUserId) },
+      attachments: true,
+      sharedCount: true,
+      _count: {
+        select: {
+          likes: true,
+          dislikes: true,
+          comments: { where: { parentId: null } },
         },
-        ...(loggedInUserId
-          ? {
-              likes: {
-                where: { userId: loggedInUserId },
-                select: { userId: true },
-              },
-              dislikes: {
-                where: { userId: loggedInUserId },
-                select: { userId: true },
-              },
-            }
-          : {}),
       },
-    },
+      ...(loggedInUserId
+        ? {
+            likes: { where: { userId: loggedInUserId }, select: { userId: true } },
+            dislikes: { where: { userId: loggedInUserId }, select: { userId: true } },
+            bookmarks: { where: { userId: loggedInUserId }, select: { userId: true } },
+          }
+        : {}),
+    };
+    if (depth > 1) {
+      base.sharedFrom = { select: sharedSelect(depth - 1) };
+    }
+    return base;
+  };
+
+  const include = {
+    user: { select: getUserDataSelect(loggedInUserId) },
+    attachments: true,
+    sharedFrom: { select: sharedSelect(2) }, // include nested one level deep
     _count: {
       select: {
         likes: true,
         dislikes: true,
-        comments: {
-          where: {
-            parentId: null, // Only count top-level comments
-          },
-        },
+        comments: { where: { parentId: null } },
       },
     },
-    Group: {
-      select: {
-        id: true,
-        name: true,
-      },
-    },
+    Group: { select: { id: true, name: true } },
   } satisfies Prisma.PostInclude;
 
   if (loggedInUserId) {
@@ -416,6 +406,19 @@ export type PostData = {
     _count: { likes: number; dislikes: number; comments: number };
     likes: { userId: string }[];
     dislikes: { userId: string }[];
+    bookmarks?: { userId: string }[];
+    sharedFrom?: {
+      id: string;
+      content: string;
+      createdAt: Date;
+      user: UserWithFollowerStatus;
+      attachments: Media[];
+      sharedCount: number;
+      _count: { likes: number; dislikes: number; comments: number };
+      likes: { userId: string }[];
+      dislikes: { userId: string }[];
+      bookmarks?: { userId: string }[];
+    } | null;
   } | null;
   _count: {
     likes: number;
