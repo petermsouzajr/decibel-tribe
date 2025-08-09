@@ -3,7 +3,7 @@
 import { useSession } from "@/app/(main)/SessionProvider";
 import { FollowerInfo, UserData, UserWithFollowerStatus } from "@/lib/types";
 import Link from "next/link";
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, useState } from "react";
 import FollowButton from "./FollowButton";
 import BlockButton from "./BlockButton";
 import FollowerCount from "./FollowerCount";
@@ -15,6 +15,7 @@ import {
   TooltipTrigger,
 } from "./ui/tooltip";
 import UserAvatar from "./UserAvatar";
+import { useBlockStatus } from "@/hooks/useBlockStatus";
 
 interface UserTooltipProps extends PropsWithChildren {
   user: UserData | UserWithFollowerStatus;
@@ -22,6 +23,8 @@ interface UserTooltipProps extends PropsWithChildren {
 
 export default function UserTooltip({ children, user }: UserTooltipProps) {
   const { user: loggedInUser } = useSession();
+  const [forceOpen, setForceOpen] = useState(false);
+  const { isBlocked } = useBlockStatus(user.id);
 
   const hasFollowerData = (
     u: UserData | UserWithFollowerStatus,
@@ -40,9 +43,9 @@ export default function UserTooltip({ children, user }: UserTooltipProps) {
 
   return (
     <TooltipProvider>
-      <Tooltip>
+      <Tooltip open={forceOpen ? true : undefined}>
         <TooltipTrigger asChild>{children}</TooltipTrigger>
-        <TooltipContent>
+        <TooltipContent onPointerDownOutside={(e) => forceOpen && e.preventDefault()}>
           <div className="flex max-w-80 flex-col gap-3 break-words px-1 py-2.5 md:min-w-52">
             <div className="flex items-center justify-between gap-2">
               <Link href={`/users/${user.username}`}>
@@ -51,7 +54,7 @@ export default function UserTooltip({ children, user }: UserTooltipProps) {
               {loggedInUser && loggedInUser.id !== user.id && followerState && (
                 <>
                   <FollowButton userId={user.id} initialState={followerState} />
-                  <BlockButton userId={user.id} />
+                  <BlockButton userId={user.id} initiallyBlocked={isBlocked} onConfirmOpenChange={setForceOpen} />
                 </>
               )}
             </div>

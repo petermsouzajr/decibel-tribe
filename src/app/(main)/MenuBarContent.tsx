@@ -80,19 +80,17 @@ export default function MenuBarContent({
           <span className="hidden lg:inline">Groups</span>
         </Link>
       </Button>
-      {user.isDatingActive && (
         <Button
           variant="ghost"
-          className={`hidden w-full items-center justify-start gap-3 sm:flex ${isActive("/")}`}
+          className={`hidden w-full items-center justify-start gap-3 sm:flex ${isActive("/dating")}`}
           title="Dating"
           asChild
         >
-          <Link href="/">
+          <Link href="/dating">
             <Heart />
             <span className="hidden lg:inline">Dating</span>
           </Link>
         </Button>
-      )}
       <Button
         variant="ghost"
         className={`flex items-center justify-start gap-3 ${isActive("/calendar")}`}
@@ -124,10 +122,9 @@ export default function MenuBarContent({
         <Plus />
         <span className="hidden lg:inline">Post</span>
       </Button>
-      {user.isDatingActive && (
         <Button
           variant="ghost"
-          className="flex h-[3rem] w-[3rem] items-center justify-center rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-2xl transition-all hover:scale-[1.15] active:scale-105 sm:hidden"
+          className="flex items-center p-2 justify-center rounded-full bg-gradient-to-r from-pink-900 to-purple-700 text-white shadow-2xl transition-all hover:scale-[1.15] active:scale-105 sm:hidden"
           title="Dating"
           asChild
         >
@@ -135,7 +132,6 @@ export default function MenuBarContent({
             <Heart />
           </Link>
         </Button>
-      )}
       <Button
         variant="ghost"
         className="fixed bottom-20 right-5 flex h-[3rem] w-[3rem] items-center justify-center rounded-full bg-primary text-white shadow-2xl transition-all hover:scale-[1.15] active:scale-105 sm:hidden"

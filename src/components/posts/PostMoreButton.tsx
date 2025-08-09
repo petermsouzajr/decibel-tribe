@@ -14,6 +14,7 @@ import kyInstance from "@/lib/ky";
 import { useToast } from "../ui/use-toast";
 import ConfirmModal from "../ConfirmModal";
 import { useSession } from "@/app/(main)/SessionProvider";
+import { useBlockStatus } from "@/hooks/useBlockStatus";
 
 interface PostMoreButtonProps {
   post: PostData;
@@ -30,6 +31,7 @@ export default function PostMoreButton({
   const { toast } = useToast();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { isBlocked, block, unblock } = useBlockStatus(post.user.id);
 
   return (
     <>
@@ -51,7 +53,7 @@ export default function PostMoreButton({
             <DropdownMenuItem onSelect={() => setConfirmOpen(true)}>
               <span className="flex items-center gap-3">
                 <CircleSlash2 className="size-4" />
-                Block user
+                {isBlocked ? "Unblock user" : "Block user"}
               </span>
             </DropdownMenuItem>
           )}
@@ -78,17 +80,26 @@ export default function PostMoreButton({
       <ConfirmModal
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
-        title="Block this user?"
-        description="You are about to block this user. Their content and events will no longer be visible to you, but your content will still be visible to them. You can unblock them anytime from your profile's Blocked Users section."
-        confirmLabel="Block"
+        title={isBlocked ? "Unblock this user?" : "Block this user?"}
+        description={
+          isBlocked
+            ? "You will start seeing this user's content again. You can block them anytime from their profile or menus."
+            : "You are about to block this user. Their content and events will no longer be visible to you, but your content will still be visible to them. You can unblock them anytime from your profile's Blocked Users section."
+        }
+        confirmLabel={isBlocked ? "Unblock" : "Block"}
         loading={loading}
         onConfirm={async () => {
           try {
             setLoading(true);
-            await kyInstance.post(`/api/users/${post.user.id}/blocks`);
-            toast({ description: "User blocked. You will no longer see their content." });
+            if (isBlocked) {
+              await unblock.mutateAsync();
+              toast({ description: "User unblocked." });
+            } else {
+              await block.mutateAsync();
+              toast({ description: "User blocked. You will no longer see their content." });
+            }
           } catch (e) {
-            toast({ variant: "destructive", description: "Failed to block user." });
+            toast({ variant: "destructive", description: isBlocked ? "Failed to unblock user." : "Failed to block user." });
           } finally {
             setLoading(false);
             setConfirmOpen(false);

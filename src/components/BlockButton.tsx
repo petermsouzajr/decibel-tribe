@@ -1,7 +1,7 @@
 "use client";
 
 import kyInstance from "@/lib/ky";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { useToast } from "./ui/use-toast";
 import ConfirmModal from "./ConfirmModal";
@@ -9,13 +9,19 @@ import ConfirmModal from "./ConfirmModal";
 interface BlockButtonProps {
   userId: string;
   initiallyBlocked?: boolean;
+  onConfirmOpenChange?: (open: boolean) => void;
 }
 
-export default function BlockButton({ userId, initiallyBlocked = false }: BlockButtonProps) {
+export default function BlockButton({ userId, initiallyBlocked = false, onConfirmOpenChange }: BlockButtonProps) {
   const { toast } = useToast();
   const [blocked, setBlocked] = useState(initiallyBlocked);
   const [loading, setLoading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+
+  // Keep local state in sync if the parent provides updated initial state
+  useEffect(() => {
+    setBlocked(initiallyBlocked);
+  }, [initiallyBlocked]);
 
   const runToggle = async () => {
     try {
@@ -34,17 +40,28 @@ export default function BlockButton({ userId, initiallyBlocked = false }: BlockB
     } finally {
       setLoading(false);
       setConfirmOpen(false);
+      onConfirmOpenChange?.(false);
     }
   };
 
   return (
     <>
-      <Button variant={blocked ? "secondary" : "outline"} onClick={() => setConfirmOpen(true)} disabled={loading}>
+      <Button
+        variant={blocked ? "secondary" : "outline"}
+        onClick={() => {
+          setConfirmOpen(true);
+          onConfirmOpenChange?.(true);
+        }}
+        disabled={loading}
+      >
         {blocked ? "Unblock" : "Block"}
       </Button>
       <ConfirmModal
         open={confirmOpen}
-        onClose={() => setConfirmOpen(false)}
+        onClose={() => {
+          setConfirmOpen(false);
+          onConfirmOpenChange?.(false);
+        }}
         onConfirm={runToggle}
         loading={loading}
         title={blocked ? "Unblock this user?" : "Block this user?"}

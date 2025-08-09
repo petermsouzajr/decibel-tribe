@@ -13,6 +13,8 @@ import {
 import DeleteCommentDialog from "./DeleteCommentDialog";
 import CommentEditDialog from "./CommentEditDialog";
 import ReportModal from "@/components/reports/ReportModal";
+import ConfirmModal from "@/components/ConfirmModal";
+import { useBlockStatus } from "@/hooks/useBlockStatus";
 
 interface CommentMoreButtonProps {
   comment: CommentData;
@@ -34,6 +36,9 @@ export default function CommentMoreButton({
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const { toast } = useToast();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { isBlocked, block, unblock } = useBlockStatus(comment.user.id);
 
   // Check if comment is within edit window (5 minutes)
   const editWindow = 5 * 60 * 1000; // 5 minutes in milliseconds
@@ -86,19 +91,10 @@ export default function CommentMoreButton({
             </DropdownMenuItem>
           )}
           {!isOwner && (
-            <DropdownMenuItem
-              onSelect={async () => {
-                try {
-                  await kyInstance.post(`/api/users/${comment.user.id}/blocks`);
-                  toast({ description: "User blocked. You will no longer see their content." });
-                } catch (e) {
-                  toast({ variant: "destructive", description: "Failed to block user." });
-                }
-              }}
-            >
+            <DropdownMenuItem onSelect={() => setConfirmOpen(true)}>
               <span className="flex items-center gap-3">
                 <CircleSlash2 className="size-4" />
-                Block User
+                {isBlocked ? "Unblock User" : "Block User"}
               </span>
             </DropdownMenuItem>
           )}
@@ -131,6 +127,35 @@ export default function CommentMoreButton({
         onClose={() => setShowReportModal(false)}
         contentType="comment"
         targetId={comment.id}
+      />
+      <ConfirmModal
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={async () => {
+          try {
+            setLoading(true);
+            if (isBlocked) {
+              await unblock.mutateAsync();
+              toast({ description: "User unblocked." });
+            } else {
+              await block.mutateAsync();
+              toast({ description: "User blocked. You will no longer see their content." });
+            }
+          } catch (e) {
+            toast({ variant: "destructive", description: isBlocked ? "Failed to unblock user." : "Failed to block user." });
+          } finally {
+            setLoading(false);
+            setConfirmOpen(false);
+          }
+        }}
+        loading={loading}
+        title={isBlocked ? "Unblock this user?" : "Block this user?"}
+        description={
+          isBlocked
+            ? "You will start seeing this user's content again. You can block them anytime from their profile or menus."
+            : "You are about to block this user. Their content and events will no longer be visible to you, but your content will still be visible to them. You can unblock them anytime from your profile's Blocked Users section."
+        }
+        confirmLabel={isBlocked ? "Unblock" : "Block"}
       />
     </>
   );
