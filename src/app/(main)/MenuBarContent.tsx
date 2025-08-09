@@ -128,7 +128,7 @@ export default function MenuBarContent({
           title="Dating"
           asChild
         >
-          <Link href="/">
+          <Link href="/dating">
             <Heart />
           </Link>
         </Button>
