@@ -39,6 +39,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
   // Load existing data from the new table structure
   const existingProfile = (user as any).user_dating_profile;
   const existingPreferences = (user as any).user_dating_preferences;
+  const isVerified = (user as any).isVerified ?? false;
   
   const [formData, setFormData] = useState<OnboardingData>({
     // User profile data
@@ -132,7 +133,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
 
       if (response.ok) {
         // Enable dating feature
-        await fetch("/api/dating/toggle", {
+        const toggleResponse = await fetch("/api/dating/toggle", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -140,11 +141,17 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
           body: JSON.stringify({ isActive: true }),
         });
 
-        // Go to success step
-        setCurrentStep(5);
+        if (toggleResponse.ok) {
+          // Go to success step
+          setCurrentStep(5);
+        } else {
+          console.error("Failed to enable dating");
+          alert("Failed to enable dating feature. Please try again.");
+        }
       } else {
-        console.error("Failed to save preferences");
-        alert("Failed to save preferences. Please try again.");
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Failed to save preferences:", errorData);
+        alert(errorData.error || "Failed to save preferences. Please try again.");
       }
     } catch (error) {
       console.error("Error completing onboarding:", error);
@@ -872,21 +879,37 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                 <Check className="w-8 h-8 text-green-600" />
               </div>
               <h2 className="text-2xl text-gray-900 font-bold mb-4">Setup Complete!</h2>
-              <p className="text-gray-600 font-bold mb-8">
-                Your dating profile is ready and you can start swiping!
-              </p>
+              {isVerified ? (
+                <p className="text-gray-600 font-bold mb-8">
+                  Your dating profile is ready and you can start finding matches!
+                </p>
+              ) : (
+                <div className="mb-8">
+                  <p className="text-gray-600 font-bold mb-4">
+                    Your dating profile is ready! You can browse profiles and dislike users.
+                  </p>
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md mx-auto">
+                    <p className="text-sm text-yellow-800 font-semibold mb-1">
+                      ⚠️ Verify Your Email to Like Users
+                    </p>
+                    <p className="text-sm text-yellow-700">
+                      Check your email for a verification link. Once verified, you'll be able to like users and appear in others' decks!
+                    </p>
+                  </div>
+                </div>
+              )}
               
                               <div className="space-y-4 w-full max-w-2xl mx-auto">
                   <Button
-                    onClick={() => router.push("/")}
+                    onClick={() => router.push("/dating")}
                     className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold py-6 text-lg"
                   >
-                    Get Started
+                    {isVerified ? "Start Finding Matches" : "Browse Profiles"}
                   </Button>
                   <Button
                     onClick={() => router.push(`/users/${user.username}`)}
                     variant="outline"
-                    className="w-full border-gray-300 text-white hover:bg-gray-800 font-bold py-6 text-lg"
+                    className="w-full border-gray-300 text-gray-900 hover:bg-gray-100 font-bold py-6 text-lg"
                   >
                     Back to Profile
                   </Button>

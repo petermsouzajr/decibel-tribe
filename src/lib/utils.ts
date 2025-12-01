@@ -12,8 +12,8 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatRelativeDate(from: Date) {
   const currentDate = new Date();
-  if (currentDate.getFullYear() === from.getFullYear()) {
-    return formatDate(from, "d MMM");
+    if (currentDate.getFullYear() === from.getFullYear()) {
+      return formatDate(from, "d MMM");
   }
   return formatDate(from, "d MMM, yyyy");
 }

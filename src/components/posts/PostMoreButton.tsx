@@ -96,7 +96,7 @@ export default function PostMoreButton({
               toast({ description: "User unblocked." });
             } else {
               await block.mutateAsync();
-              toast({ description: "User blocked. You will no longer see their content." });
+            toast({ description: "User blocked. You will no longer see their content." });
             }
           } catch (e) {
             toast({ variant: "destructive", description: isBlocked ? "Failed to unblock user." : "Failed to block user." });

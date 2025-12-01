@@ -1,6 +1,8 @@
 import { validateRequest } from "@/auth";
 import { redirect } from "next/navigation";
+import prisma from "@/lib/prisma";
 import DatingIntroButtons from "@/components/dating/DatingIntroButtons";
+import DatingDeck from "@/components/dating/DatingDeck";
 
 export default async function DatingPage() {
   const { user } = await validateRequest();
@@ -9,7 +11,14 @@ export default async function DatingPage() {
     redirect("/login");
   }
 
-  const isDatingActive = (user as any).isDatingActive ?? false;
+  // Check user status (non-verified users can access but with restrictions)
+  const currentUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { isVerified: true, isDatingActive: true },
+  });
+
+  const isDatingActive = currentUser?.isDatingActive ?? false;
+  const isVerified = currentUser?.isVerified ?? false;
 
   // If dating is not active, show intro page with buttons
   if (!isDatingActive) {
@@ -58,42 +67,6 @@ export default async function DatingPage() {
 
   // If dating is active, show the dating deck
   if (isDatingActive) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Find Your Match
-            </h1>
-            <p className="text-gray-600">
-              Discover music lovers in your area
-            </p>
-          </div>
-
-          {/* Placeholder for dating deck */}
-          <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-            <div className="w-64 h-96 bg-gray-100 rounded-xl mx-auto mb-6 flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">💕</span>
-                </div>
-                <p className="text-gray-600">Dating Deck</p>
-                <p className="text-sm text-gray-500">Coming soon...</p>
-              </div>
-            </div>
-            
-            <p className="text-gray-600 mb-4">
-              Your dating profile is ready! The matching system will be available soon.
-            </p>
-            
-            <div className="space-y-2 text-sm text-gray-500">
-              <p>✅ Profile setup complete</p>
-              <p>✅ Preferences configured</p>
-              <p>⏳ Matching engine in development</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <DatingDeck isVerified={isVerified} />;
   }
 }

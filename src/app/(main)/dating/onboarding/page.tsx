@@ -11,6 +11,9 @@ export default async function DatingOnboardingPage() {
     redirect("/login");
   }
 
+  // Non-verified users can complete onboarding but will have restrictions
+  // (can't like users, won't appear in decks until verified)
+
   // Fetch complete user data with dating profile and preferences
   const completeUser = await prisma.user.findFirst({
     where: {

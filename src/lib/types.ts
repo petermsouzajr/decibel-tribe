@@ -130,26 +130,26 @@ export type EventData = Prisma.EventGetPayload<{
 export function getPostDataInclude(loggedInUserId?: string | null) {
   const sharedSelect = (depth: number): any => {
     const base: any = {
-      id: true,
-      content: true,
-      createdAt: true,
-      user: { select: getUserDataSelect(loggedInUserId) },
-      attachments: true,
-      sharedCount: true,
-      _count: {
-        select: {
-          likes: true,
-          dislikes: true,
-          comments: { where: { parentId: null } },
+        id: true,
+        content: true,
+        createdAt: true,
+        user: { select: getUserDataSelect(loggedInUserId) },
+        attachments: true,
+        sharedCount: true,
+        _count: {
+          select: {
+            likes: true,
+            dislikes: true,
+            comments: { where: { parentId: null } },
+          },
         },
-      },
-      ...(loggedInUserId
-        ? {
+        ...(loggedInUserId
+          ? {
             likes: { where: { userId: loggedInUserId }, select: { userId: true } },
             dislikes: { where: { userId: loggedInUserId }, select: { userId: true } },
             bookmarks: { where: { userId: loggedInUserId }, select: { userId: true } },
-          }
-        : {}),
+            }
+          : {}),
     };
     if (depth > 1) {
       base.sharedFrom = { select: sharedSelect(depth - 1) };

@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import streamServerClient from "@/lib/stream";
 import { createUploadthing, FileRouter } from "uploadthing/next";
 import { UploadThingError, UTApi } from "uploadthing/server";
+import crypto from "crypto";
 
 const f = createUploadthing();
 
@@ -89,6 +90,55 @@ export const fileRouter = {
 
       console.log("Media created with ID:", media.id);
       return { mediaId: media.id };
+    }),
+  datingPhoto: f({
+    image: { maxFileSize: "4MB", maxFileCount: 1 },
+  })
+    .middleware(async () => {
+      const { user } = await validateRequest();
+
+      if (!user) throw new UploadThingError("Unauthorized");
+
+      // Check photo count limit
+      const photoCount = await prisma.user_photos.count({
+        where: { userId: user.id },
+      });
+
+      if (photoCount >= 5) {
+        throw new UploadThingError("Maximum 5 photos allowed");
+      }
+
+      return { user };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      console.log("UploadThing datingPhoto onUploadComplete called with file:", file);
+      
+      if (!file.url) {
+        console.error("UploadThing error: file.url is undefined for dating photo");
+        throw new UploadThingError("Photo upload failed - no URL returned");
+      }
+
+      const photoUrl = file.url.replace(
+        "/f/",
+        `/a/${process.env.NEXT_PUBLIC_UPLOADTHING_APP_ID}/`,
+      );
+
+      // Check if this is the first photo (make it primary)
+      const photoCount = await prisma.user_photos.count({
+        where: { userId: metadata.user.id },
+      });
+
+      const photo = await prisma.user_photos.create({
+        data: {
+          id: crypto.randomUUID(),
+          userId: metadata.user.id,
+          url: photoUrl,
+          isPrimary: photoCount === 0,
+          createdAt: new Date(),
+        },
+      });
+
+      return { photoId: photo.id, photoUrl };
     }),
 } satisfies FileRouter;
 

@@ -9,21 +9,21 @@ datasource db {
 }
 
 model User {
-  id                              String                   @id @default(cuid())
-  username                        String                   @unique
+  id                              String                     @id @default(cuid())
+  username                        String                     @unique
   displayName                     String
-  email                           String?                  @unique
+  email                           String?                    @unique
   passwordHash                    String?
-  isVerified                      Boolean                  @default(false)
-  googleId                        String?                  @unique
+  isVerified                      Boolean                    @default(false)
+  googleId                        String?                    @unique
   avatarUrl                       String?
   bio                             String?
-  createdAt                       DateTime                 @default(now())
+  createdAt                       DateTime                   @default(now())
   pendingEmail                    String?
   deletedAt                       DateTime?
-  isDatingActive                  Boolean                  @default(false)
-  isAdmin                        Boolean                  @default(false)
-  preferredUnits                  String?                  @default("metric")
+  isDatingActive                  Boolean                    @default(false)
+  isAdmin                         Boolean                    @default(false)
+  preferredUnits                  String?                    @default("metric")
   EmailVerification               EmailVerification[]
   groups                          GroupMember[]
   userInstruments                 UserInstrument[]
@@ -33,33 +33,37 @@ model User {
   comments                        Comment[]
   dislikes                        Dislike[]
   EventAttendee                   EventAttendee[]
-  events                          Event[]                  @relation("CreatedEvents")
-  following                       Follow[]                 @relation("Following")
-  followers                       Follow[]                 @relation("Followers")
-  ownedGroups                     Group[]                  @relation("GroupOwner")
+  events                          Event[]                    @relation("CreatedEvents")
+  following                       Follow[]                   @relation("Following")
+  followers                       Follow[]                   @relation("Followers")
+  ownedGroups                     Group[]                    @relation("GroupOwner")
   likes                           Like[]
-  matches_matches_user1IdTousers  matches[]                @relation("matches_user1IdTousers")
-  matches_matches_user2IdTousers  matches[]                @relation("matches_user2IdTousers")
-  issuedNotifications             Notification[]           @relation("Issuer")
-  receivedNotifications           Notification[]           @relation("Recipient")
+  matches_matches_user1IdTousers  matches[]                  @relation("matches_user1IdTousers")
+  matches_matches_user2IdTousers  matches[]                  @relation("matches_user2IdTousers")
+  issuedNotifications             Notification[]             @relation("Issuer")
+  receivedNotifications           Notification[]             @relation("Recipient")
   posts                           Post[]
   sessions                        Session[]
-  swipes_swipes_fromUserIdTousers swipes[]                 @relation("swipes_fromUserIdTousers")
-  swipes_swipes_toUserIdTousers   swipes[]                 @relation("swipes_toUserIdTousers")
+  swipes_swipes_fromUserIdTousers swipes[]                   @relation("swipes_fromUserIdTousers")
+  swipes_swipes_toUserIdTousers   swipes[]                   @relation("swipes_toUserIdTousers")
   user_dating_preferences         user_dating_preferences?
   user_dating_profile             user_dating_profile?
   user_photos                     user_photos[]
   userPreferences                 UserPreferences?
+  sentMessages                    Message[]                  @relation("MessageSender")
+  datingLocationOverride          dating_location_overrides? @relation("DatingLocationOverrides")
 
   // Reports relations
-  reportsMade                     Report[]                 @relation("UserReports")
-  reportsReceived                 Report[]                 @relation("ReportedUser")
-  adminResolvedReports            Report[]                 @relation("AdminResolutions")
+  reportsMade          Report[] @relation("UserReports")
+  reportsReceived      Report[] @relation("ReportedUser")
+  adminResolvedReports Report[] @relation("AdminResolutions")
 
   // Blocking relations
-  blocksMade                      Block[]                  @relation("BlocksByUser")
-  blocksReceived                  Block[]                  @relation("BlocksOfUser")
+  blocksMade     Block[] @relation("BlocksByUser")
+  blocksReceived Block[] @relation("BlocksOfUser")
 
+  @@index([isVerified, isDatingActive, deletedAt])
+  @@index([isDatingActive, deletedAt])
   @@map("users")
 }
 
@@ -75,7 +79,7 @@ model Group {
   posts       Post[]
 
   // Reports
-  reports     Report[]
+  reports Report[]
 
   @@map("groups")
 }
@@ -168,32 +172,32 @@ enum ReportStatus {
 }
 
 model Report {
-  id          String        @id @default(cuid())
-  reporterId  String
-  reportedId  String?
-  postId      String?
-  commentId   String?
-  messageId   String?
-  groupId     String?
-  eventId     String?
+  id         String  @id @default(cuid())
+  reporterId String
+  reportedId String?
+  postId     String?
+  commentId  String?
+  messageId  String?
+  groupId    String?
+  eventId    String?
 
   reason      ReportReason
   description String?
-  status      ReportStatus  @default(PENDING)
+  status      ReportStatus @default(PENDING)
   adminNotes  String?
 
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  resolvedAt  DateTime?
-  resolvedBy  String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  resolvedAt DateTime?
+  resolvedBy String?
 
-  reporter    User          @relation("UserReports", fields: [reporterId], references: [id])
-  reported    User?         @relation("ReportedUser", fields: [reportedId], references: [id])
-  post        Post?         @relation(fields: [postId], references: [id])
-  comment     Comment?      @relation(fields: [commentId], references: [id])
-  group       Group?        @relation(fields: [groupId], references: [id])
-  event       Event?        @relation(fields: [eventId], references: [id])
-  admin       User?         @relation("AdminResolutions", fields: [resolvedBy], references: [id])
+  reporter User     @relation("UserReports", fields: [reporterId], references: [id])
+  reported User?    @relation("ReportedUser", fields: [reportedId], references: [id])
+  post     Post?    @relation(fields: [postId], references: [id])
+  comment  Comment? @relation(fields: [commentId], references: [id])
+  group    Group?   @relation(fields: [groupId], references: [id])
+  event    Event?   @relation(fields: [eventId], references: [id])
+  admin    User?    @relation("AdminResolutions", fields: [resolvedBy], references: [id])
 
   @@index([status])
   @@index([createdAt])
@@ -232,7 +236,7 @@ model Post {
   shares              Post[]         @relation("PostShares")
 
   // Reports
-  reports             Report[]
+  reports Report[]
 
   @@map("posts")
 }
@@ -320,8 +324,8 @@ model Block {
   blockedId String
   createdAt DateTime @default(now())
 
-  blocker   User @relation("BlocksByUser", fields: [blockerId], references: [id], onDelete: Cascade)
-  blocked   User @relation("BlocksOfUser", fields: [blockedId], references: [id], onDelete: Cascade)
+  blocker User @relation("BlocksByUser", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("BlocksOfUser", fields: [blockedId], references: [id], onDelete: Cascade)
 
   @@id([blockerId, blockedId])
   @@map("blocks")
@@ -366,7 +370,7 @@ model Event {
   linkedNotifications Notification[]
 
   // Reports
-  reports             Report[]
+  reports Report[]
 
   @@map("events")
 }
@@ -383,26 +387,51 @@ model EventAttendee {
 }
 
 model matches {
-  id                           String   @id
+  id                           String    @id
   user1Id                      String
   user2Id                      String
-  createdAt                    DateTime @default(now())
-  users_matches_user1IdTousers User     @relation("matches_user1IdTousers", fields: [user1Id], references: [id], onDelete: Cascade)
-  users_matches_user2IdTousers User     @relation("matches_user2IdTousers", fields: [user2Id], references: [id], onDelete: Cascade)
+  createdAt                    DateTime  @default(now())
+  users_matches_user1IdTousers User      @relation("matches_user1IdTousers", fields: [user1Id], references: [id], onDelete: Cascade)
+  users_matches_user2IdTousers User      @relation("matches_user2IdTousers", fields: [user2Id], references: [id], onDelete: Cascade)
+  messages                     Message[]
 
   @@unique([user1Id, user2Id])
+  @@index([user1Id])
+  @@index([user2Id])
+  @@index([user1Id, createdAt])
+  @@index([user2Id, createdAt])
 }
 
 model swipes {
-  id                             String   @id
+  id                             String    @id
   fromUserId                     String
   toUserId                       String
   direction                      String
-  createdAt                      DateTime @default(now())
-  users_swipes_fromUserIdTousers User     @relation("swipes_fromUserIdTousers", fields: [fromUserId], references: [id], onDelete: Cascade)
-  users_swipes_toUserIdTousers   User     @relation("swipes_toUserIdTousers", fields: [toUserId], references: [id], onDelete: Cascade)
+  message                        String? // Optional message with like
+  undoExpiresAt                  DateTime? // For undo functionality (3-hour window)
+  createdAt                      DateTime  @default(now())
+  users_swipes_fromUserIdTousers User      @relation("swipes_fromUserIdTousers", fields: [fromUserId], references: [id], onDelete: Cascade)
+  users_swipes_toUserIdTousers   User      @relation("swipes_toUserIdTousers", fields: [toUserId], references: [id], onDelete: Cascade)
 
   @@unique([fromUserId, toUserId])
+  @@index([fromUserId])
+  @@index([toUserId])
+  @@index([fromUserId, createdAt])
+  @@index([direction, createdAt])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  matchId   String
+  senderId  String
+  content   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  match     matches  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  sender    User     @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([matchId, createdAt])
+  @@map("messages")
 }
 
 model user_dating_profile {
@@ -434,6 +463,9 @@ model user_dating_preferences {
   preferredReligions             String[]
   preferredGender                String?
   preferredSexualOrientation     String?
+  preferredInstruments           String[] // Music filter: preferred instruments
+  preferredSkills                String[] // Music filter: preferred skills
+  matchMusicTastes               Boolean  @default(true) // User preference: prioritize music compatibility
   users                          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -444,6 +476,23 @@ model user_photos {
   isPrimary Boolean  @default(false)
   createdAt DateTime @default(now())
   users     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, isPrimary])
+}
+
+model dating_location_overrides {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  latitude  Float
+  longitude Float
+  city      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation("DatingLocationOverrides", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 enum GroupRole {
@@ -463,4 +512,5 @@ enum NotificationType {
   COMMENT
   EVENT_ATTENDEE
   EVENT_CANCELLED
+  MATCH
 }
