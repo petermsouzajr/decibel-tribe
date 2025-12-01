@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { Heart, ArrowLeft, ArrowRight, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+interface GenderPreference {
+  gender: string;
+  sexualOrientation: string;
+}
+
 interface OnboardingData {
   // User profile (clearly "mine" by context)
   bio: string;
@@ -17,6 +22,9 @@ interface OnboardingData {
   sexualOrientation: string;
   
   // Preferences (clearly "theirs" by context and naming)
+  // Support multiple gender preferences, each with their own orientation
+  preferredGenders: GenderPreference[];
+  // Legacy fields for backward compatibility (will be derived from preferredGenders)
   preferredGender: string;
   preferredSexualOrientation: string;
   preferredMinAge: number;
@@ -41,6 +49,31 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
   const existingPreferences = (user as any).user_dating_preferences;
   const isVerified = (user as any).isVerified ?? false;
   
+  // Parse existing preferences - support both old format (single gender) and new format (multiple)
+  const parseExistingPreferences = (): GenderPreference[] => {
+    // Try to parse as JSON first (new format)
+    if (existingPreferences?.preferredGender) {
+      try {
+        const parsed = JSON.parse(existingPreferences.preferredGender);
+        if (Array.isArray(parsed)) {
+          return parsed;
+        }
+      } catch {
+        // Not JSON, continue with single value handling
+      }
+    }
+    
+    // Old format: single gender with single orientation
+    if (existingPreferences?.preferredGender && existingPreferences?.preferredSexualOrientation) {
+      return [{
+        gender: existingPreferences.preferredGender,
+        sexualOrientation: existingPreferences.preferredSexualOrientation
+      }];
+    }
+    
+    return [];
+  };
+
   const [formData, setFormData] = useState<OnboardingData>({
     // User profile data
     bio: (user as any).bio || "",
@@ -52,7 +85,9 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
     religion: existingProfile?.religion || "",
     sexualOrientation: existingProfile?.sexualOrientation || "",
     
-    // Preference data
+    // Preference data - new format with multiple gender preferences
+    preferredGenders: parseExistingPreferences(),
+    // Legacy fields for backward compatibility
     preferredGender: existingPreferences?.preferredGender || "",
     preferredSexualOrientation: existingPreferences?.preferredSexualOrientation || "",
     preferredMinAge: existingPreferences?.preferredMinAge || 0,
@@ -77,8 +112,9 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
   };
 
   const isStep2Valid = () => {
-    return formData.preferredGender !== "" && 
-           formData.preferredSexualOrientation !== "";
+    // At least one gender preference must be selected with an orientation
+    return formData.preferredGenders.length > 0 && 
+           formData.preferredGenders.every(pref => pref.sexualOrientation !== "");
   };
 
   const isStep3Valid = () => {
@@ -122,13 +158,25 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
   const handleFinish = async () => {
     setIsLoading(true);
     try {
+      // Convert preferredGenders array to format API expects
+      // Store as JSON string in preferredGender field for now (will need API update later)
+      const submissionData = {
+        ...formData,
+        // Store preferredGenders as JSON string in preferredGender field
+        preferredGender: JSON.stringify(formData.preferredGenders),
+        // For backward compatibility, also set single values (use first preference)
+        preferredSexualOrientation: formData.preferredGenders.length > 0 
+          ? formData.preferredGenders[0].sexualOrientation 
+          : "",
+      };
+      
       // Save dating preferences to database
       const response = await fetch("/api/dating/preferences", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submissionData),
       });
 
       if (response.ok) {
@@ -389,69 +437,104 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
         );
 
       case 2:
+        const toggleGenderPreference = (gender: string) => {
+          const existingIndex = formData.preferredGenders.findIndex(p => p.gender === gender);
+          let newGenders: GenderPreference[];
+          
+          if (existingIndex >= 0) {
+            // Remove if already selected
+            newGenders = formData.preferredGenders.filter((_, i) => i !== existingIndex);
+          } else {
+            // Add new preference
+            newGenders = [...formData.preferredGenders, { gender, sexualOrientation: "" }];
+          }
+          
+          setFormData({ ...formData, preferredGenders: newGenders });
+        };
+
+        const updateGenderOrientation = (gender: string, orientation: string) => {
+          const newGenders = formData.preferredGenders.map(pref =>
+            pref.gender === gender ? { ...pref, sexualOrientation: orientation } : pref
+          );
+          setFormData({ ...formData, preferredGenders: newGenders });
+        };
+
         return (
           <div className="space-y-6">
             <h2 className="text-2xl text-gray-900 font-bold text-center mb-6">What are you looking for?</h2>
             <div className="max-w-2xl mx-auto">
               <label className="block text-sm text-gray-900 font-bold mb-4">
-                Gender {formData.preferredGender === "" && (
+                Select who you&apos;re interested in {formData.preferredGenders.length === 0 && (
                   <span className="text-red-500 text-md mt-1">*</span>
                 )}
               </label>
-              <div className="grid grid-cols-2 gap-4">
-                {["male", "female"].map((gender) => (
-                  <label key={gender} className={`flex items-center p-3 border rounded-lg cursor-pointer text-gray-900 transition-colors ${
-                    formData.preferredGender === gender 
-                      ? "border-purple-500 bg-purple-50" 
-                      : "border-gray-300 hover:bg-gray-50"
-                  }`}>
-                    <input
-                      type="radio"
-                      name="preferredGender"
-                      className="mr-3 w-5 h-5 border-2 border-gray-300 bg-white text-purple-600 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-                      checked={formData.preferredGender === gender}
-                      onChange={() => setFormData({
-                        ...formData,
-                        preferredGender: gender
-                      })}
-                    />
-                    {gender.charAt(0).toUpperCase() + gender.slice(1)}
-                  </label>
-                ))}
+              <p className="text-sm text-gray-600 mb-4">
+                You can select both male and female partners, each with their own orientation preference.
+              </p>
+              
+              <div className="space-y-4">
+                {["male", "female"].map((gender) => {
+                  const isSelected = formData.preferredGenders.some(p => p.gender === gender);
+                  const preference = formData.preferredGenders.find(p => p.gender === gender);
+                  
+                  return (
+                    <div key={gender} className={`border rounded-lg p-4 transition-colors ${
+                      isSelected ? "border-purple-500 bg-purple-50" : "border-gray-300"
+                    }`}>
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="mr-3 w-5 h-5 border-2 border-gray-300 bg-white text-purple-600 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                            checked={isSelected}
+                            onChange={() => toggleGenderPreference(gender)}
+                          />
+                          <span className="text-gray-900 font-semibold">
+                            {gender.charAt(0).toUpperCase() + gender.slice(1)}
+                          </span>
+                        </label>
+                      </div>
+                      
+                      {isSelected && (
+                        <div className="ml-8 mt-2">
+                          <label className="block text-sm text-gray-700 font-medium mb-2">
+                            Their orientation preference {!preference?.sexualOrientation && (
+                              <span className="text-red-500">*</span>
+                            )}
+                          </label>
+                          <div className="grid grid-cols-2 gap-2">
+                            {["straight", "gay", "bisexual", "other"].map((orientation) => (
+                              <label
+                                key={orientation}
+                                className={`flex items-center p-2 border rounded cursor-pointer text-sm transition-colors ${
+                                  preference?.sexualOrientation === orientation
+                                    ? "border-purple-500 bg-purple-100"
+                                    : "border-gray-300 hover:bg-gray-50"
+                                }`}
+                              >
+                                <input
+                                  type="radio"
+                                  name={`orientation-${gender}`}
+                                  className="mr-2 w-4 h-4"
+                                  checked={preference?.sexualOrientation === orientation}
+                                  onChange={() => updateGenderOrientation(gender, orientation)}
+                                />
+                                {orientation.charAt(0).toUpperCase() + orientation.slice(1)}
+                              </label>
+                            ))}
+                          </div>
+                          {!preference?.sexualOrientation && (
+                            <p className="text-red-500 text-xs mt-1">Please select an orientation preference</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-              {formData.preferredGender === "" && (
-                <p className="text-red-500 text-xs mt-2">Please select a gender preference</p>
-              )}
-            </div>
-            <div className="max-w-2xl mx-auto">
-              <label className="block text-sm text-gray-900 font-bold mb-4">
-                Sexual Orientation {formData.preferredSexualOrientation === "" && (
-                  <span className="text-red-500 text-md mt-1">*</span>
-                )}
-              </label>
-              <div className="grid grid-cols-2 gap-4">
-                {["straight", "gay", "bisexual", "other"].map((orientation) => (
-                  <label key={orientation} className={`flex items-center p-3 border rounded-lg cursor-pointer text-gray-900 transition-colors ${
-                    formData.preferredSexualOrientation === orientation 
-                      ? "border-purple-500 bg-purple-50" 
-                      : "border-gray-300 hover:bg-gray-50"
-                  }`}>
-                    <input
-                      type="radio"
-                      name="preferredSexualOrientation"
-                      className="mr-3 w-5 h-5 border-2 border-gray-300 bg-white text-purple-600 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-                      checked={formData.preferredSexualOrientation === orientation}
-                      onChange={() => setFormData({
-                        ...formData,
-                        preferredSexualOrientation: orientation
-                      })}
-                    />
-                    {orientation.charAt(0).toUpperCase() + orientation.slice(1)}
-                  </label>
-                ))}
-              </div>
-              {formData.preferredSexualOrientation === "" && (
-                <p className="text-red-500 text-xs mt-2">Please select a sexual orientation preference</p>
+              
+              {formData.preferredGenders.length === 0 && (
+                <p className="text-red-500 text-xs mt-2">Please select at least one gender preference</p>
               )}
             </div>
           </div>
@@ -834,12 +917,18 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                   <h3 className="text-lg font-bold text-gray-900 mb-4">Dating Preferences</h3>
                   <div className="space-y-4">
                     <div>
-                      <p className="text-sm text-gray-900 font-bold">Looking for (Gender)</p>
-                      <p className="font-medium text-gray-900">{formData.preferredGender || "Not specified"}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-900 font-bold">Looking for (Orientation)</p>
-                      <p className="font-medium text-gray-900">{formData.preferredSexualOrientation || "Not specified"}</p>
+                      <p className="text-sm text-gray-900 font-bold">Looking for</p>
+                      {formData.preferredGenders.length > 0 ? (
+                        <div className="space-y-2">
+                          {formData.preferredGenders.map((pref, idx) => (
+                            <p key={idx} className="font-medium text-gray-900">
+                              {pref.gender.charAt(0).toUpperCase() + pref.gender.slice(1)} - {pref.sexualOrientation.charAt(0).toUpperCase() + pref.sexualOrientation.slice(1)}
+                            </p>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="font-medium text-gray-900">Not specified</p>
+                      )}
                     </div>
                     <div>
                       <p className="text-sm text-gray-900 font-bold">Age range</p>
@@ -890,10 +979,10 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                   </p>
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md mx-auto">
                     <p className="text-sm text-yellow-800 font-semibold mb-1">
-                      ⚠️ Verify Your Email to Like Users
+                      ⚠️ Verify Your Photo to Like Users
                     </p>
                     <p className="text-sm text-yellow-700">
-                      Check your email for a verification link. Once verified, you&apos;ll be able to like users and appear in others&apos; decks!
+                      Upload a photo to verify your identity. Once verified, you&apos;ll be able to like users and appear in others&apos; decks!
                     </p>
                   </div>
                 </div>

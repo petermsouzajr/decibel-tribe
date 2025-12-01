@@ -276,10 +276,10 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-sm font-semibold text-yellow-800 mb-1">
-                    Verify Your Email to Like Users
+                    Verify Your Photo to Like Users
                   </h3>
                   <p className="text-sm text-yellow-700">
-                    You can browse and dislike profiles, but you need to verify your email address to like users and appear in others&apos; decks.
+                    You can browse and dislike profiles, but you need to verify your identity by uploading a photo to like users and appear in others&apos; decks.
                   </p>
                 </div>
               </div>

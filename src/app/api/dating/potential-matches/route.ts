@@ -64,6 +64,31 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Parse preferredGender - support both old format (single string) and new format (JSON array)
+    let preferredGenders: Array<{ gender: string; sexualOrientation: string }> = [];
+    try {
+      if (preferences.preferredGender) {
+        const parsed = JSON.parse(preferences.preferredGender);
+        if (Array.isArray(parsed)) {
+          preferredGenders = parsed;
+        } else {
+          // Old format: single gender with single orientation
+          preferredGenders = [{
+            gender: preferences.preferredGender,
+            sexualOrientation: preferences.preferredSexualOrientation || ""
+          }];
+        }
+      }
+    } catch {
+      // Not JSON, use as single value (old format)
+      if (preferences.preferredGender) {
+        preferredGenders = [{
+          gender: preferences.preferredGender,
+          sexualOrientation: preferences.preferredSexualOrientation || ""
+        }];
+      }
+    }
+
     // Get user's dating profile
     const profile = await prisma.user_dating_profile.findUnique({
       where: { userId: user.id },
@@ -150,8 +175,10 @@ export async function GET(request: NextRequest) {
         isVerified: true, // Only show verified users in decks (non-verified users can browse but won't appear)
         isDatingActive: true,
         user_dating_profile: {
-          // Match gender preference
-          gender: preferences.preferredGender || undefined,
+          // Match gender preference - check if their gender matches any of our preferred genders
+          ...(preferredGenders.length > 0 ? {
+            gender: { in: preferredGenders.map(p => p.gender) }
+          } : {}),
           // Match age range
           age: {
             gte: preferences.preferredMinAge,
@@ -180,9 +207,8 @@ export async function GET(request: NextRequest) {
             : {}),
         },
         // Reciprocal preference check: they must also prefer the current user
+        // This is handled in post-processing since we need to parse their preferredGender JSON
         user_dating_preferences: {
-          preferredGender: profile.gender || undefined,
-          preferredSexualOrientation: profile.sexualOrientation || undefined,
           preferredMinAge: { lte: profile.age || 100 },
           preferredMaxAge: { gte: profile.age || 18 },
         },
@@ -216,6 +242,7 @@ export async function GET(request: NextRequest) {
       },
       include: {
         user_dating_profile: true,
+        user_dating_preferences: true,
         user_photos: {
           where: { isPrimary: true },
           take: 1,
@@ -251,9 +278,49 @@ export async function GET(request: NextRequest) {
     const currentUserSkills =
       currentUserMusic?.userSkills.map((us) => us.skill.name) || [];
 
+    // Filter matches by reciprocal preferences (they must also want us)
+    const reciprocalMatches = matches.filter((match) => {
+      if (!match.user_dating_preferences) return false;
+      
+      // Parse their preferredGender (support both formats)
+      let theirPreferredGenders: Array<{ gender: string; sexualOrientation: string }> = [];
+      try {
+        if (match.user_dating_preferences.preferredGender) {
+          const parsed = JSON.parse(match.user_dating_preferences.preferredGender);
+          if (Array.isArray(parsed)) {
+            theirPreferredGenders = parsed;
+          } else {
+            // Old format
+            theirPreferredGenders = [{
+              gender: match.user_dating_preferences.preferredGender,
+              sexualOrientation: match.user_dating_preferences.preferredSexualOrientation || ""
+            }];
+          }
+        }
+      } catch {
+        // Not JSON, use as single value
+        if (match.user_dating_preferences.preferredGender) {
+          theirPreferredGenders = [{
+            gender: match.user_dating_preferences.preferredGender,
+            sexualOrientation: match.user_dating_preferences.preferredSexualOrientation || ""
+          }];
+        }
+      }
+      
+      // Check if they want our gender with matching orientation
+      const ourGender = profile.gender;
+      const ourOrientation = profile.sexualOrientation;
+      
+      if (!ourGender || !ourOrientation) return false;
+      
+      return theirPreferredGenders.some(pref => 
+        pref.gender === ourGender && pref.sexualOrientation === ourOrientation
+      );
+    });
+
     // Format response with compatibility scores
     const formattedMatches = await Promise.all(
-      matches.map(async (match) => {
+      reciprocalMatches.map(async (match) => {
         const primaryPhoto = match.user_photos[0];
         const instruments = match.userInstruments.map((ui) => ui.instrument.name);
         const skills = match.userSkills.map((us) => us.skill.name);
