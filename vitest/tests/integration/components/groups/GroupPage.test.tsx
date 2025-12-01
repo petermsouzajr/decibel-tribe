@@ -145,6 +145,9 @@ const mockPost1: PostData = {
   attachments: [], // RENAME mediaItems to attachments
   userId: mockPostUser.id, // Add missing userId
   groupId: mockGroupId, // Add missing groupId
+  sharedFromId: null,
+  sharedCount: 0,
+  sharedFrom: null,
 };
 
 const mockPostsPage1 = {

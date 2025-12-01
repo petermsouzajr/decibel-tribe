@@ -105,6 +105,9 @@ describe("API Route: /api/posts/[postId]", () => {
     userId: authorUserId,
     createdAt: new Date(),
     updatedAt: new Date(),
+    groupId: null,
+    sharedFromId: null,
+    sharedCount: 0,
     user: {
       id: authorUserId,
       username: "author",
@@ -129,7 +132,7 @@ describe("API Route: /api/posts/[postId]", () => {
     bookmarks: [],
     _count: { likes: 0, dislikes: 0, comments: 0 },
     attachments: [],
-    groupId: null,
+    sharedFrom: null,
   };
 
   const mockLoggedInUser = { id: loggedInUserId };

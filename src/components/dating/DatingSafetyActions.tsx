@@ -50,7 +50,7 @@ export default function DatingSafetyActions({
       <ReportModal
         isOpen={showReportModal}
         onClose={() => setShowReportModal(false)}
-        contentType="USER"
+        contentType="profile"
         targetId={userId}
       />
     </>

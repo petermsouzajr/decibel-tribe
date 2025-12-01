@@ -893,7 +893,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                       ⚠️ Verify Your Email to Like Users
                     </p>
                     <p className="text-sm text-yellow-700">
-                      Check your email for a verification link. Once verified, you'll be able to like users and appear in others' decks!
+                      Check your email for a verification link. Once verified, you&apos;ll be able to like users and appear in others&apos; decks!
                     </p>
                   </div>
                 </div>

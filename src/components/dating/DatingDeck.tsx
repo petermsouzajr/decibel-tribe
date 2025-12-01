@@ -279,7 +279,7 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
                     Verify Your Email to Like Users
                   </h3>
                   <p className="text-sm text-yellow-700">
-                    You can browse and dislike profiles, but you need to verify your email address to like users and appear in others' decks.
+                    You can browse and dislike profiles, but you need to verify your email address to like users and appear in others&apos; decks.
                   </p>
                 </div>
               </div>

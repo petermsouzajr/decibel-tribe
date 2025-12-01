@@ -39,6 +39,9 @@ describe("Post Id Page Integration Test", () => {
     createdAt: new Date(),
     updatedAt: new Date(),
     userId: "user-1",
+    groupId: null,
+    sharedFromId: null,
+    sharedCount: 0,
     user: {
       id: "user-1",
       username: "mockuser",
@@ -48,13 +51,14 @@ describe("Post Id Page Integration Test", () => {
       _count: { followers: 0 },
       followers: [],
     },
+    attachments: [],
+    sharedFrom: null,
     likes: [],
     bookmarks: [],
     replies: [],
     parentPostId: null,
     parentPost: null,
     _count: { likes: 0, replies: 0 },
-    groupId: null,
   };
 
   let queryClient: QueryClient;

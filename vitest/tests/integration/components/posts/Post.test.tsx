@@ -136,8 +136,11 @@ const mockPostData: PostData = {
   updatedAt: new Date(Date.now() - 1000 * 60 * 5), // Add updatedAt, same as createdAt
   userId: mockPostUser.id,
   groupId: null,
+  sharedFromId: null,
+  sharedCount: 0,
   user: mockPostUser, // Should conform to UserWithFollowerStatus now
   attachments: [],
+  sharedFrom: null,
   Group: null, // Required by PostData type
   _count: {
     // Correct root _count

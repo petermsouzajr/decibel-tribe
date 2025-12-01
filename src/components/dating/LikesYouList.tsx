@@ -210,7 +210,7 @@ export default function LikesYouList() {
                     {user.message && (
                       <div className="bg-purple-50 border border-purple-200 rounded-lg p-2 mb-3">
                         <p className="text-xs text-purple-800 italic">
-                          "{user.message}"
+                          &quot;{user.message}&quot;
                         </p>
                       </div>
                     )}
@@ -295,7 +295,7 @@ export default function LikesYouList() {
                   Their message:
                 </p>
                 <p className="text-sm text-purple-800 italic">
-                  "{selectedUser.message}"
+                  &quot;{selectedUser.message}&quot;
                 </p>
               </div>
             )}

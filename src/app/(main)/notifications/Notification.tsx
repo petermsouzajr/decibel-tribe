@@ -62,6 +62,12 @@ export default function Notification({ notification }: NotificationProps) {
       icon: <CalendarDays className="size-7 text-primary" />,
       href: `/events/${notification.event?.id}`,
     },
+    MATCH: {
+      issuer: notification.issuer,
+      message: "matched with you",
+      icon: <User2 className="size-7 text-primary" />,
+      href: `/dating/matches`,
+    },
   };
 
   const { message, icon, href } = notificationTypeMap[notification.type];

@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import streamServerClient from "@/lib/stream";
+import { NotificationType } from "@prisma/client";
 
 // Rate limiting: Track likes per hour
 const likeCounts = new Map<string, { count: number; resetAt: number }>();
@@ -176,7 +177,7 @@ export async function POST(request: NextRequest) {
               id: crypto.randomUUID(),
               recipientId: user.id,
               issuerId: targetUserId,
-              type: "MATCH",
+              type: NotificationType.MATCH,
               read: false,
               createdAt: new Date(),
             },
@@ -186,7 +187,7 @@ export async function POST(request: NextRequest) {
               id: crypto.randomUUID(),
               recipientId: targetUserId,
               issuerId: user.id,
-              type: "MATCH",
+              type: NotificationType.MATCH,
               read: false,
               createdAt: new Date(),
             },

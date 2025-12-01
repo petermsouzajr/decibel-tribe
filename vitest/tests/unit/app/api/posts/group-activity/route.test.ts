@@ -48,6 +48,8 @@ describe("API Route: GET /api/posts/group-activity", () => {
     content: `Group post content ${i}`,
     userId: `user-${i}`,
     groupId: "group-1",
+    sharedFromId: null,
+    sharedCount: 0,
     createdAt: new Date(Date.now() - i * 1000 * 60 * 5),
     updatedAt: new Date(Date.now() - i * 1000 * 60 * 5),
     user: {
@@ -74,6 +76,7 @@ describe("API Route: GET /api/posts/group-activity", () => {
     bookmarks: [],
     _count: { likes: 0, dislikes: 0, comments: 0 },
     attachments: [],
+    sharedFrom: null,
   }));
 
   // Define GET function type once
@@ -318,6 +321,8 @@ describe("API Route: GET /api/posts/group-activity", () => {
         content: `Content ${i + 1}`,
         userId: `user-${i % 3}`,
         groupId: "group-1",
+        sharedFromId: null,
+        sharedCount: 0,
         createdAt: new Date(Date.now() - i * 1000 * 60 * 60), // Hours ago
         updatedAt: new Date(Date.now() - i * 1000 * 60 * 60), // Add updatedAt, same as createdAt
         user: {
@@ -344,6 +349,7 @@ describe("API Route: GET /api/posts/group-activity", () => {
         bookmarks: [],
         _count: { likes: 0, dislikes: 0, comments: 0 },
         attachments: [],
+        sharedFrom: null,
       }),
     );
 

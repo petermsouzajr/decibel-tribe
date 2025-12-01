@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
             ? {
                 content: lastMessage.content,
                 createdAt: lastMessage.createdAt,
-                isFromMe: lastMessage.senderId === user.id,
+                isFromMe: lastMessage.isFromMe,
                 read: lastMessage.read,
               }
             : null,

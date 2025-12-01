@@ -203,7 +203,7 @@ export default function SwipeHistory() {
                     {swipe.message && (
                       <div className="bg-purple-50 border border-purple-200 rounded-lg p-2 mb-2">
                         <p className="text-xs text-purple-800 italic truncate">
-                          "{swipe.message}"
+                          &quot;{swipe.message}&quot;
                         </p>
                       </div>
                     )}

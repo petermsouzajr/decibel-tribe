@@ -30,8 +30,8 @@ export default function MatchCelebration({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-center text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500">
-            It's a Match! 🎉
-          </DialogHeader>
+            It&apos;s a Match! 🎉
+          </DialogTitle>
         </DialogHeader>
         <div className="text-center py-6">
           <div className="flex justify-center items-center gap-4 mb-6">

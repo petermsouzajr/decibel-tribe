@@ -186,37 +186,27 @@ export async function GET(request: NextRequest) {
           preferredMinAge: { lte: profile.age || 100 },
           preferredMaxAge: { gte: profile.age || 18 },
         },
-        // Music filter: use URL params if provided, otherwise use preferences
-        ...((preferredInstruments.length > 0
-          ? preferredInstruments
-          : preferences.preferredInstruments || []).length > 0
+        // Music filter: use preferences
+        ...((preferences.preferredInstruments || []).length > 0
           ? {
               userInstruments: {
                 some: {
                   instrument: {
                     name: {
-                      in:
-                        preferredInstruments.length > 0
-                          ? preferredInstruments
-                          : preferences.preferredInstruments || [],
+                      in: preferences.preferredInstruments || [],
                     },
                   },
                 },
               },
             }
           : {}),
-        ...((preferredSkills.length > 0
-          ? preferredSkills
-          : preferences.preferredSkills || []).length > 0
+        ...((preferences.preferredSkills || []).length > 0
           ? {
               userSkills: {
                 some: {
                   skill: {
                     name: {
-                      in:
-                        preferredSkills.length > 0
-                          ? preferredSkills
-                          : preferences.preferredSkills || [],
+                      in: preferences.preferredSkills || [],
                     },
                   },
                 },

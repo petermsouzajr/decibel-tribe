@@ -82,6 +82,8 @@ describe("API Route: GET /api/posts/following", () => {
     content: `Following post content ${i}`,
     userId: mockFollowingIds[i % mockFollowingIds.length],
     groupId: null,
+    sharedFromId: null,
+    sharedCount: 0,
     createdAt: new Date(Date.now() - i * 3600 * 1000), // More spread out dates
     updatedAt: new Date(Date.now() - i * 3600 * 1000), // Add updatedAt, same as createdAt
     user: {
@@ -108,6 +110,7 @@ describe("API Route: GET /api/posts/following", () => {
     bookmarks: [],
     _count: { likes: 0, dislikes: 0, comments: 0 },
     attachments: [],
+    sharedFrom: null,
   }));
 
   const expectedPostFindManyWhereClause = {

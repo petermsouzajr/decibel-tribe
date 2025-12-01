@@ -9,7 +9,6 @@ import { useToast } from "@/components/ui/use-toast";
 import Image from "next/image";
 import { formatRelativeDate } from "@/lib/utils";
 import MatchInsights from "./MatchInsights";
-import { useState } from "react";
 import { Info } from "lucide-react";
 
 interface Message {

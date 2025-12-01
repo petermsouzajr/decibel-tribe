@@ -40,10 +40,10 @@ export default function SafetyTips() {
             </h3>
             <ul className="space-y-2 text-sm text-gray-700">
               <li>• Meet in a public place for your first few dates</li>
-              <li>• Tell a friend or family member where you're going and who you're meeting</li>
+              <li>• Tell a friend or family member where you&apos;re going and who you&apos;re meeting</li>
               <li>• Keep your phone charged and with you</li>
               <li>• Trust your instincts - if something feels off, leave</li>
-              <li>• Don't share your home address until you're comfortable</li>
+              <li>• Don&apos;t share your home address until you&apos;re comfortable</li>
             </ul>
           </div>
 
@@ -58,7 +58,7 @@ export default function SafetyTips() {
               <li>• Be cautious of users who ask for personal information too quickly</li>
               <li>• Report suspicious behavior or fake profiles immediately</li>
               <li>• Use the block feature if someone makes you uncomfortable</li>
-              <li>• Keep conversations on the platform until you're comfortable</li>
+              <li>• Keep conversations on the platform until you&apos;re comfortable</li>
             </ul>
           </div>
 
@@ -97,7 +97,7 @@ export default function SafetyTips() {
           <div className="bg-gray-50 rounded-lg p-4">
             <h3 className="font-semibold text-gray-900 mb-2">Emergency Resources</h3>
             <p className="text-sm text-gray-700 mb-2">
-              If you're in immediate danger, call 911 or your local emergency services.
+              If you&apos;re in immediate danger, call 911 or your local emergency services.
             </p>
             <p className="text-sm text-gray-700">
               For support with dating safety, visit{" "}

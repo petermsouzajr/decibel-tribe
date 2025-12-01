@@ -8,8 +8,8 @@ import { useEffect, useState } from "react";
 import MatchInsights from "./MatchInsights";
 import DatingSafetyActions from "./DatingSafetyActions";
 import useInitializeChatClient from "@/app/(main)/messages/useInitializeChatClient";
-import { StreamChat } from "stream-chat-react";
 import {
+  Chat as StreamChat,
   Channel,
   ChannelHeader,
   MessageInput,
