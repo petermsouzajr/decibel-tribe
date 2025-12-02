@@ -843,7 +843,7 @@ export async function seedDatingProfiles(
     });
     console.log(`...${usersToCreate.length} users created.`);
 
-    // Add users to StreamChat
+    // Add users to StreamChat (batch in groups of 100)
     if (streamClient) {
       const streamChatUsers = usersToCreate.map((user) => ({
         id: user.id!,
@@ -852,7 +852,15 @@ export async function seedDatingProfiles(
         email: user.email!,
       }));
       try {
-        await streamClient.upsertUsers(streamChatUsers);
+        // StreamChat has a limit of 100 users per batch
+        const batchSize = 100;
+        let upsertedCount = 0;
+        for (let i = 0; i < streamChatUsers.length; i += batchSize) {
+          const batch = streamChatUsers.slice(i, i + batchSize);
+          await streamClient.upsertUsers(batch);
+          upsertedCount += batch.length;
+          console.log(`...${upsertedCount}/${streamChatUsers.length} users upserted to StreamChat.`);
+        }
         console.log(
           `...${streamChatUsers.length} users upserted to StreamChat.`,
         );
