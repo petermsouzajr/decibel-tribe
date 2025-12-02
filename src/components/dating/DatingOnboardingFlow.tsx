@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 
 interface GenderPreference {
   gender: string;
-  sexualOrientation: string;
+  sexualOrientation: string[]; // Changed to array to support multiple selections
 }
 
 interface OnboardingData {
@@ -67,7 +67,9 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
     if (existingPreferences?.preferredGender && existingPreferences?.preferredSexualOrientation) {
       return [{
         gender: existingPreferences.preferredGender,
-        sexualOrientation: existingPreferences.preferredSexualOrientation
+        sexualOrientation: Array.isArray(existingPreferences.preferredSexualOrientation) 
+          ? existingPreferences.preferredSexualOrientation 
+          : [existingPreferences.preferredSexualOrientation]
       }];
     }
     
@@ -112,9 +114,11 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
   };
 
   const isStep2Valid = () => {
-    // At least one gender preference must be selected with an orientation
+    // At least one gender preference must be selected with at least one orientation
     return formData.preferredGenders.length > 0 && 
-           formData.preferredGenders.every(pref => pref.sexualOrientation !== "");
+           formData.preferredGenders.every(pref => 
+             Array.isArray(pref.sexualOrientation) && pref.sexualOrientation.length > 0
+           );
   };
 
   const isStep3Valid = () => {
@@ -164,10 +168,12 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
         ...formData,
         // Store preferredGenders as JSON string in preferredGender field
         preferredGender: JSON.stringify(formData.preferredGenders),
-        // For backward compatibility, also set single values (use first preference)
-        preferredSexualOrientation: formData.preferredGenders.length > 0 
-          ? formData.preferredGenders[0].sexualOrientation 
-          : "",
+          // For backward compatibility, also set single values (use first preference's first orientation)
+          preferredSexualOrientation: formData.preferredGenders.length > 0 && 
+            Array.isArray(formData.preferredGenders[0].sexualOrientation) &&
+            formData.preferredGenders[0].sexualOrientation.length > 0
+            ? formData.preferredGenders[0].sexualOrientation[0]
+            : "",
       };
       
       // Save dating preferences to database
@@ -235,7 +241,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                   <input
                     type="number"
                     min="18"
-                    max="100"
+                    max="130"
                     required
                     className={`w-full p-3 border rounded-lg ${formData.age < 18 ? 'border-red-500' : ''}`}
                     value={formData.age === 0 ? '' : formData.age}
@@ -445,17 +451,27 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
             // Remove if already selected
             newGenders = formData.preferredGenders.filter((_, i) => i !== existingIndex);
           } else {
-            // Add new preference
-            newGenders = [...formData.preferredGenders, { gender, sexualOrientation: "" }];
+            // Add new preference with empty array
+            newGenders = [...formData.preferredGenders, { gender, sexualOrientation: [] }];
           }
           
           setFormData({ ...formData, preferredGenders: newGenders });
         };
 
-        const updateGenderOrientation = (gender: string, orientation: string) => {
-          const newGenders = formData.preferredGenders.map(pref =>
-            pref.gender === gender ? { ...pref, sexualOrientation: orientation } : pref
-          );
+        const toggleGenderOrientation = (gender: string, orientation: string) => {
+          const newGenders = formData.preferredGenders.map(pref => {
+            if (pref.gender === gender) {
+              const currentOrientations = pref.sexualOrientation || [];
+              const isSelected = currentOrientations.includes(orientation);
+              return {
+                ...pref,
+                sexualOrientation: isSelected
+                  ? currentOrientations.filter(o => o !== orientation)
+                  : [...currentOrientations, orientation]
+              };
+            }
+            return pref;
+          });
           setFormData({ ...formData, preferredGenders: newGenders });
         };
 
@@ -497,34 +513,38 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                       
                       {isSelected && (
                         <div className="ml-8 mt-2">
-                          <label className="block text-sm text-gray-700 font-medium mb-2">
-                            Their orientation preference {!preference?.sexualOrientation && (
+                          <label className="block text-sm text-gray-900 font-medium mb-2">
+                            Their orientation preference {(preference?.sexualOrientation?.length || 0) === 0 && (
                               <span className="text-red-500">*</span>
                             )}
                           </label>
                           <div className="grid grid-cols-2 gap-2">
-                            {["straight", "gay", "bisexual", "other"].map((orientation) => (
-                              <label
-                                key={orientation}
-                                className={`flex items-center p-2 border rounded cursor-pointer text-sm transition-colors ${
-                                  preference?.sexualOrientation === orientation
-                                    ? "border-purple-500 bg-purple-100"
-                                    : "border-gray-300 hover:bg-gray-50"
-                                }`}
-                              >
-                                <input
-                                  type="radio"
-                                  name={`orientation-${gender}`}
-                                  className="mr-2 w-4 h-4"
-                                  checked={preference?.sexualOrientation === orientation}
-                                  onChange={() => updateGenderOrientation(gender, orientation)}
-                                />
-                                {orientation.charAt(0).toUpperCase() + orientation.slice(1)}
-                              </label>
-                            ))}
+                            {["straight", "gay", "bisexual", "other"].map((orientation) => {
+                              const isChecked = preference?.sexualOrientation?.includes(orientation) || false;
+                              return (
+                                <label
+                                  key={orientation}
+                                  className={`flex items-center p-2 border rounded cursor-pointer text-sm text-gray-900 transition-colors ${
+                                    isChecked
+                                      ? "border-purple-500 bg-purple-100"
+                                      : "border-gray-300 hover:bg-gray-50"
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    className="mr-2 w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                                    checked={isChecked}
+                                    onChange={() => toggleGenderOrientation(gender, orientation)}
+                                  />
+                                  <span className="text-gray-900 font-medium">
+                                    {orientation.charAt(0).toUpperCase() + orientation.slice(1)}
+                                  </span>
+                                </label>
+                              );
+                            })}
                           </div>
-                          {!preference?.sexualOrientation && (
-                            <p className="text-red-500 text-xs mt-1">Please select an orientation preference</p>
+                          {(preference?.sexualOrientation?.length || 0) === 0 && (
+                            <p className="text-red-500 text-xs mt-1">Please select at least one orientation preference</p>
                           )}
                         </div>
                       )}
@@ -555,7 +575,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                   <input
                     type="number"
                     min="18"
-                    max="100"
+                    max="130"
                     required
                     className={`w-full p-3 border rounded-lg ${formData.preferredMinAge < 18 ? 'border-red-500' : ''}`}
                     value={formData.preferredMinAge === 0 ? '' : formData.preferredMinAge}
@@ -593,7 +613,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                   <input
                     type="number"
                     min="18"
-                    max="100"
+                    max="130"
                     required
                     className={`w-full p-3 border rounded-lg ${formData.preferredMaxAge < 18 ? 'border-red-500' : ''}`}
                     value={formData.preferredMaxAge === 0 ? '' : formData.preferredMaxAge}
@@ -922,7 +942,11 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                         <div className="space-y-2">
                           {formData.preferredGenders.map((pref, idx) => (
                             <p key={idx} className="font-medium text-gray-900">
-                              {pref.gender.charAt(0).toUpperCase() + pref.gender.slice(1)} - {pref.sexualOrientation.charAt(0).toUpperCase() + pref.sexualOrientation.slice(1)}
+                              {pref.gender.charAt(0).toUpperCase() + pref.gender.slice(1)} - {
+                                Array.isArray(pref.sexualOrientation) 
+                                  ? pref.sexualOrientation.map(o => o.charAt(0).toUpperCase() + o.slice(1)).join(", ")
+                                  : pref.sexualOrientation
+                              }
                             </p>
                           ))}
                         </div>
@@ -998,7 +1022,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                   <Button
                     onClick={() => router.push(`/users/${user.username}`)}
                     variant="outline"
-                    className="w-full border-gray-300 text-gray-900 hover:bg-gray-100 font-bold py-6 text-lg"
+                    className="w-full border-gray-300 text-gray-900 hover:bg-gray-100 font-bold py-6 text-lg bg-white"
                   >
                     Back to Profile
                   </Button>

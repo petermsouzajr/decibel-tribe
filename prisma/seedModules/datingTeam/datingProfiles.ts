@@ -260,8 +260,316 @@ export async function seedDatingProfiles(
   const profilesToCreate: Prisma.user_dating_profileCreateInput[] = [];
   const preferencesToCreate: Prisma.user_dating_preferencesCreateInput[] = [];
   const photosToCreate: Prisma.user_photosCreateInput[] = [];
+  const swipesToCreate: Array<{ fromUserId: string; toUserId: string; direction: string }> = [];
+  const matchesToCreate: Array<{ user1Id: string; user2Id: string }> = [];
 
   let userIndex = 0;
+
+  // Create specific test users with predefined relationships for easy testing
+  console.log("Creating test users with predefined dating relationships...");
+  const testUsers: Record<string, { id: string; userId: string; username: string }> = {};
+  
+  // Test user scenarios:
+  // 1. testUserDatingDeckReady - Has 5 compatible users ready in deck (no swipes yet)
+  // 2. testUserDatingPendingMatches - Has 5 users who liked them (pending matches)
+  // 3. testUserDatingMutualMatches - Has 3 mutual matches already
+  // 4. testUserDatingNoMatches - Fresh user with no activity
+  // 5. testUserDatingLikedBack - Has liked 5 users, waiting for responses
+  
+  const testUserConfigs = [
+    {
+      username: "testUserDatingDeckReady",
+      displayName: "Deck Ready User",
+      age: 28,
+      gender: "Male",
+      sexualOrientation: "Straight",
+      location: GUARANTEED_TEST_CITIES[0], // Los Angeles
+      preferredGender: "Female",
+      preferredSexualOrientation: "Straight",
+      preferredMinAge: 23,
+      preferredMaxAge: 35,
+    },
+    {
+      username: "testUserDatingPendingMatches",
+      displayName: "Pending Matches User",
+      age: 25,
+      gender: "Female",
+      sexualOrientation: "Straight",
+      location: GUARANTEED_TEST_CITIES[0], // Los Angeles
+      preferredGender: "Male",
+      preferredSexualOrientation: "Straight",
+      preferredMinAge: 23,
+      preferredMaxAge: 32,
+    },
+    {
+      username: "testUserDatingMutualMatches",
+      displayName: "Mutual Matches User",
+      age: 30,
+      gender: "Male",
+      sexualOrientation: "Bisexual",
+      location: GUARANTEED_TEST_CITIES[1], // San Francisco
+      preferredGender: null, // Open to any
+      preferredSexualOrientation: null,
+      preferredMinAge: 25,
+      preferredMaxAge: 40,
+    },
+    {
+      username: "testUserDatingNoMatches",
+      displayName: "No Matches User",
+      age: 22,
+      gender: "Female",
+      sexualOrientation: "Straight",
+      location: GUARANTEED_TEST_CITIES[2], // Chicago
+      preferredGender: "Male",
+      preferredSexualOrientation: "Straight",
+      preferredMinAge: 20,
+      preferredMaxAge: 30,
+    },
+    {
+      username: "testUserDatingLikedBack",
+      displayName: "Liked Back User",
+      age: 27,
+      gender: "Male",
+      sexualOrientation: "Straight",
+      location: GUARANTEED_TEST_CITIES[0], // Los Angeles
+      preferredGender: "Female",
+      preferredSexualOrientation: "Straight",
+      preferredMinAge: 22,
+      preferredMaxAge: 32,
+    },
+  ];
+
+  // Create 5 compatible users for testUserDatingDeckReady
+  const compatibleUsersForDeck: Array<{ username: string; config: typeof testUserConfigs[0] }> = [];
+  for (let i = 0; i < 5; i++) {
+    compatibleUsersForDeck.push({
+      username: `testUserDatingCompatible${i + 1}`,
+      config: {
+        username: `testUserDatingCompatible${i + 1}`,
+        displayName: `Compatible User ${i + 1}`,
+        age: 24 + i,
+        gender: "Female",
+        sexualOrientation: "Straight",
+        location: GUARANTEED_TEST_CITIES[0], // Same city as DeckReady
+        preferredGender: "Male",
+        preferredSexualOrientation: "Straight",
+        preferredMinAge: 25,
+        preferredMaxAge: 35,
+      },
+    });
+  }
+
+  // Create 5 users who liked testUserDatingPendingMatches
+  const usersWhoLikedPending: Array<{ username: string; config: typeof testUserConfigs[0] }> = [];
+  for (let i = 0; i < 5; i++) {
+    usersWhoLikedPending.push({
+      username: `testUserDatingLikedPending${i + 1}`,
+      config: {
+        username: `testUserDatingLikedPending${i + 1}`,
+        displayName: `Liked Pending User ${i + 1}`,
+        age: 24 + i,
+        gender: "Male",
+        sexualOrientation: "Straight",
+        location: GUARANTEED_TEST_CITIES[0], // Same city
+        preferredGender: "Female",
+        preferredSexualOrientation: "Straight",
+        preferredMinAge: 22,
+        preferredMaxAge: 30,
+      },
+    });
+  }
+
+  // Create 3 users for mutual matches with testUserDatingMutualMatches
+  const mutualMatchUsers: Array<{ username: string; config: typeof testUserConfigs[0] }> = [];
+  for (let i = 0; i < 3; i++) {
+    mutualMatchUsers.push({
+      username: `testUserDatingMutualMatch${i + 1}`,
+      config: {
+        username: `testUserDatingMutualMatch${i + 1}`,
+        displayName: `Mutual Match ${i + 1}`,
+        age: 28 + i,
+        gender: i === 0 ? "Female" : "Male",
+        sexualOrientation: i === 0 ? "Straight" : "Bisexual",
+        location: GUARANTEED_TEST_CITIES[1], // San Francisco
+        preferredGender: null,
+        preferredSexualOrientation: null,
+        preferredMinAge: 25,
+        preferredMaxAge: 40,
+      },
+    });
+  }
+
+  // Create 5 users that testUserDatingLikedBack has liked
+  const usersLikedByLikedBack: Array<{ username: string; config: typeof testUserConfigs[0] }> = [];
+  for (let i = 0; i < 5; i++) {
+    usersLikedByLikedBack.push({
+      username: `testUserDatingLikedByLikedBack${i + 1}`,
+      config: {
+        username: `testUserDatingLikedByLikedBack${i + 1}`,
+        displayName: `Liked By LikedBack ${i + 1}`,
+        age: 23 + i,
+        gender: "Female",
+        sexualOrientation: "Straight",
+        location: GUARANTEED_TEST_CITIES[0], // Los Angeles
+        preferredGender: "Male",
+        preferredSexualOrientation: "Straight",
+        preferredMinAge: 25,
+        preferredMaxAge: 35,
+      },
+    });
+  }
+
+  // Combine all test users
+  const allTestUsers = [
+    ...testUserConfigs.map(c => ({ username: c.username, config: c })),
+    ...compatibleUsersForDeck,
+    ...usersWhoLikedPending,
+    ...mutualMatchUsers,
+    ...usersLikedByLikedBack,
+  ];
+
+  // Create all test users
+  for (const { username, config } of allTestUsers) {
+    const userId = generateIdFromEntropySize(10);
+    const email = `${username}@test.com`;
+    const heightInches = 66; // 5'6" average
+    const heightCm = heightInches * 2.54;
+
+    // Create user
+    const userData: Prisma.UserCreateInput = {
+      id: userId,
+      username,
+      email,
+      displayName: config.displayName,
+      passwordHash: hashedPassword,
+      isVerified: true,
+      isDatingActive: true,
+      avatarUrl: `https://i.pravatar.cc/150?img=${faker.number.int({ min: 1, max: 70 })}`,
+      bio: `Test user: ${config.displayName}`,
+      createdAt: faker.date.between({
+        from: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000),
+        to: new Date(),
+      }),
+    };
+    usersToCreate.push(userData);
+
+    // Create dating profile
+    const profileId = generateIdFromEntropySize(10);
+    const profileData: Prisma.user_dating_profileCreateInput = {
+      id: profileId,
+      user: { connect: { id: userId } },
+      age: config.age,
+      height: heightCm,
+      gender: config.gender,
+      sexualOrientation: config.sexualOrientation,
+      religion: "Atheist",
+      coronavirusVaccinated: "Yes",
+      location: `${config.location.city}, ${config.location.state}`,
+    };
+    profilesToCreate.push(profileData);
+
+    // Create dating preferences
+    const preferencesId = generateIdFromEntropySize(10);
+    const preferencesData: Prisma.user_dating_preferencesCreateInput = {
+      id: preferencesId,
+      users: { connect: { id: userId } },
+      preferredMinAge: config.preferredMinAge,
+      preferredMaxAge: config.preferredMaxAge,
+      preferredMaxDistanceKm: 50, // 50km for test users
+      preferredMinHeight: 60 * 2.54, // 5'0"
+      preferredMaxHeight: 72 * 2.54, // 6'0"
+      preferredGender: config.preferredGender,
+      preferredSexualOrientation: config.preferredSexualOrientation,
+      preferredCoronavirusVaccinated: null,
+      preferredReligions: [],
+      preferredInstruments: [],
+      preferredSkills: [],
+      matchMusicTastes: false,
+    };
+    preferencesToCreate.push(preferencesData);
+
+    // Create photos
+    for (let j = 0; j < 2; j++) {
+      const photoId = generateIdFromEntropySize(10);
+      const photoData: Prisma.user_photosCreateInput = {
+        id: photoId,
+        users: { connect: { id: userId } },
+        url: `https://i.pravatar.cc/400?img=${faker.number.int({ min: 1, max: 70 })}`,
+        isPrimary: j === 0,
+      };
+      photosToCreate.push(photoData);
+    }
+
+    testUsers[username] = { id: userId, userId, username };
+    createdDatingUsers.push({
+      id: userId,
+      userId,
+      username,
+      isDatingActive: true,
+    });
+  }
+
+  // Create relationships:
+  // 1. Users who liked testUserDatingPendingMatches (pending matches)
+  const pendingMatchesUserId = testUsers["testUserDatingPendingMatches"]?.id;
+  if (pendingMatchesUserId) {
+    for (let i = 0; i < 5; i++) {
+      const likerUsername = `testUserDatingLikedPending${i + 1}`;
+      const likerId = testUsers[likerUsername]?.id;
+      if (likerId) {
+        swipesToCreate.push({
+          fromUserId: likerId,
+          toUserId: pendingMatchesUserId,
+          direction: "LIKE",
+        });
+      }
+    }
+  }
+
+  // 2. Mutual matches for testUserDatingMutualMatches
+  const mutualMatchesUserId = testUsers["testUserDatingMutualMatches"]?.id;
+  if (mutualMatchesUserId) {
+    for (let i = 0; i < 3; i++) {
+      const matchUsername = `testUserDatingMutualMatch${i + 1}`;
+      const matchId = testUsers[matchUsername]?.id;
+      if (matchId) {
+        // Create mutual swipes (both liked each other)
+        swipesToCreate.push({
+          fromUserId: mutualMatchesUserId,
+          toUserId: matchId,
+          direction: "LIKE",
+        });
+        swipesToCreate.push({
+          fromUserId: matchId,
+          toUserId: mutualMatchesUserId,
+          direction: "LIKE",
+        });
+        // Create match
+        matchesToCreate.push({
+          user1Id: mutualMatchesUserId < matchId ? mutualMatchesUserId : matchId,
+          user2Id: mutualMatchesUserId < matchId ? matchId : mutualMatchesUserId,
+        });
+      }
+    }
+  }
+
+  // 3. Users that testUserDatingLikedBack has liked (waiting for responses)
+  const likedBackUserId = testUsers["testUserDatingLikedBack"]?.id;
+  if (likedBackUserId) {
+    for (let i = 0; i < 5; i++) {
+      const likedUsername = `testUserDatingLikedByLikedBack${i + 1}`;
+      const likedId = testUsers[likedUsername]?.id;
+      if (likedId) {
+        swipesToCreate.push({
+          fromUserId: likedBackUserId,
+          toUserId: likedId,
+          direction: "LIKE",
+        });
+      }
+    }
+  }
+
+  console.log(`...Created ${allTestUsers.length} test users with predefined relationships.`);
 
   // First, create 50 users in guaranteed test cities (for easy testing)
   // Distribute evenly: ~8-9 users per city across 6 cities
@@ -583,9 +891,58 @@ export async function seedDatingProfiles(
     }
     console.log(`...${photosToCreate.length} photos created.`);
 
+    // Create swipes (likes/dislikes) for test users
+    if (swipesToCreate.length > 0) {
+      console.log(`Creating ${swipesToCreate.length} swipes for test users...`);
+      for (const swipe of swipesToCreate) {
+        try {
+          await tx.swipes.create({
+            data: {
+              id: generateIdFromEntropySize(10),
+              fromUserId: swipe.fromUserId,
+              toUserId: swipe.toUserId,
+              direction: swipe.direction,
+              createdAt: new Date(),
+            },
+          });
+        } catch (error) {
+          // Skip if swipe already exists
+          console.warn(`Swipe already exists or error: ${(error as Error).message}`);
+        }
+      }
+      console.log(`...${swipesToCreate.length} swipes created.`);
+    }
+
+    // Create matches for test users
+    if (matchesToCreate.length > 0) {
+      console.log(`Creating ${matchesToCreate.length} matches for test users...`);
+      for (const match of matchesToCreate) {
+        try {
+          await tx.matches.create({
+            data: {
+              id: generateIdFromEntropySize(10),
+              user1Id: match.user1Id,
+              user2Id: match.user2Id,
+              createdAt: new Date(),
+            },
+          });
+        } catch (error) {
+          // Skip if match already exists
+          console.warn(`Match already exists or error: ${(error as Error).message}`);
+        }
+      }
+      console.log(`...${matchesToCreate.length} matches created.`);
+    }
+
     console.log(
-      `Dating seeding complete: ${createdDatingUsers.length} users with profiles, preferences, and photos.`,
+      `Dating seeding complete: ${createdDatingUsers.length} users with profiles, preferences, photos, swipes, and matches.`,
     );
+    console.log("\nTest Users Created:");
+    console.log("  - testUserDatingDeckReady: Has 5 compatible users ready in deck");
+    console.log("  - testUserDatingPendingMatches: Has 5 users who liked them (pending matches)");
+    console.log("  - testUserDatingMutualMatches: Has 3 mutual matches");
+    console.log("  - testUserDatingNoMatches: Fresh user with no activity");
+    console.log("  - testUserDatingLikedBack: Liked 5 users, waiting for responses");
 
     return createdDatingUsers;
   } catch (error) {

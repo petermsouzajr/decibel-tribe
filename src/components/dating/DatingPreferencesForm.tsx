@@ -25,7 +25,10 @@ export default function DatingPreferencesForm() {
     preferredReligions: [] as string[],
     preferredInstruments: [] as string[],
     preferredSkills: [] as string[],
-    matchMusicTastes: true,
+    matchMusicTastes: false,
+    anyAge: false,
+    anyHeight: false,
+    anyDistance: false,
   });
 
   useEffect(() => {
@@ -49,19 +52,28 @@ export default function DatingPreferencesForm() {
           preferredReligions: string[];
         }>();
 
+      const minAge = response.preferredMinAge || 0;
+      const maxAge = response.preferredMaxAge || 0;
+      const minHeight = response.preferredMinHeight || 0;
+      const maxHeight = response.preferredMaxHeight || 0;
+      const maxDistance = response.preferredMaxDistanceKm || 0;
+      
       setFormData({
         preferredGender: response.preferredGender || "",
         preferredSexualOrientation: response.preferredSexualOrientation || "",
-        preferredMinAge: response.preferredMinAge || 0,
-        preferredMaxAge: response.preferredMaxAge || 0,
-        preferredMinHeight: response.preferredMinHeight || 0,
-        preferredMaxHeight: response.preferredMaxHeight || 0,
-        preferredMaxDistance: response.preferredMaxDistanceKm || 0,
+        preferredMinAge: minAge,
+        preferredMaxAge: maxAge,
+        preferredMinHeight: minHeight,
+        preferredMaxHeight: maxHeight,
+        preferredMaxDistance: maxDistance,
         preferredCoronavirusVaccinated: response.preferredCoronavirusVaccinated || "",
         preferredReligions: response.preferredReligions || [],
         preferredInstruments: (response as any).preferredInstruments || [],
         preferredSkills: (response as any).preferredSkills || [],
-        matchMusicTastes: (response as any).matchMusicTastes ?? true,
+        matchMusicTastes: (response as any).matchMusicTastes ?? false,
+        anyAge: minAge === 18 && maxAge === 130,
+        anyHeight: minHeight === 36 && maxHeight === 94, // 3'0" to 7'10"
+        anyDistance: maxDistance >= 10000,
       });
     } catch (error) {
       console.error("Error fetching preferences:", error);
@@ -186,19 +198,39 @@ export default function DatingPreferencesForm() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-2">
-            Minimum Age
-          </label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-semibold text-gray-900">
+              Minimum Age
+            </label>
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.anyAge}
+                onChange={(e) => {
+                  const anyAge = e.target.checked;
+                  setFormData({
+                    ...formData,
+                    anyAge,
+                    preferredMinAge: anyAge ? 18 : formData.preferredMinAge,
+                    preferredMaxAge: anyAge ? 130 : formData.preferredMaxAge,
+                  });
+                }}
+                className="w-4 h-4 rounded border-gray-300 text-purple-600"
+              />
+              <span className="text-sm text-gray-700">Any</span>
+            </label>
+          </div>
           <input
             type="number"
             min="18"
-            max="100"
+            max="130"
             className="w-full p-3 border rounded-lg"
             value={formData.preferredMinAge === 0 ? "" : formData.preferredMinAge}
             onChange={(e) => {
               const value = parseInt(e.target.value) || 0;
-              setFormData({ ...formData, preferredMinAge: value });
+              setFormData({ ...formData, preferredMinAge: value, anyAge: false });
             }}
+            disabled={formData.anyAge}
           />
         </div>
         <div>
@@ -208,21 +240,41 @@ export default function DatingPreferencesForm() {
           <input
             type="number"
             min="18"
-            max="100"
+            max="130"
             className="w-full p-3 border rounded-lg"
             value={formData.preferredMaxAge === 0 ? "" : formData.preferredMaxAge}
             onChange={(e) => {
               const value = parseInt(e.target.value) || 0;
-              setFormData({ ...formData, preferredMaxAge: value });
+              setFormData({ ...formData, preferredMaxAge: value, anyAge: false });
             }}
+            disabled={formData.anyAge}
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-gray-900 mb-2">
-          Preferred Height Range
-        </label>
+        <div className="flex items-center justify-between mb-2">
+          <label className="block text-sm font-semibold text-gray-900">
+            Preferred Height Range
+          </label>
+          <label className="flex items-center space-x-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={formData.anyHeight}
+              onChange={(e) => {
+                const anyHeight = e.target.checked;
+                setFormData({
+                  ...formData,
+                  anyHeight,
+                  preferredMinHeight: anyHeight ? 36 : formData.preferredMinHeight, // 3'0" minimum
+                  preferredMaxHeight: anyHeight ? 94 : formData.preferredMaxHeight, // 7'10" maximum
+                });
+              }}
+              className="w-4 h-4 rounded border-gray-300 text-purple-600"
+            />
+            <span className="text-sm text-gray-700">Any</span>
+          </label>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <label className="text-xs text-gray-600">Minimum Height</label>
@@ -237,9 +289,10 @@ export default function DatingPreferencesForm() {
                   onChange={(e) => {
                     const feet = parseInt(e.target.value) || 0;
                     const inches = formData.preferredMinHeight % 12;
-                    setFormData({ ...formData, preferredMinHeight: feet * 12 + inches });
+                    setFormData({ ...formData, preferredMinHeight: feet * 12 + inches, anyHeight: false });
                   }}
                   placeholder="Feet"
+                  disabled={formData.anyHeight}
                 />
               </div>
               <div className="flex-1">
@@ -252,9 +305,10 @@ export default function DatingPreferencesForm() {
                   onChange={(e) => {
                     const inches = parseInt(e.target.value) || 0;
                     const feet = Math.floor(formData.preferredMinHeight / 12);
-                    setFormData({ ...formData, preferredMinHeight: feet * 12 + inches });
+                    setFormData({ ...formData, preferredMinHeight: feet * 12 + inches, anyHeight: false });
                   }}
                   placeholder="Inches"
+                  disabled={formData.anyHeight}
                 />
               </div>
             </div>
@@ -272,9 +326,10 @@ export default function DatingPreferencesForm() {
                   onChange={(e) => {
                     const feet = parseInt(e.target.value) || 0;
                     const inches = formData.preferredMaxHeight % 12;
-                    setFormData({ ...formData, preferredMaxHeight: feet * 12 + inches });
+                    setFormData({ ...formData, preferredMaxHeight: feet * 12 + inches, anyHeight: false });
                   }}
                   placeholder="Feet"
+                  disabled={formData.anyHeight}
                 />
               </div>
               <div className="flex-1">
@@ -287,9 +342,10 @@ export default function DatingPreferencesForm() {
                   onChange={(e) => {
                     const inches = parseInt(e.target.value) || 0;
                     const feet = Math.floor(formData.preferredMaxHeight / 12);
-                    setFormData({ ...formData, preferredMaxHeight: feet * 12 + inches });
+                    setFormData({ ...formData, preferredMaxHeight: feet * 12 + inches, anyHeight: false });
                   }}
                   placeholder="Inches"
+                  disabled={formData.anyHeight}
                 />
               </div>
             </div>
@@ -299,9 +355,27 @@ export default function DatingPreferencesForm() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-2">
-            Maximum Distance (miles)
-          </label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-semibold text-gray-900">
+              Maximum Distance (miles)
+            </label>
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.anyDistance}
+                onChange={(e) => {
+                  const anyDistance = e.target.checked;
+                  setFormData({
+                    ...formData,
+                    anyDistance,
+                    preferredMaxDistance: anyDistance ? 10000 : formData.preferredMaxDistance, // Very large number for "any"
+                  });
+                }}
+                className="w-4 h-4 rounded border-gray-300 text-purple-600"
+              />
+              <span className="text-sm text-gray-700">Any</span>
+            </label>
+          </div>
           <input
             type="number"
             min="1"
@@ -310,8 +384,9 @@ export default function DatingPreferencesForm() {
             value={formData.preferredMaxDistance === 0 ? "" : formData.preferredMaxDistance}
             onChange={(e) => {
               const value = parseInt(e.target.value) || 0;
-              setFormData({ ...formData, preferredMaxDistance: value });
+              setFormData({ ...formData, preferredMaxDistance: value, anyDistance: false });
             }}
+            disabled={formData.anyDistance}
           />
         </div>
         <div>
@@ -509,7 +584,14 @@ export default function DatingPreferencesForm() {
         </label>
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-between items-center">
+        <Button
+          onClick={() => window.location.href = "/dating"}
+          variant="outline"
+          className="border-gray-300 text-gray-900 hover:bg-gray-100 font-bold"
+        >
+          Back to Dating
+        </Button>
         <Button
           onClick={handleSave}
           disabled={saving}

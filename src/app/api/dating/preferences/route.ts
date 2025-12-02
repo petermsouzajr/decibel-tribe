@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
         preferredGender: preferredGender || null,
         preferredSexualOrientation: preferredSexualOrientation || null,
         preferredMinAge: preferredMinAge || 18,
-        preferredMaxAge: preferredMaxAge || 100,
+        preferredMaxAge: preferredMaxAge || 130,
         preferredMinHeight: preferredMinHeight || null,
         preferredMaxHeight: preferredMaxHeight || null,
         preferredMaxDistanceKm: preferredMaxDistance || 50,

@@ -1264,11 +1264,866 @@ async function seedNotifications(prismaClient, allPosts, allComments, createdLik
   }
 }
 
+// prisma/seedModules/adminTeam/reports.ts
+async function seedReports(prismaClient, { adminUserIds, regularUserIds, postIds, groupIds, eventIds }) {
+  if (!prismaClient) {
+    console.error("Prisma client is not available for seedReports.");
+    return [];
+  }
+  const reasons = [
+    "HARASSMENT",
+    "SPAM",
+    "INAPPROPRIATE_CONTENT",
+    "FAKE_PROFILE",
+    "OTHER"
+  ];
+  const pick = (arr) => arr.length ? arr[Math.floor(Math.random() * arr.length)] : void 0;
+  const reportsData = Array.from({ length: 25 }).map(() => {
+    const contentType = faker.number.int({ min: 0, max: 3 });
+    const reporterId = pick(regularUserIds);
+    const reason = pick(reasons);
+    const status = faker.helpers.weightedArrayElement([
+      { weight: 6, value: "PENDING" },
+      { weight: 2, value: "INVESTIGATING" },
+      { weight: 1, value: "RESOLVED_ACTION_TAKEN" },
+      { weight: 1, value: "RESOLVED_NO_ACTION" }
+    ]);
+    const base = {
+      reporterId,
+      reason,
+      description: faker.lorem.sentence(),
+      status,
+      adminNotes: status === "PENDING" ? null : faker.lorem.sentence()
+    };
+    if (status !== "PENDING") {
+      base.resolvedAt = faker.date.recent({ days: 14 });
+      base.resolvedBy = pick(adminUserIds);
+    }
+    if (contentType === 0) {
+      base.reportedId = pick(regularUserIds);
+    } else if (contentType === 1) {
+      base.postId = pick(postIds);
+    } else if (contentType === 2) {
+      base.groupId = pick(groupIds);
+    } else if (contentType === 3) {
+      base.eventId = pick(eventIds);
+    }
+    return base;
+  });
+  try {
+    const created = await prismaClient.report.createMany({ data: reportsData, skipDuplicates: true });
+    console.log(`adminTeam: created ${created.count} reports`);
+  } catch (error) {
+    console.error("adminTeam: error creating reports:", error);
+  }
+  const latest = await prismaClient.report.findMany({ orderBy: { createdAt: "desc" }, take: 25, select: { id: true } });
+  return latest.map((r) => r.id);
+}
+
+// prisma/seedModules/datingTeam/datingProfiles.ts
+var GUARANTEED_TEST_CITIES = [
+  { city: "Los Angeles", state: "CA", lat: 34.0522, lon: -118.2437 },
+  { city: "San Francisco", state: "CA", lat: 37.7749, lon: -122.4194 },
+  { city: "Chicago", state: "IL", lat: 41.8781, lon: -87.6298 },
+  { city: "New York", state: "NY", lat: 40.7128, lon: -74.006 },
+  { city: "Austin", state: "TX", lat: 30.2672, lon: -97.7431 },
+  { city: "Honolulu", state: "HI", lat: 21.3099, lon: -157.8581 }
+];
+var RANDOM_MAINLAND_CITIES = [
+  { city: "Houston", state: "TX", lat: 29.7604, lon: -95.3698 },
+  { city: "Phoenix", state: "AZ", lat: 33.4484, lon: -112.074 },
+  { city: "Philadelphia", state: "PA", lat: 39.9526, lon: -75.1652 },
+  { city: "San Antonio", state: "TX", lat: 29.4241, lon: -98.4936 },
+  { city: "San Diego", state: "CA", lat: 32.7157, lon: -117.1611 },
+  { city: "Dallas", state: "TX", lat: 32.7767, lon: -96.797 },
+  { city: "San Jose", state: "CA", lat: 37.3382, lon: -121.8863 },
+  { city: "Jacksonville", state: "FL", lat: 30.3322, lon: -81.6557 },
+  { city: "Fort Worth", state: "TX", lat: 32.7555, lon: -97.3308 },
+  { city: "Columbus", state: "OH", lat: 39.9612, lon: -82.9988 },
+  { city: "Charlotte", state: "NC", lat: 35.2271, lon: -80.8431 },
+  { city: "Indianapolis", state: "IN", lat: 39.7684, lon: -86.1581 },
+  { city: "Seattle", state: "WA", lat: 47.6062, lon: -122.3321 },
+  { city: "Denver", state: "CO", lat: 39.7392, lon: -104.9903 },
+  { city: "Washington", state: "DC", lat: 38.9072, lon: -77.0369 },
+  { city: "Boston", state: "MA", lat: 42.3601, lon: -71.0589 },
+  { city: "El Paso", state: "TX", lat: 31.7619, lon: -106.485 },
+  { city: "Nashville", state: "TN", lat: 36.1627, lon: -86.7816 },
+  { city: "Detroit", state: "MI", lat: 42.3314, lon: -83.0458 },
+  { city: "Oklahoma City", state: "OK", lat: 35.4676, lon: -97.5164 },
+  { city: "Portland", state: "OR", lat: 45.5152, lon: -122.6784 },
+  { city: "Las Vegas", state: "NV", lat: 36.1699, lon: -115.1398 },
+  { city: "Memphis", state: "TN", lat: 35.1495, lon: -90.049 },
+  { city: "Louisville", state: "KY", lat: 38.2527, lon: -85.7585 },
+  { city: "Baltimore", state: "MD", lat: 39.2904, lon: -76.6122 },
+  { city: "Milwaukee", state: "WI", lat: 43.0389, lon: -87.9065 },
+  { city: "Albuquerque", state: "NM", lat: 35.0844, lon: -106.6504 },
+  { city: "Tucson", state: "AZ", lat: 32.2226, lon: -110.9747 },
+  { city: "Fresno", state: "CA", lat: 36.7378, lon: -119.7871 },
+  { city: "Sacramento", state: "CA", lat: 38.5816, lon: -121.4944 },
+  { city: "Kansas City", state: "MO", lat: 39.0997, lon: -94.5786 },
+  { city: "Mesa", state: "AZ", lat: 33.4152, lon: -111.8315 },
+  { city: "Atlanta", state: "GA", lat: 33.749, lon: -84.388 },
+  { city: "Omaha", state: "NE", lat: 41.2565, lon: -95.9345 },
+  { city: "Colorado Springs", state: "CO", lat: 38.8339, lon: -104.8214 },
+  { city: "Raleigh", state: "NC", lat: 35.7796, lon: -78.6382 },
+  { city: "Virginia Beach", state: "VA", lat: 36.8529, lon: -75.978 },
+  { city: "Miami", state: "FL", lat: 25.7617, lon: -80.1918 },
+  { city: "Oakland", state: "CA", lat: 37.8044, lon: -122.2712 },
+  { city: "Minneapolis", state: "MN", lat: 44.9778, lon: -93.265 },
+  { city: "Tulsa", state: "OK", lat: 36.154, lon: -95.9928 },
+  { city: "Cleveland", state: "OH", lat: 41.4993, lon: -81.6944 },
+  { city: "Wichita", state: "KS", lat: 37.6872, lon: -97.3301 },
+  { city: "Arlington", state: "TX", lat: 32.7357, lon: -97.1081 },
+  { city: "New Orleans", state: "LA", lat: 29.9511, lon: -90.0715 }
+];
+var DATING_USER_COUNT = 200;
+var GUARANTEED_USERS_COUNT = 50;
+var RANDOM_USERS_COUNT = DATING_USER_COUNT - GUARANTEED_USERS_COUNT;
+var GENDERS = ["Male", "Female", "Non-binary", "Prefer not to say"];
+var SEXUAL_ORIENTATIONS = [
+  "Straight",
+  "Gay",
+  "Bisexual",
+  "Other"
+];
+var RELIGIONS = [
+  "Christian",
+  "Catholic",
+  "Jewish",
+  "Muslim",
+  "Buddhist",
+  "Hindu",
+  "Sikh",
+  "Atheist",
+  "Agnostic",
+  "Undecided"
+];
+var VACCINATION_STATUS = ["Yes", "No", ""];
+var MIN_HEIGHT_INCHES = 36;
+var MAX_HEIGHT_INCHES = 94;
+var MIN_AGE = 18;
+var MAX_AGE = 130;
+async function deleteDatingTestUsers(tx, streamClient) {
+  console.log("Deleting existing dating test users...");
+  try {
+    const datingUsers = await tx.user.findMany({
+      where: {
+        OR: [
+          { username: { startsWith: "dating_user_" } },
+          { email: { endsWith: "@test.com" } }
+        ]
+      },
+      select: { id: true }
+    });
+    const userIds = datingUsers.map((user) => user.id);
+    if (userIds.length === 0) {
+      console.log("...No existing dating test users found to delete.");
+      return [];
+    }
+    await tx.user_photos.deleteMany({
+      where: { userId: { in: userIds } }
+    });
+    await tx.user_dating_preferences.deleteMany({
+      where: { userId: { in: userIds } }
+    });
+    await tx.user_dating_profile.deleteMany({
+      where: { userId: { in: userIds } }
+    });
+    await tx.dating_location_overrides.deleteMany({
+      where: { userId: { in: userIds } }
+    });
+    await tx.swipes.deleteMany({
+      where: {
+        OR: [
+          { fromUserId: { in: userIds } },
+          { toUserId: { in: userIds } }
+        ]
+      }
+    });
+    await tx.matches.deleteMany({
+      where: {
+        OR: [
+          { user1Id: { in: userIds } },
+          { user2Id: { in: userIds } }
+        ]
+      }
+    });
+    await tx.user.deleteMany({
+      where: { id: { in: userIds } }
+    });
+    console.log(
+      `...${userIds.length} dating test users and related data deleted from database.`
+    );
+    if (streamClient && userIds.length > 0) {
+      try {
+        const streamUsers = await streamClient.queryUsers({
+          id: { $in: userIds }
+        });
+        if (streamUsers.users.length > 0) {
+          let deletedCount = 0;
+          for (const user of streamUsers.users) {
+            try {
+              await streamClient.deleteUser(user.id, { hardDelete: true });
+              deletedCount++;
+            } catch (error) {
+              console.error(
+                `Failed to delete user ${user.id} from StreamChat:`,
+                error.message
+              );
+            }
+          }
+          console.log(
+            `...${deletedCount} dating users deleted from StreamChat.`
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Error deleting dating users from StreamChat:",
+          error.message
+        );
+      }
+    }
+    return userIds;
+  } catch (error) {
+    console.error("Error deleting dating test users:", error);
+    return [];
+  }
+}
+async function seedDatingProfiles(tx, streamClient, hasher) {
+  if (!tx) {
+    console.error("Prisma client is not available for seedDatingProfiles.");
+    return [];
+  }
+  await deleteDatingTestUsers(tx, streamClient);
+  console.log(`Seeding ${DATING_USER_COUNT} dating profiles...`);
+  const hashedPassword = await hasher(cypressEnv.password);
+  const createdDatingUsers = [];
+  const usersToCreate = [];
+  const profilesToCreate = [];
+  const preferencesToCreate = [];
+  const photosToCreate = [];
+  const swipesToCreate = [];
+  const matchesToCreate = [];
+  let userIndex = 0;
+  console.log("Creating test users with predefined dating relationships...");
+  const testUsers = {};
+  const testUserConfigs = [
+    {
+      username: "testUserDatingDeckReady",
+      displayName: "Deck Ready User",
+      age: 28,
+      gender: "Male",
+      sexualOrientation: "Straight",
+      location: GUARANTEED_TEST_CITIES[0],
+      // Los Angeles
+      preferredGender: "Female",
+      preferredSexualOrientation: "Straight",
+      preferredMinAge: 23,
+      preferredMaxAge: 35
+    },
+    {
+      username: "testUserDatingPendingMatches",
+      displayName: "Pending Matches User",
+      age: 25,
+      gender: "Female",
+      sexualOrientation: "Straight",
+      location: GUARANTEED_TEST_CITIES[0],
+      // Los Angeles
+      preferredGender: "Male",
+      preferredSexualOrientation: "Straight",
+      preferredMinAge: 23,
+      preferredMaxAge: 32
+    },
+    {
+      username: "testUserDatingMutualMatches",
+      displayName: "Mutual Matches User",
+      age: 30,
+      gender: "Male",
+      sexualOrientation: "Bisexual",
+      location: GUARANTEED_TEST_CITIES[1],
+      // San Francisco
+      preferredGender: null,
+      // Open to any
+      preferredSexualOrientation: null,
+      preferredMinAge: 25,
+      preferredMaxAge: 40
+    },
+    {
+      username: "testUserDatingNoMatches",
+      displayName: "No Matches User",
+      age: 22,
+      gender: "Female",
+      sexualOrientation: "Straight",
+      location: GUARANTEED_TEST_CITIES[2],
+      // Chicago
+      preferredGender: "Male",
+      preferredSexualOrientation: "Straight",
+      preferredMinAge: 20,
+      preferredMaxAge: 30
+    },
+    {
+      username: "testUserDatingLikedBack",
+      displayName: "Liked Back User",
+      age: 27,
+      gender: "Male",
+      sexualOrientation: "Straight",
+      location: GUARANTEED_TEST_CITIES[0],
+      // Los Angeles
+      preferredGender: "Female",
+      preferredSexualOrientation: "Straight",
+      preferredMinAge: 22,
+      preferredMaxAge: 32
+    }
+  ];
+  const compatibleUsersForDeck = [];
+  for (let i = 0; i < 5; i++) {
+    compatibleUsersForDeck.push({
+      username: `testUserDatingCompatible${i + 1}`,
+      config: {
+        username: `testUserDatingCompatible${i + 1}`,
+        displayName: `Compatible User ${i + 1}`,
+        age: 24 + i,
+        gender: "Female",
+        sexualOrientation: "Straight",
+        location: GUARANTEED_TEST_CITIES[0],
+        // Same city as DeckReady
+        preferredGender: "Male",
+        preferredSexualOrientation: "Straight",
+        preferredMinAge: 25,
+        preferredMaxAge: 35
+      }
+    });
+  }
+  const usersWhoLikedPending = [];
+  for (let i = 0; i < 5; i++) {
+    usersWhoLikedPending.push({
+      username: `testUserDatingLikedPending${i + 1}`,
+      config: {
+        username: `testUserDatingLikedPending${i + 1}`,
+        displayName: `Liked Pending User ${i + 1}`,
+        age: 24 + i,
+        gender: "Male",
+        sexualOrientation: "Straight",
+        location: GUARANTEED_TEST_CITIES[0],
+        // Same city
+        preferredGender: "Female",
+        preferredSexualOrientation: "Straight",
+        preferredMinAge: 22,
+        preferredMaxAge: 30
+      }
+    });
+  }
+  const mutualMatchUsers = [];
+  for (let i = 0; i < 3; i++) {
+    mutualMatchUsers.push({
+      username: `testUserDatingMutualMatch${i + 1}`,
+      config: {
+        username: `testUserDatingMutualMatch${i + 1}`,
+        displayName: `Mutual Match ${i + 1}`,
+        age: 28 + i,
+        gender: i === 0 ? "Female" : "Male",
+        sexualOrientation: i === 0 ? "Straight" : "Bisexual",
+        location: GUARANTEED_TEST_CITIES[1],
+        // San Francisco
+        preferredGender: null,
+        preferredSexualOrientation: null,
+        preferredMinAge: 25,
+        preferredMaxAge: 40
+      }
+    });
+  }
+  const usersLikedByLikedBack = [];
+  for (let i = 0; i < 5; i++) {
+    usersLikedByLikedBack.push({
+      username: `testUserDatingLikedByLikedBack${i + 1}`,
+      config: {
+        username: `testUserDatingLikedByLikedBack${i + 1}`,
+        displayName: `Liked By LikedBack ${i + 1}`,
+        age: 23 + i,
+        gender: "Female",
+        sexualOrientation: "Straight",
+        location: GUARANTEED_TEST_CITIES[0],
+        // Los Angeles
+        preferredGender: "Male",
+        preferredSexualOrientation: "Straight",
+        preferredMinAge: 25,
+        preferredMaxAge: 35
+      }
+    });
+  }
+  const allTestUsers = [
+    ...testUserConfigs.map((c) => ({ username: c.username, config: c })),
+    ...compatibleUsersForDeck,
+    ...usersWhoLikedPending,
+    ...mutualMatchUsers,
+    ...usersLikedByLikedBack
+  ];
+  for (const { username, config } of allTestUsers) {
+    const userId = generateIdFromEntropySize(10);
+    const email = `${username}@test.com`;
+    const heightInches = 66;
+    const heightCm = heightInches * 2.54;
+    const userData = {
+      id: userId,
+      username,
+      email,
+      displayName: config.displayName,
+      passwordHash: hashedPassword,
+      isVerified: true,
+      isDatingActive: true,
+      avatarUrl: `https://i.pravatar.cc/150?img=${faker.number.int({ min: 1, max: 70 })}`,
+      bio: `Test user: ${config.displayName}`,
+      createdAt: faker.date.between({
+        from: new Date(Date.now() - 365 * 24 * 60 * 60 * 1e3),
+        to: /* @__PURE__ */ new Date()
+      })
+    };
+    usersToCreate.push(userData);
+    const profileId = generateIdFromEntropySize(10);
+    const profileData = {
+      id: profileId,
+      user: { connect: { id: userId } },
+      age: config.age,
+      height: heightCm,
+      gender: config.gender,
+      sexualOrientation: config.sexualOrientation,
+      religion: "Atheist",
+      coronavirusVaccinated: "Yes",
+      location: `${config.location.city}, ${config.location.state}`
+    };
+    profilesToCreate.push(profileData);
+    const preferencesId = generateIdFromEntropySize(10);
+    const preferencesData = {
+      id: preferencesId,
+      users: { connect: { id: userId } },
+      preferredMinAge: config.preferredMinAge,
+      preferredMaxAge: config.preferredMaxAge,
+      preferredMaxDistanceKm: 50,
+      // 50km for test users
+      preferredMinHeight: 60 * 2.54,
+      // 5'0"
+      preferredMaxHeight: 72 * 2.54,
+      // 6'0"
+      preferredGender: config.preferredGender,
+      preferredSexualOrientation: config.preferredSexualOrientation,
+      preferredCoronavirusVaccinated: null,
+      preferredReligions: [],
+      preferredInstruments: [],
+      preferredSkills: [],
+      matchMusicTastes: false
+    };
+    preferencesToCreate.push(preferencesData);
+    for (let j = 0; j < 2; j++) {
+      const photoId = generateIdFromEntropySize(10);
+      const photoData = {
+        id: photoId,
+        users: { connect: { id: userId } },
+        url: `https://i.pravatar.cc/400?img=${faker.number.int({ min: 1, max: 70 })}`,
+        isPrimary: j === 0
+      };
+      photosToCreate.push(photoData);
+    }
+    testUsers[username] = { id: userId, userId, username };
+    createdDatingUsers.push({
+      id: userId,
+      userId,
+      username,
+      isDatingActive: true
+    });
+  }
+  const pendingMatchesUserId = testUsers["testUserDatingPendingMatches"]?.id;
+  if (pendingMatchesUserId) {
+    for (let i = 0; i < 5; i++) {
+      const likerUsername = `testUserDatingLikedPending${i + 1}`;
+      const likerId = testUsers[likerUsername]?.id;
+      if (likerId) {
+        swipesToCreate.push({
+          fromUserId: likerId,
+          toUserId: pendingMatchesUserId,
+          direction: "LIKE"
+        });
+      }
+    }
+  }
+  const mutualMatchesUserId = testUsers["testUserDatingMutualMatches"]?.id;
+  if (mutualMatchesUserId) {
+    for (let i = 0; i < 3; i++) {
+      const matchUsername = `testUserDatingMutualMatch${i + 1}`;
+      const matchId = testUsers[matchUsername]?.id;
+      if (matchId) {
+        swipesToCreate.push({
+          fromUserId: mutualMatchesUserId,
+          toUserId: matchId,
+          direction: "LIKE"
+        });
+        swipesToCreate.push({
+          fromUserId: matchId,
+          toUserId: mutualMatchesUserId,
+          direction: "LIKE"
+        });
+        matchesToCreate.push({
+          user1Id: mutualMatchesUserId < matchId ? mutualMatchesUserId : matchId,
+          user2Id: mutualMatchesUserId < matchId ? matchId : mutualMatchesUserId
+        });
+      }
+    }
+  }
+  const likedBackUserId = testUsers["testUserDatingLikedBack"]?.id;
+  if (likedBackUserId) {
+    for (let i = 0; i < 5; i++) {
+      const likedUsername = `testUserDatingLikedByLikedBack${i + 1}`;
+      const likedId = testUsers[likedUsername]?.id;
+      if (likedId) {
+        swipesToCreate.push({
+          fromUserId: likedBackUserId,
+          toUserId: likedId,
+          direction: "LIKE"
+        });
+      }
+    }
+  }
+  console.log(`...Created ${allTestUsers.length} test users with predefined relationships.`);
+  const usersPerGuaranteedCity = Math.floor(
+    GUARANTEED_USERS_COUNT / GUARANTEED_TEST_CITIES.length
+  );
+  const remainderGuaranteed = GUARANTEED_USERS_COUNT % GUARANTEED_TEST_CITIES.length;
+  for (let cityIdx = 0; cityIdx < GUARANTEED_TEST_CITIES.length; cityIdx++) {
+    const city = GUARANTEED_TEST_CITIES[cityIdx];
+    const usersForThisCity = usersPerGuaranteedCity + (cityIdx < remainderGuaranteed ? 1 : 0);
+    for (let j = 0; j < usersForThisCity; j++) {
+      const userId = generateIdFromEntropySize(10);
+      const username = `dating_user_${userIndex + 1}`;
+      const email = `dating_user_${userIndex + 1}@test.com`;
+      userIndex++;
+      const age = faker.number.int({ min: MIN_AGE, max: MAX_AGE });
+      const gender = faker.helpers.arrayElement(GENDERS);
+      const sexualOrientation = faker.helpers.arrayElement(SEXUAL_ORIENTATIONS);
+      const heightInches = faker.number.int({
+        min: MIN_HEIGHT_INCHES,
+        max: MAX_HEIGHT_INCHES
+      });
+      const heightCm = heightInches * 2.54;
+      const religion = faker.helpers.arrayElement(RELIGIONS);
+      const vaccinated = faker.helpers.arrayElement(VACCINATION_STATUS);
+      const location = `${city.city}, ${city.state}`;
+      const userData = {
+        id: userId,
+        username,
+        email,
+        displayName: faker.person.fullName(),
+        passwordHash: hashedPassword,
+        isVerified: true,
+        isDatingActive: true,
+        avatarUrl: `https://i.pravatar.cc/150?img=${faker.number.int({
+          min: 1,
+          max: 70
+        })}`,
+        bio: faker.lorem.sentence(),
+        createdAt: faker.date.between({
+          from: new Date(Date.now() - 365 * 24 * 60 * 60 * 1e3),
+          to: /* @__PURE__ */ new Date()
+        })
+      };
+      usersToCreate.push(userData);
+      const profileId = generateIdFromEntropySize(10);
+      const profileData = {
+        id: profileId,
+        user: { connect: { id: userId } },
+        age,
+        height: heightCm,
+        gender,
+        sexualOrientation,
+        religion,
+        coronavirusVaccinated: vaccinated,
+        location
+      };
+      profilesToCreate.push(profileData);
+      const preferencesId = generateIdFromEntropySize(10);
+      const preferredMinAge = Math.max(MIN_AGE, age - 5);
+      const preferredMaxAge = Math.min(MAX_AGE, age + 10);
+      const preferredGender = gender === "Non-binary" ? null : faker.helpers.arrayElement([
+        gender,
+        null,
+        faker.helpers.arrayElement(GENDERS)
+      ]);
+      const preferredSexualOrientation = faker.helpers.arrayElement([
+        sexualOrientation,
+        null,
+        faker.helpers.arrayElement(SEXUAL_ORIENTATIONS)
+      ]);
+      const preferencesData = {
+        id: preferencesId,
+        users: { connect: { id: userId } },
+        preferredMinAge,
+        preferredMaxAge,
+        preferredMaxDistanceKm: faker.helpers.arrayElement([
+          25,
+          50,
+          100,
+          150,
+          200
+        ]),
+        preferredMinHeight: Math.max(MIN_HEIGHT_INCHES * 2.54, heightCm - 10),
+        preferredMaxHeight: Math.min(MAX_HEIGHT_INCHES * 2.54, heightCm + 15),
+        preferredGender,
+        preferredSexualOrientation,
+        preferredCoronavirusVaccinated: faker.helpers.arrayElement([
+          vaccinated,
+          null,
+          faker.helpers.arrayElement(VACCINATION_STATUS)
+        ]),
+        preferredReligions: faker.helpers.arrayElements(RELIGIONS, {
+          min: 0,
+          max: 3
+        }),
+        preferredInstruments: [],
+        preferredSkills: [],
+        matchMusicTastes: faker.datatype.boolean()
+      };
+      preferencesToCreate.push(preferencesData);
+      const photoCount = faker.number.int({ min: 1, max: 4 });
+      for (let k = 0; k < photoCount; k++) {
+        const photoId = generateIdFromEntropySize(10);
+        const photoData = {
+          id: photoId,
+          users: { connect: { id: userId } },
+          url: `https://i.pravatar.cc/400?img=${faker.number.int({
+            min: 1,
+            max: 70
+          })}`,
+          isPrimary: k === 0
+        };
+        photosToCreate.push(photoData);
+      }
+      createdDatingUsers.push({
+        id: userId,
+        userId,
+        username,
+        isDatingActive: true
+      });
+    }
+  }
+  for (let i = 0; i < RANDOM_USERS_COUNT; i++) {
+    const userId = generateIdFromEntropySize(10);
+    const city = faker.helpers.arrayElement(RANDOM_MAINLAND_CITIES);
+    const username = `dating_user_${userIndex + 1}`;
+    const email = `dating_user_${userIndex + 1}@test.com`;
+    userIndex++;
+    const age = faker.number.int({ min: MIN_AGE, max: MAX_AGE });
+    const gender = faker.helpers.arrayElement(GENDERS);
+    const sexualOrientation = faker.helpers.arrayElement(SEXUAL_ORIENTATIONS);
+    const heightInches = faker.number.int({
+      min: MIN_HEIGHT_INCHES,
+      max: MAX_HEIGHT_INCHES
+    });
+    const heightCm = heightInches * 2.54;
+    const religion = faker.helpers.arrayElement(RELIGIONS);
+    const vaccinated = faker.helpers.arrayElement(VACCINATION_STATUS);
+    const location = `${city.city}, ${city.state}`;
+    const userData = {
+      id: userId,
+      username,
+      email,
+      displayName: faker.person.fullName(),
+      passwordHash: hashedPassword,
+      isVerified: true,
+      isDatingActive: true,
+      // Enable dating feature
+      avatarUrl: `https://i.pravatar.cc/150?img=${faker.number.int({
+        min: 1,
+        max: 70
+      })}`,
+      bio: faker.lorem.sentence(),
+      createdAt: faker.date.between({
+        from: new Date(Date.now() - 365 * 24 * 60 * 60 * 1e3),
+        to: /* @__PURE__ */ new Date()
+      })
+    };
+    usersToCreate.push(userData);
+    const profileId = generateIdFromEntropySize(10);
+    const profileData = {
+      id: profileId,
+      user: { connect: { id: userId } },
+      age,
+      height: heightCm,
+      gender,
+      sexualOrientation,
+      religion,
+      coronavirusVaccinated: vaccinated,
+      location
+    };
+    profilesToCreate.push(profileData);
+    const preferencesId = generateIdFromEntropySize(10);
+    const preferredMinAge = Math.max(MIN_AGE, age - 5);
+    const preferredMaxAge = Math.min(MAX_AGE, age + 10);
+    const preferredGender = gender === "Non-binary" ? null : faker.helpers.arrayElement([
+      gender,
+      null,
+      faker.helpers.arrayElement(GENDERS)
+    ]);
+    const preferredSexualOrientation = faker.helpers.arrayElement([
+      sexualOrientation,
+      null,
+      faker.helpers.arrayElement(SEXUAL_ORIENTATIONS)
+    ]);
+    const preferencesData = {
+      id: preferencesId,
+      users: { connect: { id: userId } },
+      preferredMinAge,
+      preferredMaxAge,
+      preferredMaxDistanceKm: faker.helpers.arrayElement([
+        25,
+        50,
+        100,
+        150,
+        200
+      ]),
+      preferredMinHeight: Math.max(MIN_HEIGHT_INCHES * 2.54, heightCm - 10),
+      preferredMaxHeight: Math.min(MAX_HEIGHT_INCHES * 2.54, heightCm + 15),
+      preferredGender,
+      preferredSexualOrientation,
+      preferredCoronavirusVaccinated: faker.helpers.arrayElement([
+        vaccinated,
+        null,
+        faker.helpers.arrayElement(VACCINATION_STATUS)
+      ]),
+      preferredReligions: faker.helpers.arrayElements(RELIGIONS, {
+        min: 0,
+        max: 3
+      }),
+      preferredInstruments: [],
+      // Can be populated if needed
+      preferredSkills: [],
+      // Can be populated if needed
+      matchMusicTastes: faker.datatype.boolean()
+    };
+    preferencesToCreate.push(preferencesData);
+    const photoCount = faker.number.int({ min: 1, max: 4 });
+    for (let k = 0; k < photoCount; k++) {
+      const photoId = generateIdFromEntropySize(10);
+      const photoData = {
+        id: photoId,
+        users: { connect: { id: userId } },
+        url: `https://i.pravatar.cc/400?img=${faker.number.int({
+          min: 1,
+          max: 70
+        })}`,
+        isPrimary: k === 0
+      };
+      photosToCreate.push(photoData);
+    }
+    createdDatingUsers.push({
+      id: userId,
+      userId,
+      username,
+      isDatingActive: true
+    });
+  }
+  try {
+    console.log(`Creating ${usersToCreate.length} dating users...`);
+    await tx.user.createMany({
+      data: usersToCreate,
+      skipDuplicates: true
+    });
+    console.log(`...${usersToCreate.length} users created.`);
+    if (streamClient) {
+      const streamChatUsers = usersToCreate.map((user) => ({
+        id: user.id,
+        name: user.displayName,
+        image: user.avatarUrl,
+        email: user.email
+      }));
+      try {
+        await streamClient.upsertUsers(streamChatUsers);
+        console.log(
+          `...${streamChatUsers.length} users upserted to StreamChat.`
+        );
+      } catch (error) {
+        console.error(
+          `Failed to add users to StreamChat:`,
+          error.message
+        );
+      }
+    }
+    console.log(`Creating ${profilesToCreate.length} dating profiles...`);
+    for (const profile of profilesToCreate) {
+      await tx.user_dating_profile.create({
+        data: profile
+      });
+    }
+    console.log(`...${profilesToCreate.length} profiles created.`);
+    console.log(`Creating ${preferencesToCreate.length} dating preferences...`);
+    for (const prefs of preferencesToCreate) {
+      await tx.user_dating_preferences.create({
+        data: prefs
+      });
+    }
+    console.log(`...${preferencesToCreate.length} preferences created.`);
+    console.log(`Creating ${photosToCreate.length} user photos...`);
+    for (const photo of photosToCreate) {
+      await tx.user_photos.create({
+        data: photo
+      });
+    }
+    console.log(`...${photosToCreate.length} photos created.`);
+    if (swipesToCreate.length > 0) {
+      console.log(`Creating ${swipesToCreate.length} swipes for test users...`);
+      for (const swipe of swipesToCreate) {
+        try {
+          await tx.swipes.create({
+            data: {
+              id: generateIdFromEntropySize(10),
+              fromUserId: swipe.fromUserId,
+              toUserId: swipe.toUserId,
+              direction: swipe.direction,
+              createdAt: /* @__PURE__ */ new Date()
+            }
+          });
+        } catch (error) {
+          console.warn(`Swipe already exists or error: ${error.message}`);
+        }
+      }
+      console.log(`...${swipesToCreate.length} swipes created.`);
+    }
+    if (matchesToCreate.length > 0) {
+      console.log(`Creating ${matchesToCreate.length} matches for test users...`);
+      for (const match of matchesToCreate) {
+        try {
+          await tx.matches.create({
+            data: {
+              id: generateIdFromEntropySize(10),
+              user1Id: match.user1Id,
+              user2Id: match.user2Id,
+              createdAt: /* @__PURE__ */ new Date()
+            }
+          });
+        } catch (error) {
+          console.warn(`Match already exists or error: ${error.message}`);
+        }
+      }
+      console.log(`...${matchesToCreate.length} matches created.`);
+    }
+    console.log(
+      `Dating seeding complete: ${createdDatingUsers.length} users with profiles, preferences, photos, swipes, and matches.`
+    );
+    console.log("\nTest Users Created:");
+    console.log("  - testUserDatingDeckReady: Has 5 compatible users ready in deck");
+    console.log("  - testUserDatingPendingMatches: Has 5 users who liked them (pending matches)");
+    console.log("  - testUserDatingMutualMatches: Has 3 mutual matches");
+    console.log("  - testUserDatingNoMatches: Fresh user with no activity");
+    console.log("  - testUserDatingLikedBack: Liked 5 users, waiting for responses");
+    return createdDatingUsers;
+  } catch (error) {
+    console.error("Error during dating profile seeding:", error);
+    return [];
+  }
+}
+
 // prisma/seed.ts
 var {
   prisma: prisma3,
   // Use shared prisma instance
-  streamChatClient: streamChatClient2,
+  streamChatClient: streamChatClient3,
   // Use shared stream client instance
   cypressEnv: cypressEnv5,
   // Use shared cypress env data
@@ -1276,7 +2131,7 @@ var {
   // Use shared faker instance
   generateIdFromEntropySize: generateIdFromEntropySize6,
   // Use shared ID generator
-  passwordHash: passwordHash2,
+  passwordHash: passwordHash3,
   // Use shared hash function
   // Import other helpers if needed: random, weightedRandom, etc.
   accountDataGenerator: accountDataGenerator3,
@@ -1288,7 +2143,7 @@ var {
 async function main() {
   console.log("Initiating deletion phase...");
   const deletedUserIds = await deleteTestUsers(prisma3);
-  await deleteTestUsersFromStreamChat(streamChatClient2, deletedUserIds);
+  await deleteTestUsersFromStreamChat(streamChatClient3, deletedUserIds);
   console.log("Deletion phase completed.");
   console.log("Start seeding...");
   try {
@@ -1297,8 +2152,8 @@ async function main() {
         console.log("Starting Prisma transaction for seeding...");
         const createdUsers = await seedUsers(
           tx,
-          streamChatClient2,
-          passwordHash2
+          streamChatClient3,
+          passwordHash3
         );
         if (createdUsers.length === 0)
           throw new Error("User seeding failed, aborting transaction.");
@@ -1364,6 +2219,22 @@ async function main() {
           createdEvents,
           createdAttendees
         );
+        const adminUsers = await tx.user.findMany({
+          where: { isAdmin: true },
+          select: { id: true }
+        });
+        const allUsers = await tx.user.findMany({ select: { id: true } });
+        const allPostIds = (await tx.post.findMany({ select: { id: true } })).map((p) => p.id);
+        const allGroupIds = (await tx.group.findMany({ select: { id: true } })).map((g) => g.id);
+        const allEventIds = (await tx.event.findMany({ select: { id: true } })).map((e) => e.id);
+        await seedReports(tx, {
+          adminUserIds: adminUsers.map((u) => u.id),
+          regularUserIds: allUsers.map((u) => u.id),
+          postIds: allPostIds,
+          groupIds: allGroupIds,
+          eventIds: allEventIds
+        });
+        await seedDatingProfiles(tx, streamChatClient3, passwordHash3);
         console.log("Prisma transaction committed successfully.");
       },
       {

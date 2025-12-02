@@ -213,6 +213,41 @@ Creates 200 dating users spread across the United States with **guaranteed test 
 - Email format: `dating_user_1@test.com`, `dating_user_2@test.com`, etc.
 - Password: (your env password, same for all dating users)
 
+**Test Users with Predefined Relationships:**
+
+For easy testing, the seed creates specific test users with predefined relationships:
+
+1. **`testUserDatingDeckReady`** (Deck Ready User)
+   - Location: Los Angeles, CA
+   - Has 5 compatible users ready to view in their deck
+   - No swipes have been made yet, so all 5 appear as potential matches
+   - Compatible users: `testUserDatingCompatible1` through `testUserDatingCompatible5`
+
+2. **`testUserDatingPendingMatches`** (Pending Matches User)
+   - Location: Los Angeles, CA
+   - Has 5 users who have liked them (pending matches)
+   - These users appear in the "Likes You" section
+   - Users who liked them: `testUserDatingLikedPending1` through `testUserDatingLikedPending5`
+
+3. **`testUserDatingMutualMatches`** (Mutual Matches User)
+   - Location: San Francisco, CA
+   - Has 3 mutual matches already established
+   - Can test chat functionality immediately
+   - Mutual matches: `testUserDatingMutualMatch1` through `testUserDatingMutualMatch3`
+
+4. **`testUserDatingNoMatches`** (No Matches User)
+   - Location: Chicago, IL
+   - Fresh user with no swipes or matches
+   - Good for testing initial deck experience
+
+5. **`testUserDatingLikedBack`** (Liked Back User)
+   - Location: Los Angeles, CA
+   - Has liked 5 users but waiting for their responses
+   - Can test the "waiting for response" state
+   - Liked users: `testUserDatingLikedByLikedBack1` through `testUserDatingLikedByLikedBack5`
+
+All test users are in guaranteed test cities (Los Angeles, San Francisco, or Chicago) for easy location-based testing.
+
 ## Running Partial Seeds
 
 **Current Status:** The seed system does **NOT** currently support running partial seeds. The entire seed process runs as a single operation.

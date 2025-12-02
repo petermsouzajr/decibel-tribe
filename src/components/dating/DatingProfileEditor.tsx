@@ -162,7 +162,7 @@ export default function DatingProfileEditor() {
                   <input
                     type="number"
                     min="18"
-                    max="100"
+                    max="130"
                     className="w-full p-3 border rounded-lg"
                     value={formData.age === 0 ? "" : formData.age}
                     onChange={(e) => {
@@ -323,6 +323,17 @@ export default function DatingProfileEditor() {
           {activeTab === "photos" && <PhotoManager />}
 
           {activeTab === "preferences" && <DatingPreferencesForm />}
+        </div>
+
+        {/* Back to Dating Button */}
+        <div className="mt-6 flex justify-center">
+          <Button
+            onClick={() => router.push("/dating")}
+            variant="outline"
+            className="border-gray-300 text-gray-900 hover:bg-gray-100 font-bold py-6 text-lg bg-white"
+          >
+            Back to Dating
+          </Button>
         </div>
       </div>
     </div>
