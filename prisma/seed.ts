@@ -36,6 +36,7 @@ import {
   type CommentInput,
 } from "./seedModules/notificationsTeam/notifications.js";
 import { seedReports } from "./seedModules/adminTeam/reports.js";
+import { seedDatingProfiles } from "./seedModules/datingTeam/datingProfiles.js";
 
 async function main() {
   // --- Deletion (outside transaction) ---
@@ -152,6 +153,9 @@ async function main() {
           groupIds: allGroupIds,
           eventIds: allEventIds,
         });
+
+        // --- DatingTeam: seed dating profiles ---
+        await seedDatingProfiles(tx as any, streamChatClient, passwordHash);
 
         console.log("Prisma transaction committed successfully.");
       },

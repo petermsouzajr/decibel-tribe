@@ -49,3 +49,4 @@ CREATE INDEX IF NOT EXISTS "user_photos_userId_isPrimary_idx" ON "user_photos"("
 CREATE INDEX IF NOT EXISTS "users_isVerified_isDatingActive_deletedAt_idx" ON "users"("isVerified", "isDatingActive", "deletedAt");
 
 
+
