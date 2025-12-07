@@ -278,6 +278,14 @@ export default function LikesYouList() {
                 height: selectedUser.height || null,
                 gender: selectedUser.gender || null,
                 bio: "",
+                hasKids: null,
+                smokes: null,
+                drinks: null,
+                activity: null,
+                college: null,
+                job: null,
+                pets: null,
+                interests: [],
                 photos: selectedUser.primaryPhotoUrl
                   ? [{ url: selectedUser.primaryPhotoUrl, isPrimary: true }]
                   : [],

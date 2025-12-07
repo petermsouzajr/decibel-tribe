@@ -3,6 +3,65 @@ import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 
+// Geocode zip code to lat/lon/city using OpenStreetMap Nominatim API
+async function geocodeZipCode(zipCode: string): Promise<{ lat: number; lon: number; city?: string } | null> {
+  try {
+    const cleanZip = zipCode.trim().replace(/\s+/g, "");
+    
+    if (/^\d{5}(-\d{4})?$/.test(cleanZip)) {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?postalcode=${encodeURIComponent(cleanZip)}&countrycodes=us&format=json&limit=1`,
+        {
+          headers: {
+            'User-Agent': 'DecibelTribe/1.0'
+          }
+        }
+      );
+      
+      if (!response.ok) {
+        console.error(`Geocoding API error: ${response.status}`);
+        return null;
+      }
+      
+      const data = await response.json();
+      if (data && data.length > 0) {
+        return {
+          lat: parseFloat(data[0].lat),
+          lon: parseFloat(data[0].lon),
+          city: data[0].address?.city || data[0].address?.town || data[0].address?.village || data[0].display_name.split(",")[0] || null,
+        };
+      }
+    }
+
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(zipCode)}&format=json&limit=1`,
+      {
+        headers: {
+          'User-Agent': 'DecibelTribe/1.0'
+        }
+      }
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    if (data && data.length > 0) {
+      return {
+        lat: parseFloat(data[0].lat),
+        lon: parseFloat(data[0].lon),
+        city: data[0].address?.city || data[0].address?.town || data[0].address?.village || data[0].display_name.split(",")[0] || null,
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Error geocoding location:", error);
+    return null;
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { user } = await validateRequest();
@@ -43,7 +102,7 @@ export async function POST(request: NextRequest) {
       age,
       height,
       gender,
-      location,
+      zipCode,
       coronavirusVaccinated,
       religion,
       sexualOrientation,
@@ -73,13 +132,27 @@ export async function POST(request: NextRequest) {
       preferredActivity,
     } = await request.json();
 
+    // Geocode zipCode if provided (only called once when user updates their zip code)
+    let city: string | null = null;
+    let latitude: number | null = null;
+    let longitude: number | null = null;
+    
+    if (zipCode !== undefined && zipCode) {
+      const geocoded = await geocodeZipCode(zipCode);
+      if (geocoded) {
+        city = geocoded.city || null;
+        latitude = geocoded.lat;
+        longitude = geocoded.lon;
+      }
+    }
+
     // Create or update user dating profile (including dating-specific bio)
     if (
       bio !== undefined ||
       age !== undefined ||
       height !== undefined ||
       gender !== undefined ||
-      location !== undefined ||
+      zipCode !== undefined ||
       coronavirusVaccinated !== undefined ||
       religion !== undefined ||
       sexualOrientation !== undefined ||
@@ -90,7 +163,10 @@ export async function POST(request: NextRequest) {
       college !== undefined ||
       job !== undefined ||
       pets !== undefined ||
-      interests !== undefined
+      interests !== undefined ||
+      city !== null ||
+      latitude !== null ||
+      longitude !== null
     ) {
       await prisma.user_dating_profile.upsert({
         where: {
@@ -101,7 +177,10 @@ export async function POST(request: NextRequest) {
           ...(age !== undefined && { age }),
           ...(height !== undefined && { height }),
           ...(gender !== undefined && { gender }),
-          ...(location !== undefined && { location }),
+          ...(zipCode !== undefined && { zipCode }),
+          ...(city !== null && { city }),
+          ...(latitude !== null && { latitude }),
+          ...(longitude !== null && { longitude }),
           ...(coronavirusVaccinated !== undefined && {
             coronavirusVaccinated,
           }),
@@ -124,7 +203,10 @@ export async function POST(request: NextRequest) {
           age: age || null,
           height: height || null,
           gender: gender || null,
-          location: location || null,
+          zipCode: zipCode || null,
+          city: city,
+          latitude: latitude,
+          longitude: longitude,
           coronavirusVaccinated: coronavirusVaccinated || null,
           religion: religion || null,
           sexualOrientation: sexualOrientation || null,

@@ -962,7 +962,7 @@ export async function seedDatingProfiles(
       },
       select: { id: true, username: true },
     });
-    const createdUserIds = new Set(actualCreatedUsers.map((u) => u.id));
+    const createdUserIds = new Set(actualCreatedUsers.map((u: { id: string; username: string }) => u.id));
     console.log(`...Fetched ${actualCreatedUsers.length} actual users from DB.`);
 
     // Filter profiles, preferences, and photos to only include users that were actually created
