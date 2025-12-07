@@ -125,7 +125,7 @@ describe("GET /api/users/{userId}/posts", () => {
     );
 
     // Act
-    const response = await GET(request, { params: { userId: targetUserId } });
+    const response = await GET(request, { params: Promise.resolve({ userId: targetUserId }) });
 
     // Assert
     expect(response.status).toBe(401);
@@ -144,7 +144,7 @@ describe("GET /api/users/{userId}/posts", () => {
     );
 
     // Act
-    await GET(request, { params: { userId: targetUserId } });
+    await GET(request, { params: Promise.resolve({ userId: targetUserId }) });
 
     // Assert
     expect(mockPostFindMany).toHaveBeenCalled();
@@ -163,7 +163,7 @@ describe("GET /api/users/{userId}/posts", () => {
     );
 
     // Act
-    const response = await GET(request, { params: { userId: targetUserId } });
+    const response = await GET(request, { params: Promise.resolve({ userId: targetUserId }) });
     const body: PostsPage = await response.json();
 
     // Assert
@@ -199,7 +199,7 @@ describe("GET /api/users/{userId}/posts", () => {
     );
 
     // Act
-    const response = await GET(request, { params: { userId: targetUserId } });
+    const response = await GET(request, { params: Promise.resolve({ userId: targetUserId }) });
     const body: PostsPage = await response.json();
 
     // Assert
@@ -228,7 +228,7 @@ describe("GET /api/users/{userId}/posts", () => {
     );
 
     // Act
-    const response = await GET(request, { params: { userId: targetUserId } });
+    const response = await GET(request, { params: Promise.resolve({ userId: targetUserId }) });
     const body = await response.json();
 
     // Assert

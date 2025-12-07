@@ -165,7 +165,7 @@ describe("API Route: /api/users/username/[username]", () => {
 
       // Act
       const response = await GET(request, {
-        params: { username: targetUsername },
+        params: Promise.resolve({ username: targetUsername  }),
       });
       const body = await response.json();
 
@@ -189,7 +189,7 @@ describe("API Route: /api/users/username/[username]", () => {
 
       // Act
       const response = await GET(request, {
-        params: { username: targetUsername },
+        params: Promise.resolve({ username: targetUsername  }),
       });
       const body = await response.json();
 
@@ -219,7 +219,7 @@ describe("API Route: /api/users/username/[username]", () => {
 
       // Act
       const response = await GET(request, {
-        params: { username: targetUsername },
+        params: Promise.resolve({ username: targetUsername  }),
       });
       const body = await response.json();
 
@@ -252,7 +252,7 @@ describe("API Route: /api/users/username/[username]", () => {
 
       // Act
       const response = await GET(request, {
-        params: { username: targetUsername },
+        params: Promise.resolve({ username: targetUsername  }),
       });
       const body = await response.json();
 
@@ -280,7 +280,7 @@ describe("API Route: /api/users/username/[username]", () => {
 
       // Act
       const response = await GET(request, {
-        params: { username: targetUsername },
+        params: Promise.resolve({ username: targetUsername  }),
       });
       const body = await response.json();
 
@@ -311,7 +311,7 @@ describe("API Route: /api/users/username/[username]", () => {
 
       // Act
       const response = await GET(request, {
-        params: { username: targetUsername },
+        params: Promise.resolve({ username: targetUsername  }),
       });
       const body = await response.json();
 
@@ -332,7 +332,7 @@ describe("API Route: /api/users/username/[username]", () => {
 
       // Act
       const response = await GET(request, {
-        params: { username: targetUsername },
+        params: Promise.resolve({ username: targetUsername  }),
       });
       const body = await response.json();
 

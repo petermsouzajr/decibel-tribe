@@ -20,7 +20,7 @@ describe("Group Details Page", () => {
   const renderPage = () =>
     render(
       <QueryClientProvider client={queryClient}>
-        <GroupPage params={{ groupId: mockGroupId }} />
+        <GroupPage params={Promise.resolve({ groupId: mockGroupId })} />
       </QueryClientProvider>,
     );
 

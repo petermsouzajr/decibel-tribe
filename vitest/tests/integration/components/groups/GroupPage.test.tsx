@@ -266,14 +266,14 @@ describe("[Groups][Component] GroupPage Client Logic", () => {
 
   // Test 1: Render name, description (as member)
   it("should render group name, description", () => {
-    render(<GroupPage params={{ groupId: mockGroupId }} />);
+    render(<GroupPage params={Promise.resolve({ groupId: mockGroupId })} />);
     expect(screen.getByText(mockGroupDetails.name)).toBeInTheDocument();
     expect(screen.getByText(mockGroupDetails.description)).toBeInTheDocument();
   });
 
   // Test 2: Render activity feed (as member)
   it("should render activity feed (mocked)", () => {
-    render(<GroupPage params={{ groupId: mockGroupId }} />);
+    render(<GroupPage params={Promise.resolve({ groupId: mockGroupId })} />);
     expect(screen.getByTestId(`post-${mockPost1.id}`)).toBeInTheDocument();
     expect(
       screen.getByText(`Mock Post: ${mockPost1.content}`),
@@ -292,7 +292,7 @@ describe("[Groups][Component] GroupPage Client Logic", () => {
         }
         return createUseQueryMock("pending", undefined);
       });
-      render(<GroupPage params={{ groupId: mockGroupId }} />);
+      render(<GroupPage params={Promise.resolve({ groupId: mockGroupId })} />);
 
       expect(
         screen.getByRole("button", { name: /accept invite/i }),
@@ -306,7 +306,7 @@ describe("[Groups][Component] GroupPage Client Logic", () => {
     it("should show dropdown with 'Unjoin Group' when a member (not owner)", async () => {
       const user = userEvent.setup();
       // beforeEach already sets user as member (non-owner)
-      render(<GroupPage params={{ groupId: mockGroupId }} />);
+      render(<GroupPage params={Promise.resolve({ groupId: mockGroupId })} />);
       expect(
         screen.queryByRole("button", { name: /accept invite/i }),
       ).not.toBeInTheDocument();
@@ -328,7 +328,7 @@ describe("[Groups][Component] GroupPage Client Logic", () => {
         }
         return createUseQueryMock("pending", undefined);
       });
-      render(<GroupPage params={{ groupId: mockGroupId }} />);
+      render(<GroupPage params={Promise.resolve({ groupId: mockGroupId })} />);
       const acceptButton = screen.getByRole("button", {
         name: /accept invite/i,
       });
@@ -358,7 +358,7 @@ describe("[Groups][Component] GroupPage Client Logic", () => {
         }
         return createUseQueryMock("pending", undefined);
       });
-      render(<GroupPage params={{ groupId: mockGroupId }} />);
+      render(<GroupPage params={Promise.resolve({ groupId: mockGroupId })} />);
       const moreButton = screen.getByTestId("more-button-mock");
       await user.click(moreButton);
       expect(await screen.findByText(/add user/i)).toBeInTheDocument();
@@ -377,7 +377,7 @@ describe("[Groups][Component] GroupPage Client Logic", () => {
         }
         return createUseQueryMock("pending", undefined);
       });
-      render(<GroupPage params={{ groupId: mockGroupId }} />);
+      render(<GroupPage params={Promise.resolve({ groupId: mockGroupId })} />);
       const moreButton = screen.getByTestId("more-button-mock");
       await user.click(moreButton);
       expect(await screen.findByText(/add user/i)).toBeInTheDocument();

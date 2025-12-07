@@ -144,7 +144,7 @@ describe("API Route: /api/posts/[postId]", () => {
   };
 
   let request: NextRequest;
-  let context: { params: { postId: string } };
+  let context: { params: Promise<{ postId: string }> };
 
   beforeEach(() => {
     vi.resetAllMocks();

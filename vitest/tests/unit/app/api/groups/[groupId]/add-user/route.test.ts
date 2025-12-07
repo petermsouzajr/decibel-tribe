@@ -149,7 +149,7 @@ describe("[Groups][API] /api/groups/[groupId]/add-user", () => {
     it("should return 401 if not authenticated", async () => {
       setAuth(null, null);
       const req = createMockRequest({ userId: mockTargetUser.id });
-      const response = await POST(req, { params: { groupId: mockGroupId } });
+      const response = await POST(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       expect(response.status).toBe(401);
       expect(mockGroupMemberCreate).not.toHaveBeenCalled();
     });
@@ -157,7 +157,7 @@ describe("[Groups][API] /api/groups/[groupId]/add-user", () => {
     it("should return 403 if authenticated user is not group owner", async () => {
       setAuth(mockOtherUser, mockSessionOther); // Logged in as non-owner
       const req = createMockRequest({ userId: mockTargetUser.id });
-      const response = await POST(req, { params: { groupId: mockGroupId } });
+      const response = await POST(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       expect(response.status).toBe(403);
       expect(await response.json()).toEqual({ error: "Forbidden." });
       expect(mockGroupMemberCreate).not.toHaveBeenCalled();
@@ -165,7 +165,7 @@ describe("[Groups][API] /api/groups/[groupId]/add-user", () => {
 
     it("should return 400 if userId is missing in request body", async () => {
       const req = createMockRequest({}); // Empty body
-      const response = await POST(req, { params: { groupId: mockGroupId } });
+      const response = await POST(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       expect(response.status).toBe(400);
       expect(await response.json()).toEqual({ error: "User ID is required." });
       expect(mockGroupMemberCreate).not.toHaveBeenCalled();
@@ -174,7 +174,7 @@ describe("[Groups][API] /api/groups/[groupId]/add-user", () => {
     it("should return 404 if group not found", async () => {
       mockGroupFindUnique.mockResolvedValue(null);
       const req = createMockRequest({ userId: mockTargetUser.id });
-      const response = await POST(req, { params: { groupId: mockGroupId } });
+      const response = await POST(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       expect(response.status).toBe(404);
       expect(await response.json()).toEqual({ error: "Group not found." });
       expect(mockGroupMemberCreate).not.toHaveBeenCalled();
@@ -183,7 +183,7 @@ describe("[Groups][API] /api/groups/[groupId]/add-user", () => {
     it("should return 400 if target user is already a member", async () => {
       mockGroupMemberFindUnique.mockResolvedValue(mockExistingMemberRecord); // User is already member
       const req = createMockRequest({ userId: mockTargetUser.id });
-      const response = await POST(req, { params: { groupId: mockGroupId } });
+      const response = await POST(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       expect(response.status).toBe(400);
       expect(await response.json()).toEqual({
         error: "User is already a member of the group.",
@@ -193,7 +193,7 @@ describe("[Groups][API] /api/groups/[groupId]/add-user", () => {
 
     it("should successfully add user (create invite) if owner", async () => {
       const req = createMockRequest({ userId: mockTargetUser.id });
-      const response = await POST(req, { params: { groupId: mockGroupId } });
+      const response = await POST(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       const body = await response.json();
 
       expect(response.status).toBe(200); // Should be 200 or 201? Route returns 200
@@ -219,21 +219,21 @@ describe("[Groups][API] /api/groups/[groupId]/add-user", () => {
     it("should return 500 on prisma group find error", async () => {
       mockGroupFindUnique.mockRejectedValue(new Error("DB Error"));
       const req = createMockRequest({ userId: mockTargetUser.id });
-      const response = await POST(req, { params: { groupId: mockGroupId } });
+      const response = await POST(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       expect(response.status).toBe(500);
     });
 
     it("should return 500 on prisma member find error", async () => {
       mockGroupMemberFindUnique.mockRejectedValue(new Error("DB Error"));
       const req = createMockRequest({ userId: mockTargetUser.id });
-      const response = await POST(req, { params: { groupId: mockGroupId } });
+      const response = await POST(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       expect(response.status).toBe(500);
     });
 
     it("should return 500 on prisma member create error", async () => {
       mockGroupMemberCreate.mockRejectedValue(new Error("DB Error"));
       const req = createMockRequest({ userId: mockTargetUser.id });
-      const response = await POST(req, { params: { groupId: mockGroupId } });
+      const response = await POST(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       expect(response.status).toBe(500);
     });
   });

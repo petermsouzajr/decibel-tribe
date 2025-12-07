@@ -152,7 +152,7 @@ describe("API Route: /api/users/[userId]/follow", () => {
 
       // Act
       const response = await POST(request, {
-        params: { userId: targetUserId },
+        params: Promise.resolve({ userId: targetUserId  }),
       });
 
       // Assert
@@ -169,7 +169,7 @@ describe("API Route: /api/users/[userId]/follow", () => {
 
       // Act
       const response = await POST(request, {
-        params: { userId: targetUserId },
+        params: Promise.resolve({ userId: targetUserId  }),
       });
       // Assert
       expect(response.status).toBe(401);
@@ -195,7 +195,7 @@ describe("API Route: /api/users/[userId]/follow", () => {
       });
 
       // Act
-      await POST(request, { params: { userId: targetUserId } });
+      await POST(request, { params: Promise.resolve({ userId: targetUserId }) });
 
       // Assert
       expect(mockCookiesGet).toHaveBeenCalledWith(lucia.sessionCookieName);
@@ -217,7 +217,7 @@ describe("API Route: /api/users/[userId]/follow", () => {
 
       // Act
       const response = await POST(request, {
-        params: { userId: targetUserId },
+        params: Promise.resolve({ userId: targetUserId  }),
       });
       const body = await response.json();
 
@@ -249,7 +249,7 @@ describe("API Route: /api/users/[userId]/follow", () => {
 
       // Act
       const response = await POST(request, {
-        params: { userId: targetUserId },
+        params: Promise.resolve({ userId: targetUserId  }),
       });
       const body = await response.json();
 
@@ -276,7 +276,7 @@ describe("API Route: /api/users/[userId]/follow", () => {
 
       // Act
       const response = await DELETE(request, {
-        params: { userId: targetUserId },
+        params: Promise.resolve({ userId: targetUserId  }),
       });
 
       // Assert
@@ -293,7 +293,7 @@ describe("API Route: /api/users/[userId]/follow", () => {
 
       // Act
       const response = await DELETE(request, {
-        params: { userId: targetUserId },
+        params: Promise.resolve({ userId: targetUserId  }),
       });
       // Assert
       expect(response.status).toBe(401);
@@ -319,7 +319,7 @@ describe("API Route: /api/users/[userId]/follow", () => {
       });
 
       // Act
-      await DELETE(request, { params: { userId: targetUserId } });
+      await DELETE(request, { params: Promise.resolve({ userId: targetUserId }) });
 
       // Assert
       expect(mockCookiesGet).toHaveBeenCalledWith(lucia.sessionCookieName);
@@ -341,7 +341,7 @@ describe("API Route: /api/users/[userId]/follow", () => {
 
       // Act
       const response = await DELETE(request, {
-        params: { userId: targetUserId },
+        params: Promise.resolve({ userId: targetUserId  }),
       });
       const body = await response.json();
 
@@ -375,7 +375,7 @@ describe("API Route: /api/users/[userId]/follow", () => {
 
       // Act
       const response = await DELETE(request, {
-        params: { userId: targetUserId },
+        params: Promise.resolve({ userId: targetUserId  }),
       });
       const body = await response.json();
 

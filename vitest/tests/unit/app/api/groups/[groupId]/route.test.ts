@@ -157,7 +157,7 @@ describe("[Groups][API] /api/groups/[groupId]", () => {
     it("should return 401 if not authenticated", async () => {
       setAuth(null, null);
       const req = createMockRequest("GET");
-      const response = await GET(req, { params: { groupId: mockGroupId } });
+      const response = await GET(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       expect(response.status).toBe(401);
       expect(mockGroupFindUnique).not.toHaveBeenCalled();
     });
@@ -166,7 +166,7 @@ describe("[Groups][API] /api/groups/[groupId]", () => {
       setAuth(mockMember, mockSessionMember);
       mockGroupFindUnique.mockResolvedValue(null);
       const req = createMockRequest("GET");
-      const response = await GET(req, { params: { groupId: mockGroupId } });
+      const response = await GET(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       expect(response.status).toBe(404);
       expect(mockGroupMemberFindUnique).not.toHaveBeenCalled();
     });
@@ -175,7 +175,7 @@ describe("[Groups][API] /api/groups/[groupId]", () => {
       setAuth(mockNonMember, mockSessionNonMember);
       mockGroupMemberFindUnique.mockResolvedValue(null); // Not a member
       const req = createMockRequest("GET");
-      const response = await GET(req, { params: { groupId: mockGroupId } });
+      const response = await GET(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       expect(response.status).toBe(403);
       expect(await response.json()).toEqual({
         error: "Access denied. You are not a member of this group.",
@@ -187,7 +187,7 @@ describe("[Groups][API] /api/groups/[groupId]", () => {
       mockGroupFindUnique.mockResolvedValue(mockGroup); // Group exists
       mockGroupMemberFindUnique.mockResolvedValue(mockMemberRecord); // Is a member
       const req = createMockRequest("GET");
-      const response = await GET(req, { params: { groupId: mockGroupId } });
+      const response = await GET(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       const body = await response.json();
       expect(response.status).toBe(200);
       expect(body.id).toBe(mockGroupId);
@@ -206,7 +206,7 @@ describe("[Groups][API] /api/groups/[groupId]", () => {
       setAuth(mockMember, mockSessionMember);
       mockGroupFindUnique.mockRejectedValue(new Error("DB Error"));
       const req = createMockRequest("GET");
-      const response = await GET(req, { params: { groupId: mockGroupId } });
+      const response = await GET(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       expect(response.status).toBe(500);
     });
 
@@ -214,7 +214,7 @@ describe("[Groups][API] /api/groups/[groupId]", () => {
       setAuth(mockMember, mockSessionMember);
       mockGroupMemberFindUnique.mockRejectedValue(new Error("DB Error"));
       const req = createMockRequest("GET");
-      const response = await GET(req, { params: { groupId: mockGroupId } });
+      const response = await GET(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       expect(response.status).toBe(500);
     });
   });
@@ -224,7 +224,7 @@ describe("[Groups][API] /api/groups/[groupId]", () => {
     it("should return 401 if not authenticated", async () => {
       setAuth(null, null);
       const req = createMockRequest("DELETE");
-      const response = await DELETE(req, { params: { groupId: mockGroupId } });
+      const response = await DELETE(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       expect(response.status).toBe(401);
       expect(mockGroupDelete).not.toHaveBeenCalled();
     });
@@ -233,7 +233,7 @@ describe("[Groups][API] /api/groups/[groupId]", () => {
       setAuth(mockUser, mockSessionOwner);
       mockGroupFindUnique.mockResolvedValue(null);
       const req = createMockRequest("DELETE");
-      const response = await DELETE(req, { params: { groupId: mockGroupId } });
+      const response = await DELETE(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       expect(response.status).toBe(404);
       expect(mockGroupDelete).not.toHaveBeenCalled();
     });
@@ -242,7 +242,7 @@ describe("[Groups][API] /api/groups/[groupId]", () => {
       setAuth(mockMember, mockSessionMember); // Logged in as member, not owner
       mockGroupFindUnique.mockResolvedValue(mockGroup);
       const req = createMockRequest("DELETE");
-      const response = await DELETE(req, { params: { groupId: mockGroupId } });
+      const response = await DELETE(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       expect(response.status).toBe(403);
       expect(await response.json()).toEqual({
         error: "Access denied. Only the group owner can delete this group.",
@@ -254,7 +254,7 @@ describe("[Groups][API] /api/groups/[groupId]", () => {
       setAuth(mockUser, mockSessionOwner); // Logged in as owner
       mockGroupFindUnique.mockResolvedValue(mockGroup);
       const req = createMockRequest("DELETE");
-      const response = await DELETE(req, { params: { groupId: mockGroupId } });
+      const response = await DELETE(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       expect(response.status).toBe(200);
       expect(mockGroupFindUnique).toHaveBeenCalledWith({
         where: { id: mockGroupId },
@@ -272,7 +272,7 @@ describe("[Groups][API] /api/groups/[groupId]", () => {
       setAuth(mockUser, mockSessionOwner);
       mockGroupFindUnique.mockRejectedValue(new Error("DB Error"));
       const req = createMockRequest("DELETE");
-      const response = await DELETE(req, { params: { groupId: mockGroupId } });
+      const response = await DELETE(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       expect(response.status).toBe(500);
     });
 
@@ -280,7 +280,7 @@ describe("[Groups][API] /api/groups/[groupId]", () => {
       setAuth(mockUser, mockSessionOwner);
       mockGroupDelete.mockRejectedValue(new Error("DB Error"));
       const req = createMockRequest("DELETE");
-      const response = await DELETE(req, { params: { groupId: mockGroupId } });
+      const response = await DELETE(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       expect(response.status).toBe(500);
     });
   });
@@ -290,7 +290,7 @@ describe("[Groups][API] /api/groups/[groupId]", () => {
     it("should return 401 if not authenticated", async () => {
       setAuth(null, null);
       const req = createMockRequest("PUT");
-      const response = await PUT(req, { params: { groupId: mockGroupId } });
+      const response = await PUT(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       expect(response.status).toBe(401);
     });
 
@@ -298,7 +298,7 @@ describe("[Groups][API] /api/groups/[groupId]", () => {
       setAuth(mockMember, mockSessionMember);
       mockGroupFindUnique.mockResolvedValue(null);
       const req = createMockRequest("PUT");
-      const response = await PUT(req, { params: { groupId: mockGroupId } });
+      const response = await PUT(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       expect(response.status).toBe(404);
     });
 
@@ -306,7 +306,7 @@ describe("[Groups][API] /api/groups/[groupId]", () => {
       setAuth(mockNonMember, mockSessionNonMember);
       mockGroupMemberFindUnique.mockResolvedValue(null);
       const req = createMockRequest("PUT");
-      const response = await PUT(req, { params: { groupId: mockGroupId } });
+      const response = await PUT(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       expect(response.status).toBe(403);
     });
 
@@ -316,7 +316,7 @@ describe("[Groups][API] /api/groups/[groupId]", () => {
       mockGroupFindUnique.mockResolvedValue(mockGroup);
       mockGroupMemberFindUnique.mockResolvedValue(mockMemberRecord);
       const req = createMockRequest("PUT");
-      const response = await PUT(req, { params: { groupId: mockGroupId } });
+      const response = await PUT(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       const body = await response.json();
       expect(response.status).toBe(200);
       expect(body.id).toBe(mockGroupId);
@@ -328,7 +328,7 @@ describe("[Groups][API] /api/groups/[groupId]", () => {
       setAuth(mockMember, mockSessionMember);
       mockGroupFindUnique.mockRejectedValue(new Error("DB Error"));
       const req = createMockRequest("PUT");
-      const response = await PUT(req, { params: { groupId: mockGroupId } });
+      const response = await PUT(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       expect(response.status).toBe(500);
     });
   });

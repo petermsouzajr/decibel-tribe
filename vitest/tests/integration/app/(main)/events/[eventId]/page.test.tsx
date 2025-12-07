@@ -87,9 +87,9 @@ describe("Event Details Page", () => {
         <React.Suspense fallback={<div>Loading...</div>}>
           {/* The actual Page import will now resolve to our mock */}
           <Page
-            params={{
+            params={Promise.resolve({
               eventId: "event-id",
-            }}
+            })}
           />
         </React.Suspense>
       </QueryClientProvider>,

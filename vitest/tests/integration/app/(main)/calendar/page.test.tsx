@@ -35,11 +35,7 @@ describe("Calendar Page", () => {
     const renderResult = render(
       <SessionProvider value={mockSession}>
         <QueryClientProvider client={queryClient}>
-          <Page
-            searchParams={{
-              q: undefined,
-            }}
-          />
+          <Page />
         </QueryClientProvider>
       </SessionProvider>,
     );
@@ -89,11 +85,7 @@ describe("Calendar Page", () => {
     render(
       <SessionProvider value={mockSession}>
         <QueryClientProvider client={queryClient}>
-          <Page
-            searchParams={{
-              q: undefined,
-            }}
-          />
+          <Page />
         </QueryClientProvider>
       </SessionProvider>,
     );

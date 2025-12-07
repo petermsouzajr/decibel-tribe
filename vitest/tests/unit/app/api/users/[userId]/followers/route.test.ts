@@ -169,7 +169,7 @@ describe("API Route: /api/users/[userId]/followers", () => {
       mockCookiesGet.mockReturnValue(undefined);
 
       const response = await GET(request, {
-        params: { userId: targetUserId },
+        params: Promise.resolve({ userId: targetUserId  }),
       });
       const body = await response.json();
 
@@ -183,7 +183,7 @@ describe("API Route: /api/users/[userId]/followers", () => {
       mockLuciaValidateSession.mockResolvedValue({ user: null, session: null });
 
       const response = await GET(request, {
-        params: { userId: targetUserId },
+        params: Promise.resolve({ userId: targetUserId  }),
       });
       const body = await response.json();
 
@@ -210,7 +210,7 @@ describe("API Route: /api/users/[userId]/followers", () => {
         followers: [],
       });
 
-      await GET(request, { params: { userId: targetUserId } });
+      await GET(request, { params: Promise.resolve({ userId: targetUserId }) });
 
       expect(mockLuciaValidateSession).toHaveBeenCalledWith("valid_session_id");
       expect(mockCreateSessionCookie).toHaveBeenCalledWith(
@@ -226,7 +226,7 @@ describe("API Route: /api/users/[userId]/followers", () => {
     it("should return 404 if the target user is not found", async () => {
       mockUserFindUnique.mockResolvedValue(null);
 
-      const response = await GET(request, { params: { userId: targetUserId } });
+      const response = await GET(request, { params: Promise.resolve({ userId: targetUserId }) });
       const body = await response.json();
 
       expect(response.status).toBe(404);
@@ -244,7 +244,7 @@ describe("API Route: /api/users/[userId]/followers", () => {
       };
       mockUserFindUnique.mockResolvedValue(mockUserData);
 
-      const response = await GET(request, { params: { userId: targetUserId } });
+      const response = await GET(request, { params: Promise.resolve({ userId: targetUserId }) });
       const body: FollowerInfo = await response.json();
 
       expect(response.status).toBe(200);
@@ -271,7 +271,7 @@ describe("API Route: /api/users/[userId]/followers", () => {
       };
       mockUserFindUnique.mockResolvedValue(mockUserData);
 
-      const response = await GET(request, { params: { userId: targetUserId } });
+      const response = await GET(request, { params: Promise.resolve({ userId: targetUserId }) });
       const body: FollowerInfo = await response.json();
 
       expect(response.status).toBe(200);
@@ -294,7 +294,7 @@ describe("API Route: /api/users/[userId]/followers", () => {
     it("should return 500 if prisma query fails", async () => {
       mockUserFindUnique.mockRejectedValue(new Error("DB Error"));
 
-      const response = await GET(request, { params: { userId: targetUserId } });
+      const response = await GET(request, { params: Promise.resolve({ userId: targetUserId }) });
       const body = await response.json();
 
       expect(response.status).toBe(500);
@@ -308,7 +308,7 @@ describe("API Route: /api/users/[userId]/followers", () => {
       mockLuciaValidateSession.mockResolvedValue({ user: null, session: null });
 
       const response = await POST(request, {
-        params: { userId: targetUserId },
+        params: Promise.resolve({ userId: targetUserId  }),
       });
 
       expect(response.status).toBe(401);
@@ -326,7 +326,7 @@ describe("API Route: /api/users/[userId]/followers", () => {
       });
 
       const response = await POST(selfRequest, {
-        params: { userId: selfUserId },
+        params: Promise.resolve({ userId: selfUserId  }),
       });
       const body = await response.json();
 
@@ -345,7 +345,7 @@ describe("API Route: /api/users/[userId]/followers", () => {
       });
 
       const response = await POST(request, {
-        params: { userId: targetUserId },
+        params: Promise.resolve({ userId: targetUserId  }),
       });
 
       expect(response.status).toBe(201);
@@ -377,7 +377,7 @@ describe("API Route: /api/users/[userId]/followers", () => {
       });
 
       const response = await POST(request, {
-        params: { userId: targetUserId },
+        params: Promise.resolve({ userId: targetUserId  }),
       });
       const body = await response.json();
 
@@ -391,7 +391,7 @@ describe("API Route: /api/users/[userId]/followers", () => {
       mockLuciaValidateSession.mockResolvedValue({ user: null, session: null });
 
       const response = await DELETE(request, {
-        params: { userId: targetUserId },
+        params: Promise.resolve({ userId: targetUserId  }),
       });
 
       expect(response.status).toBe(401);
@@ -408,7 +408,7 @@ describe("API Route: /api/users/[userId]/followers", () => {
       });
 
       const response = await DELETE(request, {
-        params: { userId: targetUserId },
+        params: Promise.resolve({ userId: targetUserId  }),
       });
 
       expect(response.status).toBe(200);
@@ -433,7 +433,7 @@ describe("API Route: /api/users/[userId]/followers", () => {
       });
 
       const response = await DELETE(request, {
-        params: { userId: targetUserId },
+        params: Promise.resolve({ userId: targetUserId  }),
       });
       const body = await response.json();
 

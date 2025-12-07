@@ -99,7 +99,7 @@ describe("POST /api/groups/{groupId}/leave", () => {
       ]),
     } as any; // Use 'as any' for simplicity as crafting a perfect mock is complex
 
-    mockedCookies.mockImplementation(() => mockCookieStore);
+    mockedCookies.mockImplementation(() => Promise.resolve(mockCookieStore as any));
 
     mockedLuciaCreateSessionCookie.mockReturnValue({
       name: "auth_session",
@@ -141,7 +141,7 @@ describe("POST /api/groups/{groupId}/leave", () => {
         method: "POST",
       },
     );
-    const response = await POST(request, { params: { groupId: group.id } });
+    const response = await POST(request, { params: Promise.resolve({ groupId: group.id }) });
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -182,7 +182,7 @@ describe("POST /api/groups/{groupId}/leave", () => {
         method: "POST",
       },
     );
-    const response = await POST(request, { params: { groupId: group.id } });
+    const response = await POST(request, { params: Promise.resolve({ groupId: group.id }) });
     const body = await response.json();
 
     expect(response.status).toBe(401);
@@ -199,7 +199,7 @@ describe("POST /api/groups/{groupId}/leave", () => {
         method: "POST",
       },
     );
-    const response = await POST(request, { params: { groupId: group.id } });
+    const response = await POST(request, { params: Promise.resolve({ groupId: group.id }) });
     const body = await response.json();
 
     expect(response.status).toBe(400);
@@ -224,7 +224,7 @@ describe("POST /api/groups/{groupId}/leave", () => {
         method: "POST",
       },
     );
-    const response = await POST(request, { params: { groupId: group.id } });
+    const response = await POST(request, { params: Promise.resolve({ groupId: group.id }) });
     const body = await response.json();
 
     expect(response.status).toBe(403);
@@ -254,7 +254,7 @@ describe("POST /api/groups/{groupId}/leave", () => {
         method: "POST",
       },
     );
-    const response = await POST(request, { params: { groupId: group.id } });
+    const response = await POST(request, { params: Promise.resolve({ groupId: group.id }) });
     const body = await response.json();
 
     expect(response.status).toBe(500);

@@ -180,7 +180,7 @@ describe("API Route: /api/events/{eventId}/attendees", () => {
       // Act
       request = createMockRequest();
       const response = await GET(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId  }),
       });
       // Assert
       expect(response.status).toBe(401);
@@ -194,7 +194,7 @@ describe("API Route: /api/events/{eventId}/attendees", () => {
       // Act
       request = createMockRequest();
       const response = await GET(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId  }),
       });
       // Assert
       expect(response.status).toBe(401);
@@ -216,7 +216,7 @@ describe("API Route: /api/events/{eventId}/attendees", () => {
       // Act
       request = createMockRequest();
       const response = await GET(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId  }),
       });
       // Assert
       expect(response.status).toBe(401);
@@ -229,7 +229,7 @@ describe("API Route: /api/events/{eventId}/attendees", () => {
       request = createMockRequest(); // Request created before call
       // Act
       // Simulate Next.js not providing the param correctly
-      const response = await GET(request, { params: { eventId: "" } });
+      const response = await GET(request, { params: Promise.resolve({ eventId: "" }) });
       const body = await response.json();
       // Assert
       expect(response.status).toBe(400);
@@ -243,7 +243,7 @@ describe("API Route: /api/events/{eventId}/attendees", () => {
 
       // Act
       const response = await GET(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId  }),
       });
       const body = await response.json();
 
@@ -285,7 +285,7 @@ describe("API Route: /api/events/{eventId}/attendees", () => {
 
       // Act
       const response = await GET(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId  }),
       });
       const body = await response.json();
 
@@ -314,7 +314,7 @@ describe("API Route: /api/events/{eventId}/attendees", () => {
 
       // Act
       const response = await GET(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId  }),
       });
       const body = await response.json();
 
@@ -331,7 +331,7 @@ describe("API Route: /api/events/{eventId}/attendees", () => {
       });
       request = createMockRequest();
       // Act
-      await GET(request, { params: { eventId: targetEventId } });
+      await GET(request, { params: Promise.resolve({ eventId: targetEventId }) });
       // Assert
       expect(mockEventAttendeeFindMany).toHaveBeenCalled(); // Ensure main logic ran
       expect(mockCreateSessionCookie).toHaveBeenCalledWith(
@@ -391,7 +391,7 @@ describe("API Route: /api/events/{eventId}/attendees", () => {
 
       // Act
       const response = await POST(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId  }),
       });
 
       // Assert
@@ -407,7 +407,7 @@ describe("API Route: /api/events/{eventId}/attendees", () => {
 
       // Act
       const response = await POST(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId  }),
       });
 
       // Assert
@@ -422,7 +422,7 @@ describe("API Route: /api/events/{eventId}/attendees", () => {
       request = createMockRequest();
       // Act
       const response = await POST(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId  }),
       });
       const body = await response.json();
       // Assert
@@ -446,7 +446,7 @@ describe("API Route: /api/events/{eventId}/attendees", () => {
 
       // Act
       const response = await POST(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId  }),
       });
       const body = await response.json();
 
@@ -468,7 +468,7 @@ describe("API Route: /api/events/{eventId}/attendees", () => {
       request = createMockRequest();
       // Act
       const response = await POST(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId  }),
       });
       const body = await response.json();
       // Assert
@@ -497,7 +497,7 @@ describe("API Route: /api/events/{eventId}/attendees", () => {
       request = createMockRequest();
       // Act
       const response = await POST(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId  }),
       });
       const body = await response.json(); // Check body to ensure route completed
       // Assert
@@ -517,7 +517,7 @@ describe("API Route: /api/events/{eventId}/attendees", () => {
       request = createMockRequest();
       // Act
       const response = await POST(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId  }),
       });
       const body = await response.json();
       // Assert
@@ -534,7 +534,7 @@ describe("API Route: /api/events/{eventId}/attendees", () => {
       request = createMockRequest();
       // Act
       const response = await POST(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId  }),
       });
       const body = await response.json();
       // Assert
@@ -552,7 +552,7 @@ describe("API Route: /api/events/{eventId}/attendees", () => {
       request = createMockRequest();
       // Act
       const response = await POST(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId  }),
       });
       const body = await response.json();
       // Assert
@@ -574,7 +574,7 @@ describe("API Route: /api/events/{eventId}/attendees", () => {
       request = createMockRequest();
       // Act
       const response = await POST(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId  }),
       });
       const body = await response.json();
       // Assert: Route returns 500 because error is not gracefully handled
@@ -591,7 +591,7 @@ describe("API Route: /api/events/{eventId}/attendees", () => {
         session: mockFreshSessionData,
       });
       request = createMockRequest();
-      await POST(request, { params: { eventId: targetEventId } });
+      await POST(request, { params: Promise.resolve({ eventId: targetEventId }) });
       expect(mockEventAttendeeCreate).toHaveBeenCalled(); // Ensure main logic ran
       expect(mockCreateSessionCookie).toHaveBeenCalledWith(
         mockFreshSessionData.id,
@@ -645,7 +645,7 @@ describe("API Route: /api/events/{eventId}/attendees", () => {
       request = createMockRequest();
       // Act
       const response = await DELETE(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId  }),
       });
       // Assert
       expect(response.status).toBe(401);
@@ -659,7 +659,7 @@ describe("API Route: /api/events/{eventId}/attendees", () => {
       request = createMockRequest();
       // Act
       const response = await DELETE(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId  }),
       });
       const body = await response.json();
       // Assert: Route returns 400
@@ -674,7 +674,7 @@ describe("API Route: /api/events/{eventId}/attendees", () => {
       request = createMockRequest();
       // Act
       const response = await DELETE(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId  }),
       });
       const body = await response.json();
       // Assert
@@ -709,7 +709,7 @@ describe("API Route: /api/events/{eventId}/attendees", () => {
       request = createMockRequest();
       // Act
       const response = await DELETE(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId  }),
       });
       const body = await response.json();
       // Assert
@@ -724,7 +724,7 @@ describe("API Route: /api/events/{eventId}/attendees", () => {
       request = createMockRequest();
       // Act
       const response = await DELETE(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId  }),
       });
       const body = await response.json();
       // Assert
@@ -739,7 +739,7 @@ describe("API Route: /api/events/{eventId}/attendees", () => {
         session: mockFreshSessionData,
       });
       request = createMockRequest();
-      await DELETE(request, { params: { eventId: targetEventId } });
+      await DELETE(request, { params: Promise.resolve({ eventId: targetEventId }) });
       expect(mockEventAttendeeDelete).toHaveBeenCalled(); // Ensure main logic ran
       expect(mockCreateSessionCookie).toHaveBeenCalledWith(
         mockFreshSessionData.id,

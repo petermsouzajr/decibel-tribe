@@ -12,7 +12,7 @@ import { signUpSchema, SignUpValues } from "@/lib/validation";
 import { generateIdFromEntropySize } from "lucia";
 import bcrypt from "bcryptjs";
 import { generateAndSendVerification } from "@/app/(auth)/sendVerification";
-import { isRedirectError } from "next/dist/client/components/redirect";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 // --- Mock Definitions ---
 // Define explicit types for mocks

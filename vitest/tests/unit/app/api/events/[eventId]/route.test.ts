@@ -38,10 +38,10 @@ const createMockRequest = (
   });
 };
 
-// Explicit type for API Route handlers in App Router
+// Explicit type for API Route handlers in App Router (Next.js 15+: params are now Promises)
 type ApiHandler = (
   request: NextRequest,
-  context: { params: { eventId: string } },
+  context: { params: Promise<{ eventId: string }> },
 ) => Promise<NextResponse>;
 
 // --- Test Suite ---
@@ -208,7 +208,7 @@ describe("API Route: /api/events/[eventId]", () => {
       mockCookiesGet.mockImplementation(() => undefined);
       const request = createMockRequest(`/api/events/${targetEventId}`);
       const response = await GET(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId }),
       });
       const body = await response.json();
       expect(response.status).toBe(401);
@@ -220,7 +220,7 @@ describe("API Route: /api/events/[eventId]", () => {
       mockLuciaValidateSession.mockResolvedValue({ user: null, session: null });
       const request = createMockRequest(`/api/events/${targetEventId}`);
       const response = await GET(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId }),
       });
       const body = await response.json();
       expect(response.status).toBe(401);
@@ -240,7 +240,7 @@ describe("API Route: /api/events/[eventId]", () => {
       });
       const request = createMockRequest(`/api/events/${targetEventId}`);
       const response = await GET(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId }),
       });
       const body = await response.json();
       expect(response.status).toBe(401);
@@ -274,7 +274,7 @@ describe("API Route: /api/events/[eventId]", () => {
       mockEventFindUnique.mockResolvedValue(null);
       const request = createMockRequest(`/api/events/${targetEventId}`);
       const response = await GET(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId }),
       });
       const body = await response.json();
       expect(response.status).toBe(404);
@@ -294,7 +294,7 @@ describe("API Route: /api/events/[eventId]", () => {
       // loggedInUserId is 'user-123', eventOwnerId is 'user-owner'
       const request = createMockRequest(`/api/events/${targetEventId}`);
       const response = await GET(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId }),
       });
       const body = await response.json();
       expect(response.status).toBe(403);
@@ -309,7 +309,7 @@ describe("API Route: /api/events/[eventId]", () => {
       mockEventFindUnique.mockResolvedValue(publishedEvent);
       const request = createMockRequest(`/api/events/${targetEventId}`);
       const response = await GET(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId }),
       });
       const body = await response.json();
 
@@ -339,7 +339,7 @@ describe("API Route: /api/events/[eventId]", () => {
       mockEventFindUnique.mockResolvedValue(draftEvent);
       const request = createMockRequest(`/api/events/${targetEventId}`);
       const response = await GET(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId }),
       });
       const body = await response.json();
 
@@ -359,7 +359,7 @@ describe("API Route: /api/events/[eventId]", () => {
       mockEventFindUnique.mockRejectedValue(new Error("DB Error"));
       const request = createMockRequest(`/api/events/${targetEventId}`);
       const response = await GET(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId }),
       });
       const body = await response.json();
       expect(response.status).toBe(500);
@@ -377,7 +377,7 @@ describe("API Route: /api/events/[eventId]", () => {
         {},
       );
       const response = await PATCH(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId }),
       });
       expect(response.status).toBe(401);
     });
@@ -390,7 +390,7 @@ describe("API Route: /api/events/[eventId]", () => {
         { title: "New Title" },
       );
       const response = await PATCH(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId }),
       });
       expect(response.status).toBe(404);
       expect(await response.json()).toEqual({ error: "Event not found" });
@@ -409,7 +409,7 @@ describe("API Route: /api/events/[eventId]", () => {
         },
       );
       const response = await PATCH(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId }),
       });
       expect(response.status).toBe(403);
       expect(await response.json()).toEqual({ error: "Forbidden" });
@@ -435,7 +435,7 @@ describe("API Route: /api/events/[eventId]", () => {
         updateData,
       );
       const response = await PATCH(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId }),
       });
       const body = await response.json();
 
@@ -462,7 +462,7 @@ describe("API Route: /api/events/[eventId]", () => {
         requestBody,
       );
       const response = await PATCH(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId }),
       });
 
       expect(response.status).toBe(200);
@@ -497,7 +497,7 @@ describe("API Route: /api/events/[eventId]", () => {
         requestBody,
       );
       const response = await PATCH(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId }),
       });
 
       expect(response.status).toBe(200);
@@ -525,7 +525,7 @@ describe("API Route: /api/events/[eventId]", () => {
         requestBody,
       );
       const response = await PATCH(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId }),
       });
       expect(response.status).toBe(400);
       expect(await response.json()).toEqual({ error: "Invalid action" });
@@ -548,7 +548,7 @@ describe("API Route: /api/events/[eventId]", () => {
         invalidUpdateData,
       );
       const response = await PATCH(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId }),
       });
       expect(response.status).toBe(400);
       // You might need to adjust the expected error based on actual validation implementation
@@ -568,7 +568,7 @@ describe("API Route: /api/events/[eventId]", () => {
         { title: "Fail Update" },
       );
       const response = await PATCH(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId }),
       });
       expect(response.status).toBe(500);
       expect(await response.json()).toEqual({ error: "Internal server error" });
@@ -586,7 +586,7 @@ describe("API Route: /api/events/[eventId]", () => {
         { action: "attend" },
       );
       const response = await PATCH(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId }),
       });
       expect(response.status).toBe(500);
     });
@@ -605,7 +605,7 @@ describe("API Route: /api/events/[eventId]", () => {
         { action: "unattend" },
       );
       const response = await PATCH(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId }),
       });
       expect(response.status).toBe(500);
     });
@@ -620,7 +620,7 @@ describe("API Route: /api/events/[eventId]", () => {
         "DELETE",
       );
       const response = await DELETE(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId }),
       });
       expect(response.status).toBe(401);
     });
@@ -632,7 +632,7 @@ describe("API Route: /api/events/[eventId]", () => {
         "DELETE",
       );
       const response = await DELETE(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId }),
       });
       expect(response.status).toBe(404);
       expect(await response.json()).toEqual({ error: "Event not found" });
@@ -648,7 +648,7 @@ describe("API Route: /api/events/[eventId]", () => {
         "DELETE",
       );
       const response = await DELETE(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId }),
       });
       expect(response.status).toBe(403);
       expect(await response.json()).toEqual({ error: "Unauthorized" });
@@ -667,7 +667,7 @@ describe("API Route: /api/events/[eventId]", () => {
         "DELETE",
       );
       const response = await DELETE(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId }),
       });
 
       // Check status (Route currently returns 200, not 204)
@@ -690,7 +690,7 @@ describe("API Route: /api/events/[eventId]", () => {
         "DELETE",
       );
       const response = await DELETE(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId }),
       });
       expect(response.status).toBe(500);
     });
@@ -706,7 +706,7 @@ describe("API Route: /api/events/[eventId]", () => {
         "DELETE",
       );
       const response = await DELETE(request, {
-        params: { eventId: targetEventId },
+        params: Promise.resolve({ eventId: targetEventId }),
       });
       expect(response.status).toBe(500);
     });

@@ -216,7 +216,7 @@ describe("[Groups][Page] GroupPage", () => {
     });
 
     // Act: Render
-    render(<GroupPage params={{ groupId: mockGroupId }} />);
+    render(<GroupPage params={Promise.resolve({ groupId: mockGroupId })} />);
 
     // Assert: Check for loading text
     expect(screen.getByText(/loading group.../i)).toBeInTheDocument();
@@ -253,7 +253,7 @@ describe("[Groups][Page] GroupPage", () => {
     });
 
     // Act: Render
-    render(<GroupPage params={{ groupId: mockGroupId }} />);
+    render(<GroupPage params={Promise.resolve({ groupId: mockGroupId })} />);
 
     // Assert: Check for error text
     expect(screen.getByText(/group not found./i)).toBeInTheDocument();
@@ -290,7 +290,7 @@ describe("[Groups][Page] GroupPage", () => {
     });
 
     // Act: Render
-    render(<GroupPage params={{ groupId: mockGroupId }} />);
+    render(<GroupPage params={Promise.resolve({ groupId: mockGroupId })} />);
 
     // Assert: Check group name is visible
     expect(screen.getByText(mockGroupData.name)).toBeInTheDocument();
@@ -336,7 +336,7 @@ describe("[Groups][Page] GroupPage", () => {
     });
 
     // Act: Render
-    render(<GroupPage params={{ groupId: mockGroupId }} />);
+    render(<GroupPage params={Promise.resolve({ groupId: mockGroupId })} />);
 
     // Assert: Check group name is visible
     expect(screen.getByText(mockGroupData.name)).toBeInTheDocument();
@@ -360,7 +360,7 @@ describe("[Groups][Page] GroupPage", () => {
 
   it("should render posts and dropdown for a regular member", () => {
     // Arrange: Default mocks (member, group success, posts success)
-    render(<GroupPage params={{ groupId: mockGroupId }} />);
+    render(<GroupPage params={Promise.resolve({ groupId: mockGroupId })} />);
 
     // Assert: Check group name, description
     expect(screen.getByText(mockGroupData.name)).toBeInTheDocument();
@@ -397,7 +397,7 @@ describe("[Groups][Page] GroupPage", () => {
     // Arrange: Default mocks (regular member)
     // Get rerender function
     const { rerender } = render(
-      <GroupPage params={{ groupId: mockGroupId }} />,
+      <GroupPage params={Promise.resolve({ groupId: mockGroupId })} />,
     );
 
     // Act: Locate dropdown content
@@ -429,7 +429,7 @@ describe("[Groups][Page] GroupPage", () => {
     await user.click(leaveButton);
 
     // Force re-render AFTER the click/state update
-    rerender(<GroupPage params={{ groupId: mockGroupId }} />);
+    rerender(<GroupPage params={Promise.resolve({ groupId: mockGroupId })} />);
 
     // Assert: LeaveGroupModal mock is now visible (use waitFor as a precaution)
     await waitFor(() => {
@@ -478,7 +478,7 @@ describe("[Groups][Page] GroupPage", () => {
 
     // Act: Render and get rerender function
     const { rerender } = render(
-      <GroupPage params={{ groupId: mockGroupId }} />,
+      <GroupPage params={Promise.resolve({ groupId: mockGroupId })} />,
     );
 
     // Act: Locate dropdown content
@@ -512,7 +512,7 @@ describe("[Groups][Page] GroupPage", () => {
     await user.click(addButton);
 
     // Force re-render AFTER the click/state update
-    rerender(<GroupPage params={{ groupId: mockGroupId }} />);
+    rerender(<GroupPage params={Promise.resolve({ groupId: mockGroupId })} />);
 
     // Assert: AddUserModal mock is now visible (use waitFor as a precaution)
     await waitFor(() => {
@@ -561,7 +561,7 @@ describe("[Groups][Page] GroupPage", () => {
 
     // Act: Render and get rerender function
     const { rerender } = render(
-      <GroupPage params={{ groupId: mockGroupId }} />,
+      <GroupPage params={Promise.resolve({ groupId: mockGroupId })} />,
     ); // Get rerender for later fix
 
     // Act: Locate dropdown content
@@ -594,7 +594,7 @@ describe("[Groups][Page] GroupPage", () => {
     await user.click(deleteButton);
 
     // Force re-render AFTER the click/state update
-    rerender(<GroupPage params={{ groupId: mockGroupId }} />);
+    rerender(<GroupPage params={Promise.resolve({ groupId: mockGroupId })} />);
 
     // Assert: DeleteGroupModal mock is now visible (use waitFor as a precaution)
     await waitFor(() => {
