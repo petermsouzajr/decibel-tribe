@@ -4,6 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Heart, ArrowLeft, ArrowRight, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import datingInterests from "@/data/datingInterests.json";
+import HeightSelector from "./HeightSelector";
+import DropdownSelector from "./DropdownSelector";
+import AgeSelector from "./AgeSelector";
 
 interface GenderPreference {
   gender: string;
@@ -16,10 +20,18 @@ interface OnboardingData {
   age: number;
   height: number;
   gender: string;
-  location: string;
+  zipCode: string;
   coronavirusVaccinated: string;
   religion: string;
   sexualOrientation: string;
+  hasKids: boolean | null;
+  smokes: string;
+  drinks: string;
+  activity: string;
+  college: string;
+  job: string;
+  pets: string;
+  interests: string[];
   
   // Preferences (clearly "theirs" by context and naming)
   // Support multiple gender preferences, each with their own orientation
@@ -82,10 +94,18 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
     age: existingProfile?.age || 0,
     height: existingProfile?.height || 0,
     gender: existingProfile?.gender || "",
-    location: existingProfile?.location || "",
+    zipCode: existingProfile?.zipCode || "",
     coronavirusVaccinated: existingProfile?.coronavirusVaccinated || "",
     religion: existingProfile?.religion || "",
     sexualOrientation: existingProfile?.sexualOrientation || "",
+    hasKids: existingProfile?.hasKids ?? null,
+    smokes: existingProfile?.smokes || "",
+    drinks: existingProfile?.drinks || "",
+    activity: existingProfile?.activity || "",
+    college: existingProfile?.college || "",
+    job: existingProfile?.job || "",
+    pets: existingProfile?.pets || "",
+    interests: existingProfile?.interests || [],
     
     // Preference data - new format with multiple gender preferences
     preferredGenders: parseExistingPreferences(),
@@ -110,7 +130,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
            formData.height >= 12 && // Minimum 1 foot
            formData.gender !== "" && 
            formData.sexualOrientation !== "" && 
-           formData.location.trim() !== "";
+           formData.zipCode.trim() !== "";
   };
 
   const isStep2Valid = () => {
@@ -225,218 +245,289 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
               <div className="md:col-span-2">
                 <label className="block text-sm text-gray-900 font-bold mb-2">About you</label>
                 <textarea
-                  className="w-full p-3 border rounded-lg"
+                  className="w-full px-3 py-3 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
                   rows={4}
                   placeholder="Tell us about yourself and your music taste..."
                   value={formData.bio}
                   onChange={(e) => setFormData({...formData, bio: e.target.value})}
                 />
               </div>
-                              <div>
-                  <label className="block text-sm text-gray-900 font-bold mb-2">
-                    Age {formData.age <= 0 && (
-                    <span className="text-red-500 text-md mt-1">*</span>
-                  )}
-                  </label>
-                  <input
-                    type="number"
-                    min="18"
-                    max="130"
-                    required
-                    className={`w-full p-3 border rounded-lg ${formData.age < 18 ? 'border-red-500' : ''}`}
-                    value={formData.age === 0 ? '' : formData.age}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      // Allow typing any number, but store as 0 if invalid
-                      const numValue = parseInt(value) || 0;
-                      setFormData({...formData, age: numValue});
-                    }}
-                    onFocus={(e) => {
-                      if (formData.age === 0) {
-                        e.target.value = '';
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const value = parseInt(e.target.value) || 0;
-                      // Clear field if user enters value below 18
-                      if (value < 18) {
-                        setFormData({...formData, age: 0});
-                      }
-                    }}
-                  />
-                  {formData.age < 18 && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {formData.age === 0 ? "Age is required" : "Age must be at least 18"}
-                    </p>
-                  )}
-                </div>
+              <AgeSelector
+                value={formData.age}
+                onChange={(age) => setFormData({...formData, age})}
+                label="Age"
+                required={true}
+                error={formData.age < 18}
+                min={18}
+                max={130}
+              />
+              {formData.age < 18 && (
+                <p className="text-red-500 text-xs mt-1">
+                  {formData.age === 0 ? "Age is required" : "Age must be at least 18"}
+                </p>
+              )}
+              <HeightSelector
+                value={formData.height}
+                onChange={(heightInInches) => setFormData({...formData, height: heightInInches})}
+                label="Height"
+                required={true}
+                error={formData.height < 36}
+              />
+              {formData.height < 36 && (
+                <p className="text-red-500 text-xs mt-1">
+                  Height must be at least 3 feet
+                </p>
+              )}
               <div>
-                <label className="block text-sm text-gray-900 font-bold mb-2">
-                  Height {formData.height < 12 && (
-                  <span className="text-red-500 text-md mt-1">*</span>
-                )}
-                </label>
-                <div className="flex items-center space-x-2">
-                  <div className="flex-1">
-                    <input
-                      type="number"
-                      min="0"
-                      max="9"
-                      className={`w-full p-3 border rounded-lg ${formData.height < 12 ? 'border-red-500' : ''}`}
-                      value={Math.floor(formData.height / 12) === 0 ? '' : Math.floor(formData.height / 12)}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        const feet = parseInt(value) || 0;
-                        const inches = formData.height % 12;
-                        setFormData({...formData, height: feet * 12 + inches});
-                      }}
-                      onFocus={(e) => {
-                        if (Math.floor(formData.height / 12) === 0) {
-                          e.target.value = '';
-                        }
-                      }}
-                      onBlur={(e) => {
-                        const value = parseInt(e.target.value) || 0;
-                        if (value < 0) {
-                          const inches = formData.height % 12;
-                          setFormData({...formData, height: inches});
-                        }
-                      }}
-                      placeholder="0"
-                    />
-                    <label className="text-xs text-gray-500 mt-1 block">Feet</label>
-                  </div>
-                  <div className="flex-1">
-                    <input
-                      type="number"
-                      min="0"
-                      max="11"
-                      className={`w-full p-3 border rounded-lg ${formData.height < 12 ? 'border-red-500' : ''}`}
-                      value={formData.height % 12 === 0 ? '' : formData.height % 12}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        const inches = parseInt(value) || 0;
-                        const feet = Math.floor(formData.height / 12);
-                        setFormData({...formData, height: feet * 12 + inches});
-                      }}
-                      onFocus={(e) => {
-                        if (formData.height % 12 === 0) {
-                          e.target.value = '';
-                        }
-                      }}
-                      onBlur={(e) => {
-                        const value = parseInt(e.target.value) || 0;
-                        if (value < 0) {
-                          const feet = Math.floor(formData.height / 12);
-                          setFormData({...formData, height: feet * 12});
-                        }
-                      }}
-                      placeholder="0"
-                    />
-                    <label className="text-xs text-gray-500 mt-1 block">Inches</label>
-                  </div>
-                </div>
-                {formData.height < 12 && (
-                  <p className="text-red-500 text-xs mt-1">
-                    Height must be at least 1 foot
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm text-gray-900 font-bold mb-2">
-                  Gender {formData.gender === "" && (
-                  <span className="text-red-500 text-md mt-1">*</span>
-                )}
-                </label>
-                <select
-                  required
-                  className={`w-full p-3 border rounded-lg ${formData.gender === "" ? 'border-red-500' : ''}`}
+                <DropdownSelector
                   value={formData.gender}
-                  onChange={(e) => setFormData({...formData, gender: e.target.value})}
-                >
-                  <option value="">Select gender</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                </select>
+                  onChange={(value) => setFormData({...formData, gender: value})}
+                  options={[
+                    { label: "Select gender", value: "" },
+                    { label: "Male", value: "male" },
+                    { label: "Female", value: "female" },
+                  ]}
+                  label="Gender"
+                  placeholder="Select gender"
+                  required={true}
+                  error={formData.gender === ""}
+                />
                 {formData.gender === "" && (
                   <p className="text-red-500 text-xs mt-1">Gender is required</p>
                 )}
               </div>
               <div>
-                <label className="block text-sm text-gray-900 font-bold mb-2">
-                  Sexual Orientation {formData.sexualOrientation === "" && (
-                  <span className="text-red-500 text-md mt-1">*</span>
-                )}
-                </label>
-                <select
-                  required
-                  className={`w-full p-3 border rounded-lg ${formData.sexualOrientation === "" ? 'border-red-500' : ''}`}
+                <DropdownSelector
                   value={formData.sexualOrientation}
-                  onChange={(e) => setFormData({...formData, sexualOrientation: e.target.value})}
-                >
-                  <option value="">Select sexual orientation</option>
-                  <option value="straight">Straight</option>
-                  <option value="gay">Gay</option>
-                  <option value="bisexual">Bisexual</option>
-                  <option value="other">Other</option>
-                </select>
+                  onChange={(value) => setFormData({...formData, sexualOrientation: value})}
+                  options={[
+                    { label: "Select sexual orientation", value: "" },
+                    { label: "Straight", value: "straight" },
+                    { label: "Gay", value: "gay" },
+                    { label: "Bisexual", value: "bisexual" },
+                    { label: "Other", value: "other" },
+                  ]}
+                  label="Sexual Orientation"
+                  placeholder="Select sexual orientation"
+                  required={true}
+                  error={formData.sexualOrientation === ""}
+                />
                 {formData.sexualOrientation === "" && (
                   <p className="text-red-500 text-xs mt-1">Sexual orientation is required</p>
                 )}
               </div>
               <div className="md:col-span-1">
                 <label className="block text-sm text-gray-900 font-bold mb-2">
-                  Location {formData.location.trim() === "" && (
+                  Location (Zip Code) {formData.zipCode.trim() === "" && (
                   <span className="text-red-500 text-md mt-1">*</span>
                 )}
                 </label>
                 <input
                   type="text"
                   required
-                  className={`w-full p-3 border rounded-lg ${formData.location.trim() === "" ? 'border-red-500' : ''}`}
-                  placeholder="Zip code"
-                  value={formData.location}
-                  onChange={(e) => setFormData({...formData, location: e.target.value})}
+                  className={`w-full p-3 border rounded-lg ${formData.zipCode.trim() === "" ? 'border-red-500' : ''}`}
+                  placeholder="e.g., 90210"
+                  value={formData.zipCode}
+                  onChange={(e) => setFormData({...formData, zipCode: e.target.value})}
+                  maxLength={10}
                 />
-                {formData.location.trim() === "" && (
+                {formData.zipCode.trim() === "" && (
                   <p className="text-red-500 text-xs mt-1">Location is required</p>
                 )}
+                <p className="text-xs text-gray-500 mt-1">Enter your zip code for distance matching</p>
               </div>
               <div className="md:col-span-1">
-                <label className="block text-sm text-gray-900 font-bold mb-2">
-                  Coronavirus Vaccinated
-                </label>
-                <select
-                  className="w-full p-3 border rounded-lg"
+                <DropdownSelector
                   value={formData.coronavirusVaccinated}
-                  onChange={(e) => setFormData({...formData, coronavirusVaccinated: e.target.value})}
-                >
-                  <option value="">Select vaccination status (optional)</option>
-                  <option value="yes">Yes</option>
-                  <option value="no">No</option>
-                </select>
+                  onChange={(value) => setFormData({...formData, coronavirusVaccinated: value})}
+                  options={[
+                    { label: "Select vaccination status (optional)", value: "" },
+                    { label: "Yes", value: "yes" },
+                    { label: "No", value: "no" },
+                  ]}
+                  label="Coronavirus Vaccinated"
+                  placeholder="Select vaccination status (optional)"
+                />
               </div>
               <div className="md:col-span-1">
-                <label className="block text-sm text-gray-900 font-bold mb-2">
-                  Religion
-                </label>
-                <select
-                  className="w-full p-3 border rounded-lg"
+                <DropdownSelector
                   value={formData.religion}
-                  onChange={(e) => setFormData({...formData, religion: e.target.value})}
-                >
-                  <option value="">Select religion (optional)</option>
-                  <option value="christianity">Christianity</option>
-                  <option value="catholicism">Catholicism</option>
-                  <option value="judaism">Judaism</option>
-                  <option value="islam">Islam</option>
-                  <option value="hinduism">Hinduism</option>
-                  <option value="buddhism">Buddhism</option>
-                  <option value="sikhism">Sikhism</option>
-                  <option value="atheism">Atheism</option>
-                  <option value="agnosticism">Agnosticism</option>
-                  <option value="undecided">Undecided</option>
-                </select>
+                  onChange={(value) => setFormData({...formData, religion: value})}
+                  options={[
+                    { label: "Select religion (optional)", value: "" },
+                    { label: "Christianity", value: "christianity" },
+                    { label: "Catholicism", value: "catholicism" },
+                    { label: "Judaism", value: "judaism" },
+                    { label: "Islam", value: "islam" },
+                    { label: "Hinduism", value: "hinduism" },
+                    { label: "Buddhism", value: "buddhism" },
+                    { label: "Sikhism", value: "sikhism" },
+                    { label: "Atheism", value: "atheism" },
+                    { label: "Agnosticism", value: "agnosticism" },
+                    { label: "Undecided", value: "undecided" },
+                  ]}
+                  label="Religion"
+                  placeholder="Select religion (optional)"
+                />
+              </div>
+
+              {/* Additional Optional Fields */}
+              <div className="md:col-span-2">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 mt-6">Additional Information (Optional)</h3>
+              </div>
+
+              <div>
+                <DropdownSelector
+                  value={formData.hasKids === null ? "" : formData.hasKids ? "yes" : "no"}
+                  onChange={(value) =>
+                    setFormData({
+                      ...formData,
+                      hasKids: value === "" ? null : value === "yes",
+                    })
+                  }
+                  options={[
+                    { label: "Prefer not to say", value: "" },
+                    { label: "Yes", value: "yes" },
+                    { label: "No", value: "no" },
+                  ]}
+                  label="Has Kids"
+                  placeholder="Prefer not to say"
+                />
+              </div>
+
+              <div>
+                <DropdownSelector
+                  value={formData.smokes}
+                  onChange={(value) => setFormData({...formData, smokes: value})}
+                  options={[
+                    { label: "Select option (optional)", value: "" },
+                    { label: "Yes", value: "Yes" },
+                    { label: "No", value: "No" },
+                    { label: "Social", value: "Social" },
+                  ]}
+                  label="Smokes"
+                  placeholder="Select option (optional)"
+                />
+              </div>
+
+              <div>
+                <DropdownSelector
+                  value={formData.drinks}
+                  onChange={(value) => setFormData({...formData, drinks: value})}
+                  options={[
+                    { label: "Select option (optional)", value: "" },
+                    { label: "Yes", value: "Yes" },
+                    { label: "No", value: "No" },
+                    { label: "Social", value: "Social" },
+                  ]}
+                  label="Drinks"
+                  placeholder="Select option (optional)"
+                />
+              </div>
+
+              <div>
+                <DropdownSelector
+                  value={formData.activity}
+                  onChange={(value) => setFormData({...formData, activity: value})}
+                  options={[
+                    { label: "Select activity level (optional)", value: "" },
+                    { label: "Active", value: "Active" },
+                    { label: "Sporting", value: "Sporting" },
+                    { label: "Super active", value: "Super active" },
+                    { label: "Couch potato", value: "Couch potato" },
+                    { label: "Hiker", value: "Hiker" },
+                    { label: "Gym enthusiast", value: "Gym enthusiast" },
+                    { label: "Yoga lover", value: "Yoga lover" },
+                    { label: "Outdoor adventurer", value: "Outdoor adventurer" },
+                    { label: "Weekend warrior", value: "Weekend warrior" },
+                    { label: "Moderately active", value: "Moderately active" },
+                  ]}
+                  label="Activity Level"
+                  placeholder="Select activity level (optional)"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-900 font-bold mb-2">
+                  College
+                </label>
+                <input
+                  type="text"
+                  className="w-full h-11 px-3 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="e.g., UCLA, Stanford University (optional)"
+                  maxLength={100}
+                  value={formData.college}
+                  onChange={(e) => setFormData({...formData, college: e.target.value})}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-900 font-bold mb-2">
+                  Job
+                </label>
+                <input
+                  type="text"
+                  className="w-full h-11 px-3 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="e.g., Software Engineer, Teacher (optional)"
+                  maxLength={100}
+                  value={formData.job}
+                  onChange={(e) => setFormData({...formData, job: e.target.value})}
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm text-gray-900 font-bold mb-2">
+                  Pets
+                </label>
+                <input
+                  type="text"
+                  className="w-full h-11 px-3 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="e.g., 2 dogs, 1 cat (optional)"
+                  maxLength={150}
+                  value={formData.pets}
+                  onChange={(e) => setFormData({...formData, pets: e.target.value})}
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm text-gray-900 font-bold mb-3">
+                  Interests (Select all that apply - optional)
+                </label>
+                <div className="max-h-64 overflow-y-auto border rounded-lg p-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {datingInterests.map((interest) => (
+                      <label
+                        key={interest}
+                        className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.interests.includes(interest)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFormData({
+                                ...formData,
+                                interests: [...formData.interests, interest],
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                interests: formData.interests.filter((i) => i !== interest),
+                              });
+                            }
+                          }}
+                          className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                        />
+                        <span className="text-sm text-gray-700">{interest}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                {formData.interests.length > 0 && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    {formData.interests.length} interest{formData.interests.length !== 1 ? "s" : ""} selected
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -577,7 +668,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                     min="18"
                     max="130"
                     required
-                    className={`w-full p-3 border rounded-lg ${formData.preferredMinAge < 18 ? 'border-red-500' : ''}`}
+                    className={`w-full h-11 px-3 text-sm border rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent ${formData.preferredMinAge < 18 ? 'border-red-500' : 'border-gray-300'}`}
                     value={formData.preferredMinAge === 0 ? '' : formData.preferredMinAge}
                     onChange={(e) => {
                       const value = e.target.value;
@@ -615,7 +706,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                     min="18"
                     max="130"
                     required
-                    className={`w-full p-3 border rounded-lg ${formData.preferredMaxAge < 18 ? 'border-red-500' : ''}`}
+                    className={`w-full h-11 px-3 text-sm border rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent ${formData.preferredMaxAge < 18 ? 'border-red-500' : 'border-gray-300'}`}
                     value={formData.preferredMaxAge === 0 ? '' : formData.preferredMaxAge}
                     onChange={(e) => {
                       const value = e.target.value;
@@ -663,7 +754,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                           type="number"
                           min="0"
                           max="9"
-                          className={`w-full p-3 border rounded-lg ${formData.preferredMinHeight < 12 ? 'border-red-500' : ''}`}
+                          className={`w-full h-11 px-3 text-sm border rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent ${formData.preferredMinHeight < 12 ? 'border-red-500' : 'border-gray-300'}`}
                           value={Math.floor(formData.preferredMinHeight / 12) === 0 ? '' : Math.floor(formData.preferredMinHeight / 12)}
                           onChange={(e) => {
                             const value = e.target.value;
@@ -692,7 +783,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                           type="number"
                           min="0"
                           max="11"
-                          className={`w-full p-3 border rounded-lg ${formData.preferredMinHeight < 12 ? 'border-red-500' : ''}`}
+                          className={`w-full h-11 px-3 text-sm border rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent ${formData.preferredMinHeight < 12 ? 'border-red-500' : 'border-gray-300'}`}
                           value={formData.preferredMinHeight % 12 === 0 ? '' : formData.preferredMinHeight % 12}
                           onChange={(e) => {
                             const value = e.target.value;
@@ -728,7 +819,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                           type="number"
                           min="0"
                           max="8"
-                          className={`w-full p-3 border rounded-lg ${formData.preferredMaxHeight < 12 ? 'border-red-500' : ''}`}
+                          className={`w-full h-11 px-3 text-sm border rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent ${formData.preferredMaxHeight < 12 ? 'border-red-500' : 'border-gray-300'}`}
                           value={Math.floor(formData.preferredMaxHeight / 12) === 0 ? '' : Math.floor(formData.preferredMaxHeight / 12)}
                           onChange={(e) => {
                             const value = e.target.value;
@@ -757,7 +848,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                           type="number"
                           min="0"
                           max="11"
-                          className={`w-full p-3 border rounded-lg ${formData.preferredMaxHeight < 12 ? 'border-red-500' : ''}`}
+                          className={`w-full h-11 px-3 text-sm border rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent ${formData.preferredMaxHeight < 12 ? 'border-red-500' : 'border-gray-300'}`}
                           value={formData.preferredMaxHeight % 12 === 0 ? '' : formData.preferredMaxHeight % 12}
                           onChange={(e) => {
                             const value = e.target.value;
@@ -806,7 +897,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                     min="1"
                     max="300"
                     required
-                    className={`w-full p-3 border rounded-lg ${formData.preferredMaxDistance <= 0 ? 'border-red-500' : ''}`}
+                    className={`w-full h-11 px-3 text-sm border rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent ${formData.preferredMaxDistance <= 0 ? 'border-red-500' : 'border-gray-300'}`}
                     value={formData.preferredMaxDistance === 0 ? '' : formData.preferredMaxDistance}
                     onChange={(e) => {
                       const value = e.target.value;
@@ -831,18 +922,17 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                 </div>
                 
                 <div>
-                  <label className="block text-sm text-gray-900 font-bold mb-2">
-                    Preferred Vaccination Status
-                  </label>
-                  <select
-                    className="w-full p-3 border rounded-lg"
+                  <DropdownSelector
                     value={formData.preferredCoronavirusVaccinated}
-                    onChange={(e) => setFormData({...formData, preferredCoronavirusVaccinated: e.target.value})}
-                  >
-                    <option value="">No preference</option>
-                    <option value="Yes">Vaccinated</option>
-                    <option value="No">Not vaccinated</option>
-                  </select>
+                    onChange={(value) => setFormData({...formData, preferredCoronavirusVaccinated: value})}
+                    options={[
+                      { label: "No preference", value: "" },
+                      { label: "Vaccinated", value: "Yes" },
+                      { label: "Not vaccinated", value: "No" },
+                    ]}
+                    label="Preferred Vaccination Status"
+                    placeholder="No preference"
+                  />
                 </div>
               </div>
 
@@ -915,7 +1005,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                     </div>
                     <div>
                       <p className="text-sm text-gray-900 font-bold">Location</p>
-                      <p className="font-medium text-gray-900">{formData.location || "Not provided"}</p>
+                      <p className="font-medium text-gray-900">{formData.zipCode || "Not provided"}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-900 font-bold">Coronavirus Vaccinated</p>

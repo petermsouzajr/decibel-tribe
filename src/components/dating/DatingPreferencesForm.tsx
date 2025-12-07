@@ -7,6 +7,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import instrumentList from "@/data/instrumentList.json";
 import skillsList from "@/data/skillsList.json";
+import DropdownSelector from "./DropdownSelector";
+import AgeSelector from "./AgeSelector";
 
 export default function DatingPreferencesForm() {
   const { toast } = useToast();
@@ -220,34 +222,26 @@ export default function DatingPreferencesForm() {
               <span className="text-sm text-gray-700">Any</span>
             </label>
           </div>
-          <input
-            type="number"
-            min="18"
-            max="130"
-            className="w-full p-3 border rounded-lg"
-            value={formData.preferredMinAge === 0 ? "" : formData.preferredMinAge}
-            onChange={(e) => {
-              const value = parseInt(e.target.value) || 0;
-              setFormData({ ...formData, preferredMinAge: value, anyAge: false });
-            }}
-            disabled={formData.anyAge}
+          <AgeSelector
+            value={formData.preferredMinAge || 18}
+            onChange={(age) => setFormData({ ...formData, preferredMinAge: age, anyAge: false })}
+            label=""
+            min={18}
+            max={130}
+            className={formData.anyAge ? "opacity-50 pointer-events-none" : ""}
           />
         </div>
         <div>
           <label className="block text-sm font-semibold text-gray-900 mb-2">
             Maximum Age
           </label>
-          <input
-            type="number"
-            min="18"
-            max="130"
-            className="w-full p-3 border rounded-lg"
-            value={formData.preferredMaxAge === 0 ? "" : formData.preferredMaxAge}
-            onChange={(e) => {
-              const value = parseInt(e.target.value) || 0;
-              setFormData({ ...formData, preferredMaxAge: value, anyAge: false });
-            }}
-            disabled={formData.anyAge}
+          <AgeSelector
+            value={formData.preferredMaxAge || 130}
+            onChange={(age) => setFormData({ ...formData, preferredMaxAge: age, anyAge: false })}
+            label=""
+            min={18}
+            max={130}
+            className={formData.anyAge ? "opacity-50 pointer-events-none" : ""}
           />
         </div>
       </div>
@@ -284,7 +278,7 @@ export default function DatingPreferencesForm() {
                   type="number"
                   min="0"
                   max="9"
-                  className="w-full p-3 border rounded-lg"
+                  className="w-full h-11 px-3 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
                   value={Math.floor(formData.preferredMinHeight / 12) || ""}
                   onChange={(e) => {
                     const feet = parseInt(e.target.value) || 0;
@@ -300,7 +294,7 @@ export default function DatingPreferencesForm() {
                   type="number"
                   min="0"
                   max="11"
-                  className="w-full p-3 border rounded-lg"
+                  className="w-full h-11 px-3 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
                   value={formData.preferredMinHeight % 12 || ""}
                   onChange={(e) => {
                     const inches = parseInt(e.target.value) || 0;
@@ -321,7 +315,7 @@ export default function DatingPreferencesForm() {
                   type="number"
                   min="0"
                   max="9"
-                  className="w-full p-3 border rounded-lg"
+                  className="w-full h-11 px-3 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
                   value={Math.floor(formData.preferredMaxHeight / 12) || ""}
                   onChange={(e) => {
                     const feet = parseInt(e.target.value) || 0;
@@ -337,7 +331,7 @@ export default function DatingPreferencesForm() {
                   type="number"
                   min="0"
                   max="11"
-                  className="w-full p-3 border rounded-lg"
+                  className="w-full h-11 px-3 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
                   value={formData.preferredMaxHeight % 12 || ""}
                   onChange={(e) => {
                     const inches = parseInt(e.target.value) || 0;
@@ -380,7 +374,7 @@ export default function DatingPreferencesForm() {
             type="number"
             min="1"
             max="300"
-            className="w-full p-3 border rounded-lg"
+            className="w-full h-11 px-3 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
             value={formData.preferredMaxDistance === 0 ? "" : formData.preferredMaxDistance}
             onChange={(e) => {
               const value = parseInt(e.target.value) || 0;
@@ -389,22 +383,19 @@ export default function DatingPreferencesForm() {
             disabled={formData.anyDistance}
           />
         </div>
-        <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-2">
-            Preferred Vaccination Status
-          </label>
-          <select
-            className="w-full p-3 border rounded-lg"
-            value={formData.preferredCoronavirusVaccinated}
-            onChange={(e) =>
-              setFormData({ ...formData, preferredCoronavirusVaccinated: e.target.value })
-            }
-          >
-            <option value="">No preference</option>
-            <option value="Yes">Vaccinated</option>
-            <option value="No">Not vaccinated</option>
-          </select>
-        </div>
+        <DropdownSelector
+          value={formData.preferredCoronavirusVaccinated}
+          onChange={(value) =>
+            setFormData({ ...formData, preferredCoronavirusVaccinated: value })
+          }
+          options={[
+            { label: "No preference", value: "" },
+            { label: "Vaccinated", value: "Yes" },
+            { label: "Not vaccinated", value: "No" },
+          ]}
+          label="Preferred Vaccination Status"
+          placeholder="No preference"
+        />
       </div>
 
       <div>
@@ -584,14 +575,7 @@ export default function DatingPreferencesForm() {
         </label>
       </div>
 
-      <div className="flex justify-between items-center">
-        <Button
-          onClick={() => window.location.href = "/dating"}
-          variant="outline"
-          className="border-gray-300 text-gray-900 hover:bg-gray-100 font-bold"
-        >
-          Back to Dating
-        </Button>
+      <div className="flex justify-end">
         <Button
           onClick={handleSave}
           disabled={saving}

@@ -438,14 +438,26 @@ model user_dating_profile {
   id                    String    @id
   userId                String    @unique
   age                   Int?
-  height                Float?    @db.Real
+  height                Int? // Height in inches (no decimals)
   gender                String?
   sexualOrientation     String?
   coronavirusVaccinated String?
   religion              String?
+  bio                   String?
+  hasKids               Boolean?
+  smokes                String? // "Yes" | "No" | "Social"
+  drinks                String? // "Yes" | "No" | "Social"
+  activity              String? // "Active" | "Sporting" | "Super active" | "Couch potato" | "Hiker" | etc.
+  college               String?   @db.VarChar(100)
+  job                   String?   @db.VarChar(100)
+  pets                  String?   @db.VarChar(150)
+  interests             String[] // Array of interests like "Gamer", "Foodie", etc.
   createdAt             DateTime? @default(now()) @db.Timestamp(6)
   updatedAt             DateTime? @default(now()) @updatedAt @db.Timestamp(6)
-  location              String?
+  zipCode               String? // User's zip code (input by user)
+  city                  String? // City name (geocoded from zip code, displayed on card)
+  latitude              Float? // Cached geocoded latitude (from zip code)
+  longitude             Float? // Cached geocoded longitude (from zip code)
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
@@ -455,8 +467,8 @@ model user_dating_preferences {
   preferredMinAge                Int
   preferredMaxAge                Int
   preferredMaxDistanceKm         Int
-  preferredMinHeight             Float?
-  preferredMaxHeight             Float?
+  preferredMinHeight             Int? // Height in inches (no decimals)
+  preferredMaxHeight             Int? // Height in inches (no decimals)
   createdAt                      DateTime @default(now())
   updatedAt                      DateTime @updatedAt
   preferredCoronavirusVaccinated String?
@@ -466,6 +478,10 @@ model user_dating_preferences {
   preferredInstruments           String[] // Music filter: preferred instruments
   preferredSkills                String[] // Music filter: preferred skills
   matchMusicTastes               Boolean  @default(true) // User preference: prioritize music compatibility
+  preferredHasKids               String? // "yes" | "no" | "any" | null
+  preferredSmokes                String? // "Yes" | "No" | "Social" | null
+  preferredDrinks                String? // "Yes" | "No" | "Social" | null
+  preferredActivity              String? // Activity level preference
   users                          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 

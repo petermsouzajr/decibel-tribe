@@ -49,7 +49,8 @@ export async function GET(request: NextRequest) {
             user_dating_profile: {
               select: {
                 age: true,
-                location: true,
+                city: true,
+                zipCode: true,
               },
             },
             user_photos: {
@@ -85,7 +86,7 @@ export async function GET(request: NextRequest) {
         avatarUrl: targetUser.avatarUrl,
         primaryPhotoUrl: targetUser.user_photos[0]?.url || targetUser.avatarUrl,
         age: targetUser.user_dating_profile?.age || null,
-        location: targetUser.user_dating_profile?.location || null,
+        location: targetUser.user_dating_profile?.city || targetUser.user_dating_profile?.zipCode || null,
         direction: swipe.direction,
         message: swipe.message || null,
         createdAt: swipe.createdAt,

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { formatRelativeDate } from "@/lib/utils";
 import PotentialMatchCard from "./PotentialMatchCard";
 import MatchCelebration from "./MatchCelebration";
+import BackToDatingButton from "./BackToDatingButton";
 
 interface LikeUser {
   id: string;
@@ -18,6 +19,8 @@ interface LikeUser {
   avatarUrl: string | null;
   primaryPhotoUrl: string | null;
   age: number | null;
+  height: number | null;
+  gender: string | null;
   location: string | null;
   likedAt: Date;
   message: string | null;
@@ -125,7 +128,7 @@ export default function LikesYouList() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4 flex items-center justify-center">
+      <div className="w-full min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-purple-500 mx-auto mb-4" />
           <p className="text-gray-600">Loading who likes you...</p>
@@ -136,8 +139,9 @@ export default function LikesYouList() {
 
   if (likes.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
-        <div className="max-w-4xl mx-auto">
+      <div className="w-full min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+        <div className="w-full px-2 sm:px-4 lg:max-w-4xl lg:mx-auto">
+          <BackToDatingButton />
           <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
             <div className="w-64 h-96 bg-gray-100 rounded-xl mx-auto mb-6 flex items-center justify-center">
               <div className="text-center">
@@ -162,8 +166,9 @@ export default function LikesYouList() {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
-        <div className="max-w-4xl mx-auto">
+      <div className="w-full min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+        <div className="w-full px-2 sm:px-4 lg:max-w-4xl lg:mx-auto">
+          <BackToDatingButton />
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Likes You
@@ -270,6 +275,8 @@ export default function LikesYouList() {
                 username: selectedUser.username,
                 displayName: selectedUser.displayName,
                 age: selectedUser.age,
+                height: selectedUser.height || null,
+                gender: selectedUser.gender || null,
                 bio: "",
                 photos: selectedUser.primaryPhotoUrl
                   ? [{ url: selectedUser.primaryPhotoUrl, isPrimary: true }]

@@ -60,11 +60,11 @@ export default function FilterPanel({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-950 border-gray-800">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Filter className="w-5 h-5" />
-            Advanced Filters
+          <DialogTitle className="flex items-center gap-2 text-white">
+            <Music className="w-5 h-5" />
+            Advanced Filters - Music Preferences
           </DialogTitle>
         </DialogHeader>
 
@@ -72,34 +72,34 @@ export default function FilterPanel({
           {/* Instruments Filter */}
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <Music className="w-5 h-5 text-purple-500" />
-              <h3 className="text-lg font-semibold text-gray-900">
+              <Music className="w-5 h-5 text-purple-400" />
+              <h3 className="text-lg font-semibold text-white">
                 Preferred Instruments
               </h3>
               {localFilters.preferredInstruments.length > 0 && (
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-gray-300">
                   ({localFilters.preferredInstruments.length} selected)
                 </span>
               )}
             </div>
-            <div className="max-h-60 overflow-y-auto border rounded-lg p-3">
+            <div className="max-h-60 overflow-y-auto border border-gray-700 rounded-lg p-3 bg-gray-900/50">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 {instrumentList.map((instrument) => (
                   <label
                     key={instrument}
-                    className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-gray-50 transition-colors ${
+                    className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-gray-800 transition-colors ${
                       localFilters.preferredInstruments.includes(instrument)
-                        ? "bg-purple-50 border border-purple-200"
-                        : "border border-gray-200"
+                        ? "bg-purple-900/50 border border-purple-500"
+                        : "border border-gray-700"
                     }`}
                   >
                     <input
                       type="checkbox"
                       checked={localFilters.preferredInstruments.includes(instrument)}
                       onChange={() => toggleInstrument(instrument)}
-                      className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                      className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-purple-500 focus:ring-purple-500"
                     />
-                    <span className="text-sm text-gray-900">{instrument}</span>
+                    <span className="text-sm text-gray-100">{instrument}</span>
                   </label>
                 ))}
               </div>
@@ -109,34 +109,34 @@ export default function FilterPanel({
           {/* Skills Filter */}
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <Music className="w-5 h-5 text-blue-500" />
-              <h3 className="text-lg font-semibold text-gray-900">
+              <Music className="w-5 h-5 text-blue-400" />
+              <h3 className="text-lg font-semibold text-white">
                 Preferred Skills
               </h3>
               {localFilters.preferredSkills.length > 0 && (
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-gray-300">
                   ({localFilters.preferredSkills.length} selected)
                 </span>
               )}
             </div>
-            <div className="max-h-60 overflow-y-auto border rounded-lg p-3">
+            <div className="max-h-60 overflow-y-auto border border-gray-700 rounded-lg p-3 bg-gray-900/50">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 {skillsList.map((skill) => (
                   <label
                     key={skill}
-                    className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-gray-50 transition-colors ${
+                    className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-gray-800 transition-colors ${
                       localFilters.preferredSkills.includes(skill)
-                        ? "bg-blue-50 border border-blue-200"
-                        : "border border-gray-200"
+                        ? "bg-blue-900/50 border border-blue-500"
+                        : "border border-gray-700"
                     }`}
                   >
                     <input
                       type="checkbox"
                       checked={localFilters.preferredSkills.includes(skill)}
                       onChange={() => toggleSkill(skill)}
-                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-blue-500 focus:ring-blue-500"
                     />
-                    <span className="text-sm text-gray-900">{skill}</span>
+                    <span className="text-sm text-gray-100">{skill}</span>
                   </label>
                 ))}
               </div>
@@ -165,6 +165,11 @@ export default function FilterPanel({
     </Dialog>
   );
 }
+
+
+
+
+
 
 
 

@@ -43,10 +43,10 @@ function DatingChatContent({
     "/assets/avatar-placeholder.png";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex flex-col">
+    <div className="w-full min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex flex-col">
       {/* Header */}
       <div className="bg-white border-b shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-4">
+        <div className="max-w-4xl mx-auto w-full px-2 sm:px-4 py-3 flex items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
@@ -87,7 +87,7 @@ function DatingChatContent({
       {/* Insights Panel */}
       {showInsights && (
         <div className="bg-white border-b shadow-sm">
-          <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="max-w-4xl mx-auto w-full px-2 sm:px-4 py-4">
             <MatchInsights matchId={matchId} />
           </div>
         </div>
@@ -143,7 +143,7 @@ export default function DatingChatInterface({
 
   if (!chatClient || !channel) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
+      <div className="w-full min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
       </div>
     );

@@ -23,8 +23,8 @@ export default async function DatingPage() {
   // If dating is not active, show intro page with buttons
   if (!isDatingActive) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
-        <div className="max-w-4xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4 flex items-center justify-center">
+        <div className="w-full">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Decibel Tribe Dating

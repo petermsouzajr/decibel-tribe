@@ -33,6 +33,7 @@ export default function MenuBarContent({
   const [showPostDialog, setShowPostDialog] = useState(false);
 
   const pathname = usePathname();
+  const isDatingPage = pathname?.startsWith("/dating") ?? false;
 
   const isActive = (path: string) =>
     pathname === path ? "bg-accent text-white" : "";
@@ -113,15 +114,17 @@ export default function MenuBarContent({
           <span className="hidden lg:inline">Events</span>
         </Link>
       </Button>
-      <Button
-        variant="ghost"
-        className="hidden w-full items-center justify-start gap-3 bg-primary text-white sm:flex"
-        title="Post"
-        onClick={() => setShowPostDialog(true)}
-      >
-        <Plus />
-        <span className="hidden lg:inline">Post</span>
-      </Button>
+      {!isDatingPage && (
+        <Button
+          variant="ghost"
+          className="hidden w-full items-center justify-start gap-3 bg-primary text-white sm:flex"
+          title="Post"
+          onClick={() => setShowPostDialog(true)}
+        >
+          <Plus />
+          <span className="hidden lg:inline">Post</span>
+        </Button>
+      )}
         <Button
           variant="ghost"
           className="flex items-center p-2 justify-center rounded-full bg-gradient-to-r from-pink-900 to-purple-700 text-white shadow-2xl transition-all hover:scale-[1.15] active:scale-105 sm:hidden"
@@ -132,14 +135,16 @@ export default function MenuBarContent({
             <Heart />
           </Link>
         </Button>
-      <Button
-        variant="ghost"
-        className="fixed bottom-20 right-5 flex h-[3rem] w-[3rem] items-center justify-center rounded-full bg-primary text-white shadow-2xl transition-all hover:scale-[1.15] active:scale-105 sm:hidden"
-        title="Post"
-        onClick={() => setShowPostDialog(true)}
-      >
-        <Plus />
-      </Button>
+      {!isDatingPage && (
+        <Button
+          variant="ghost"
+          className="fixed bottom-20 right-5 flex h-[3rem] w-[3rem] items-center justify-center rounded-full bg-primary text-white shadow-2xl transition-all hover:scale-[1.15] active:scale-105 sm:hidden"
+          title="Post"
+          onClick={() => setShowPostDialog(true)}
+        >
+          <Plus />
+        </Button>
+      )}
       <PostDialog open={showPostDialog} onOpenChange={setShowPostDialog} />
     </div>
   );

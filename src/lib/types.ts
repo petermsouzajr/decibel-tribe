@@ -21,7 +21,8 @@ export function getUserDataSelect(loggedInUserId?: string | null) {
         sexualOrientation: true,
         coronavirusVaccinated: true,
         religion: true,
-        location: true,
+        zipCode: true,
+        city: true,
       },
     },
     userPreferences: {

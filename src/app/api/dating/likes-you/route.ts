@@ -52,7 +52,10 @@ export async function GET(request: NextRequest) {
             user_dating_profile: {
               select: {
                 age: true,
-                location: true,
+                height: true,
+                gender: true,
+                city: true,
+                zipCode: true,
               },
             },
             user_photos: {
@@ -75,7 +78,9 @@ export async function GET(request: NextRequest) {
         avatarUrl: liker.avatarUrl,
         primaryPhotoUrl: liker.user_photos[0]?.url || liker.avatarUrl,
         age: liker.user_dating_profile?.age || null,
-        location: liker.user_dating_profile?.location || null,
+        height: liker.user_dating_profile?.height || null,
+        gender: liker.user_dating_profile?.gender || null,
+        location: liker.user_dating_profile?.city || liker.user_dating_profile?.zipCode || null,
         likedAt: swipe.createdAt,
         message: swipe.message || null, // Message attached to the like
       };

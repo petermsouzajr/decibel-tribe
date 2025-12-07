@@ -6,6 +6,7 @@ import { Loader2, MapPin, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { formatDistanceToNow } from "date-fns";
+import DropdownSelector from "./DropdownSelector";
 
 interface TravelModeDialogContentProps {
   onClose: () => void;
@@ -144,25 +145,25 @@ export default function TravelModeDialogContent({
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Travel Mode</h3>
-          <p className="text-sm text-gray-600 mt-1">
+          <h3 className="text-lg font-semibold text-white">Travel Mode</h3>
+          <p className="text-sm text-gray-300 mt-1">
             Browse matches in different cities
           </p>
         </div>
-        <Button variant="ghost" size="icon" onClick={onClose}>
+        <Button variant="ghost" size="icon" onClick={onClose} className="text-gray-300 hover:text-white">
           <X className="w-5 h-5" />
         </Button>
       </div>
 
       {currentOverride?.active && currentOverride.expiresAt ? (
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+        <div className="bg-purple-900/30 border border-purple-500 rounded-lg p-4">
           <div className="flex items-start gap-3">
-            <MapPin className="w-5 h-5 text-purple-600 mt-0.5" />
+            <MapPin className="w-5 h-5 text-purple-400 mt-0.5" />
             <div className="flex-1">
-              <p className="font-semibold text-gray-900">
+              <p className="font-semibold text-white">
                 Currently browsing: {currentOverride.city}
               </p>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-gray-300 mt-1">
                 Expires {formatDistanceToNow(new Date(currentOverride.expiresAt), { addSuffix: true })}
               </p>
             </div>
@@ -172,7 +173,7 @@ export default function TravelModeDialogContent({
             size="sm"
             onClick={handleDisable}
             disabled={saving}
-            className="mt-3 w-full"
+            className="mt-3 w-full border-gray-700 text-gray-200 hover:bg-gray-800"
           >
             {saving ? (
               <>
@@ -188,7 +189,7 @@ export default function TravelModeDialogContent({
         <>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
+              <label className="block text-sm font-semibold text-gray-200 mb-2">
                 City Name
               </label>
               <input
@@ -196,7 +197,7 @@ export default function TravelModeDialogContent({
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 placeholder="e.g., New York, Los Angeles, London"
-                className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full p-3 border border-gray-700 rounded-lg bg-gray-900 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 onKeyPress={(e) => {
                   if (e.key === "Enter") {
                     handleSetLocation();
@@ -205,22 +206,20 @@ export default function TravelModeDialogContent({
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Duration
-              </label>
-              <select
-                value={durationDays}
-                onChange={(e) => setDurationDays(parseInt(e.target.value))}
-                className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              >
-                <option value={1}>1 day</option>
-                <option value={3}>3 days</option>
-                <option value={7}>7 days</option>
-                <option value={14}>14 days</option>
-                <option value={30}>30 days</option>
-              </select>
-            </div>
+            <DropdownSelector
+              value={durationDays.toString()}
+              onChange={(value) => setDurationDays(parseInt(value))}
+              options={[
+                { label: "1 day", value: "1" },
+                { label: "3 days", value: "3" },
+                { label: "7 days", value: "7" },
+                { label: "14 days", value: "14" },
+                { label: "30 days", value: "30" },
+              ]}
+              label="Duration"
+              placeholder="Select duration"
+              className="bg-gray-900 border-gray-700 text-white"
+            />
           </div>
 
           <Button

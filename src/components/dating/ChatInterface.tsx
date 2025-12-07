@@ -158,10 +158,10 @@ export default function ChatInterface({ matchId, otherUser }: ChatInterfaceProps
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex flex-col">
+    <div className="w-full min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex flex-col">
       {/* Header */}
       <div className="bg-white border-b shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-4">
+        <div className="max-w-4xl mx-auto w-full px-2 sm:px-4 py-3 flex items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
@@ -198,7 +198,7 @@ export default function ChatInterface({ matchId, otherUser }: ChatInterfaceProps
       {/* Insights Panel */}
       {showInsights && (
         <div className="bg-white border-b shadow-sm">
-          <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="max-w-4xl mx-auto w-full px-2 sm:px-4 py-4">
             <MatchInsights matchId={matchId} />
           </div>
         </div>
@@ -209,7 +209,7 @@ export default function ChatInterface({ matchId, otherUser }: ChatInterfaceProps
         ref={messagesContainerRef}
         className="flex-1 overflow-y-auto px-4 py-6"
       >
-        <div className="max-w-4xl mx-auto space-y-4">
+        <div className="max-w-4xl mx-auto w-full px-2 sm:px-4 space-y-4">
           {loading && messages.length === 0 ? (
             <div className="flex justify-center items-center h-full">
               <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
@@ -294,7 +294,7 @@ export default function ChatInterface({ matchId, otherUser }: ChatInterfaceProps
 
       {/* Input */}
       <div className="bg-white border-t">
-        <div className="max-w-4xl mx-auto px-4 py-3">
+        <div className="max-w-4xl mx-auto w-full px-2 sm:px-4 py-3">
           <div className="flex gap-2">
             <textarea
               value={messageInput}

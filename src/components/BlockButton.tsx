@@ -47,7 +47,8 @@ export default function BlockButton({ userId, initiallyBlocked = false, onConfir
   return (
     <>
       <Button
-        variant={blocked ? "secondary" : "outline"}
+        variant="outline"
+        className="w-full bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
         onClick={() => {
           setConfirmOpen(true);
           onConfirmOpenChange?.(true);

@@ -95,7 +95,7 @@ export async function GET(
       age: currentUser.user_dating_profile?.age || null,
       height: currentUser.user_dating_profile?.height || null,
       gender: currentUser.user_dating_profile?.gender || null,
-      location: currentUser.user_dating_profile?.location || null,
+      location: currentUser.user_dating_profile?.city || currentUser.user_dating_profile?.zipCode || null,
       photos: 0, // We'd need to fetch photos separately
     });
 
@@ -104,7 +104,7 @@ export async function GET(
       age: otherUser.user_dating_profile?.age || null,
       height: otherUser.user_dating_profile?.height || null,
       gender: otherUser.user_dating_profile?.gender || null,
-      location: otherUser.user_dating_profile?.location || null,
+      location: otherUser.user_dating_profile?.city || otherUser.user_dating_profile?.zipCode || null,
       photos: 0,
     });
 
@@ -189,6 +189,12 @@ export async function GET(
     );
   }
 }
+
+
+
+
+
+
 
 
 

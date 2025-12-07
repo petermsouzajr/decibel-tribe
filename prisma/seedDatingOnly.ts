@@ -9,9 +9,27 @@ const {
 
 import { seedDatingProfiles } from "./seedModules/datingTeam/datingProfiles.js";
 
+// Import the deletion function directly
+import { deleteDatingTestUsers } from "./seedModules/datingTeam/datingProfiles.js";
+
 async function main() {
   console.log("Running dating seed only...");
 
+  // --- Deletion (outside transaction) ---
+  // It's often safer to delete outside the main transaction
+  // to avoid holding locks for too long or transaction size limits.
+  console.log("Initiating deletion phase...");
+  try {
+    const deletedUserIds = await deleteDatingTestUsers(prisma, streamChatClient);
+    console.log("Deletion phase completed.");
+  } catch (error) {
+    console.error("Error during deletion phase (continuing anyway):", error);
+    // Continue even if deletion fails - seed will handle duplicates
+  }
+
+  console.log("Start seeding...");
+
+  // --- Seeding (inside transaction) ---
   try {
     await prisma.$transaction(
       async (tx) => {

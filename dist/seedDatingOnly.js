@@ -1,51 +1,19 @@
-import { PrismaClient, Prisma } from "@prisma/client";
 import {
-  faker,
-  generateIdFromEntropySize,
-  passwordHash,
-  streamChatClient,
   cypressEnv,
-} from "../../seedUtils.js";
+  faker,
+  generateIdFromEntropySize
+} from "./chunk-6LT2VYDU.js";
 
-// Interface for the data returned by this module
-export interface CreatedDatingUser {
-  id: string;
-  userId: string;
-  username: string;
-  isDatingActive: boolean;
-}
-
-/**
- * HARDCODED TESTING LOCATIONS
- * ============================
- * For testing purposes, 50 users are guaranteed to be in these specific cities:
- * - Los Angeles, CA (10 users) - lat: 34.0522, lon: -118.2437
- * - San Francisco, CA (10 users) - lat: 37.7749, lon: -122.4194
- * - Chicago, IL (10 users) - lat: 41.8781, lon: -87.6298
- * - New York, NY (10 users) - lat: 40.7128, lon: -74.006
- * - Austin, TX (10 users) - lat: 30.2672, lon: -97.7431
- * - Honolulu, HI (10 users) - lat: 21.3099, lon: -157.8581
- *
- * The remaining 150 users are randomly distributed across mainland US cities.
- * Testers can use Travel Mode to set their location to any of these cities
- * to find guaranteed users for testing.
- */
-
-// Major cities with guaranteed user placement (for testing)
-// Using zip codes for location matching
-const GUARANTEED_TEST_CITIES = [
+// prisma/seedModules/datingTeam/datingProfiles.ts
+var GUARANTEED_TEST_CITIES = [
   { city: "Los Angeles", state: "CA", zip: "90001", lat: 34.0522, lon: -118.2437 },
   { city: "San Francisco", state: "CA", zip: "94102", lat: 37.7749, lon: -122.4194 },
   { city: "Chicago", state: "IL", zip: "60601", lat: 41.8781, lon: -87.6298 },
   { city: "New York", state: "NY", zip: "10001", lat: 40.7128, lon: -74.006 },
   { city: "Austin", state: "TX", zip: "78701", lat: 30.2672, lon: -97.7431 },
-  { city: "Honolulu", state: "HI", zip: "96801", lat: 21.3099, lon: -157.8581 },
+  { city: "Honolulu", state: "HI", zip: "96801", lat: 21.3099, lon: -157.8581 }
 ];
-
-const USERS_PER_GUARANTEED_CITY = 10; // 6 cities × 10 users = 60 users (we'll use 50)
-
-// Additional US cities for random distribution (mainland only)
-const RANDOM_MAINLAND_CITIES = [
+var RANDOM_MAINLAND_CITIES = [
   { city: "Houston", state: "TX", zip: "77001", lat: 29.7604, lon: -95.3698 },
   { city: "Phoenix", state: "AZ", zip: "85001", lat: 33.4484, lon: -112.074 },
   { city: "Philadelphia", state: "PA", zip: "19101", lat: 39.9526, lon: -75.1652 },
@@ -90,26 +58,19 @@ const RANDOM_MAINLAND_CITIES = [
   { city: "Cleveland", state: "OH", zip: "44101", lat: 41.4993, lon: -81.6944 },
   { city: "Wichita", state: "KS", zip: "67201", lat: 37.6872, lon: -97.3301 },
   { city: "Arlington", state: "TX", zip: "76001", lat: 32.7357, lon: -97.1081 },
-  { city: "New Orleans", state: "LA", zip: "70112", lat: 29.9511, lon: -90.0715 },
+  { city: "New Orleans", state: "LA", zip: "70112", lat: 29.9511, lon: -90.0715 }
 ];
-
-const DATING_USER_COUNT = 200;
-const GUARANTEED_USERS_COUNT = 50; // 50 users in guaranteed test cities
-const RANDOM_USERS_COUNT = DATING_USER_COUNT - GUARANTEED_USERS_COUNT; // 150 users randomly distributed
-
-// Gender options
-const GENDERS = ["Male", "Female", "Non-binary", "Prefer not to say"];
-
-// Sexual orientation options
-const SEXUAL_ORIENTATIONS = [
+var DATING_USER_COUNT = 200;
+var GUARANTEED_USERS_COUNT = 50;
+var RANDOM_USERS_COUNT = DATING_USER_COUNT - GUARANTEED_USERS_COUNT;
+var GENDERS = ["Male", "Female", "Non-binary", "Prefer not to say"];
+var SEXUAL_ORIENTATIONS = [
   "Straight",
   "Gay",
   "Bisexual",
-  "Other",
+  "Other"
 ];
-
-// Religion options
-const RELIGIONS = [
+var RELIGIONS = [
   "Christian",
   "Catholic",
   "Jewish",
@@ -119,97 +80,58 @@ const RELIGIONS = [
   "Sikh",
   "Atheist",
   "Agnostic",
-  "Undecided",
+  "Undecided"
 ];
-
-// Coronavirus vaccination status
-const VACCINATION_STATUS = ["Yes", "No", ""];
-
-// Height range in inches (for US)
-const MIN_HEIGHT_INCHES = 36; // 3'0"
-const MAX_HEIGHT_INCHES = 94; // 8'0"
-
-// Age range
-const MIN_AGE = 18;
-const MAX_AGE = 130;
-
-/**
- * Deletes existing dating test users from database and StreamChat
- * This ensures clean state before seeding new dating users
- */
-export async function deleteDatingTestUsers(
-  tx: PrismaClient | any,
-  streamClient: any,
-): Promise<string[]> {
+var VACCINATION_STATUS = ["Yes", "No", ""];
+var MIN_HEIGHT_INCHES = 36;
+var MAX_HEIGHT_INCHES = 94;
+var MIN_AGE = 18;
+var MAX_AGE = 130;
+async function deleteDatingTestUsers(tx, streamClient) {
   console.log("Deleting existing dating test users...");
-
   try {
-    // Get the unique test domain (same as regular seed uses)
     const testDomain = cypressEnv.testUserEmailDomain;
     if (!testDomain) {
       console.error(
-        "testUserEmailDomain not found in cypress.env.json. Cannot delete by domain.",
+        "testUserEmailDomain not found in cypress.env.json. Cannot delete by domain."
       );
       return [];
     }
-
-    // Find all dating users by username pattern or email domain in database
-    // Use the same test domain as the regular seed to catch all test users
     const datingUsers = await tx.user.findMany({
       where: {
         OR: [
           { username: { startsWith: "dating_user_" } },
-          { email: { endsWith: testDomain } },
-        ],
+          { email: { endsWith: testDomain } }
+        ]
       },
-      select: { id: true },
+      select: { id: true }
     });
-
-    const userIds = datingUsers.map((user: { id: string }) => user.id);
-
+    const userIds = datingUsers.map((user) => user.id);
     if (userIds.length === 0) {
       console.log("...No existing dating test users found to delete.");
-      
-      // Even if no database users found, try to clean up orphaned StreamChat users
-      // Query StreamChat for users with emails ending in test domain
       if (streamClient) {
         try {
-          // Try to query StreamChat for test users by querying for known test user patterns
-          // Since StreamChat doesn't support email pattern queries easily, we'll query by ID ranges
-          // or try to get all users and filter (but that's expensive)
-          // For now, we'll skip orphaned user cleanup if no database users exist
           console.log(`...Skipping StreamChat cleanup (no database users to match with domain ${testDomain}).`);
         } catch (error) {
-          // Ignore errors when no users exist
         }
       }
       return [];
     }
-
-    // Delete from StreamChat FIRST (before database deletion) to ensure we catch all users
-    // Query StreamChat by userIds (same approach as regular seed: query DB by email, then StreamChat by userIds)
-    // This matches the regular seed's reliable method in seedDeletion.ts
     let streamChatDeletedCount = 0;
     if (streamClient && userIds.length > 0) {
       try {
-        // Query StreamChat for users matching the database userIds
-        // This is the same approach used in seedDeletion.ts for regular seed users
-        // StreamChat queryUsers supports querying by ID array
         const streamUsers = await streamClient.queryUsers({
-          id: { $in: userIds },
+          id: { $in: userIds }
         });
-
         if (streamUsers.users.length > 0) {
           console.log(
-            `...Found ${streamUsers.users.length} dating users in StreamChat (out of ${userIds.length} database users).`,
+            `...Found ${streamUsers.users.length} dating users in StreamChat (out of ${userIds.length} database users).`
           );
-
           if (streamUsers.users.length < userIds.length) {
             console.log(
-              `...Note: ${userIds.length - streamUsers.users.length} database users had no StreamChat entries (likely from incomplete previous seed).`,
+              `...Note: ${userIds.length - streamUsers.users.length} database users had no StreamChat entries (likely from incomplete previous seed).`
             );
           }
-
           for (const user of streamUsers.users) {
             try {
               await streamClient.deleteUser(user.id, { hardDelete: true });
@@ -217,160 +139,130 @@ export async function deleteDatingTestUsers(
             } catch (error) {
               console.error(
                 `Failed to delete user ${user.id} from StreamChat:`,
-                (error as Error).message,
+                error.message
               );
             }
           }
           console.log(
-            `...${streamChatDeletedCount} dating users deleted from StreamChat.`,
+            `...${streamChatDeletedCount} dating users deleted from StreamChat.`
           );
         } else {
           console.log(
-            `...No matching StreamChat users found (${userIds.length} database users had no StreamChat entries - likely from incomplete previous seed).`,
+            `...No matching StreamChat users found (${userIds.length} database users had no StreamChat entries - likely from incomplete previous seed).`
           );
         }
       } catch (error) {
         console.error(
           "Error deleting dating users from StreamChat:",
-          (error as Error).message,
+          error.message
         );
       }
     }
-
-    // Delete related dating data from database
-    // Delete in order to respect foreign key constraints
     await tx.event.deleteMany({
-      where: { createdById: { in: userIds } },
+      where: { createdById: { in: userIds } }
     });
     await tx.post.deleteMany({
-      where: { userId: { in: userIds } },
+      where: { userId: { in: userIds } }
     });
     await tx.comment.deleteMany({
-      where: { userId: { in: userIds } },
+      where: { userId: { in: userIds } }
     });
     await tx.like.deleteMany({ where: { userId: { in: userIds } } });
     await tx.dislike.deleteMany({
-      where: { userId: { in: userIds } },
+      where: { userId: { in: userIds } }
     });
     await tx.bookmark.deleteMany({
-      where: { userId: { in: userIds } },
+      where: { userId: { in: userIds } }
     });
     await tx.groupMember.deleteMany({
-      where: { userId: { in: userIds } },
+      where: { userId: { in: userIds } }
     });
     await tx.eventAttendee.deleteMany({
-      where: { userId: { in: userIds } },
+      where: { userId: { in: userIds } }
     });
     await tx.notification.deleteMany({
       where: {
-        OR: [{ recipientId: { in: userIds } }, { issuerId: { in: userIds } }],
-      },
+        OR: [{ recipientId: { in: userIds } }, { issuerId: { in: userIds } }]
+      }
     });
     await tx.follow.deleteMany({
       where: {
-        OR: [{ followerId: { in: userIds } }, { followingId: { in: userIds } }],
-      },
+        OR: [{ followerId: { in: userIds } }, { followingId: { in: userIds } }]
+      }
     });
     await tx.report.deleteMany({
       where: {
-        OR: [{ reporterId: { in: userIds } }, { reportedId: { in: userIds } }],
-      },
+        OR: [{ reporterId: { in: userIds } }, { reportedId: { in: userIds } }]
+      }
     });
     await tx.block.deleteMany({
       where: {
-        OR: [{ blockerId: { in: userIds } }, { blockedId: { in: userIds } }],
-      },
+        OR: [{ blockerId: { in: userIds } }, { blockedId: { in: userIds } }]
+      }
     });
     await tx.user_photos.deleteMany({
-      where: { userId: { in: userIds } },
+      where: { userId: { in: userIds } }
     });
     await tx.user_dating_preferences.deleteMany({
-      where: { userId: { in: userIds } },
+      where: { userId: { in: userIds } }
     });
     await tx.user_dating_profile.deleteMany({
-      where: { userId: { in: userIds } },
+      where: { userId: { in: userIds } }
     });
     await tx.dating_location_overrides.deleteMany({
-      where: { userId: { in: userIds } },
+      where: { userId: { in: userIds } }
     });
     await tx.swipes.deleteMany({
       where: {
         OR: [
           { fromUserId: { in: userIds } },
-          { toUserId: { in: userIds } },
-        ],
-      },
+          { toUserId: { in: userIds } }
+        ]
+      }
     });
     await tx.matches.deleteMany({
       where: {
         OR: [
           { user1Id: { in: userIds } },
-          { user2Id: { in: userIds } },
-        ],
-      },
+          { user2Id: { in: userIds } }
+        ]
+      }
     });
-
-    // Delete users last
     await tx.user.deleteMany({
-      where: { id: { in: userIds } },
+      where: { id: { in: userIds } }
     });
-
     console.log(
-      `...${userIds.length} dating test users and related data deleted from database.`,
+      `...${userIds.length} dating test users and related data deleted from database.`
     );
-
     return userIds;
   } catch (error) {
     console.error("Error deleting dating test users:", error);
     return [];
   }
 }
-
-export async function seedDatingProfiles(
-  tx: PrismaClient | any,
-  streamClient: any,
-  hasher: (pw: string) => Promise<string>,
-): Promise<CreatedDatingUser[]> {
+async function seedDatingProfiles(tx, streamClient, hasher) {
   if (!tx) {
     console.error("Prisma client is not available for seedDatingProfiles.");
     return [];
   }
-
-  // Note: Deletion is handled outside the transaction in seedDatingOnly.ts
-  // This function only handles seeding
-
   console.log(`Seeding ${DATING_USER_COUNT} dating profiles...`);
-
-  // Get the unique test domain (same as regular seed uses)
   const testDomain = cypressEnv.testUserEmailDomain;
   if (!testDomain) {
     throw new Error(
-      "testUserEmailDomain not found in cypress.env.json. Cannot create dating users.",
+      "testUserEmailDomain not found in cypress.env.json. Cannot create dating users."
     );
   }
-
-  const hashedPassword = await hasher(cypressEnv.password as string); // Default password for test users
-  const createdDatingUsers: CreatedDatingUser[] = [];
-  const usersToCreate: Prisma.UserCreateInput[] = [];
-  const profilesToCreate: Prisma.user_dating_profileCreateInput[] = [];
-  const preferencesToCreate: Prisma.user_dating_preferencesCreateInput[] = [];
-  const photosToCreate: Prisma.user_photosCreateInput[] = [];
-  const swipesToCreate: Array<{ fromUserId: string; toUserId: string; direction: string }> = [];
-  const matchesToCreate: Array<{ user1Id: string; user2Id: string }> = [];
-
+  const hashedPassword = await hasher(cypressEnv.password);
+  const createdDatingUsers = [];
+  const usersToCreate = [];
+  const profilesToCreate = [];
+  const preferencesToCreate = [];
+  const photosToCreate = [];
+  const swipesToCreate = [];
+  const matchesToCreate = [];
   let userIndex = 0;
-
-  // Create specific test users with predefined relationships for easy testing
   console.log("Creating test users with predefined dating relationships...");
-  const testUsers: Record<string, { id: string; userId: string; username: string }> = {};
-  
-  // Test user scenarios:
-  // 1. testUserDatingDeckReady - Has 5 compatible users ready in deck (no swipes yet)
-  // 2. testUserDatingPendingMatches - Has 5 users who liked them (pending matches)
-  // 3. testUserDatingMutualMatches - Has 3 mutual matches already
-  // 4. testUserDatingNoMatches - Fresh user with no activity
-  // 5. testUserDatingLikedBack - Has liked 5 users, waiting for responses
-  
+  const testUsers = {};
   const testUserConfigs = [
     {
       username: "testUserDatingDeckReady",
@@ -378,11 +270,12 @@ export async function seedDatingProfiles(
       age: 28,
       gender: "Male",
       sexualOrientation: "Straight",
-      location: GUARANTEED_TEST_CITIES[0], // Los Angeles
+      location: GUARANTEED_TEST_CITIES[0],
+      // Los Angeles
       preferredGender: "Female",
       preferredSexualOrientation: "Straight",
       preferredMinAge: 23,
-      preferredMaxAge: 35,
+      preferredMaxAge: 35
     },
     {
       username: "testUserDatingPendingMatches",
@@ -390,11 +283,12 @@ export async function seedDatingProfiles(
       age: 25,
       gender: "Female",
       sexualOrientation: "Straight",
-      location: GUARANTEED_TEST_CITIES[0], // Los Angeles
+      location: GUARANTEED_TEST_CITIES[0],
+      // Los Angeles
       preferredGender: "Male",
       preferredSexualOrientation: "Straight",
       preferredMinAge: 23,
-      preferredMaxAge: 32,
+      preferredMaxAge: 32
     },
     {
       username: "testUserDatingMutualMatches",
@@ -402,11 +296,13 @@ export async function seedDatingProfiles(
       age: 30,
       gender: "Male",
       sexualOrientation: "Bisexual",
-      location: GUARANTEED_TEST_CITIES[1], // San Francisco
-      preferredGender: null, // Open to any
+      location: GUARANTEED_TEST_CITIES[1],
+      // San Francisco
+      preferredGender: null,
+      // Open to any
       preferredSexualOrientation: null,
       preferredMinAge: 25,
-      preferredMaxAge: 40,
+      preferredMaxAge: 40
     },
     {
       username: "testUserDatingNoMatches",
@@ -414,11 +310,12 @@ export async function seedDatingProfiles(
       age: 22,
       gender: "Female",
       sexualOrientation: "Straight",
-      location: GUARANTEED_TEST_CITIES[2], // Chicago
+      location: GUARANTEED_TEST_CITIES[2],
+      // Chicago
       preferredGender: "Male",
       preferredSexualOrientation: "Straight",
       preferredMinAge: 20,
-      preferredMaxAge: 30,
+      preferredMaxAge: 30
     },
     {
       username: "testUserDatingLikedBack",
@@ -426,16 +323,15 @@ export async function seedDatingProfiles(
       age: 27,
       gender: "Male",
       sexualOrientation: "Straight",
-      location: GUARANTEED_TEST_CITIES[0], // Los Angeles
+      location: GUARANTEED_TEST_CITIES[0],
+      // Los Angeles
       preferredGender: "Female",
       preferredSexualOrientation: "Straight",
       preferredMinAge: 22,
-      preferredMaxAge: 32,
-    },
+      preferredMaxAge: 32
+    }
   ];
-
-  // Create 5 compatible users for testUserDatingDeckReady
-  const compatibleUsersForDeck: Array<{ username: string; config: typeof testUserConfigs[0] }> = [];
+  const compatibleUsersForDeck = [];
   for (let i = 0; i < 5; i++) {
     compatibleUsersForDeck.push({
       username: `testUserDatingCompatible${i + 1}`,
@@ -445,17 +341,16 @@ export async function seedDatingProfiles(
         age: 24 + i,
         gender: "Female",
         sexualOrientation: "Straight",
-        location: GUARANTEED_TEST_CITIES[0], // Same city as DeckReady
+        location: GUARANTEED_TEST_CITIES[0],
+        // Same city as DeckReady
         preferredGender: "Male",
         preferredSexualOrientation: "Straight",
         preferredMinAge: 25,
-        preferredMaxAge: 35,
-      },
+        preferredMaxAge: 35
+      }
     });
   }
-
-  // Create 5 users who liked testUserDatingPendingMatches
-  const usersWhoLikedPending: Array<{ username: string; config: typeof testUserConfigs[0] }> = [];
+  const usersWhoLikedPending = [];
   for (let i = 0; i < 5; i++) {
     usersWhoLikedPending.push({
       username: `testUserDatingLikedPending${i + 1}`,
@@ -465,17 +360,16 @@ export async function seedDatingProfiles(
         age: 24 + i,
         gender: "Male",
         sexualOrientation: "Straight",
-        location: GUARANTEED_TEST_CITIES[0], // Same city
+        location: GUARANTEED_TEST_CITIES[0],
+        // Same city
         preferredGender: "Female",
         preferredSexualOrientation: "Straight",
         preferredMinAge: 22,
-        preferredMaxAge: 30,
-      },
+        preferredMaxAge: 30
+      }
     });
   }
-
-  // Create 3 users for mutual matches with testUserDatingMutualMatches
-  const mutualMatchUsers: Array<{ username: string; config: typeof testUserConfigs[0] }> = [];
+  const mutualMatchUsers = [];
   for (let i = 0; i < 3; i++) {
     mutualMatchUsers.push({
       username: `testUserDatingMutualMatch${i + 1}`,
@@ -485,17 +379,16 @@ export async function seedDatingProfiles(
         age: 28 + i,
         gender: i === 0 ? "Female" : "Male",
         sexualOrientation: i === 0 ? "Straight" : "Bisexual",
-        location: GUARANTEED_TEST_CITIES[1], // San Francisco
+        location: GUARANTEED_TEST_CITIES[1],
+        // San Francisco
         preferredGender: null,
         preferredSexualOrientation: null,
         preferredMinAge: 25,
-        preferredMaxAge: 40,
-      },
+        preferredMaxAge: 40
+      }
     });
   }
-
-  // Create 5 users that testUserDatingLikedBack has liked
-  const usersLikedByLikedBack: Array<{ username: string; config: typeof testUserConfigs[0] }> = [];
+  const usersLikedByLikedBack = [];
   for (let i = 0; i < 5; i++) {
     usersLikedByLikedBack.push({
       username: `testUserDatingLikedByLikedBack${i + 1}`,
@@ -505,36 +398,31 @@ export async function seedDatingProfiles(
         age: 23 + i,
         gender: "Female",
         sexualOrientation: "Straight",
-        location: GUARANTEED_TEST_CITIES[0], // Los Angeles
+        location: GUARANTEED_TEST_CITIES[0],
+        // Los Angeles
         preferredGender: "Male",
         preferredSexualOrientation: "Straight",
         preferredMinAge: 25,
-        preferredMaxAge: 35,
-      },
+        preferredMaxAge: 35
+      }
     });
   }
-
-  // Combine all test users
   const allTestUsers = [
-    ...testUserConfigs.map(c => ({ username: c.username, config: c })),
+    ...testUserConfigs.map((c) => ({ username: c.username, config: c })),
     ...compatibleUsersForDeck,
     ...usersWhoLikedPending,
     ...mutualMatchUsers,
-    ...usersLikedByLikedBack,
+    ...usersLikedByLikedBack
   ];
-
-  // Create all test users
   for (const { username, config } of allTestUsers) {
     const userId = generateIdFromEntropySize(10);
     const email = `${username}${testDomain}`;
-    const heightInches = 66; // 5'6" average
-    const locationZip = config.location.zip || "90001"; // Default to LA zip
-    const locationCity = config.location.city || "Los Angeles"; // Default to LA
+    const heightInches = 66;
+    const locationZip = config.location.zip || "90001";
+    const locationCity = config.location.city || "Los Angeles";
     const locationLat = config.location.lat || 34.0522;
     const locationLon = config.location.lon || -118.2437;
-
-    // Create user
-    const userData: Prisma.UserCreateInput = {
+    const userData = {
       id: userId,
       username,
       email,
@@ -545,73 +433,69 @@ export async function seedDatingProfiles(
       avatarUrl: `https://i.pravatar.cc/150?img=${faker.number.int({ min: 1, max: 70 })}`,
       bio: `Test user: ${config.displayName}`,
       createdAt: faker.date.between({
-        from: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000),
-        to: new Date(),
-      }),
+        from: new Date(Date.now() - 365 * 24 * 60 * 60 * 1e3),
+        to: /* @__PURE__ */ new Date()
+      })
     };
     usersToCreate.push(userData);
-
-    // Create dating profile
     const profileId = generateIdFromEntropySize(10);
-    const profileData: Prisma.user_dating_profileCreateInput = {
+    const profileData = {
       id: profileId,
       user: { connect: { id: userId } },
       age: config.age,
-      height: heightInches, // Store as inches (Int)
+      height: heightInches,
+      // Store as inches (Int)
       gender: config.gender,
       sexualOrientation: config.sexualOrientation,
       religion: "Atheist",
       coronavirusVaccinated: "Yes",
-      zipCode: locationZip, // Store zip code
-      city: locationCity, // Store city name (geocoded)
+      zipCode: locationZip,
+      // Store zip code
+      city: locationCity,
+      // Store city name (geocoded)
       latitude: locationLat,
-      longitude: locationLon,
+      longitude: locationLon
     };
     profilesToCreate.push(profileData);
-
-    // Create dating preferences
     const preferencesId = generateIdFromEntropySize(10);
-    const preferencesData: Prisma.user_dating_preferencesCreateInput = {
+    const preferencesData = {
       id: preferencesId,
       users: { connect: { id: userId } },
       preferredMinAge: config.preferredMinAge,
       preferredMaxAge: config.preferredMaxAge,
-      preferredMaxDistanceKm: 50, // 50km for test users
-      preferredMinHeight: 60, // 5'0" in inches
-      preferredMaxHeight: 72, // 6'0" in inches
+      preferredMaxDistanceKm: 50,
+      // 50km for test users
+      preferredMinHeight: 60,
+      // 5'0" in inches
+      preferredMaxHeight: 72,
+      // 6'0" in inches
       preferredGender: config.preferredGender,
       preferredSexualOrientation: config.preferredSexualOrientation,
       preferredCoronavirusVaccinated: null,
       preferredReligions: [],
       preferredInstruments: [],
       preferredSkills: [],
-      matchMusicTastes: false,
+      matchMusicTastes: false
     };
     preferencesToCreate.push(preferencesData);
-
-    // Create photos
     for (let j = 0; j < 2; j++) {
       const photoId = generateIdFromEntropySize(10);
-      const photoData: Prisma.user_photosCreateInput = {
+      const photoData = {
         id: photoId,
         users: { connect: { id: userId } },
         url: `https://i.pravatar.cc/400?img=${faker.number.int({ min: 1, max: 70 })}`,
-        isPrimary: j === 0,
+        isPrimary: j === 0
       };
       photosToCreate.push(photoData);
     }
-
     testUsers[username] = { id: userId, userId, username };
     createdDatingUsers.push({
       id: userId,
       userId,
       username,
-      isDatingActive: true,
+      isDatingActive: true
     });
   }
-
-  // Create relationships:
-  // 1. Users who liked testUserDatingPendingMatches (pending matches)
   const pendingMatchesUserId = testUsers["testUserDatingPendingMatches"]?.id;
   if (pendingMatchesUserId) {
     for (let i = 0; i < 5; i++) {
@@ -621,40 +505,34 @@ export async function seedDatingProfiles(
         swipesToCreate.push({
           fromUserId: likerId,
           toUserId: pendingMatchesUserId,
-          direction: "LIKE",
+          direction: "LIKE"
         });
       }
     }
   }
-
-  // 2. Mutual matches for testUserDatingMutualMatches
   const mutualMatchesUserId = testUsers["testUserDatingMutualMatches"]?.id;
   if (mutualMatchesUserId) {
     for (let i = 0; i < 3; i++) {
       const matchUsername = `testUserDatingMutualMatch${i + 1}`;
       const matchId = testUsers[matchUsername]?.id;
       if (matchId) {
-        // Create mutual swipes (both liked each other)
         swipesToCreate.push({
           fromUserId: mutualMatchesUserId,
           toUserId: matchId,
-          direction: "LIKE",
+          direction: "LIKE"
         });
         swipesToCreate.push({
           fromUserId: matchId,
           toUserId: mutualMatchesUserId,
-          direction: "LIKE",
+          direction: "LIKE"
         });
-        // Create match
         matchesToCreate.push({
           user1Id: mutualMatchesUserId < matchId ? mutualMatchesUserId : matchId,
-          user2Id: mutualMatchesUserId < matchId ? matchId : mutualMatchesUserId,
+          user2Id: mutualMatchesUserId < matchId ? matchId : mutualMatchesUserId
         });
       }
     }
   }
-
-  // 3. Users that testUserDatingLikedBack has liked (waiting for responses)
   const likedBackUserId = testUsers["testUserDatingLikedBack"]?.id;
   if (likedBackUserId) {
     for (let i = 0; i < 5; i++) {
@@ -664,49 +542,38 @@ export async function seedDatingProfiles(
         swipesToCreate.push({
           fromUserId: likedBackUserId,
           toUserId: likedId,
-          direction: "LIKE",
+          direction: "LIKE"
         });
       }
     }
   }
-
   console.log(`...Created ${allTestUsers.length} test users with predefined relationships.`);
-
-  // First, create 50 users in guaranteed test cities (for easy testing)
-  // Distribute evenly: ~8-9 users per city across 6 cities
   const usersPerGuaranteedCity = Math.floor(
-    GUARANTEED_USERS_COUNT / GUARANTEED_TEST_CITIES.length,
+    GUARANTEED_USERS_COUNT / GUARANTEED_TEST_CITIES.length
   );
   const remainderGuaranteed = GUARANTEED_USERS_COUNT % GUARANTEED_TEST_CITIES.length;
-
   for (let cityIdx = 0; cityIdx < GUARANTEED_TEST_CITIES.length; cityIdx++) {
     const city = GUARANTEED_TEST_CITIES[cityIdx];
-    const usersForThisCity =
-      usersPerGuaranteedCity + (cityIdx < remainderGuaranteed ? 1 : 0);
-
+    const usersForThisCity = usersPerGuaranteedCity + (cityIdx < remainderGuaranteed ? 1 : 0);
     for (let j = 0; j < usersForThisCity; j++) {
       const userId = generateIdFromEntropySize(10);
       const username = `dating_user_${userIndex + 1}`;
       const email = `dating_user_${userIndex + 1}${testDomain}`;
       userIndex++;
-
-      // Generate user data
       const age = faker.number.int({ min: MIN_AGE, max: MAX_AGE });
       const gender = faker.helpers.arrayElement(GENDERS);
       const sexualOrientation = faker.helpers.arrayElement(SEXUAL_ORIENTATIONS);
       const heightInches = faker.number.int({
         min: MIN_HEIGHT_INCHES,
-        max: MAX_HEIGHT_INCHES,
+        max: MAX_HEIGHT_INCHES
       });
       const religion = faker.helpers.arrayElement(RELIGIONS);
       const vaccinated = faker.helpers.arrayElement(VACCINATION_STATUS);
-      const locationZip = city.zip || "90001"; // Default to LA zip if missing
-      const locationCity = city.city; // City name for display
+      const locationZip = city.zip || "90001";
+      const locationCity = city.city;
       const locationLat = city.lat;
       const locationLon = city.lon;
-
-      // Create user
-      const userData: Prisma.UserCreateInput = {
+      const userData = {
         id: userId,
         username,
         email,
@@ -716,59 +583,58 @@ export async function seedDatingProfiles(
         isDatingActive: true,
         avatarUrl: `https://i.pravatar.cc/150?img=${faker.number.int({
           min: 1,
-          max: 70,
+          max: 70
         })}`,
         bio: faker.lorem.sentence(),
         createdAt: faker.date.between({
-          from: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000),
-          to: new Date(),
-        }),
+          from: new Date(Date.now() - 365 * 24 * 60 * 60 * 1e3),
+          to: /* @__PURE__ */ new Date()
+        })
       };
       usersToCreate.push(userData);
-
-      // Create dating profile
       const profileId = generateIdFromEntropySize(10);
-      const profileData: Prisma.user_dating_profileCreateInput = {
+      const profileData = {
         id: profileId,
         user: { connect: { id: userId } },
         age,
-        height: heightInches, // Store as inches (Int)
+        height: heightInches,
+        // Store as inches (Int)
         gender,
         sexualOrientation,
         religion,
         coronavirusVaccinated: vaccinated,
-        zipCode: locationZip, // Store zip code
-        city: locationCity, // Store city name (geocoded)
+        zipCode: locationZip,
+        // Store zip code
+        city: locationCity,
+        // Store city name (geocoded)
         latitude: locationLat,
-        longitude: locationLon,
+        longitude: locationLon
       };
       profilesToCreate.push(profileData);
-
-      // Create dating preferences
       const preferencesId = generateIdFromEntropySize(10);
       const preferredMinAge = Math.max(MIN_AGE, age - 5);
       const preferredMaxAge = Math.min(MAX_AGE, age + 10);
-      const preferredGender =
-        gender === "Non-binary"
-          ? null
-          : faker.helpers.arrayElement([
-              gender,
-              null,
-              faker.helpers.arrayElement(GENDERS),
-            ]);
+      const preferredGender = gender === "Non-binary" ? null : faker.helpers.arrayElement([
+        gender,
+        null,
+        faker.helpers.arrayElement(GENDERS)
+      ]);
       const preferredSexualOrientation = faker.helpers.arrayElement([
         sexualOrientation,
         null,
-        faker.helpers.arrayElement(SEXUAL_ORIENTATIONS),
+        faker.helpers.arrayElement(SEXUAL_ORIENTATIONS)
       ]);
-
-      const preferencesData: Prisma.user_dating_preferencesCreateInput = {
+      const preferencesData = {
         id: preferencesId,
         users: { connect: { id: userId } },
         preferredMinAge,
         preferredMaxAge,
         preferredMaxDistanceKm: faker.helpers.arrayElement([
-          25, 50, 100, 150, 200,
+          25,
+          50,
+          100,
+          150,
+          200
         ]),
         preferredMinHeight: Math.max(MIN_HEIGHT_INCHES, heightInches - 10),
         preferredMaxHeight: Math.min(MAX_HEIGHT_INCHES, heightInches + 15),
@@ -777,130 +643,121 @@ export async function seedDatingProfiles(
         preferredCoronavirusVaccinated: faker.helpers.arrayElement([
           vaccinated,
           null,
-          faker.helpers.arrayElement(VACCINATION_STATUS),
+          faker.helpers.arrayElement(VACCINATION_STATUS)
         ]),
         preferredReligions: faker.helpers.arrayElements(RELIGIONS, {
           min: 0,
-          max: 3,
+          max: 3
         }),
         preferredInstruments: [],
         preferredSkills: [],
-        matchMusicTastes: faker.datatype.boolean(),
+        matchMusicTastes: faker.datatype.boolean()
       };
       preferencesToCreate.push(preferencesData);
-
-      // Create 1-4 photos per user
       const photoCount = faker.number.int({ min: 1, max: 4 });
       for (let k = 0; k < photoCount; k++) {
         const photoId = generateIdFromEntropySize(10);
-        const photoData: Prisma.user_photosCreateInput = {
+        const photoData = {
           id: photoId,
           users: { connect: { id: userId } },
           url: `https://i.pravatar.cc/400?img=${faker.number.int({
             min: 1,
-            max: 70,
+            max: 70
           })}`,
-          isPrimary: k === 0,
+          isPrimary: k === 0
         };
         photosToCreate.push(photoData);
       }
-
       createdDatingUsers.push({
         id: userId,
         userId,
         username,
-        isDatingActive: true,
+        isDatingActive: true
       });
     }
   }
-
-  // Then, create remaining users randomly distributed across mainland cities
   for (let i = 0; i < RANDOM_USERS_COUNT; i++) {
     const userId = generateIdFromEntropySize(10);
     const city = faker.helpers.arrayElement(RANDOM_MAINLAND_CITIES);
     const username = `dating_user_${userIndex + 1}`;
     const email = `dating_user_${userIndex + 1}${testDomain}`;
     userIndex++;
-
-    // Generate user data
     const age = faker.number.int({ min: MIN_AGE, max: MAX_AGE });
     const gender = faker.helpers.arrayElement(GENDERS);
     const sexualOrientation = faker.helpers.arrayElement(SEXUAL_ORIENTATIONS);
     const heightInches = faker.number.int({
       min: MIN_HEIGHT_INCHES,
-      max: MAX_HEIGHT_INCHES,
+      max: MAX_HEIGHT_INCHES
     });
     const religion = faker.helpers.arrayElement(RELIGIONS);
     const vaccinated = faker.helpers.arrayElement(VACCINATION_STATUS);
-    const locationZip = city.zip || "90001"; // Default to LA zip if missing
-    const locationCity = city.city; // City name for display
+    const locationZip = city.zip || "90001";
+    const locationCity = city.city;
     const locationLat = city.lat;
     const locationLon = city.lon;
-
-    // Create user
-    const userData: Prisma.UserCreateInput = {
+    const userData = {
       id: userId,
       username,
       email,
       displayName: faker.person.fullName(),
       passwordHash: hashedPassword,
       isVerified: true,
-      isDatingActive: true, // Enable dating feature
+      isDatingActive: true,
+      // Enable dating feature
       avatarUrl: `https://i.pravatar.cc/150?img=${faker.number.int({
         min: 1,
-        max: 70,
+        max: 70
       })}`,
       bio: faker.lorem.sentence(),
       createdAt: faker.date.between({
-        from: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000),
-        to: new Date(),
-      }),
+        from: new Date(Date.now() - 365 * 24 * 60 * 60 * 1e3),
+        to: /* @__PURE__ */ new Date()
+      })
     };
     usersToCreate.push(userData);
-
-    // Create dating profile
     const profileId = generateIdFromEntropySize(10);
-    const profileData: Prisma.user_dating_profileCreateInput = {
+    const profileData = {
       id: profileId,
       user: { connect: { id: userId } },
       age,
-      height: heightInches, // Store as inches (Int)
+      height: heightInches,
+      // Store as inches (Int)
       gender,
       sexualOrientation,
       religion,
       coronavirusVaccinated: vaccinated,
-      zipCode: locationZip, // Store zip code
-      city: locationCity, // Store city name (geocoded)
+      zipCode: locationZip,
+      // Store zip code
+      city: locationCity,
+      // Store city name (geocoded)
       latitude: locationLat,
-      longitude: locationLon,
+      longitude: locationLon
     };
     profilesToCreate.push(profileData);
-
-    // Create dating preferences
     const preferencesId = generateIdFromEntropySize(10);
     const preferredMinAge = Math.max(MIN_AGE, age - 5);
     const preferredMaxAge = Math.min(MAX_AGE, age + 10);
-    const preferredGender =
-      gender === "Non-binary"
-        ? null
-        : faker.helpers.arrayElement([
-            gender,
-            null,
-            faker.helpers.arrayElement(GENDERS),
-          ]);
+    const preferredGender = gender === "Non-binary" ? null : faker.helpers.arrayElement([
+      gender,
+      null,
+      faker.helpers.arrayElement(GENDERS)
+    ]);
     const preferredSexualOrientation = faker.helpers.arrayElement([
       sexualOrientation,
       null,
-      faker.helpers.arrayElement(SEXUAL_ORIENTATIONS),
+      faker.helpers.arrayElement(SEXUAL_ORIENTATIONS)
     ]);
-
-    const preferencesData: Prisma.user_dating_preferencesCreateInput = {
+    const preferencesData = {
       id: preferencesId,
       users: { connect: { id: userId } },
       preferredMinAge,
       preferredMaxAge,
       preferredMaxDistanceKm: faker.helpers.arrayElement([
-        25, 50, 100, 150, 200,
+        25,
+        50,
+        100,
+        150,
+        200
       ]),
       preferredMinHeight: Math.max(MIN_HEIGHT_INCHES, heightInches - 10),
       preferredMaxHeight: Math.min(MAX_HEIGHT_INCHES, heightInches + 15),
@@ -909,94 +766,81 @@ export async function seedDatingProfiles(
       preferredCoronavirusVaccinated: faker.helpers.arrayElement([
         vaccinated,
         null,
-        faker.helpers.arrayElement(VACCINATION_STATUS),
+        faker.helpers.arrayElement(VACCINATION_STATUS)
       ]),
       preferredReligions: faker.helpers.arrayElements(RELIGIONS, {
         min: 0,
-        max: 3,
+        max: 3
       }),
-      preferredInstruments: [], // Can be populated if needed
-      preferredSkills: [], // Can be populated if needed
-      matchMusicTastes: faker.datatype.boolean(),
+      preferredInstruments: [],
+      // Can be populated if needed
+      preferredSkills: [],
+      // Can be populated if needed
+      matchMusicTastes: faker.datatype.boolean()
     };
     preferencesToCreate.push(preferencesData);
-
-    // Create 1-4 photos per user
     const photoCount = faker.number.int({ min: 1, max: 4 });
     for (let k = 0; k < photoCount; k++) {
       const photoId = generateIdFromEntropySize(10);
-      const photoData: Prisma.user_photosCreateInput = {
+      const photoData = {
         id: photoId,
         users: { connect: { id: userId } },
         url: `https://i.pravatar.cc/400?img=${faker.number.int({
           min: 1,
-          max: 70,
+          max: 70
         })}`,
-        isPrimary: k === 0,
+        isPrimary: k === 0
       };
       photosToCreate.push(photoData);
     }
-
     createdDatingUsers.push({
       id: userId,
       userId,
       username,
-      isDatingActive: true,
+      isDatingActive: true
     });
   }
-
   try {
-    // Create users
     console.log(`Creating ${usersToCreate.length} dating users...`);
     await tx.user.createMany({
       data: usersToCreate,
-      skipDuplicates: true,
+      skipDuplicates: true
     });
     console.log(`...${usersToCreate.length} users created.`);
-
-    // Fetch the actually created users (in case some were skipped due to duplicates)
-    const usernamesToCreate = usersToCreate.map((u) => u.username!);
+    const usernamesToCreate = usersToCreate.map((u) => u.username);
     const actualCreatedUsers = await tx.user.findMany({
       where: {
-        username: { in: usernamesToCreate },
+        username: { in: usernamesToCreate }
       },
-      select: { id: true, username: true },
+      select: { id: true, username: true }
     });
     const createdUserIds = new Set(actualCreatedUsers.map((u) => u.id));
     console.log(`...Fetched ${actualCreatedUsers.length} actual users from DB.`);
-
-    // Filter profiles, preferences, and photos to only include users that were actually created
     const validProfiles = profilesToCreate.filter((p) => {
-      const userId = (p.user as { connect: { id: string } }).connect.id;
+      const userId = p.user.connect.id;
       return createdUserIds.has(userId);
     });
     const validPreferences = preferencesToCreate.filter((p) => {
-      const userId = (p.users as { connect: { id: string } }).connect.id;
+      const userId = p.users.connect.id;
       return createdUserIds.has(userId);
     });
     const validPhotos = photosToCreate.filter((p) => {
-      const userId = (p.users as { connect: { id: string } }).connect.id;
+      const userId = p.users.connect.id;
       return createdUserIds.has(userId);
     });
-
     if (validProfiles.length < profilesToCreate.length) {
       console.log(
-        `...Filtered out ${profilesToCreate.length - validProfiles.length} profiles for users that weren't created (duplicates).`,
+        `...Filtered out ${profilesToCreate.length - validProfiles.length} profiles for users that weren't created (duplicates).`
       );
     }
-
-    // Add users to StreamChat (batch in groups of 100)
     if (streamClient) {
-      const streamChatUsers = usersToCreate
-        .filter((user) => createdUserIds.has(user.id!))
-        .map((user) => ({
-          id: user.id!,
-          name: user.displayName!,
-          image: user.avatarUrl,
-          email: user.email!,
-        }));
+      const streamChatUsers = usersToCreate.filter((user) => createdUserIds.has(user.id)).map((user) => ({
+        id: user.id,
+        name: user.displayName,
+        image: user.avatarUrl,
+        email: user.email
+      }));
       try {
-        // StreamChat has a limit of 100 users per batch
         const batchSize = 100;
         let upsertedCount = 0;
         for (let i = 0; i < streamChatUsers.length; i += batchSize) {
@@ -1006,44 +850,36 @@ export async function seedDatingProfiles(
           console.log(`...${upsertedCount}/${streamChatUsers.length} users upserted to StreamChat.`);
         }
         console.log(
-          `...${streamChatUsers.length} users upserted to StreamChat.`,
+          `...${streamChatUsers.length} users upserted to StreamChat.`
         );
       } catch (error) {
         console.error(
           `Failed to add users to StreamChat:`,
-          (error as Error).message,
+          error.message
         );
       }
     }
-
-    // Create dating profiles (only for users that were actually created)
     console.log(`Creating ${validProfiles.length} dating profiles...`);
     for (const profile of validProfiles) {
       await tx.user_dating_profile.create({
-        data: profile,
+        data: profile
       });
     }
     console.log(`...${validProfiles.length} profiles created.`);
-
-    // Create dating preferences (only for users that were actually created)
     console.log(`Creating ${validPreferences.length} dating preferences...`);
     for (const prefs of validPreferences) {
       await tx.user_dating_preferences.create({
-        data: prefs,
+        data: prefs
       });
     }
     console.log(`...${validPreferences.length} preferences created.`);
-
-    // Create photos (only for users that were actually created)
     console.log(`Creating ${validPhotos.length} user photos...`);
     for (const photo of validPhotos) {
       await tx.user_photos.create({
-        data: photo,
+        data: photo
       });
     }
     console.log(`...${validPhotos.length} photos created.`);
-
-    // Create swipes (likes/dislikes) for test users
     if (swipesToCreate.length > 0) {
       console.log(`Creating ${swipesToCreate.length} swipes for test users...`);
       for (const swipe of swipesToCreate) {
@@ -1054,18 +890,15 @@ export async function seedDatingProfiles(
               fromUserId: swipe.fromUserId,
               toUserId: swipe.toUserId,
               direction: swipe.direction,
-              createdAt: new Date(),
-            },
+              createdAt: /* @__PURE__ */ new Date()
+            }
           });
         } catch (error) {
-          // Skip if swipe already exists
-          console.warn(`Swipe already exists or error: ${(error as Error).message}`);
+          console.warn(`Swipe already exists or error: ${error.message}`);
         }
       }
       console.log(`...${swipesToCreate.length} swipes created.`);
     }
-
-    // Create matches for test users
     if (matchesToCreate.length > 0) {
       console.log(`Creating ${matchesToCreate.length} matches for test users...`);
       for (const match of matchesToCreate) {
@@ -1075,19 +908,17 @@ export async function seedDatingProfiles(
               id: generateIdFromEntropySize(10),
               user1Id: match.user1Id,
               user2Id: match.user2Id,
-              createdAt: new Date(),
-            },
+              createdAt: /* @__PURE__ */ new Date()
+            }
           });
         } catch (error) {
-          // Skip if match already exists
-          console.warn(`Match already exists or error: ${(error as Error).message}`);
+          console.warn(`Match already exists or error: ${error.message}`);
         }
       }
       console.log(`...${matchesToCreate.length} matches created.`);
     }
-
     console.log(
-      `Dating seeding complete: ${createdDatingUsers.length} users with profiles, preferences, photos, swipes, and matches.`,
+      `Dating seeding complete: ${createdDatingUsers.length} users with profiles, preferences, photos, swipes, and matches.`
     );
     console.log("\nTest Users Created:");
     console.log("  - testUserDatingDeckReady: Has 5 compatible users ready in deck");
@@ -1095,7 +926,6 @@ export async function seedDatingProfiles(
     console.log("  - testUserDatingMutualMatches: Has 3 mutual matches");
     console.log("  - testUserDatingNoMatches: Fresh user with no activity");
     console.log("  - testUserDatingLikedBack: Liked 5 users, waiting for responses");
-
     return createdDatingUsers;
   } catch (error) {
     console.error("Error during dating profile seeding:", error);
@@ -1103,3 +933,44 @@ export async function seedDatingProfiles(
   }
 }
 
+// prisma/seedDatingOnly.ts
+var {
+  prisma,
+  streamChatClient: streamChatClient2,
+  passwordHash: passwordHash2
+} = await import("./seedUtils-YXFADVGQ.js");
+async function main() {
+  console.log("Running dating seed only...");
+  console.log("Initiating deletion phase...");
+  try {
+    const deletedUserIds = await deleteDatingTestUsers(prisma, streamChatClient2);
+    console.log("Deletion phase completed.");
+  } catch (error) {
+    console.error("Error during deletion phase (continuing anyway):", error);
+  }
+  console.log("Start seeding...");
+  try {
+    await prisma.$transaction(
+      async (tx) => {
+        console.log("Starting Prisma transaction for dating seed...");
+        await seedDatingProfiles(tx, streamChatClient2, passwordHash2);
+        console.log("Dating seed transaction committed successfully.");
+      },
+      {
+        timeout: 3e5
+        // 5 minutes timeout for dating seed (200+ users with photos)
+      }
+    );
+    console.log("Dating seeding finished successfully.");
+  } catch (error) {
+    console.error("Error during dating seed:", error);
+    throw error;
+  }
+}
+main().catch((e) => {
+  console.error("Dating seed script failed:", e);
+  process.exit(1);
+}).finally(async () => {
+  await prisma.$disconnect();
+  console.log("Prisma client disconnected.");
+});

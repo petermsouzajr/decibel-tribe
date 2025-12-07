@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import Image from "next/image";
 import Link from "next/link";
 import { formatRelativeDate } from "@/lib/utils";
+import BackToDatingButton from "./BackToDatingButton";
 
 interface Match {
   matchId: string;
@@ -81,7 +82,7 @@ export default function MatchList() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4 flex items-center justify-center">
+      <div className="w-full min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-purple-500 mx-auto mb-4" />
           <p className="text-gray-600">Loading your matches...</p>
@@ -92,8 +93,9 @@ export default function MatchList() {
 
   if (matches.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
-        <div className="max-w-4xl mx-auto">
+      <div className="w-full min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+        <div className="w-full px-2 sm:px-4 lg:max-w-4xl lg:mx-auto">
+          <BackToDatingButton />
           <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
             <div className="w-64 h-96 bg-gray-100 rounded-xl mx-auto mb-6 flex items-center justify-center">
               <div className="text-center">
@@ -117,8 +119,9 @@ export default function MatchList() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="w-full min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+      <div className="w-full px-2 sm:px-4 lg:max-w-4xl lg:mx-auto">
+        <BackToDatingButton />
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Matches</h1>
           <p className="text-gray-600">
