@@ -113,18 +113,18 @@ export default function PotentialMatchCard({
         <div className="flex items-center justify-between gap-3 mb-4">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
             {match.displayName}{match.age ? `, ${match.age}` : ""}
-          </h2>
-          <Link href={`/users/${match.username}`} target="_blank">
-            <Button
-              variant="outline"
-              size="sm"
+            </h2>
+            <Link href={`/users/${match.username}`} target="_blank">
+              <Button
+                variant="outline"
+                size="sm"
               className="flex items-center gap-2 text-md sm:text-md bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
-            >
-              <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">View Profile</span>
-              <span className="sm:hidden">Profile</span>
-            </Button>
-          </Link>
+              >
+                <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">View Profile</span>
+                <span className="sm:hidden">Profile</span>
+              </Button>
+            </Link>
         </div>
 
         {/* Matches Preferences Section */}
@@ -237,7 +237,7 @@ export default function PotentialMatchCard({
             <span className="text-md text-gray-900">{match.pets}</span>
           </div>
         )}
-        
+
         {/* Bio */}
         {match.bio && (
           <div className="mb-4 pt-2 border-t">

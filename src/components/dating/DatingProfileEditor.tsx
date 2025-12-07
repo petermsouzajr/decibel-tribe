@@ -292,7 +292,7 @@ export default function DatingProfileEditor() {
                   ]}
                   label="Smokes"
                   placeholder="Select option"
-                />
+                      />
 
                 <DropdownSelector
                   value={formData.drinks}
@@ -368,13 +368,13 @@ export default function DatingProfileEditor() {
                     onChange={(e) => setFormData({ ...formData, pets: e.target.value })}
                   />
                 </div>
-              </div>
+                </div>
 
               {/* Interests Section */}
-              <div>
+                <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-3">
                   Interests (Select all that apply)
-                </label>
+                  </label>
                 <div className="max-h-96 overflow-y-auto border rounded-lg p-4">
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                     {datingInterests.map((interest) => (

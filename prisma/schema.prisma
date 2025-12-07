@@ -9,49 +9,50 @@ datasource db {
 }
 
 model User {
-  id                              String                     @id @default(cuid())
-  username                        String                     @unique
-  displayName                     String
-  email                           String?                    @unique
-  passwordHash                    String?
-  isVerified                      Boolean                    @default(false)
-  googleId                        String?                    @unique
-  avatarUrl                       String?
-  bio                             String?
-  createdAt                       DateTime                   @default(now())
-  pendingEmail                    String?
-  deletedAt                       DateTime?
-  isDatingActive                  Boolean                    @default(false)
-  isAdmin                         Boolean                    @default(false)
-  preferredUnits                  String?                    @default("metric")
-  EmailVerification               EmailVerification[]
-  groups                          GroupMember[]
-  userInstruments                 UserInstrument[]
-  userSkills                      UserSkill[]
-  bookmarks                       Bookmark[]
-  commentLikes                    CommentLike[]
-  comments                        Comment[]
-  dislikes                        Dislike[]
-  EventAttendee                   EventAttendee[]
-  events                          Event[]                    @relation("CreatedEvents")
-  following                       Follow[]                   @relation("Following")
-  followers                       Follow[]                   @relation("Followers")
-  ownedGroups                     Group[]                    @relation("GroupOwner")
-  likes                           Like[]
-  matches_matches_user1IdTousers  matches[]                  @relation("matches_user1IdTousers")
-  matches_matches_user2IdTousers  matches[]                  @relation("matches_user2IdTousers")
-  issuedNotifications             Notification[]             @relation("Issuer")
-  receivedNotifications           Notification[]             @relation("Recipient")
-  posts                           Post[]
-  sessions                        Session[]
-  swipes_swipes_fromUserIdTousers swipes[]                   @relation("swipes_fromUserIdTousers")
-  swipes_swipes_toUserIdTousers   swipes[]                   @relation("swipes_toUserIdTousers")
-  user_dating_preferences         user_dating_preferences?
-  user_dating_profile             user_dating_profile?
-  user_photos                     user_photos[]
-  userPreferences                 UserPreferences?
-  sentMessages                    Message[]                  @relation("MessageSender")
-  datingLocationOverride          dating_location_overrides? @relation("DatingLocationOverrides")
+  id                                String                             @id @default(cuid())
+  username                          String                             @unique
+  displayName                       String
+  email                             String?                            @unique
+  passwordHash                      String?
+  isVerified                        Boolean                            @default(false)
+  googleId                          String?                            @unique
+  avatarUrl                         String?
+  bio                               String?
+  createdAt                         DateTime                           @default(now())
+  pendingEmail                      String?
+  deletedAt                         DateTime?
+  isDatingActive                    Boolean                            @default(false)
+  isAdmin                           Boolean                            @default(false)
+  preferredUnits                    String?                            @default("metric")
+  EmailVerification                 EmailVerification[]
+  groups                            GroupMember[]
+  userInstruments                   UserInstrument[]
+  userSkills                        UserSkill[]
+  bookmarks                         Bookmark[]
+  commentLikes                      CommentLike[]
+  comments                          Comment[]
+  dislikes                          Dislike[]
+  EventAttendee                     EventAttendee[]
+  events                            Event[]                            @relation("CreatedEvents")
+  following                         Follow[]                           @relation("Following")
+  followers                         Follow[]                           @relation("Followers")
+  ownedGroups                       Group[]                            @relation("GroupOwner")
+  likes                             Like[]
+  matches_matches_user1IdTousers    matches[]                          @relation("matches_user1IdTousers")
+  matches_matches_user2IdTousers    matches[]                          @relation("matches_user2IdTousers")
+  issuedNotifications               Notification[]                     @relation("Issuer")
+  receivedNotifications             Notification[]                     @relation("Recipient")
+  posts                             Post[]
+  sessions                          Session[]
+  swipes_swipes_fromUserIdTousers   swipes[]                           @relation("swipes_fromUserIdTousers")
+  swipes_swipes_toUserIdTousers     swipes[]                           @relation("swipes_toUserIdTousers")
+  user_dating_preferences           user_dating_preferences?
+  user_dating_profile               user_dating_profile?
+  user_dating_identity_verification user_dating_identity_verification?
+  user_photos                       user_photos[]
+  userPreferences                   UserPreferences?
+  sentMessages                      Message[]                          @relation("MessageSender")
+  datingLocationOverride            dating_location_overrides?         @relation("DatingLocationOverrides")
 
   // Reports relations
   reportsMade          Report[] @relation("UserReports")
@@ -459,6 +460,28 @@ model user_dating_profile {
   latitude              Float? // Cached geocoded latitude (from zip code)
   longitude             Float? // Cached geocoded longitude (from zip code)
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model user_dating_identity_verification {
+  id                    String    @id @default(cuid())
+  userId                String    @unique
+  isVerified            Boolean   @default(false)
+  verificationStatus    String    @default("not_started") // "not_started" | "pending" | "verified" | "failed" | "requires_input"
+  verificationMethod    String? // "stripe_identity" | "manual" | future methods
+  stripeVerificationId  String?   @unique // Stripe Identity VerificationSession ID
+  stripeVerificationUrl String? // URL for user to complete Stripe verification
+  documentType          String? // "passport" | "drivers_license" | "id_card"
+  verifiedAt            DateTime?
+  failureReason         String? // Reason if verification failed
+  attemptsCount         Int       @default(0)
+  lastAttemptAt         DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isVerified])
+  @@index([stripeVerificationId])
+  @@map("user_dating_identity_verifications")
 }
 
 model user_dating_preferences {

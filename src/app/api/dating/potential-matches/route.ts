@@ -71,7 +71,7 @@ async function geocodeZipCode(zipCode: string): Promise<{ lat: number; lon: numb
     );
     
     if (!response.ok) {
-      return null;
+  return null;
     }
     
     const data = await response.json();
@@ -145,12 +145,12 @@ export async function GET(request: NextRequest) {
         } else {
           // Old format: single gender with single orientation
           if (preferences.preferredGender) {
-            preferredGenders = [{
-              gender: preferences.preferredGender,
-              sexualOrientation: preferences.preferredSexualOrientation || ""
-            }];
-          }
+          preferredGenders = [{
+            gender: preferences.preferredGender,
+            sexualOrientation: preferences.preferredSexualOrientation || ""
+          }];
         }
+      }
       }
     } catch (parseError) {
       // Not JSON, use as single value (old format)
@@ -291,10 +291,10 @@ export async function GET(request: NextRequest) {
           } : {}),
           // Match age range (only if both min and max are set)
           ...(preferences.preferredMinAge && preferences.preferredMaxAge ? {
-            age: {
-              gte: preferences.preferredMinAge,
-              lte: preferences.preferredMaxAge,
-            },
+          age: {
+            gte: preferences.preferredMinAge,
+            lte: preferences.preferredMaxAge,
+          },
           } : {}),
           // Match height range if specified
           ...(preferences.preferredMinHeight && preferences.preferredMaxHeight
