@@ -3,12 +3,10 @@ import { lucia } from "@/auth";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { groupId: string } },
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ groupId: string }> }) {
+  const params = await props.params;
   try {
-    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
     if (!sessionId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -17,7 +15,7 @@ export async function GET(
 
     if (!session) {
       const sessionCookie = lucia.createBlankSessionCookie();
-      cookies().set(
+      (await cookies()).set(
         sessionCookie.name,
         sessionCookie.value,
         sessionCookie.attributes,
@@ -27,7 +25,7 @@ export async function GET(
 
     if (session && session.fresh) {
       const sessionCookie = lucia.createSessionCookie(session.id);
-      cookies().set(
+      (await cookies()).set(
         sessionCookie.name,
         sessionCookie.value,
         sessionCookie.attributes,
@@ -78,13 +76,11 @@ export async function GET(
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { groupId: string } },
-) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ groupId: string }> }) {
+  const params = await props.params;
   try {
     // Direct session validation
-    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
     if (!sessionId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -93,7 +89,7 @@ export async function DELETE(
 
     if (!session) {
       const sessionCookie = lucia.createBlankSessionCookie();
-      cookies().set(
+      (await cookies()).set(
         sessionCookie.name,
         sessionCookie.value,
         sessionCookie.attributes,
@@ -103,7 +99,7 @@ export async function DELETE(
 
     if (session && session.fresh) {
       const sessionCookie = lucia.createSessionCookie(session.id);
-      cookies().set(
+      (await cookies()).set(
         sessionCookie.name,
         sessionCookie.value,
         sessionCookie.attributes,
@@ -149,13 +145,11 @@ export async function DELETE(
   }
 }
 
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: { groupId: string } },
-) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ groupId: string }> }) {
+  const params = await props.params;
   try {
     // Direct session validation
-    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
     if (!sessionId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -164,7 +158,7 @@ export async function PUT(
 
     if (!session) {
       const sessionCookie = lucia.createBlankSessionCookie();
-      cookies().set(
+      (await cookies()).set(
         sessionCookie.name,
         sessionCookie.value,
         sessionCookie.attributes,
@@ -174,7 +168,7 @@ export async function PUT(
 
     if (session && session.fresh) {
       const sessionCookie = lucia.createSessionCookie(session.id);
-      cookies().set(
+      (await cookies()).set(
         sessionCookie.name,
         sessionCookie.value,
         sessionCookie.attributes,

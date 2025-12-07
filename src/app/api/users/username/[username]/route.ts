@@ -5,12 +5,10 @@ import prisma from "@/lib/prisma";
 import { getUserDataSelect } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server"; // Import NextResponse
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { username: string } },
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ username: string }> }) {
+  const params = await props.params;
   try {
-    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
     let loggedInUserId: string | null = null;
 
     if (sessionId) {
@@ -20,7 +18,7 @@ export async function GET(
           if (session.fresh) {
             // Session is fresh, generate new cookie
             const sessionCookie = lucia.createSessionCookie(session.id);
-            cookies().set(
+            (await cookies()).set(
               sessionCookie.name,
               sessionCookie.value,
               sessionCookie.attributes,
@@ -31,7 +29,7 @@ export async function GET(
         } else {
           // Session is invalid, invalidate cookie
           const sessionCookie = lucia.createBlankSessionCookie();
-          cookies().set(
+          (await cookies()).set(
             sessionCookie.name,
             sessionCookie.value,
             sessionCookie.attributes,
@@ -42,7 +40,7 @@ export async function GET(
         console.error("Session validation error:", validationError);
         // Invalidate cookie just in case
         const sessionCookie = lucia.createBlankSessionCookie();
-        cookies().set(
+        (await cookies()).set(
           sessionCookie.name,
           sessionCookie.value,
           sessionCookie.attributes,

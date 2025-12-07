@@ -9,10 +9,8 @@ import {
   calculateDistanceScore,
 } from "@/lib/dating/compatibility";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { matchId: string } }
-) {
+export async function GET(request: NextRequest, props: { params: Promise<{ matchId: string }> }) {
+  const params = await props.params;
   try {
     const { user } = await validateRequest();
     if (!user) {

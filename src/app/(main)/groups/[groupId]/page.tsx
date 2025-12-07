@@ -4,7 +4,7 @@ import kyInstance from "@/lib/ky";
 import { GroupMembershipData, PostData } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import InfiniteScrollContainer from "@/components/InfiniteScrollContainer";
 import {
@@ -28,10 +28,16 @@ import LeaveGroupModal from "./LeaveGroupModal";
 import ReportModal from "@/components/reports/ReportModal";
 
 interface PageProps {
-  params: { groupId: string };
+  params: Promise<{ groupId: string }>;
 }
 
-export default function GroupPage({ params: { groupId } }: PageProps) {
+export default function GroupPage(props: PageProps) {
+  const params = use(props.params);
+
+  const {
+    groupId
+  } = params;
+
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
   const router = useRouter();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);

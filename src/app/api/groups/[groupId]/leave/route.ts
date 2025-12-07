@@ -5,12 +5,14 @@ import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server"; // Import NextResponse
 
 export async function POST(
-  req: NextRequest, // req is unused, consider removing if not needed for future logic
-  { params }: { params: { groupId: string } },
+  // req is unused, consider removing if not needed for future logic
+  req: NextRequest,
+  props: { params: Promise<{ groupId: string }> }
 ) {
+  const params = await props.params;
   try {
     // Direct session validation
-    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
     if (!sessionId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -19,7 +21,7 @@ export async function POST(
 
     if (!session) {
       const sessionCookie = lucia.createBlankSessionCookie();
-      cookies().set(
+      (await cookies()).set(
         sessionCookie.name,
         sessionCookie.value,
         sessionCookie.attributes,
@@ -29,7 +31,7 @@ export async function POST(
 
     if (session && session.fresh) {
       const sessionCookie = lucia.createSessionCookie(session.id);
-      cookies().set(
+      (await cookies()).set(
         sessionCookie.name,
         sessionCookie.value,
         sessionCookie.attributes,

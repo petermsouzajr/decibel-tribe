@@ -7,9 +7,9 @@ const nextConfig = {
     staleTimes: {
       dynamic: 30,
     },
-    // Keep serverComponentsExternalPackages empty for now, as original content is lost/unclear
-    serverComponentsExternalPackages: [],
   },
+  // Moved from experimental in Next.js 15+
+  serverExternalPackages: ["@uploadthing/dropzone", "@uploadthing/mime-types", "@uploadthing/react", "@uploadthing/shared"],
   images: {
     // Assuming remotePatterns existed and is needed
     remotePatterns: [

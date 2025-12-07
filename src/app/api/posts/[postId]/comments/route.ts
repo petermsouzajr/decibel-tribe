@@ -7,19 +7,22 @@ import { NextRequest, NextResponse } from "next/server"; // Import NextResponse
 import { CommentData } from "@/lib/types"; // Ensure CommentData is imported
 
 // GET Handler
-export async function GET(
-  req: NextRequest,
-  { params: { postId } }: { params: { postId: string } },
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ postId: string }> }) {
+  const params = await props.params;
+
+  const {
+    postId
+  } = params;
+
   try {
     // Direct session validation (allowing anonymous access for viewing comments)
-    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
     let loggedInUserId: string | undefined;
     if (sessionId) {
       const { user, session } = await lucia.validateSession(sessionId);
       if (session && session.fresh) {
         const sessionCookie = lucia.createSessionCookie(session.id);
-        cookies().set(
+        (await cookies()).set(
           sessionCookie.name,
           sessionCookie.value,
           sessionCookie.attributes,
@@ -73,20 +76,23 @@ export async function GET(
 }
 
 // POST Handler
-export async function POST(
-  req: NextRequest,
-  { params: { postId } }: { params: { postId: string } },
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ postId: string }> }) {
+  const params = await props.params;
+
+  const {
+    postId
+  } = params;
+
   try {
     // Direct session validation (required for posting comments)
-    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
     if (!sessionId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const { user, session } = await lucia.validateSession(sessionId);
     if (!session) {
       const sessionCookie = lucia.createBlankSessionCookie();
-      cookies().set(
+      (await cookies()).set(
         sessionCookie.name,
         sessionCookie.value,
         sessionCookie.attributes,
@@ -95,7 +101,7 @@ export async function POST(
     }
     if (session && session.fresh) {
       const sessionCookie = lucia.createSessionCookie(session.id);
-      cookies().set(
+      (await cookies()).set(
         sessionCookie.name,
         sessionCookie.value,
         sessionCookie.attributes,

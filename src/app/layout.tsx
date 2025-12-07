@@ -1,10 +1,11 @@
 import { Toaster } from "@/components/ui/toaster";
-import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
+// Temporarily disabled due to Next.js 15 compatibility issues with @uploadthing/react
+// import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
 import localFont from "next/font/local";
-import { extractRouterConfig } from "uploadthing/server";
-import { fileRouter } from "./api/uploadthing/core";
+// import { extractRouterConfig } from "uploadthing/server";
+// import { fileRouter } from "./api/uploadthing/core";
 import "./globals.css";
 import ReactQueryProvider from "./ReactQueryProvider";
 
@@ -33,7 +34,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <NextSSRPlugin routerConfig={extractRouterConfig(fileRouter)} />
+        {/* Temporarily disabled due to Next.js 15 compatibility issues */}
+        {/* <NextSSRPlugin routerConfig={extractRouterConfig(fileRouter)} /> */}
         <ReactQueryProvider>
           <ThemeProvider
             attribute="class"

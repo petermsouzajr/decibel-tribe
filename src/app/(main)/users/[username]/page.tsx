@@ -7,7 +7,7 @@ import { cache } from "react";
 import UserProfilePage from "./UserProfilePage";
 
 interface PageProps {
-  params: { username: string };
+  params: Promise<{ username: string }>;
 }
 
 const getUser = cache(
@@ -34,9 +34,13 @@ const getUser = cache(
   },
 );
 
-export async function generateMetadata({
-  params: { username },
-}: PageProps): Promise<Metadata> {
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
+  const params = await props.params;
+
+  const {
+    username
+  } = params;
+
   const { user: loggedInUser } = await validateRequest();
 
   if (!loggedInUser) return {};
@@ -48,7 +52,13 @@ export async function generateMetadata({
   };
 }
 
-export default async function Page({ params: { username } }: PageProps) {
+export default async function Page(props: PageProps) {
+  const params = await props.params;
+
+  const {
+    username
+  } = params;
+
   const { user: loggedInUser } = await validateRequest();
 
   if (!loggedInUser) {

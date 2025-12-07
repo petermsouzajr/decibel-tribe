@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import {
   Form,
   FormCheckbox,
@@ -24,7 +24,7 @@ import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import PostsLoadingSkeleton from "@/components/posts/PostsLoadingSkeleton";
 
-export default function EventFormPage(event: any) {
+export default function EventFormPage() {
   const [status, setStatus] = useState<"DRAFT" | "PUBLISHED">("DRAFT");
   const [loadingStatus, setLoadingStatus] = useState<"pending" | "complete">(
     "complete",
@@ -50,20 +50,17 @@ export default function EventFormPage(event: any) {
   const form = useForm<CreateEventValues>({
     resolver: zodResolver(createEventSchema),
     defaultValues: {
-      title: event?.title || "",
-      location: event?.location || "",
-      description: event?.description || "",
-      url: event?.url || "",
-      when: event?.when ? new Date(event.when) : parsedDate || new Date(),
-      startTime: event?.startTime || "",
-      endTime: event?.endTime || "",
-      performers:
-        event?.performers && event?.performers.length > 0
-          ? event.performers
-          : [""],
-      status: event?.status,
-      visibility: event.visibility || defaultVisibility,
-      isCancelled: event?.isCancelled || false,
+      title: "",
+      location: "",
+      description: "",
+      url: "",
+      when: parsedDate || new Date(),
+      startTime: "",
+      endTime: "",
+      performers: [""],
+      status: status,
+      visibility: defaultVisibility,
+      isCancelled: false,
     },
   });
 

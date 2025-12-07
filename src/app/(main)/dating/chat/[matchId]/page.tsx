@@ -3,11 +3,12 @@ import { redirect, notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import DatingChatInterface from "@/components/dating/DatingChatInterface";
 
-export default async function ChatPage({
-  params,
-}: {
-  params: { matchId: string };
-}) {
+export default async function ChatPage(
+  props: {
+    params: Promise<{ matchId: string }>;
+  }
+) {
+  const params = await props.params;
   const { user } = await validateRequest();
 
   if (!user) {

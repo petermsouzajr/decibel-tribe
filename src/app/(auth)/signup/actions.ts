@@ -4,7 +4,6 @@ import prisma from "@/lib/prisma";
 import { signUpSchema, SignUpValues } from "@/lib/validation";
 import bcrypt from "bcryptjs"; // Import bcryptjs
 import { generateIdFromEntropySize } from "lucia";
-import { isRedirectError } from "next/dist/client/components/redirect";
 import { generateAndSendVerification } from "../sendVerification";
 
 export async function signUp(
@@ -53,7 +52,6 @@ export async function signUp(
 
     return { success: true };
   } catch (error) {
-    if (isRedirectError(error)) throw error;
     console.error("Sign up error:", error); // Log specific error
     return {
       error: "Something went wrong. Please try again.",

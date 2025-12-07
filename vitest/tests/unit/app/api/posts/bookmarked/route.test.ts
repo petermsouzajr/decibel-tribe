@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
 import { NextRequest, NextResponse } from "next/server";
 import { GET } from "@/app/api/posts/bookmarked/route"; // Correct path
-import { cookies } from "next/headers";
+import { cookies, type UnsafeUnwrappedCookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { lucia } from "@/auth";
 import { getPostDataInclude, PostsPage, PostData } from "@/lib/types";
@@ -131,7 +131,7 @@ describe("API Route: GET /api/posts/bookmarked", () => {
     // Default mocks for successful auth
     mockCookiesGet("valid_session_id");
     mockSessionValidation(mockLoggedInUser, mockSessionData);
-    (cookies().set as Mock)?.mockClear();
+    ((cookies() as unknown as UnsafeUnwrappedCookies).set as Mock)?.mockClear();
     // Clear mocks via imported objects, casting to Mock
     (prisma.post.findMany as Mock).mockClear();
     (mockedTypes.getPostDataInclude as Mock).mockClear();
@@ -176,7 +176,7 @@ describe("API Route: GET /api/posts/bookmarked", () => {
     expect(body.error).toBe("Unauthorized");
     expect(lucia.validateSession).toHaveBeenCalledWith("invalid_session_id");
     expect(lucia.createBlankSessionCookie).toHaveBeenCalled();
-    expect(cookies().set).toHaveBeenCalledWith(
+    expect((await cookies()).set).toHaveBeenCalledWith(
       mockBlankCookie.name,
       mockBlankCookie.value,
       mockBlankCookie.attributes,
@@ -210,7 +210,7 @@ describe("API Route: GET /api/posts/bookmarked", () => {
     expect(lucia.createSessionCookie).toHaveBeenCalledWith(
       mockFreshSessionData.id,
     );
-    expect(cookies().set).toHaveBeenCalledWith(
+    expect((await cookies()).set).toHaveBeenCalledWith(
       mockNewSessionCookie.name,
       mockNewSessionCookie.value,
       mockNewSessionCookie.attributes,

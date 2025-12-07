@@ -2,7 +2,8 @@ import { requireAdmin } from "@/lib/admin";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 
-export default async function ReportDetail({ params }: { params: { reportId: string } }) {
+export default async function ReportDetail(props: { params: Promise<{ reportId: string }> }) {
+  const params = await props.params;
   await requireAdmin();
   const report = await (prisma as any).report.findUnique({
     where: { id: params.reportId },

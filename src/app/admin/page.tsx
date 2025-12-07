@@ -1,6 +1,7 @@
 import { getAdminUser } from "@/lib/admin";
 import { Shield, Users, Flag, TrendingUp, AlertTriangle } from "lucide-react";
 import prisma from "@/lib/prisma";
+import Link from "next/link";
 
 async function getAdminStats() {
   try {
@@ -164,10 +165,10 @@ export default async function AdminDashboard() {
       <div className="bg-white rounded-lg shadow-sm p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <a href="/admin/reports" className="flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+          <Link href="/admin/reports" className="flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
             <Flag className="h-4 w-4 mr-2" />
             Review Reports
-          </a>
+          </Link>
           
           <a href="/admin/users" className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
             <Users className="h-4 w-4 mr-2" />

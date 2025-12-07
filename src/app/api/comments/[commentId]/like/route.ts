@@ -2,10 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { commentId: string } }
-) {
+export async function POST(request: NextRequest, props: { params: Promise<{ commentId: string }> }) {
+  const params = await props.params;
   try {
     const { user } = await validateRequest();
     if (!user) {
@@ -73,10 +71,8 @@ export async function POST(
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { commentId: string } }
-) {
+export async function DELETE(request: NextRequest, props: { params: Promise<{ commentId: string }> }) {
+  const params = await props.params;
   try {
     const { user } = await validateRequest();
     if (!user) {

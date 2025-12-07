@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
 import { NextRequest } from "next/server";
 import { GET, DELETE } from "@/app/api/posts/[postId]/route"; // Assuming PATCH is not used or tested here
-import { cookies } from "next/headers";
+import { cookies, type UnsafeUnwrappedCookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { lucia } from "@/auth";
 import { getPostDataInclude, PostData } from "@/lib/types";
@@ -85,7 +85,7 @@ const mockSessionValidation = (
 // Helper to mock cookie retrieval (now targets the .get method)
 const mockCookiesGet = (value: string | undefined) => {
   // We need to access the mocked 'get' function inside the return value of cookies()
-  const cookiesMock = cookies() as unknown as { get: Mock; set: Mock };
+  const cookiesMock = (cookies() as unknown as UnsafeUnwrappedCookies) as unknown as { get: Mock; set: Mock };
   cookiesMock.get.mockReturnValue({ value }); // .get() returns an object like { value: '...' }
 };
 
@@ -245,7 +245,7 @@ describe("API Route: /api/posts/[postId]", () => {
       expect(lucia.validateSession).toHaveBeenCalledWith("invalid_session_id");
       expect(lucia.createBlankSessionCookie).toHaveBeenCalled();
       // Check if the mock .set() method was called correctly
-      const cookiesMock = cookies() as unknown as { get: Mock; set: Mock };
+      const cookiesMock = await cookies() as unknown as { get: Mock; set: Mock };
       expect(cookiesMock.set).toHaveBeenCalledWith(
         mockBlankCookie.name,
         mockBlankCookie.value,

@@ -4,10 +4,8 @@ import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { createCommentSchema } from "@/lib/validation";
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { commentId: string } }
-) {
+export async function PUT(request: NextRequest, props: { params: Promise<{ commentId: string }> }) {
+  const params = await props.params;
   try {
     const { user } = await validateRequest();
     if (!user) {

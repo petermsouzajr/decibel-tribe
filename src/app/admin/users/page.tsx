@@ -56,16 +56,17 @@ async function getUsers(page: number = 1, limit: number = 10) {
   }
 }
 
-export default async function AdminUsers({
-  searchParams,
-}: {
-  searchParams: { page?: string; limit?: string };
-}) {
+export default async function AdminUsers(
+  props: {
+    searchParams: Promise<{ page?: string; limit?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const admin = await getAdminUser();
-  
+
   const page = parseInt(searchParams.page || '1');
   const limit = parseInt(searchParams.limit || '10');
-  
+
   const { users, totalUsers, totalPages, currentPage } = await getUsers(page, limit);
 
   // Format time ago

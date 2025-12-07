@@ -3,10 +3,8 @@ import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { matchId: string } }
-) {
+export async function GET(request: NextRequest, props: { params: Promise<{ matchId: string }> }) {
+  const params = await props.params;
   try {
     const { user } = await validateRequest();
     if (!user) {
@@ -107,10 +105,8 @@ export async function GET(
   }
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { matchId: string } }
-) {
+export async function POST(request: NextRequest, props: { params: Promise<{ matchId: string }> }) {
+  const params = await props.params;
   try {
     const { user } = await validateRequest();
     if (!user) {

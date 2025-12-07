@@ -2,10 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin";
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { reportId: string } },
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ reportId: string }> }) {
+  const params = await props.params;
   try {
     await requireAdmin();
     const body = await req.json();
@@ -35,7 +33,7 @@ export async function PATCH(
 
 export async function POST(
   req: NextRequest,
-  ctx: { params: { reportId: string } },
+  ctx: { params: Promise<{ reportId: string }> },
 ) {
   // Support form submissions using method override
   const method = req.nextUrl.searchParams.get("_method");

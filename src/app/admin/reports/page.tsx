@@ -30,16 +30,17 @@ async function getReports(page: number = 1, limit: number = 10) {
   }
 }
 
-export default async function AdminReports({
-  searchParams,
-}: {
-  searchParams: { page?: string; limit?: string };
-}) {
+export default async function AdminReports(
+  props: {
+    searchParams: Promise<{ page?: string; limit?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const admin = await getAdminUser();
-  
+
   const page = parseInt(searchParams.page || '1');
   const limit = parseInt(searchParams.limit || '10');
-  
+
   const { reports, totalReports, totalPages, currentPage } = await getReports(page, limit);
 
   // Format time ago

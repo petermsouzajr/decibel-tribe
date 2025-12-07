@@ -63,7 +63,7 @@ describe("POST /api/groups/{groupId}/leave", () => {
   let session: Session;
   let group: any; // Simpler type for test setup
   let groupMember: any; // Simpler type for test setup
-  let mockCookieStore: ReturnType<typeof cookies>; // Use inferred type
+  let mockCookieStore: Awaited<ReturnType<typeof cookies>>; // Use inferred type
 
   beforeEach(async () => {
     vi.resetAllMocks();

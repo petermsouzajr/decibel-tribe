@@ -7,19 +7,22 @@ import { NextRequest, NextResponse } from "next/server"; // Import NextResponse
 import { getPostDataInclude } from "@/lib/types"; // Ensure getPostDataInclude is imported
 
 // GET Handler
-export async function GET(
-  req: NextRequest,
-  { params: { postId } }: { params: { postId: string } },
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ postId: string }> }) {
+  const params = await props.params;
+
+  const {
+    postId
+  } = params;
+
   try {
     // Direct session validation (allowing anonymous access)
-    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
     let loggedInUserId: string | undefined;
     if (sessionId) {
       const { user, session } = await lucia.validateSession(sessionId);
       if (session && session.fresh) {
         const sessionCookie = lucia.createSessionCookie(session.id);
-        cookies().set(
+        (await cookies()).set(
           sessionCookie.name,
           sessionCookie.value,
           sessionCookie.attributes,
@@ -50,20 +53,23 @@ export async function GET(
 }
 
 // PATCH Handler
-export async function PATCH(
-  req: NextRequest,
-  { params: { postId } }: { params: { postId: string } },
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ postId: string }> }) {
+  const params = await props.params;
+
+  const {
+    postId
+  } = params;
+
   try {
     // Direct session validation (required)
-    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
     if (!sessionId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const { user, session } = await lucia.validateSession(sessionId);
     if (!session) {
       const sessionCookie = lucia.createBlankSessionCookie();
-      cookies().set(
+      (await cookies()).set(
         sessionCookie.name,
         sessionCookie.value,
         sessionCookie.attributes,
@@ -72,7 +78,7 @@ export async function PATCH(
     }
     if (session && session.fresh) {
       const sessionCookie = lucia.createSessionCookie(session.id);
-      cookies().set(
+      (await cookies()).set(
         sessionCookie.name,
         sessionCookie.value,
         sessionCookie.attributes,
@@ -113,20 +119,23 @@ export async function PATCH(
 }
 
 // DELETE Handler
-export async function DELETE(
-  req: NextRequest,
-  { params: { postId } }: { params: { postId: string } },
-) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ postId: string }> }) {
+  const params = await props.params;
+
+  const {
+    postId
+  } = params;
+
   try {
     // Direct session validation (required)
-    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
     if (!sessionId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const { user, session } = await lucia.validateSession(sessionId);
     if (!session) {
       const sessionCookie = lucia.createBlankSessionCookie();
-      cookies().set(
+      (await cookies()).set(
         sessionCookie.name,
         sessionCookie.value,
         sessionCookie.attributes,
@@ -135,7 +144,7 @@ export async function DELETE(
     }
     if (session && session.fresh) {
       const sessionCookie = lucia.createSessionCookie(session.id);
-      cookies().set(
+      (await cookies()).set(
         sessionCookie.name,
         sessionCookie.value,
         sessionCookie.attributes,

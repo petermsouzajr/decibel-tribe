@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { validateRequest } from "@/auth";
 
-export async function POST(
-  req: NextRequest,
-  { params: { userId } }: { params: { userId: string } },
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ userId: string }> }) {
+  const params = await props.params;
+
+  const {
+    userId
+  } = params;
+
   try {
     const { user } = await validateRequest();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -21,10 +24,13 @@ export async function POST(
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params: { userId } }: { params: { userId: string } },
-) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ userId: string }> }) {
+  const params = await props.params;
+
+  const {
+    userId
+  } = params;
+
   try {
     const { user } = await validateRequest();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -40,7 +46,13 @@ export async function DELETE(
   }
 }
 
-export async function GET(req: NextRequest, { params: { userId } }: { params: { userId: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ userId: string }> }) {
+  const params = await props.params;
+
+  const {
+    userId
+  } = params;
+
   try {
     const { user } = await validateRequest();
     if (!user || user.id !== userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

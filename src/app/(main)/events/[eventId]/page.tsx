@@ -4,19 +4,29 @@ import { getEvent } from "@/lib/utils";
 import { Metadata } from "next";
 
 interface PageProps {
-  params: { eventId: string };
+  params: Promise<{ eventId: string }>;
 }
 
-export async function generateMetadata({
-  params: { eventId },
-}: PageProps): Promise<Metadata> {
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
+  const params = await props.params;
+
+  const {
+    eventId
+  } = params;
+
   const { user } = await validateRequest();
   if (!user) return {};
   const event = await getEvent(eventId, user.id);
   return { title: `${event.title}` };
 }
 
-export default async function Page({ params: { eventId } }: PageProps) {
+export default async function Page(props: PageProps) {
+  const params = await props.params;
+
+  const {
+    eventId
+  } = params;
+
   const { user } = await validateRequest();
   if (!user) {
     return (

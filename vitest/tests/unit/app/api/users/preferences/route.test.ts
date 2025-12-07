@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
 import { NextRequest } from "next/server";
 import { GET, PATCH } from "@/app/api/users/preferences/route"; // Changed to alias path
-import { cookies } from "next/headers";
+import { cookies, type UnsafeUnwrappedCookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { lucia } from "@/auth";
 
@@ -71,7 +71,7 @@ describe("API Route: /api/users/preferences", () => {
     // Default mocks for successful auth
     mockCookiesGet("valid_session_id");
     mockSession(mockUser, mockSessionData);
-    (cookies().set as Mock).mockClear(); // Clear set mock calls
+    ((cookies() as unknown as UnsafeUnwrappedCookies).set as Mock).mockClear(); // Clear set mock calls
   });
 
   // --- GET Handler Tests ---
@@ -99,7 +99,7 @@ describe("API Route: /api/users/preferences", () => {
       expect(body.error).toBe("Unauthorized");
       expect(lucia.validateSession).toHaveBeenCalledWith("invalid_session_id");
       expect(lucia.createBlankSessionCookie).toHaveBeenCalled();
-      expect(cookies().set).toHaveBeenCalled(); // Check if blank cookie is set
+      expect((await cookies()).set).toHaveBeenCalled(); // Check if blank cookie is set
     });
 
     it("should set a new session cookie if session is fresh", async () => {
@@ -115,7 +115,7 @@ describe("API Route: /api/users/preferences", () => {
       expect(lucia.createSessionCookie).toHaveBeenCalledWith(
         mockFreshSessionData.id,
       );
-      expect(cookies().set).toHaveBeenCalledWith(
+      expect((await cookies()).set).toHaveBeenCalledWith(
         mockNewSessionCookie.name,
         mockNewSessionCookie.value,
         mockNewSessionCookie.attributes,
@@ -149,7 +149,7 @@ describe("API Route: /api/users/preferences", () => {
       expect(prisma.userPreferences.findUnique).toHaveBeenCalledWith({
         where: { userId: mockUserId },
       });
-      expect(cookies().set).not.toHaveBeenCalled(); // Should not set cookie if session is not fresh
+      expect((await cookies()).set).not.toHaveBeenCalled(); // Should not set cookie if session is not fresh
     });
 
     it("should return 500 if a database error occurs", async () => {
@@ -209,7 +209,7 @@ describe("API Route: /api/users/preferences", () => {
       expect(body.error).toBe("Unauthorized");
       expect(lucia.validateSession).toHaveBeenCalledWith("invalid_session_id");
       expect(lucia.createBlankSessionCookie).toHaveBeenCalled();
-      expect(cookies().set).toHaveBeenCalled();
+      expect((await cookies()).set).toHaveBeenCalled();
     });
 
     it("should set a new session cookie if session is fresh", async () => {
@@ -223,7 +223,7 @@ describe("API Route: /api/users/preferences", () => {
       expect(lucia.createSessionCookie).toHaveBeenCalledWith(
         mockFreshSessionData.id,
       );
-      expect(cookies().set).toHaveBeenCalledWith(
+      expect((await cookies()).set).toHaveBeenCalledWith(
         mockNewSessionCookie.name,
         mockNewSessionCookie.value,
         mockNewSessionCookie.attributes,
@@ -245,7 +245,7 @@ describe("API Route: /api/users/preferences", () => {
         update: { calendar: mockPreferenceUpdate.calendar },
       });
       expect(request.json).toHaveBeenCalled();
-      expect(cookies().set).not.toHaveBeenCalled(); // Should not set cookie if session is not fresh
+      expect((await cookies()).set).not.toHaveBeenCalled(); // Should not set cookie if session is not fresh
     });
 
     it("should return 500 if reading request body fails", async () => {

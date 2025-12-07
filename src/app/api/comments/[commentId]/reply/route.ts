@@ -5,10 +5,8 @@ import { revalidatePath } from "next/cache";
 import { createCommentSchema } from "@/lib/validation";
 import { getCommentDataInclude } from "@/lib/types";
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { commentId: string } }
-) {
+export async function POST(request: NextRequest, props: { params: Promise<{ commentId: string }> }) {
+  const params = await props.params;
   try {
     const { user } = await validateRequest();
     if (!user) {

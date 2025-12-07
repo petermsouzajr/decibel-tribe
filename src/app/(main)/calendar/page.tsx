@@ -1,11 +1,11 @@
 "use client";
-import { PageProps, Event } from "@/lib/types";
+import { Event } from "@/lib/types";
 import EventCalendar from "./CalendarActions";
 import { useEffect, useState } from "react";
 import PostsLoadingSkeleton from "@/components/posts/PostsLoadingSkeleton";
 import { useSearchParams } from "next/navigation";
 
-const Page: React.FC<PageProps> = () => {
+const Page = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
