@@ -990,11 +990,11 @@ export async function seedDatingProfiles(
       const streamChatUsers = usersToCreate
         .filter((user) => createdUserIds.has(user.id!))
         .map((user) => ({
-          id: user.id!,
-          name: user.displayName!,
-          image: user.avatarUrl,
-          email: user.email!,
-        }));
+        id: user.id!,
+        name: user.displayName!,
+        image: user.avatarUrl,
+        email: user.email!,
+      }));
       try {
         // StreamChat has a limit of 100 users per batch
         const batchSize = 100;

@@ -78,7 +78,7 @@ describe("Post Id Page Integration Test", () => {
       <QueryClientProvider client={queryClient}>
         <React.Suspense fallback={<div>Loading...</div>}>
           {/* This will now render the mocked component */}
-          <Page params={{ postId: "123" }} />
+          <Page params={Promise.resolve({ postId: "123" })} />
         </React.Suspense>
       </QueryClientProvider>,
     );

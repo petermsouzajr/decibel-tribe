@@ -30,7 +30,10 @@ export default async function sendVerificationEmail(
   try {
     // Return the result of sendMail on success
     const result = await transporter.sendMail(mailOptions);
-    console.log(`Verification email sent successfully to ${to}`);
+    const isDev = process.env.NODE_ENV === "development";
+    if (isDev) {
+      console.log(`Verification email sent successfully to ${to}`);
+    }
     return result;
   } catch (error) {
     console.error(`Error sending verification email to ${to}:`, error);

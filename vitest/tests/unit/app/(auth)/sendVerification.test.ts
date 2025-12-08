@@ -80,8 +80,8 @@ describe("[Auth] generateAndSendVerification action", () => {
   let generateAndSendVerification: typeof import("@/app/(auth)/sendVerification").generateAndSendVerification;
 
   beforeAll(async () => {
-    const module = await import("@/app/(auth)/sendVerification");
-    generateAndSendVerification = module.generateAndSendVerification;
+    const sendVerificationModule = await import("@/app/(auth)/sendVerification");
+    generateAndSendVerification = sendVerificationModule.generateAndSendVerification;
   });
 
   const userId = "new-user-id-123";
@@ -215,8 +215,8 @@ describe("[Auth] resendVerificationEmail action", () => {
   let resendVerificationEmail: typeof import("@/app/(auth)/sendVerification").resendVerificationEmail;
 
   beforeAll(async () => {
-    const module = await import("@/app/(auth)/sendVerification");
-    resendVerificationEmail = module.resendVerificationEmail;
+    const sendVerificationModule = await import("@/app/(auth)/sendVerification");
+    resendVerificationEmail = sendVerificationModule.resendVerificationEmail;
   });
 
   beforeEach(() => {

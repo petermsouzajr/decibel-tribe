@@ -21,7 +21,10 @@ export async function POST() {
       },
     });
 
-    console.log(`Found ${expiredDeletedUsers.length} users to permanently delete`);
+    const isDev = process.env.NODE_ENV === "development";
+    if (isDev) {
+      console.log(`Found ${expiredDeletedUsers.length} users to permanently delete`);
+    }
 
     let deletedCount = 0;
     let streamChatDeletedCount = 0;
@@ -34,7 +37,9 @@ export async function POST() {
             hard_delete: true,
           });
           streamChatDeletedCount++;
-          console.log(`Deleted user ${user.username} from StreamChat`);
+          if (isDev) {
+            console.log(`Deleted user ${user.username} from StreamChat`);
+          }
         } catch (streamError) {
           console.error(`Failed to delete user ${user.username} from StreamChat:`, streamError);
         }
@@ -44,7 +49,9 @@ export async function POST() {
           where: { id: user.id },
         });
         deletedCount++;
-        console.log(`Permanently deleted user ${user.username} from database`);
+        if (isDev) {
+          console.log(`Permanently deleted user ${user.username} from database`);
+        }
 
       } catch (error) {
         console.error(`Error deleting user ${user.username}:`, error);

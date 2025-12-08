@@ -53,8 +53,11 @@ export async function GET(req: NextRequest, props: { params: Promise<{ postId: s
       cursor: cursor ? { id: cursor } : undefined,
     });
 
-    console.log("Database query result - comments found:", comments.length);
-    console.log("Sample comment data:", comments[0] ? { id: comments[0].id, isDeleted: comments[0].isDeleted, content: comments[0].content.substring(0, 50) } : "No comments");
+    const isDev = process.env.NODE_ENV === "development";
+    if (isDev) {
+      console.log("Database query result - comments found:", comments.length);
+      console.log("Sample comment data:", comments[0] ? { id: comments[0].id, isDeleted: comments[0].isDeleted, content: comments[0].content.substring(0, 50) } : "No comments");
+    }
 
     const previousCursor = comments.length > pageSize ? comments[0].id : null;
 
@@ -63,7 +66,9 @@ export async function GET(req: NextRequest, props: { params: Promise<{ postId: s
       previousCursor,
     };
 
-    console.log("API returning comments:", data.comments.map(c => ({ id: c.id, isDeleted: c.isDeleted, content: c.content.substring(0, 50) })));
+    if (isDev) {
+      console.log("API returning comments:", data.comments.map(c => ({ id: c.id, isDeleted: c.isDeleted, content: c.content.substring(0, 50) })));
+    }
 
     return NextResponse.json(data);
   } catch (error) {

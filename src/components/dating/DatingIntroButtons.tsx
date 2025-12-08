@@ -14,18 +14,15 @@ const DatingIntroButtons = ({ username }: DatingIntroButtonsProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleContinue = async () => {
-    console.log("Continue button clicked");
     setIsLoading(true);
     try {
       // Just navigate to onboarding - don't enable dating yet
-      console.log("Navigating to onboarding...");
       window.location.href = "/dating/onboarding";
     } catch (error) {
       console.error("Error navigating to onboarding:", error);
       window.location.href = "/dating/onboarding"; // Fallback
     } finally {
       setIsLoading(false);
-      console.log("Loading finished");
     }
   };
 

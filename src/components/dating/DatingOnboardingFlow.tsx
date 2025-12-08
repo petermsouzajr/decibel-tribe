@@ -260,12 +260,12 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                 error={formData.age < 18}
                 min={18}
                 max={130}
-              />
-              {formData.age < 18 && (
-                <p className="text-red-500 text-xs mt-1">
-                  {formData.age === 0 ? "Age is required" : "Age must be at least 18"}
-                </p>
-              )}
+                  />
+                  {formData.age < 18 && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {formData.age === 0 ? "Age is required" : "Age must be at least 18"}
+                    </p>
+                  )}
               <HeightSelector
                 value={formData.height}
                 onChange={(heightInInches) => setFormData({...formData, height: heightInInches})}
@@ -274,10 +274,10 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                 error={formData.height < 36}
               />
               {formData.height < 36 && (
-                <p className="text-red-500 text-xs mt-1">
+                  <p className="text-red-500 text-xs mt-1">
                   Height must be at least 3 feet
-                </p>
-              )}
+                  </p>
+                )}
               <div>
                 <DropdownSelector
                   value={formData.gender}

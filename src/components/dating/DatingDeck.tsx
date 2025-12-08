@@ -87,7 +87,7 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
       setLoading(true);
       const params = new URLSearchParams();
       if (cursor) params.set("cursor", cursor);
-      params.set("limit", "10");
+      params.set("limit", "20");
       if (filters.preferredInstruments.length > 0) {
         filters.preferredInstruments.forEach((inst) =>
           params.append("instruments", inst)
@@ -100,7 +100,9 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
       }
 
       const url = `/api/dating/potential-matches?${params.toString()}`;
-      const response = await kyInstance.get(url).json<{
+      const response = await kyInstance.get(url, {
+        timeout: 90000, // 90 seconds timeout for this slow endpoint
+      }).json<{
         matches: MatchProfile[];
         nextCursor: string | null;
       }>();

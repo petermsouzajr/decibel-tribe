@@ -106,7 +106,10 @@ export async function GET(request: NextRequest) {
           unreadCount = state.unreadCount || 0;
         } catch (error) {
           // Channel might not exist yet - that's okay
-          console.log("Stream Chat channel not available yet:", error);
+          const isDev = process.env.NODE_ENV === "development";
+          if (isDev) {
+            console.log("Stream Chat channel not available yet:", error);
+          }
         }
 
         return {

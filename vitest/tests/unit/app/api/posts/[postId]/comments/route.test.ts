@@ -246,7 +246,7 @@ describe("API Route: /api/posts/[postId]/comments", () => {
       request = createGetRequest();
 
       // Act
-      const response = await GET(request, { params: { postId } });
+      const response = await GET(request, { params: Promise.resolve({ postId }) });
       const body: CommentsPage = await response.json();
 
       // Assert
@@ -272,7 +272,7 @@ describe("API Route: /api/posts/[postId]/comments", () => {
       request = createGetRequest();
 
       // Act
-      const response = await GET(request, { params: { postId } });
+      const response = await GET(request, { params: Promise.resolve({ postId }) });
       const body: CommentsPage = await response.json();
 
       // Assert
@@ -298,7 +298,7 @@ describe("API Route: /api/posts/[postId]/comments", () => {
       request = createGetRequest();
 
       // Act
-      await GET(request, { params: { postId } });
+      await GET(request, { params: Promise.resolve({ postId }) });
 
       // Assert
       expect(mockValidateSession).toHaveBeenCalledWith("valid_session_id");
@@ -322,7 +322,7 @@ describe("API Route: /api/posts/[postId]/comments", () => {
       request = createGetRequest();
 
       // Act
-      const response = await GET(request, { params: { postId } });
+      const response = await GET(request, { params: Promise.resolve({ postId }) });
       const body: CommentsPage = await response.json();
 
       // Assert
@@ -347,7 +347,7 @@ describe("API Route: /api/posts/[postId]/comments", () => {
       request = createGetRequest(cursor);
 
       // Act
-      const response = await GET(request, { params: { postId } });
+      const response = await GET(request, { params: Promise.resolve({ postId }) });
       const body: CommentsPage = await response.json();
 
       // Assert
@@ -370,7 +370,7 @@ describe("API Route: /api/posts/[postId]/comments", () => {
       request = createGetRequest();
 
       // Act
-      const response = await GET(request, { params: { postId } });
+      const response = await GET(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
 
       // Assert
@@ -405,7 +405,7 @@ describe("API Route: /api/posts/[postId]/comments", () => {
       mockValidateSession.mockResolvedValue({ user: null, session: null });
       request = createPostRequest({ content: commentContent });
       // Act
-      const response = await POST(request, { params: { postId } });
+      const response = await POST(request, { params: Promise.resolve({ postId }) });
       // Assert
       expect(response.status).toBe(401);
       expect(mockCommentCreate).not.toHaveBeenCalled();
@@ -415,7 +415,7 @@ describe("API Route: /api/posts/[postId]/comments", () => {
       // Arrange
       request = createPostRequest({ content: "" });
       // Act
-      const response = await POST(request, { params: { postId } });
+      const response = await POST(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
       // Assert
       expect(response.status).toBe(400);
@@ -442,7 +442,7 @@ describe("API Route: /api/posts/[postId]/comments", () => {
       request = createPostRequest({ content: commentContent });
 
       // Act
-      const response = await POST(request, { params: { postId } });
+      const response = await POST(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
 
       // Convert expected dates to ISO strings to match JSON response
@@ -496,7 +496,7 @@ describe("API Route: /api/posts/[postId]/comments", () => {
       mockCommentCreate.mockResolvedValue({});
       request = createPostRequest({ content: commentContent });
       // Act
-      await POST(request, { params: { postId } });
+      await POST(request, { params: Promise.resolve({ postId }) });
       // Assert
       expect(mockPostFindUnique).toHaveBeenCalled();
       expect(mockNotificationCreate).not.toHaveBeenCalled();
@@ -508,7 +508,7 @@ describe("API Route: /api/posts/[postId]/comments", () => {
       mockCommentCreate.mockResolvedValue({});
       request = createPostRequest({ content: commentContent });
       // Act
-      await POST(request, { params: { postId } });
+      await POST(request, { params: Promise.resolve({ postId }) });
       // Assert
       expect(mockNotificationFindFirst).toHaveBeenCalled();
       expect(mockNotificationCreate).not.toHaveBeenCalled();
@@ -521,7 +521,7 @@ describe("API Route: /api/posts/[postId]/comments", () => {
       request = createPostRequest({ content: commentContent });
 
       // Act
-      const response = await POST(request, { params: { postId } });
+      const response = await POST(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
 
       // Assert
@@ -541,7 +541,7 @@ describe("API Route: /api/posts/[postId]/comments", () => {
         .mockImplementation(() => {});
 
       // Act
-      const response = await POST(request, { params: { postId } });
+      const response = await POST(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
 
       // Assert

@@ -90,7 +90,7 @@ const mockCookiesGet = (value: string | undefined) => {
 };
 
 // Helper to create context
-const createMockContext = (postId: string) => ({ params: { postId } });
+const createMockContext = (postId: string) => ({ params: Promise.resolve({ postId }) });
 
 describe("API Route: /api/posts/[postId]", () => {
   const testPostId = "post123";

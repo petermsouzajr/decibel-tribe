@@ -79,7 +79,7 @@ describe("User Page", () => {
     render(
       <QueryClientProvider client={queryClient}>
         <React.Suspense fallback={<div>Loading...</div>}>
-          <Page params={{ username: "123" }} />
+          <Page params={Promise.resolve({ username: "123" })} />
         </React.Suspense>
       </QueryClientProvider>,
     );

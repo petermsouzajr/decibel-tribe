@@ -115,15 +115,15 @@ export default function MenuBarContent({
         </Link>
       </Button>
       {!isDatingPage && (
-        <Button
-          variant="ghost"
-          className="hidden w-full items-center justify-start gap-3 bg-primary text-white sm:flex"
-          title="Post"
-          onClick={() => setShowPostDialog(true)}
-        >
-          <Plus />
-          <span className="hidden lg:inline">Post</span>
-        </Button>
+      <Button
+        variant="ghost"
+        className="hidden w-full items-center justify-start gap-3 bg-primary text-white sm:flex"
+        title="Post"
+        onClick={() => setShowPostDialog(true)}
+      >
+        <Plus />
+        <span className="hidden lg:inline">Post</span>
+      </Button>
       )}
         <Button
           variant="ghost"
@@ -136,14 +136,14 @@ export default function MenuBarContent({
           </Link>
         </Button>
       {!isDatingPage && (
-        <Button
-          variant="ghost"
-          className="fixed bottom-20 right-5 flex h-[3rem] w-[3rem] items-center justify-center rounded-full bg-primary text-white shadow-2xl transition-all hover:scale-[1.15] active:scale-105 sm:hidden"
-          title="Post"
-          onClick={() => setShowPostDialog(true)}
-        >
-          <Plus />
-        </Button>
+      <Button
+        variant="ghost"
+        className="fixed bottom-20 right-5 flex h-[3rem] w-[3rem] items-center justify-center rounded-full bg-primary text-white shadow-2xl transition-all hover:scale-[1.15] active:scale-105 sm:hidden"
+        title="Post"
+        onClick={() => setShowPostDialog(true)}
+      >
+        <Plus />
+      </Button>
       )}
       <PostDialog open={showPostDialog} onOpenChange={setShowPostDialog} />
     </div>

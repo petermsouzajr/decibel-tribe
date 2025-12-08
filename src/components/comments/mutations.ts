@@ -16,7 +16,6 @@ export function useSubmitCommentMutation(postId: string) {
   const mutation = useMutation({
     mutationFn: submitComment,
     onSuccess: async (newComment) => {
-      console.log("Comment created successfully:", newComment);
       const queryKey: QueryKey = ["comments", postId];
 
       // Invalidate and refetch the comments to show the new comment
@@ -107,14 +106,9 @@ export function useReplyToCommentMutation() {
       return response.json();
     },
     onSuccess: async (response, variables) => {
-      console.log("Reply created successfully:", response);
-      console.log("Reply data:", response.reply);
-      console.log("Post ID:", response.postId);
-      
       // Invalidate the comments query to refetch and show the new reply
       // We need to invalidate the parent post's comments
       const queryKey: QueryKey = ["comments", response.postId];
-      console.log("Invalidating query key:", queryKey);
       await queryClient.invalidateQueries({ queryKey });
 
       toast({

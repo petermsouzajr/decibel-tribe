@@ -32,7 +32,6 @@ export default function Comments({ post }: CommentsProps) {
   const comments = data?.pages.flatMap((page) => page.comments) || [];
 
   const handleReply = (commentId: string) => {
-    console.log("handleReply called for commentId:", commentId);
     // Don't refetch immediately - let the user complete their reply first
     // The reply will be added to the UI optimistically or after successful submission
   };

@@ -48,7 +48,10 @@ export async function POST(request: NextRequest) {
     const settings = await request.json();
     
     // In a real app, you'd save to database
-    console.log("Saving settings:", settings);
+    const isDev = process.env.NODE_ENV === "development";
+    if (isDev) {
+      console.log("Saving settings:", settings);
+    }
     
     return NextResponse.json({ success: true });
   } catch (error) {

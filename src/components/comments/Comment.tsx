@@ -27,13 +27,11 @@ export default function Comment({ comment, onReply }: CommentProps) {
 
   const handleReply = () => {
     if (!user) return;
-    console.log("Reply button clicked for comment:", comment.id);
     setShowReplyInput(true);
     onReply?.(comment.id);
   };
 
   const isDeleted = comment.isDeleted;
-  console.log("Comment data:", { id: comment.id, isDeleted, userDeletedAt: comment.user.deletedAt });
 
   if (isDeleted) {
     return (

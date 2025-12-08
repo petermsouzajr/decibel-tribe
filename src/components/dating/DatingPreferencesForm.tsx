@@ -384,10 +384,10 @@ export default function DatingPreferencesForm() {
           />
         </div>
         <DropdownSelector
-          value={formData.preferredCoronavirusVaccinated}
+            value={formData.preferredCoronavirusVaccinated}
           onChange={(value) =>
             setFormData({ ...formData, preferredCoronavirusVaccinated: value })
-          }
+            }
           options={[
             { label: "No preference", value: "" },
             { label: "Vaccinated", value: "Yes" },

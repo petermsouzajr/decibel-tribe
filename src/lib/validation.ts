@@ -131,9 +131,11 @@ export const createEventSchema = baseEventObject.refine(
   (data) => {
     if (data.startTime && data.endTime) {
       const isEndTimeAfterStart = data.endTime > data.startTime;
-      console.log(
-        `DEBUG TIME COMPARE: Start=${data.startTime}, End=${data.endTime}, IsAfter=${isEndTimeAfterStart}`,
-      );
+      if (process.env.NODE_ENV === "development") {
+        console.log(
+          `DEBUG TIME COMPARE: Start=${data.startTime}, End=${data.endTime}, IsAfter=${isEndTimeAfterStart}`,
+        );
+      }
       return isEndTimeAfterStart;
     }
     return true;

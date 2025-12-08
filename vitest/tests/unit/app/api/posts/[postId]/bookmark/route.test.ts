@@ -143,7 +143,7 @@ describe("API Route: /api/posts/[postId]/bookmark", () => {
       // Arrange: Override the default mockResolvedValue from beforeEach
       mockLuciaValidateSession.mockResolvedValue({ user: null, session: null });
       // Act
-      const response = await GET(request, { params: { postId } });
+      const response = await GET(request, { params: Promise.resolve({ postId }) });
       // Assert
       expect(response.status).toBe(401);
       expect(mockBookmarkFindUnique).not.toHaveBeenCalled();
@@ -156,7 +156,7 @@ describe("API Route: /api/posts/[postId]/bookmark", () => {
         session: mockFreshSessionData, // Use fresh session
       });
       // Act
-      await GET(request, { params: { postId } });
+      await GET(request, { params: Promise.resolve({ postId }) });
       // Assert
       expect(mockBookmarkFindUnique).toHaveBeenCalled(); // Check DB was still called
       expect(mockCreateSessionCookie).toHaveBeenCalledWith(
@@ -174,7 +174,7 @@ describe("API Route: /api/posts/[postId]/bookmark", () => {
         userId: loggedInUserId,
         postId,
       });
-      const response = await GET(request, { params: { postId } });
+      const response = await GET(request, { params: Promise.resolve({ postId }) });
       const body: BookmarkInfo = await response.json();
       expect(response.status).toBe(200);
       expect(body.isBookmarkedByUser).toBe(true);
@@ -184,7 +184,7 @@ describe("API Route: /api/posts/[postId]/bookmark", () => {
     });
 
     it("should return isBookmarkedByUser: false if bookmark does not exist", async () => {
-      const response = await GET(request, { params: { postId } });
+      const response = await GET(request, { params: Promise.resolve({ postId }) });
       const body: BookmarkInfo = await response.json();
       expect(response.status).toBe(200);
       expect(body.isBookmarkedByUser).toBe(false);
@@ -195,7 +195,7 @@ describe("API Route: /api/posts/[postId]/bookmark", () => {
 
     it("should return 500 if prisma query fails", async () => {
       mockBookmarkFindUnique.mockRejectedValue(new Error("DB Error"));
-      const response = await GET(request, { params: { postId } });
+      const response = await GET(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
       expect(response.status).toBe(500);
       expect(body.error).toBe("Internal server error");
@@ -218,7 +218,7 @@ describe("API Route: /api/posts/[postId]/bookmark", () => {
       // Arrange: Override the default mockResolvedValue from beforeEach
       mockLuciaValidateSession.mockResolvedValue({ user: null, session: null });
       // Act
-      const response = await POST(request, { params: { postId } });
+      const response = await POST(request, { params: Promise.resolve({ postId }) });
       // Assert
       expect(response.status).toBe(401);
       expect(mockBookmarkCreate).not.toHaveBeenCalled();
@@ -231,7 +231,7 @@ describe("API Route: /api/posts/[postId]/bookmark", () => {
         session: mockFreshSessionData, // Use fresh session
       });
       // Act
-      await POST(request, { params: { postId } });
+      await POST(request, { params: Promise.resolve({ postId }) });
       // Assert
       expect(mockBookmarkCreate).toHaveBeenCalled(); // Check DB was still called
       expect(mockCreateSessionCookie).toHaveBeenCalledWith(
@@ -247,7 +247,7 @@ describe("API Route: /api/posts/[postId]/bookmark", () => {
     it("should create a bookmark successfully and return 200", async () => {
       // Arrange: Default mockBookmarkCreate is success
       // Act
-      const response = await POST(request, { params: { postId } });
+      const response = await POST(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
       // Assert
       expect(response.status).toBe(200); // Expect 200
@@ -265,7 +265,7 @@ describe("API Route: /api/posts/[postId]/bookmark", () => {
       prismaError.meta = { target: ["userId", "postId"] };
       mockBookmarkCreate.mockRejectedValue(prismaError);
       // Act
-      const response = await POST(request, { params: { postId } });
+      const response = await POST(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
       // Assert: Route currently returns 500 for this
       expect(response.status).toBe(500);
@@ -280,7 +280,7 @@ describe("API Route: /api/posts/[postId]/bookmark", () => {
       prismaError.meta = { field_name: "postId" }; // Example meta
       mockBookmarkCreate.mockRejectedValue(prismaError);
       // Act
-      const response = await POST(request, { params: { postId } });
+      const response = await POST(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
       // Assert: Route currently returns 500 for this
       expect(response.status).toBe(500);
@@ -289,7 +289,7 @@ describe("API Route: /api/posts/[postId]/bookmark", () => {
 
     it("should return 500 for other prisma errors", async () => {
       mockBookmarkCreate.mockRejectedValue(new Error("DB Error"));
-      const response = await POST(request, { params: { postId } });
+      const response = await POST(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
       expect(response.status).toBe(500);
       expect(body.error).toBe("Internal server error");
@@ -312,7 +312,7 @@ describe("API Route: /api/posts/[postId]/bookmark", () => {
       // Arrange: Override the default mockResolvedValue from beforeEach
       mockLuciaValidateSession.mockResolvedValue({ user: null, session: null });
       // Act
-      const response = await DELETE(request, { params: { postId } });
+      const response = await DELETE(request, { params: Promise.resolve({ postId }) });
       // Assert
       expect(response.status).toBe(401);
       expect(mockBookmarkDeleteMany).not.toHaveBeenCalled();
@@ -325,7 +325,7 @@ describe("API Route: /api/posts/[postId]/bookmark", () => {
         session: mockFreshSessionData, // Use fresh session
       });
       // Act
-      await DELETE(request, { params: { postId } });
+      await DELETE(request, { params: Promise.resolve({ postId }) });
       // Assert
       expect(mockBookmarkDeleteMany).toHaveBeenCalled(); // Check DB was still called
       expect(mockCreateSessionCookie).toHaveBeenCalledWith(
@@ -341,7 +341,7 @@ describe("API Route: /api/posts/[postId]/bookmark", () => {
     it("should delete the bookmark successfully and return 200", async () => {
       // Arrange: Default mockBookmarkDeleteMany is success
       // Act
-      const response = await DELETE(request, { params: { postId } });
+      const response = await DELETE(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
       // Assert
       expect(response.status).toBe(200);
@@ -355,7 +355,7 @@ describe("API Route: /api/posts/[postId]/bookmark", () => {
       // Arrange
       mockBookmarkDeleteMany.mockResolvedValue({ count: 0 }); // Override default
       // Act
-      const response = await DELETE(request, { params: { postId } });
+      const response = await DELETE(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
       // Assert
       expect(response.status).toBe(200);
@@ -367,7 +367,7 @@ describe("API Route: /api/posts/[postId]/bookmark", () => {
 
     it("should return 500 if prisma query fails", async () => {
       mockBookmarkDeleteMany.mockRejectedValue(new Error("DB Error"));
-      const response = await DELETE(request, { params: { postId } });
+      const response = await DELETE(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
       expect(response.status).toBe(500);
       expect(body.error).toBe("Internal server error");

@@ -69,8 +69,11 @@ export async function POST(request: NextRequest, props: { params: Promise<{ comm
     // Revalidate the post page to show the new reply
     revalidatePath(`/posts/${parentComment.postId}`);
 
-    console.log("Reply API - Created reply:", reply);
-    console.log("Reply API - Parent comment:", parentComment);
+    const isDev = process.env.NODE_ENV === "development";
+    if (isDev) {
+      console.log("Reply API - Created reply:", reply);
+      console.log("Reply API - Parent comment:", parentComment);
+    }
     
     return NextResponse.json({ 
       success: true, 

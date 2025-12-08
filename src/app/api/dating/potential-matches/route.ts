@@ -9,6 +9,10 @@ import {
   calculateDistanceScore,
 } from "@/lib/dating/compatibility";
 
+// Increase timeout for this route (default is 10s, increase to 60s)
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
+
 // Haversine formula to calculate distance between two lat/lon points in km
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Earth's radius in km
@@ -29,25 +33,65 @@ async function geocodeZipCode(zipCode: string): Promise<{ lat: number; lon: numb
     // Clean zip code (remove any spaces or non-numeric characters except dashes for US ZIP+4)
     const cleanZip = zipCode.trim().replace(/\s+/g, "");
     
-    // Try US zip code format first (5 digits or 5+4)
-    if (/^\d{5}(-\d{4})?$/.test(cleanZip)) {
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
+    try {
+      // Try US zip code format first (5 digits or 5+4)
+      if (/^\d{5}(-\d{4})?$/.test(cleanZip)) {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?postalcode=${encodeURIComponent(cleanZip)}&countrycodes=us&format=json&limit=1`,
+          {
+            headers: {
+              'User-Agent': 'DecibelTribe/1.0'
+            },
+            signal: controller.signal
+          }
+        );
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          console.error(`Geocoding API error: ${response.status}`);
+          return null;
+        }
+        
+        const data = await response.json();
+        if (data && data.length > 0) {
+          // Extract city name from display_name (format: "City, State, Country" or "City, County, State, Country")
+          const displayName = data[0].display_name || "";
+          const parts = displayName.split(",");
+          const city = parts[0]?.trim() || null;
+          
+          return {
+            lat: parseFloat(data[0].lat),
+            lon: parseFloat(data[0].lon),
+            city: city,
+          };
+        }
+      }
+      
+      // Fallback: try as general location search
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?postalcode=${encodeURIComponent(cleanZip)}&countrycodes=us&format=json&limit=1`,
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(zipCode)}&format=json&limit=1`,
         {
           headers: {
             'User-Agent': 'DecibelTribe/1.0'
-          }
+          },
+          signal: controller.signal
         }
       );
       
+      clearTimeout(timeoutId);
+      
       if (!response.ok) {
-        console.error(`Geocoding API error: ${response.status}`);
         return null;
       }
       
       const data = await response.json();
       if (data && data.length > 0) {
-        // Extract city name from display_name (format: "City, State, Country" or "City, County, State, Country")
+        // Extract city name from display_name
         const displayName = data[0].display_name || "";
         const parts = displayName.split(",");
         const city = parts[0]?.trim() || null;
@@ -58,37 +102,16 @@ async function geocodeZipCode(zipCode: string): Promise<{ lat: number; lon: numb
           city: city,
         };
       }
-    }
-    
-    // Fallback: try as general location search
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(zipCode)}&format=json&limit=1`,
-      {
-        headers: {
-          'User-Agent': 'DecibelTribe/1.0'
-        }
-      }
-    );
-    
-    if (!response.ok) {
-  return null;
-    }
-    
-    const data = await response.json();
-    if (data && data.length > 0) {
-      // Extract city name from display_name
-      const displayName = data[0].display_name || "";
-      const parts = displayName.split(",");
-      const city = parts[0]?.trim() || null;
       
-      return {
-        lat: parseFloat(data[0].lat),
-        lon: parseFloat(data[0].lon),
-        city: city,
-      };
+      return null;
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId);
+      if (fetchError.name === 'AbortError') {
+        console.error("Geocoding API timeout for zip code:", zipCode);
+        return null;
+      }
+      throw fetchError;
     }
-    
-    return null;
   } catch (error) {
     console.error("Error geocoding location:", error);
     return null;
@@ -96,10 +119,15 @@ async function geocodeZipCode(zipCode: string): Promise<{ lat: number; lon: numb
 }
 
 export async function GET(request: NextRequest) {
+  const startTime = Date.now();
+  const isDev = process.env.NODE_ENV === "development";
   try {
     const { user } = await validateRequest();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (isDev) {
+      console.log(`[Potential Matches] Request started for user ${user.id} at ${new Date().toISOString()}`);
     }
 
     // Check if user has dating active (non-verified users can browse but won't appear in decks)
@@ -116,9 +144,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's dating preferences
+    const prefStart = Date.now();
     const preferences = await prisma.user_dating_preferences.findUnique({
       where: { userId: user.id },
     });
+    if (isDev) {
+      console.log(`[Potential Matches] Got preferences in ${Date.now() - prefStart}ms`);
+    }
 
     if (!preferences) {
       return NextResponse.json(
@@ -171,9 +203,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's dating profile
+    const profileStart = Date.now();
     const profile = await prisma.user_dating_profile.findUnique({
       where: { userId: user.id },
     });
+    if (isDev) {
+      console.log(`[Potential Matches] Got profile in ${Date.now() - profileStart}ms`);
+    }
 
     if (!profile) {
       return NextResponse.json(
@@ -203,6 +239,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Get current user's location coordinates
+    const locationStart = Date.now();
     if (!userLatitude || !userLongitude) {
       const currentUserProfile = await prisma.user_dating_profile.findUnique({
         where: { userId: user.id },
@@ -213,9 +250,16 @@ export async function GET(request: NextRequest) {
         // Use cached coordinates
         userLatitude = currentUserProfile.latitude;
         userLongitude = currentUserProfile.longitude;
+        if (isDev) {
+          console.log(`[Potential Matches] Using cached coordinates in ${Date.now() - locationStart}ms`);
+        }
       } else if (currentUserProfile?.zipCode) {
         // Geocode the zip code and cache coordinates + city
+        const geocodeStart = Date.now();
         const geocoded = await geocodeZipCode(currentUserProfile.zipCode);
+        if (isDev) {
+          console.log(`[Potential Matches] Geocoding took ${Date.now() - geocodeStart}ms`);
+        }
         if (geocoded) {
           userLatitude = geocoded.lat;
           userLongitude = geocoded.lon;
@@ -232,6 +276,9 @@ export async function GET(request: NextRequest) {
         }
       }
     }
+    if (isDev) {
+      console.log(`[Potential Matches] Location processing completed in ${Date.now() - locationStart}ms`);
+    }
 
     // Get cursor for pagination
     const { searchParams } = new URL(request.url);
@@ -239,6 +286,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "10");
 
     // Get users the current user has already swiped on
+    const excludeStart = Date.now();
     const swipedUserIds = await prisma.swipes.findMany({
       where: { fromUserId: user.id },
       select: { toUserId: true },
@@ -269,6 +317,9 @@ export async function GET(request: NextRequest) {
       select: { blockerId: true },
     });
     const blockedByIds = blockedByUsers.map((b) => b.blockerId);
+    if (isDev) {
+      console.log(`[Potential Matches] Got excluded users in ${Date.now() - excludeStart}ms (swiped: ${swipedIds.length}, matched: ${matchedIds.length}, blocked: ${blockedIds.length + blockedByIds.length})`);
+    }
 
     // Build query conditions - exclude blocked users and users who blocked you
     const excludeIds = [user.id, ...swipedIds, ...matchedIds, ...blockedIds, ...blockedByIds];
@@ -278,6 +329,7 @@ export async function GET(request: NextRequest) {
     // - Proper geocoding for location
     // - More sophisticated filtering
     // - Better indexing
+    const queryStart = Date.now();
     const potentialMatches = await prisma.user.findMany({
       where: {
         id: { notIn: excludeIds },
@@ -396,6 +448,9 @@ export async function GET(request: NextRequest) {
       ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
       orderBy: { createdAt: "desc" }, // Simple ordering for now
     });
+    if (isDev) {
+      console.log(`[Potential Matches] Main query completed in ${Date.now() - queryStart}ms, found ${potentialMatches.length} potential matches`);
+    }
 
     const hasNextPage = potentialMatches.length > limit;
     const matches = hasNextPage ? potentialMatches.slice(0, limit) : potentialMatches;
@@ -450,7 +505,9 @@ export async function GET(request: NextRequest) {
       const ourOrientation = profile.sexualOrientation;
       
       if (!ourGender || !ourOrientation) {
-        console.log(`[Potential Matches] Filtering out match ${match.id}: Missing our gender or orientation (gender: ${ourGender}, orientation: ${ourOrientation})`);
+        if (isDev) {
+          console.log(`[Potential Matches] Filtering out match ${match.id}: Missing our gender or orientation (gender: ${ourGender}, orientation: ${ourOrientation})`);
+        }
         return false;
       }
       
@@ -460,12 +517,46 @@ export async function GET(request: NextRequest) {
         return genderMatch && orientationMatch;
       });
       
-      if (!matches) {
+      if (!matches && isDev) {
         console.log(`[Potential Matches] Filtering out match ${match.id}: No reciprocal preference match. Our: ${ourGender}/${ourOrientation}, Their preferences:`, theirPreferredGenders);
       }
       
       return matches;
     });
+    if (isDev) {
+      console.log(`[Potential Matches] Filtered to ${reciprocalMatches.length} reciprocal matches`);
+    }
+
+    // Early return if no matches after filtering
+    if (reciprocalMatches.length === 0) {
+      return NextResponse.json({
+        matches: [],
+        nextCursor: null,
+      });
+    }
+
+    // Batch fetch post counts for all matches to reduce database queries
+    const formatStart = Date.now();
+    const matchIds = reciprocalMatches.map(m => m.id);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    
+    // Get post counts for all matches in one query
+    const postCountStart = Date.now();
+    const postCounts = await prisma.post.groupBy({
+      by: ['userId'],
+      where: {
+        userId: { in: matchIds },
+        createdAt: { gte: thirtyDaysAgo },
+      },
+      _count: { id: true },
+    });
+    if (isDev) {
+      console.log(`[Potential Matches] Post counts query took ${Date.now() - postCountStart}ms`);
+    }
+    
+    const postCountMap = new Map(
+      postCounts.map(pc => [pc.userId, pc._count.id])
+    );
 
     // Format response with compatibility scores
     const formattedMatches = await Promise.all(
@@ -491,15 +582,8 @@ export async function GET(request: NextRequest) {
           photos: match.user_photos.length,
         });
 
-        // Get match's post count for activity level
-        const matchPostCount = await prisma.post.count({
-          where: {
-            userId: match.id,
-            createdAt: {
-              gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
-            },
-          },
-        });
+        // Get match's post count from batched query
+        const matchPostCount = postCountMap.get(match.id) || 0;
 
         const activityLevel = calculateActivityLevel(matchPostCount);
         
@@ -520,6 +604,7 @@ export async function GET(request: NextRequest) {
         );
 
         // Check mutual connections (followers in common)
+        // Note: This query is optimized to check both directions in one query
         const mutualConnections = await prisma.follow.count({
           where: {
             followerId: { in: [user.id, match.id] },
@@ -572,10 +657,18 @@ export async function GET(request: NextRequest) {
         };
       })
     );
+    if (isDev) {
+      console.log(`[Potential Matches] Formatting matches took ${Date.now() - formatStart}ms`);
+    }
 
     // Sort by compatibility score if music matching is enabled
     if (preferences.matchMusicTastes ?? true) {
       formattedMatches.sort((a, b) => b.compatibility.overall - a.compatibility.overall);
+    }
+
+    const totalTime = Date.now() - startTime;
+    if (isDev) {
+      console.log(`[Potential Matches] Request completed in ${totalTime}ms, returning ${formattedMatches.length} matches`);
     }
 
     return NextResponse.json({

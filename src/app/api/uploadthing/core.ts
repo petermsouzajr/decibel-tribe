@@ -19,7 +19,10 @@ export const fileRouter = {
       return { user };
     })
     .onUploadComplete(async ({ metadata, file }) => {
-      console.log("UploadThing avatar onUploadComplete called with file:", file);
+      const isDev = process.env.NODE_ENV === "development";
+      if (isDev) {
+        console.log("UploadThing avatar onUploadComplete called with file:", file);
+      }
       
       if (!file.url) {
         console.error("UploadThing error: file.url is undefined for avatar");
@@ -56,7 +59,9 @@ export const fileRouter = {
         }),
       ]);
 
-      console.log("Avatar updated successfully:", newAvatarUrl);
+      if (isDev) {
+        console.log("Avatar updated successfully:", newAvatarUrl);
+      }
       return { avatarUrl: newAvatarUrl };
     }),
   attachment: f({
@@ -71,7 +76,10 @@ export const fileRouter = {
       return {};
     })
     .onUploadComplete(async ({ file }) => {
-      console.log("UploadThing onUploadComplete called with file:", file);
+      const isDev = process.env.NODE_ENV === "development";
+      if (isDev) {
+        console.log("UploadThing onUploadComplete called with file:", file);
+      }
       
       if (!file.url) {
         console.error("UploadThing error: file.url is undefined");
@@ -88,7 +96,9 @@ export const fileRouter = {
         },
       });
 
-      console.log("Media created with ID:", media.id);
+      if (isDev) {
+        console.log("Media created with ID:", media.id);
+      }
       return { mediaId: media.id };
     }),
   datingPhoto: f({
@@ -111,7 +121,10 @@ export const fileRouter = {
       return { user };
     })
     .onUploadComplete(async ({ metadata, file }) => {
-      console.log("UploadThing datingPhoto onUploadComplete called with file:", file);
+      const isDev = process.env.NODE_ENV === "development";
+      if (isDev) {
+        console.log("UploadThing datingPhoto onUploadComplete called with file:", file);
+      }
       
       if (!file.url) {
         console.error("UploadThing error: file.url is undefined for dating photo");

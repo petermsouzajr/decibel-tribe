@@ -258,7 +258,7 @@ describe("API Route: /api/events/[eventId]", () => {
         status: "PUBLISHED",
       });
       const request = createMockRequest(`/api/events/${targetEventId}`);
-      await GET(request, { params: { eventId: targetEventId } });
+      await GET(request, { params: Promise.resolve({ eventId: targetEventId }) });
       expect(mockCreateSessionCookie).toHaveBeenCalledWith(
         mockFreshSessionData.id,
       );

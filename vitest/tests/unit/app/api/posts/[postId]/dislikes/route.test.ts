@@ -170,7 +170,7 @@ describe("API Route: /api/posts/[postId]/dislikes", () => {
       mockValidateSession.mockResolvedValue({ user: null, session: null });
       request = createGetRequest();
       // Act
-      const response = await GET(request, { params: { postId } });
+      const response = await GET(request, { params: Promise.resolve({ postId }) });
       // Assert
       expect(response.status).toBe(401);
       expect(mockPostFindUnique).not.toHaveBeenCalled();
@@ -184,7 +184,7 @@ describe("API Route: /api/posts/[postId]/dislikes", () => {
       });
       request = createGetRequest();
       // Act
-      await GET(request, { params: { postId } });
+      await GET(request, { params: Promise.resolve({ postId }) });
       // Assert
       expect(mockCreateSessionCookie).toHaveBeenCalledWith(
         mockFreshSessionData.id,
@@ -201,7 +201,7 @@ describe("API Route: /api/posts/[postId]/dislikes", () => {
       mockPostFindUnique.mockResolvedValue(null);
       request = createGetRequest();
       // Act
-      const response = await GET(request, { params: { postId } });
+      const response = await GET(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
       // Assert
       expect(response.status).toBe(404);
@@ -217,7 +217,7 @@ describe("API Route: /api/posts/[postId]/dislikes", () => {
       mockPostFindUnique.mockResolvedValue(mockPostData);
       request = createGetRequest();
       // Act
-      const response = await GET(request, { params: { postId } });
+      const response = await GET(request, { params: Promise.resolve({ postId }) });
       const body: DislikeInfo = await response.json();
       // Assert
       expect(response.status).toBe(200);
@@ -241,7 +241,7 @@ describe("API Route: /api/posts/[postId]/dislikes", () => {
       mockPostFindUnique.mockResolvedValue(mockPostData);
       request = createGetRequest();
       // Act
-      const response = await GET(request, { params: { postId } });
+      const response = await GET(request, { params: Promise.resolve({ postId }) });
       const body: DislikeInfo = await response.json();
       // Assert
       expect(response.status).toBe(200);
@@ -254,7 +254,7 @@ describe("API Route: /api/posts/[postId]/dislikes", () => {
       mockPostFindUnique.mockRejectedValue(new Error("DB Error"));
       request = createGetRequest();
       // Act
-      const response = await GET(request, { params: { postId } });
+      const response = await GET(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
       // Assert
       expect(response.status).toBe(500);
@@ -282,7 +282,7 @@ describe("API Route: /api/posts/[postId]/dislikes", () => {
       mockValidateSession.mockResolvedValue({ user: null, session: null });
       request = createPostRequest();
       // Act
-      const response = await POST(request, { params: { postId } });
+      const response = await POST(request, { params: Promise.resolve({ postId }) });
       // Assert
       expect(response.status).toBe(401);
       expect(mockPrismaTransaction).not.toHaveBeenCalled();
@@ -296,7 +296,7 @@ describe("API Route: /api/posts/[postId]/dislikes", () => {
       });
       request = createPostRequest();
       // Act
-      await POST(request, { params: { postId } });
+      await POST(request, { params: Promise.resolve({ postId }) });
       // Assert
       expect(mockCreateSessionCookie).toHaveBeenCalledWith(
         mockFreshSessionData.id,
@@ -316,7 +316,7 @@ describe("API Route: /api/posts/[postId]/dislikes", () => {
       request = createPostRequest();
 
       // Act
-      const response = await POST(request, { params: { postId } });
+      const response = await POST(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
 
       // Assert
@@ -347,7 +347,7 @@ describe("API Route: /api/posts/[postId]/dislikes", () => {
       request = createPostRequest();
 
       // Act
-      const response = await POST(request, { params: { postId } });
+      const response = await POST(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
 
       // Assert
@@ -361,7 +361,7 @@ describe("API Route: /api/posts/[postId]/dislikes", () => {
       mockPrismaTransaction.mockRejectedValue(error);
       request = createPostRequest();
       // Act
-      const response = await POST(request, { params: { postId } });
+      const response = await POST(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
       // Assert
       expect(response.status).toBe(500);
@@ -387,7 +387,7 @@ describe("API Route: /api/posts/[postId]/dislikes", () => {
       mockValidateSession.mockResolvedValue({ user: null, session: null });
       request = createDeleteRequest();
       // Act
-      const response = await DELETE(request, { params: { postId } });
+      const response = await DELETE(request, { params: Promise.resolve({ postId }) });
       // Assert
       expect(response.status).toBe(401);
       expect(mockDislikeDeleteMany).not.toHaveBeenCalled();
@@ -401,7 +401,7 @@ describe("API Route: /api/posts/[postId]/dislikes", () => {
       });
       request = createDeleteRequest();
       // Act
-      await DELETE(request, { params: { postId } });
+      await DELETE(request, { params: Promise.resolve({ postId }) });
       // Assert
       expect(mockCreateSessionCookie).toHaveBeenCalledWith(
         mockFreshSessionData.id,
@@ -418,7 +418,7 @@ describe("API Route: /api/posts/[postId]/dislikes", () => {
       mockDislikeDeleteMany.mockResolvedValue({ count: 1 });
       request = createDeleteRequest();
       // Act
-      const response = await DELETE(request, { params: { postId } });
+      const response = await DELETE(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
       // Assert
       expect(response.status).toBe(200);
@@ -433,7 +433,7 @@ describe("API Route: /api/posts/[postId]/dislikes", () => {
       mockDislikeDeleteMany.mockResolvedValue({ count: 0 });
       request = createDeleteRequest();
       // Act
-      const response = await DELETE(request, { params: { postId } });
+      const response = await DELETE(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
       // Assert
       expect(response.status).toBe(200);
@@ -445,7 +445,7 @@ describe("API Route: /api/posts/[postId]/dislikes", () => {
       mockDislikeDeleteMany.mockRejectedValue(new Error("DB Error"));
       request = createDeleteRequest();
       // Act
-      const response = await DELETE(request, { params: { postId } });
+      const response = await DELETE(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
       // Assert
       expect(response.status).toBe(500);

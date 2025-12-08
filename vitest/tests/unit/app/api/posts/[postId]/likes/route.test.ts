@@ -156,7 +156,7 @@ describe("API Route: /api/posts/[postId]/likes", () => {
       mockValidateSession.mockResolvedValue({ user: null, session: null });
       request = createGetRequest();
       // Act
-      const response = await GET(request, { params: { postId } });
+      const response = await GET(request, { params: Promise.resolve({ postId }) });
       // Assert
       expect(response.status).toBe(401);
       expect(mockPostFindUnique).not.toHaveBeenCalled();
@@ -170,7 +170,7 @@ describe("API Route: /api/posts/[postId]/likes", () => {
       });
       request = createGetRequest();
       // Act
-      await GET(request, { params: { postId } });
+      await GET(request, { params: Promise.resolve({ postId }) });
       // Assert
       // Ensure post find was still called
       expect(mockPostFindUnique).toHaveBeenCalled();
@@ -191,7 +191,7 @@ describe("API Route: /api/posts/[postId]/likes", () => {
       request = createGetRequest();
 
       // Act
-      const response = await GET(request, { params: { postId } });
+      const response = await GET(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
 
       // Assert
@@ -214,7 +214,7 @@ describe("API Route: /api/posts/[postId]/likes", () => {
       request = createGetRequest();
 
       // Act
-      const response = await GET(request, { params: { postId } });
+      const response = await GET(request, { params: Promise.resolve({ postId }) });
       const body: LikeInfo = await response.json();
 
       // Assert
@@ -238,7 +238,7 @@ describe("API Route: /api/posts/[postId]/likes", () => {
       request = createGetRequest();
 
       // Act
-      const response = await GET(request, { params: { postId } });
+      const response = await GET(request, { params: Promise.resolve({ postId }) });
       const body: LikeInfo = await response.json();
 
       // Assert
@@ -254,7 +254,7 @@ describe("API Route: /api/posts/[postId]/likes", () => {
       request = createGetRequest();
 
       // Act
-      const response = await GET(request, { params: { postId } });
+      const response = await GET(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
 
       // Assert
@@ -277,7 +277,7 @@ describe("API Route: /api/posts/[postId]/likes", () => {
       mockValidateSession.mockResolvedValue({ user: null, session: null });
       request = createPostRequest();
       // Act
-      const response = await POST(request, { params: { postId } });
+      const response = await POST(request, { params: Promise.resolve({ postId }) });
       // Assert
       expect(response.status).toBe(401);
       expect(mockPrismaTransaction).not.toHaveBeenCalled();
@@ -291,7 +291,7 @@ describe("API Route: /api/posts/[postId]/likes", () => {
       });
       request = createPostRequest();
       // Act
-      await POST(request, { params: { postId } });
+      await POST(request, { params: Promise.resolve({ postId }) });
       // Assert
       expect(mockPrismaTransaction).toHaveBeenCalled();
       expect(mockCreateSessionCookie).toHaveBeenCalledWith(
@@ -310,7 +310,7 @@ describe("API Route: /api/posts/[postId]/likes", () => {
       request = createPostRequest();
 
       // Act
-      const response = await POST(request, { params: { postId } });
+      const response = await POST(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
 
       // Assert
@@ -331,7 +331,7 @@ describe("API Route: /api/posts/[postId]/likes", () => {
       request = createPostRequest();
 
       // Act
-      const response = await POST(request, { params: { postId } });
+      const response = await POST(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
 
       // Assert
@@ -356,7 +356,7 @@ describe("API Route: /api/posts/[postId]/likes", () => {
       request = createPostRequest();
 
       // Act
-      const response = await POST(request, { params: { postId } });
+      const response = await POST(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
 
       // Assert
@@ -381,7 +381,7 @@ describe("API Route: /api/posts/[postId]/likes", () => {
       mockValidateSession.mockResolvedValue({ user: null, session: null });
       request = createDeleteRequest();
       // Act
-      const response = await DELETE(request, { params: { postId } });
+      const response = await DELETE(request, { params: Promise.resolve({ postId }) });
       // Assert
       expect(response.status).toBe(401);
       expect(mockLikeDeleteMany).not.toHaveBeenCalled();
@@ -395,7 +395,7 @@ describe("API Route: /api/posts/[postId]/likes", () => {
       });
       request = createDeleteRequest();
       // Act
-      await DELETE(request, { params: { postId } });
+      await DELETE(request, { params: Promise.resolve({ postId }) });
       // Assert
       expect(mockLikeDeleteMany).toHaveBeenCalled();
       expect(mockCreateSessionCookie).toHaveBeenCalledWith(
@@ -414,7 +414,7 @@ describe("API Route: /api/posts/[postId]/likes", () => {
       request = createDeleteRequest();
 
       // Act
-      const response = await DELETE(request, { params: { postId } });
+      const response = await DELETE(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
 
       // Assert
@@ -431,7 +431,7 @@ describe("API Route: /api/posts/[postId]/likes", () => {
       request = createDeleteRequest();
 
       // Act
-      const response = await DELETE(request, { params: { postId } });
+      const response = await DELETE(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
 
       // Assert
@@ -448,7 +448,7 @@ describe("API Route: /api/posts/[postId]/likes", () => {
       request = createDeleteRequest();
 
       // Act
-      const response = await DELETE(request, { params: { postId } });
+      const response = await DELETE(request, { params: Promise.resolve({ postId }) });
       const body = await response.json();
 
       // Assert
