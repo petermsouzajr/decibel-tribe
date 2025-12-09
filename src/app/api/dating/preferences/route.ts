@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
       smokes,
       drinks,
       activity,
-      college,
+      education,
       job,
       pets,
       interests,
@@ -127,9 +127,17 @@ export async function POST(request: NextRequest) {
       preferredSkills,
       matchMusicTastes,
       preferredHasKids,
+      preferredWantsKids,
       preferredSmokes,
       preferredDrinks,
       preferredActivity,
+      preferredEducation,
+      preferredPoliticalViews,
+      preferredDiet,
+      preferredRelationshipType,
+      exactMatchAllFilters,
+      minimumMatchPercentage,
+      nonNegotiableFields,
     } = await request.json();
 
     // Geocode zipCode if provided (only called once when user updates their zip code)
@@ -160,7 +168,7 @@ export async function POST(request: NextRequest) {
       smokes !== undefined ||
       drinks !== undefined ||
       activity !== undefined ||
-      college !== undefined ||
+      education !== undefined ||
       job !== undefined ||
       pets !== undefined ||
       interests !== undefined ||
@@ -190,7 +198,7 @@ export async function POST(request: NextRequest) {
           ...(smokes !== undefined && { smokes }),
           ...(drinks !== undefined && { drinks }),
           ...(activity !== undefined && { activity }),
-          ...(college !== undefined && { college }),
+          ...(education !== undefined && { education }),
           ...(job !== undefined && { job }),
           ...(pets !== undefined && { pets }),
           ...(interests !== undefined && { interests }),
@@ -214,7 +222,7 @@ export async function POST(request: NextRequest) {
           smokes: smokes || null,
           drinks: drinks || null,
           activity: activity || null,
-          college: college || null,
+          education: education || null,
           job: job || null,
           pets: pets || null,
           interests: interests || [],
@@ -248,9 +256,17 @@ export async function POST(request: NextRequest) {
         ...(preferredSkills !== undefined && { preferredSkills }),
         ...(matchMusicTastes !== undefined && { matchMusicTastes }),
         ...(preferredHasKids !== undefined && { preferredHasKids }),
+        ...(preferredWantsKids !== undefined && { preferredWantsKids }),
         ...(preferredSmokes !== undefined && { preferredSmokes }),
         ...(preferredDrinks !== undefined && { preferredDrinks }),
         ...(preferredActivity !== undefined && { preferredActivity }),
+        ...(preferredEducation !== undefined && { preferredEducation }),
+        ...(preferredPoliticalViews !== undefined && { preferredPoliticalViews }),
+        ...(preferredDiet !== undefined && { preferredDiet }),
+        ...(preferredRelationshipType !== undefined && { preferredRelationshipType }),
+        ...(exactMatchAllFilters !== undefined && { exactMatchAllFilters }),
+        ...(minimumMatchPercentage !== undefined && { minimumMatchPercentage }),
+        ...(nonNegotiableFields !== undefined && { nonNegotiableFields }),
         updatedAt: new Date(),
       },
       create: {
@@ -269,9 +285,17 @@ export async function POST(request: NextRequest) {
         preferredSkills: preferredSkills || [],
         matchMusicTastes: matchMusicTastes !== undefined ? matchMusicTastes : true,
         preferredHasKids: preferredHasKids || null,
+        preferredWantsKids: preferredWantsKids || null,
         preferredSmokes: preferredSmokes || null,
         preferredDrinks: preferredDrinks || null,
         preferredActivity: preferredActivity || null,
+        preferredEducation: preferredEducation || [],
+        preferredPoliticalViews: preferredPoliticalViews || [],
+        preferredDiet: preferredDiet || [],
+        preferredRelationshipType: preferredRelationshipType || [],
+        exactMatchAllFilters: exactMatchAllFilters !== undefined ? exactMatchAllFilters : false,
+        minimumMatchPercentage: minimumMatchPercentage !== undefined ? minimumMatchPercentage : 70,
+        nonNegotiableFields: nonNegotiableFields || [],
         updatedAt: new Date(),
       },
     });

@@ -145,54 +145,57 @@ export async function POST(request: NextRequest) {
         isMatch = true;
         matchId = match.id;
 
-        // Create Stream Chat channel for this match
-        try {
-          const channelId = `dating-${match.id}`;
-          const channel = streamServerClient.channel("messaging", channelId, {
-            members: [user1Id, user2Id],
-            name: undefined, // 1-on-1 chat, no name needed
-          });
-          await channel.create();
-        } catch (streamError) {
-          console.error("Error creating Stream Chat channel:", streamError);
-          // Don't fail the match creation if Stream Chat fails
-        }
-
-        // Get user details for notifications
-        const [user1, user2] = await Promise.all([
-          prisma.user.findUnique({
-            where: { id: user1Id },
-            select: { displayName: true, username: true },
-          }),
-          prisma.user.findUnique({
-            where: { id: user2Id },
-            select: { displayName: true, username: true },
-          }),
-        ]);
-
-        // Create notifications for both users
-        await Promise.all([
-          prisma.notification.create({
-            data: {
-              id: crypto.randomUUID(),
-              recipientId: user.id,
-              issuerId: targetUserId,
-              type: NotificationType.MATCH,
-              read: false,
-              createdAt: new Date(),
-            },
-          }),
-          prisma.notification.create({
-            data: {
-              id: crypto.randomUUID(),
-              recipientId: targetUserId,
-              issuerId: user.id,
-              type: NotificationType.MATCH,
-              read: false,
-              createdAt: new Date(),
-            },
-          }),
-        ]);
+        // ASYNC: Handle Stream Chat and notifications in background (don't block response)
+        // This improves perceived performance - match response returns immediately
+        Promise.all([
+          // Create Stream Chat channel asynchronously
+          (async () => {
+            try {
+              const channelId = `dating-${match.id}`;
+              const channel = streamServerClient.channel("messaging", channelId, {
+                members: [user1Id, user2Id],
+                name: undefined, // 1-on-1 chat, no name needed
+              });
+              await channel.create();
+            } catch (streamError) {
+              console.error("Error creating Stream Chat channel:", streamError);
+              // Don't fail match creation if Stream Chat fails - can be created lazily on first message
+            }
+          })(),
+          // Create notifications asynchronously
+          (async () => {
+            try {
+              await Promise.all([
+                prisma.notification.create({
+                  data: {
+                    id: crypto.randomUUID(),
+                    recipientId: user.id,
+                    issuerId: targetUserId,
+                    type: NotificationType.MATCH,
+                    read: false,
+                    createdAt: new Date(),
+                  },
+                }),
+                prisma.notification.create({
+                  data: {
+                    id: crypto.randomUUID(),
+                    recipientId: targetUserId,
+                    issuerId: user.id,
+                    type: NotificationType.MATCH,
+                    read: false,
+                    createdAt: new Date(),
+                  },
+                }),
+              ]);
+            } catch (notifError) {
+              console.error("Error creating match notifications:", notifError);
+              // Non-critical - notifications can be retried later
+            }
+          })(),
+        ]).catch((error) => {
+          // Log but don't block response
+          console.error("Error in async match setup:", error);
+        });
       }
     }
 

@@ -10,6 +10,21 @@ interface MatchProfile {
   username: string;
   displayName: string;
   primaryPhotoUrl: string | null;
+  age?: number | null;
+  height?: number | null;
+  gender?: string | null;
+  sexualOrientation?: string | null;
+  coronavirusVaccinated?: string | null;
+  religion?: string | null;
+  bio?: string;
+  hasKids?: boolean | null;
+  smokes?: string | null;
+  drinks?: string | null;
+  activity?: string | null;
+  education?: string | null;
+  job?: string | null;
+  pets?: string | null;
+  interests?: string[];
 }
 
 interface MatchCelebrationProps {

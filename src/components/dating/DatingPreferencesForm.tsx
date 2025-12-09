@@ -9,6 +9,12 @@ import instrumentList from "@/data/instrumentList.json";
 import skillsList from "@/data/skillsList.json";
 import DropdownSelector from "./DropdownSelector";
 import AgeSelector from "./AgeSelector";
+import HeightSelector from "./HeightSelector";
+
+interface GenderPreference {
+  gender: string;
+  sexualOrientation: string[];
+}
 
 export default function DatingPreferencesForm() {
   const { toast } = useToast();
@@ -16,8 +22,7 @@ export default function DatingPreferencesForm() {
   const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
-    preferredGender: "",
-    preferredSexualOrientation: "",
+    preferredGenders: [] as GenderPreference[],
     preferredMinAge: 0,
     preferredMaxAge: 0,
     preferredMinHeight: 0,
@@ -25,6 +30,10 @@ export default function DatingPreferencesForm() {
     preferredMaxDistance: 0,
     preferredCoronavirusVaccinated: "",
     preferredReligions: [] as string[],
+    preferredHasKids: "" as "" | "yes" | "no" | "any",
+    preferredSmokes: "",
+    preferredDrinks: "",
+    preferredActivity: "",
     preferredInstruments: [] as string[],
     preferredSkills: [] as string[],
     matchMusicTastes: false,
@@ -60,16 +69,48 @@ export default function DatingPreferencesForm() {
       const maxHeight = response.preferredMaxHeight || 0;
       const maxDistance = response.preferredMaxDistanceKm || 0;
       
+      // Parse preferredGender - support both JSON array and single string
+      let preferredGenders: GenderPreference[] = [];
+      if (response.preferredGender) {
+        try {
+          const parsed = JSON.parse(response.preferredGender);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            // Already in array format
+            preferredGenders = parsed.map((p: any) => ({
+              gender: p.gender || p,
+              sexualOrientation: Array.isArray(p.sexualOrientation) ? p.sexualOrientation : (p.sexualOrientation ? [p.sexualOrientation] : [])
+            }));
+          } else if (typeof parsed === 'string') {
+            // Single gender string
+            preferredGenders = [{
+              gender: parsed,
+              sexualOrientation: response.preferredSexualOrientation ? [response.preferredSexualOrientation] : []
+            }];
+          }
+        } catch {
+          // Not JSON, treat as single gender string
+          if (response.preferredGender) {
+            preferredGenders = [{
+              gender: response.preferredGender,
+              sexualOrientation: response.preferredSexualOrientation ? [response.preferredSexualOrientation] : []
+            }];
+          }
+        }
+      }
+      
       setFormData({
-        preferredGender: response.preferredGender || "",
-        preferredSexualOrientation: response.preferredSexualOrientation || "",
+        preferredGenders,
         preferredMinAge: minAge,
         preferredMaxAge: maxAge,
         preferredMinHeight: minHeight,
         preferredMaxHeight: maxHeight,
-        preferredMaxDistance: maxDistance,
+        preferredMaxDistance: Math.round(maxDistance * 0.621371), // Convert km to miles
         preferredCoronavirusVaccinated: response.preferredCoronavirusVaccinated || "",
         preferredReligions: response.preferredReligions || [],
+        preferredHasKids: (response as any).preferredHasKids || "",
+        preferredSmokes: (response as any).preferredSmokes || "",
+        preferredDrinks: (response as any).preferredDrinks || "",
+        preferredActivity: (response as any).preferredActivity || "",
         preferredInstruments: (response as any).preferredInstruments || [],
         preferredSkills: (response as any).preferredSkills || [],
         matchMusicTastes: (response as any).matchMusicTastes ?? false,
@@ -88,9 +129,46 @@ export default function DatingPreferencesForm() {
     }
   };
 
+  const toggleGenderPreference = (gender: string) => {
+    const isSelected = formData.preferredGenders.some(p => p.gender === gender);
+    if (isSelected) {
+      setFormData({
+        ...formData,
+        preferredGenders: formData.preferredGenders.filter(p => p.gender !== gender)
+      });
+    } else {
+      setFormData({
+        ...formData,
+        preferredGenders: [...formData.preferredGenders, { gender, sexualOrientation: [] }]
+      });
+    }
+  };
+
+  const toggleGenderOrientation = (gender: string, orientation: string) => {
+    const newGenders = formData.preferredGenders.map(pref => {
+      if (pref.gender === gender) {
+        const currentOrientations = pref.sexualOrientation || [];
+        const isSelected = currentOrientations.includes(orientation);
+        return {
+          ...pref,
+          sexualOrientation: isSelected
+            ? currentOrientations.filter(o => o !== orientation)
+            : [...currentOrientations, orientation]
+        };
+      }
+      return pref;
+    });
+    setFormData({ ...formData, preferredGenders: newGenders });
+  };
+
   const handleSave = async () => {
     try {
       setSaving(true);
+      // Convert preferredGenders array to JSON string for API
+      const preferredGenderJson = formData.preferredGenders.length > 0 
+        ? JSON.stringify(formData.preferredGenders)
+        : undefined;
+      
       await kyInstance.post("/api/dating/preferences", {
         json: {
           bio: "", // Not updating bio here
@@ -101,15 +179,18 @@ export default function DatingPreferencesForm() {
           coronavirusVaccinated: "",
           religion: "",
           sexualOrientation: "",
-          preferredGender: formData.preferredGender,
-          preferredSexualOrientation: formData.preferredSexualOrientation,
-          preferredMinAge: formData.preferredMinAge,
-          preferredMaxAge: formData.preferredMaxAge,
-          preferredMinHeight: formData.preferredMinHeight,
-          preferredMaxHeight: formData.preferredMaxHeight,
-          preferredMaxDistance: formData.preferredMaxDistance,
+          preferredGender: preferredGenderJson,
+          preferredMinAge: formData.anyAge ? 18 : formData.preferredMinAge,
+          preferredMaxAge: formData.anyAge ? 130 : formData.preferredMaxAge,
+          preferredMinHeight: formData.anyHeight ? 36 : formData.preferredMinHeight,
+          preferredMaxHeight: formData.anyHeight ? 94 : formData.preferredMaxHeight,
+          preferredMaxDistanceKm: formData.anyDistance ? 10000 : Math.round(formData.preferredMaxDistance / 0.621371),
           preferredCoronavirusVaccinated: formData.preferredCoronavirusVaccinated,
           preferredReligions: formData.preferredReligions,
+          preferredHasKids: formData.preferredHasKids || undefined,
+          preferredSmokes: formData.preferredSmokes || undefined,
+          preferredDrinks: formData.preferredDrinks || undefined,
+          preferredActivity: formData.preferredActivity || undefined,
           preferredInstruments: formData.preferredInstruments,
           preferredSkills: formData.preferredSkills,
           matchMusicTastes: formData.matchMusicTastes,
@@ -144,57 +225,67 @@ export default function DatingPreferencesForm() {
         <label className="block text-sm font-semibold text-gray-900 mb-4">
           Gender Preference
         </label>
-        <div className="grid grid-cols-2 gap-4">
-          {["male", "female"].map((gender) => (
-            <label
-              key={gender}
-              className={`flex items-center p-3 border rounded-lg cursor-pointer text-gray-900 transition-colors ${
-                formData.preferredGender === gender
-                  ? "border-purple-500 bg-purple-50"
-                  : "border-gray-300 hover:bg-gray-50"
-              }`}
-            >
-              <input
-                type="radio"
-                name="preferredGender"
-                className="mr-3 w-5 h-5"
-                checked={formData.preferredGender === gender}
-                onChange={() =>
-                  setFormData({ ...formData, preferredGender: gender })
-                }
-              />
-              {gender.charAt(0).toUpperCase() + gender.slice(1)}
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-semibold text-gray-900 mb-4">
-          Sexual Orientation Preference
-        </label>
-        <div className="grid grid-cols-2 gap-4">
-          {["straight", "gay", "bisexual", "other"].map((orientation) => (
-            <label
-              key={orientation}
-              className={`flex items-center p-3 border rounded-lg cursor-pointer text-gray-900 transition-colors ${
-                formData.preferredSexualOrientation === orientation
-                  ? "border-purple-500 bg-purple-50"
-                  : "border-gray-300 hover:bg-gray-50"
-              }`}
-            >
-              <input
-                type="radio"
-                name="preferredSexualOrientation"
-                className="mr-3 w-5 h-5"
-                checked={formData.preferredSexualOrientation === orientation}
-                onChange={() =>
-                  setFormData({ ...formData, preferredSexualOrientation: orientation })
-                }
-              />
-              {orientation.charAt(0).toUpperCase() + orientation.slice(1)}
-            </label>
-          ))}
+        <p className="text-sm text-gray-600 mb-4">
+          You can select multiple genders, each with their own orientation preference.
+        </p>
+        <div className="space-y-3">
+          {["male", "female", "non-binary", "other"].map((gender) => {
+            const isSelected = formData.preferredGenders.some(p => p.gender === gender);
+            const preference = formData.preferredGenders.find(p => p.gender === gender);
+            
+            return (
+              <div key={gender} className={`border rounded-lg p-4 transition-colors ${
+                isSelected ? "border-purple-500 bg-purple-50" : "border-gray-300"
+              }`}>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="mr-3 w-5 h-5 border-2 border-gray-300 bg-white text-purple-600 focus:ring-2 focus:ring-purple-500"
+                      checked={isSelected}
+                      onChange={() => toggleGenderPreference(gender)}
+                    />
+                    <span className="text-gray-900 font-semibold">
+                      {gender.charAt(0).toUpperCase() + gender.slice(1).replace("-", " ")}
+                    </span>
+                  </label>
+                </div>
+                
+                {isSelected && (
+                  <div className="ml-8 mt-3">
+                    <label className="block text-sm text-gray-900 font-medium mb-2">
+                      Their orientation preference
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {["straight", "gay", "bisexual", "other"].map((orientation) => {
+                        const isChecked = preference?.sexualOrientation?.includes(orientation) || false;
+                        return (
+                          <label
+                            key={orientation}
+                            className={`flex items-center p-2 border rounded cursor-pointer text-sm text-gray-900 transition-colors ${
+                              isChecked
+                                ? "border-purple-500 bg-purple-100"
+                                : "border-gray-300 hover:bg-gray-50"
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              className="mr-2 w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                              checked={isChecked}
+                              onChange={() => toggleGenderOrientation(gender, orientation)}
+                            />
+                            <span className="text-gray-900 font-medium">
+                              {orientation.charAt(0).toUpperCase() + orientation.slice(1)}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -463,11 +554,15 @@ export default function DatingPreferencesForm() {
               Preferred Instruments
             </label>
             <div className="max-h-40 overflow-y-auto border rounded-lg p-3">
-              <div className="space-y-2">
-                {instrumentList.slice(0, 10).map((instrument) => (
+              <div className="grid grid-cols-2 gap-2">
+                {instrumentList.map((instrument) => (
                   <label
                     key={instrument}
-                    className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded"
+                    className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-gray-50 transition-colors ${
+                      formData.preferredInstruments.includes(instrument)
+                        ? "bg-purple-50 border border-purple-500"
+                        : "border border-gray-300"
+                    }`}
                   >
                     <input
                       type="checkbox"
@@ -496,12 +591,6 @@ export default function DatingPreferencesForm() {
                     <span className="text-sm text-gray-900">{instrument}</span>
                   </label>
                 ))}
-                {formData.preferredInstruments.length > 0 && (
-                  <p className="text-xs text-gray-500 mt-2">
-                    {formData.preferredInstruments.length} selected. Use the
-                    Filters button on the dating deck for full list.
-                  </p>
-                )}
               </div>
             </div>
           </div>
@@ -511,11 +600,15 @@ export default function DatingPreferencesForm() {
               Preferred Skills
             </label>
             <div className="max-h-40 overflow-y-auto border rounded-lg p-3">
-              <div className="space-y-2">
-                {skillsList.slice(0, 10).map((skill) => (
+              <div className="grid grid-cols-2 gap-2">
+                {skillsList.map((skill) => (
                   <label
                     key={skill}
-                    className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded"
+                    className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-gray-50 transition-colors ${
+                      formData.preferredSkills.includes(skill)
+                        ? "bg-purple-50 border border-purple-500"
+                        : "border border-gray-300"
+                    }`}
                   >
                     <input
                       type="checkbox"
@@ -535,20 +628,88 @@ export default function DatingPreferencesForm() {
                           });
                         }
                       }}
-                      className="w-4 h-4 rounded border-gray-300 text-blue-600"
+                      className="w-4 h-4 rounded border-gray-300 text-purple-600"
                     />
                     <span className="text-sm text-gray-900">{skill}</span>
                   </label>
                 ))}
-                {formData.preferredSkills.length > 0 && (
-                  <p className="text-xs text-gray-500 mt-2">
-                    {formData.preferredSkills.length} selected. Use the Filters
-                    button on the dating deck for full list.
-                  </p>
-                )}
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Additional Preferences */}
+      <div className="border-t pt-6 space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Additional Preferences</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <DropdownSelector
+            value={formData.preferredHasKids}
+            onChange={(value) =>
+              setFormData({ ...formData, preferredHasKids: value as "" | "yes" | "no" | "any" })
+            }
+            options={[
+              { label: "No preference", value: "" },
+              { label: "Has kids", value: "yes" },
+              { label: "Doesn't have kids", value: "no" },
+              { label: "Any", value: "any" },
+            ]}
+            label="Has Kids"
+            placeholder="No preference"
+          />
+
+          <DropdownSelector
+            value={formData.preferredSmokes}
+            onChange={(value) =>
+              setFormData({ ...formData, preferredSmokes: value })
+            }
+            options={[
+              { label: "No preference", value: "" },
+              { label: "Yes", value: "Yes" },
+              { label: "No", value: "No" },
+              { label: "Social", value: "Social" },
+            ]}
+            label="Smoking Preference"
+            placeholder="No preference"
+          />
+
+          <DropdownSelector
+            value={formData.preferredDrinks}
+            onChange={(value) =>
+              setFormData({ ...formData, preferredDrinks: value })
+            }
+            options={[
+              { label: "No preference", value: "" },
+              { label: "Yes", value: "Yes" },
+              { label: "No", value: "No" },
+              { label: "Social", value: "Social" },
+            ]}
+            label="Drinking Preference"
+            placeholder="No preference"
+          />
+
+          <DropdownSelector
+            value={formData.preferredActivity}
+            onChange={(value) =>
+              setFormData({ ...formData, preferredActivity: value })
+            }
+            options={[
+              { label: "No preference", value: "" },
+              { label: "Active", value: "Active" },
+              { label: "Sporting", value: "Sporting" },
+              { label: "Super active", value: "Super active" },
+              { label: "Couch potato", value: "Couch potato" },
+              { label: "Hiker", value: "Hiker" },
+              { label: "Gym enthusiast", value: "Gym enthusiast" },
+              { label: "Yoga lover", value: "Yoga lover" },
+              { label: "Outdoor adventurer", value: "Outdoor adventurer" },
+              { label: "Weekend warrior", value: "Weekend warrior" },
+              { label: "Moderately active", value: "Moderately active" },
+            ]}
+            label="Activity Level"
+            placeholder="No preference"
+          />
         </div>
       </div>
 

@@ -9,6 +9,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { formatRelativeDate } from "@/lib/utils";
 import BackToDatingButton from "./BackToDatingButton";
+import ProfileViewModal from "./ProfileViewModal";
 
 interface SwipeHistoryItem {
   id: string;
@@ -32,6 +33,9 @@ export default function SwipeHistory() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "liked" | "disliked">("all");
   const [unliking, setUnliking] = useState<string | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedDirection, setSelectedDirection] = useState<"LIKE" | "DISLIKE" | null>(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   useEffect(() => {
     fetchHistory();
@@ -76,6 +80,12 @@ export default function SwipeHistory() {
 
       // Remove from list
       setSwipes((prev) => prev.filter((s) => s.id !== swipeId));
+      // Close modal if open
+      if (showProfileModal) {
+        setShowProfileModal(false);
+        setSelectedUserId(null);
+        setSelectedDirection(null);
+      }
     } catch (error: any) {
       console.error("Error unliking:", error);
       const errorData = await error.response?.json().catch(() => ({}));
@@ -85,6 +95,78 @@ export default function SwipeHistory() {
       });
     } finally {
       setUnliking(null);
+    }
+  };
+
+  const handleOpenProfile = (userId: string, direction: "LIKE" | "DISLIKE") => {
+    setSelectedUserId(userId);
+    setSelectedDirection(direction);
+    setShowProfileModal(true);
+  };
+
+  const handleCloseProfile = () => {
+    setShowProfileModal(false);
+    setSelectedUserId(null);
+    setSelectedDirection(null);
+  };
+
+  const handleProfileAction = async (userId: string, action: "LIKE" | "DISLIKE") => {
+    try {
+      // If there's an existing swipe, delete it first before creating a new one
+      const existingSwipe = swipes.find(s => s.userId === userId);
+      if (existingSwipe) {
+        try {
+          // Delete the existing swipe (now supports both LIKES and DISLIKES)
+          await kyInstance.delete(`/api/dating/history?swipeId=${existingSwipe.id}`);
+        } catch (deleteError: any) {
+          // If delete fails, log the error but continue - might be a timing issue
+          const errorData = await deleteError.response?.json().catch(() => ({}));
+          console.error("Error deleting existing swipe:", errorData.error || deleteError);
+          // Don't throw - we'll let the decision API handle duplicates
+        }
+      }
+
+      // Small delay to ensure delete completes
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Create the new swipe decision
+      await kyInstance.post("/api/dating/decision", {
+        json: {
+          targetUserId: userId,
+          decision: action,
+        },
+      });
+
+      // Refresh the history list
+      await fetchHistory();
+
+      toast({
+        description: action === "LIKE" ? "Liked successfully" : "Disliked successfully",
+      });
+
+      // Close modal
+      handleCloseProfile();
+    } catch (error: any) {
+      console.error(`Error ${action.toLowerCase()}ing:`, error);
+      const errorData = await error.response?.json().catch(() => ({}));
+      
+      // If we get "Already swiped" error, it means the delete didn't work
+      // In this case, we should try to delete again or show a better error
+      if (errorData.error?.includes("Already swiped")) {
+        toast({
+          variant: "destructive",
+          description: "Please try again - the previous swipe is being removed",
+        });
+        // Optionally, retry after a short delay
+        setTimeout(() => {
+          handleProfileAction(userId, action);
+        }, 500);
+      } else {
+        toast({
+          variant: "destructive",
+          description: errorData.error || `Failed to ${action.toLowerCase()}`,
+        });
+      }
     }
   };
 
@@ -166,7 +248,8 @@ export default function SwipeHistory() {
               return (
                 <div
                   key={swipe.id}
-                  className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+                  className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                  onClick={() => handleOpenProfile(swipe.userId, swipe.direction)}
                 >
                   <div className="relative w-full aspect-[3/4] bg-gray-100">
                     <Image
@@ -176,28 +259,23 @@ export default function SwipeHistory() {
                       className="object-cover"
                       loading="lazy"
                     />
-                    {swipe.age && (
-                      <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-semibold text-gray-900">
-                        {swipe.age}
-                      </div>
-                    )}
                     <div
-                      className={`absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-semibold ${
+                      className={`absolute top-2 left-2 px-3 py-2 rounded-full ${
                         swipe.direction === "LIKE"
                           ? "bg-green-500 text-white"
                           : "bg-red-500 text-white"
                       }`}
                     >
                       {swipe.direction === "LIKE" ? (
-                        <Heart className="w-3 h-3" />
+                        <Heart className="w-5 h-5" />
                       ) : (
-                        <X className="w-3 h-3" />
+                        <X className="w-5 h-5" />
                       )}
                     </div>
                   </div>
                   <div className="p-4">
                     <h3 className="font-semibold text-gray-900 truncate mb-1">
-                      {swipe.displayName}
+                      {swipe.displayName}{swipe.age ? `, ${swipe.age}` : ""}
                     </h3>
                     {swipe.location && (
                       <p className="text-xs text-gray-600 mb-2">{swipe.location}</p>
@@ -230,20 +308,11 @@ export default function SwipeHistory() {
                             </>
                           )}
                         </Button>
-                        <p className="text-xs text-gray-500 text-center">
-                          Undo available for 3 hours
-                        </p>
                       </div>
                     )}
                     {swipe.direction === "LIKE" && !swipe.canUnlike && (
                       <p className="text-xs text-gray-500 text-center mt-2">
-                        {(() => {
-                          const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000);
-                          if (swipe.createdAt < threeHoursAgo) {
-                            return "Undo window expired (3 hours)";
-                          }
-                          return "Cannot undo matched likes";
-                        })()}
+                        Cannot undo matched likes
                       </p>
                     )}
                   </div>
@@ -251,6 +320,24 @@ export default function SwipeHistory() {
               );
             })}
           </div>
+        )}
+
+        {/* Profile View Modal */}
+        {showProfileModal && selectedUserId && (
+          <ProfileViewModal
+            userId={selectedUserId}
+            currentDirection={selectedDirection}
+            onClose={handleCloseProfile}
+            onLike={async () => {
+              await handleProfileAction(selectedUserId, "LIKE");
+            }}
+            onDislike={async () => {
+              await handleProfileAction(selectedUserId, "DISLIKE");
+            }}
+            onUnlike={(swipeId) => {
+              handleUnlike(swipeId);
+            }}
+          />
         )}
       </div>
     </div>

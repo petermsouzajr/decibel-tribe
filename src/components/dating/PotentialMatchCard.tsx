@@ -16,12 +16,15 @@ interface MatchProfile {
   age: number | null;
   height: number | null;
   gender: string | null;
+  sexualOrientation: string | null;
+  coronavirusVaccinated: string | null;
+  religion: string | null;
   bio: string;
   hasKids: boolean | null;
   smokes: string | null;
   drinks: string | null;
   activity: string | null;
-  college: string | null;
+  education: string | null;
   job: string | null;
   pets: string | null;
   interests: string[];
@@ -177,11 +180,11 @@ export default function PotentialMatchCard({
           </div>
         )}
 
-        {/* College */}
-        {match.college && (
+        {/* Education */}
+        {match.education && (
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-md font-semibold text-gray-700 min-w-[80px]">College:</span>
-            <span className="text-md text-gray-900">{match.college}</span>
+            <span className="text-md font-semibold text-gray-700 min-w-[80px]">Education:</span>
+            <span className="text-md text-gray-900">{match.education}</span>
           </div>
         )}
 
@@ -190,6 +193,24 @@ export default function PotentialMatchCard({
           <div className="flex items-center gap-2 mb-2">
             <span className="text-md font-semibold text-gray-700 min-w-[80px]">Gender:</span>
             <span className="text-md text-gray-900">{match.gender}</span>
+          </div>
+        )}
+        {match.sexualOrientation && (
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-md font-semibold text-gray-700 min-w-[80px]">Sexual Orientation:</span>
+            <span className="text-md text-gray-900">{match.sexualOrientation}</span>
+          </div>
+        )}
+        {match.coronavirusVaccinated && (
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-md font-semibold text-gray-700 min-w-[80px]">Vaccinated:</span>
+            <span className="text-md text-gray-900">{match.coronavirusVaccinated}</span>
+          </div>
+        )}
+        {match.religion && (
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-md font-semibold text-gray-700 min-w-[80px]">Religion:</span>
+            <span className="text-md text-gray-900">{match.religion}</span>
           </div>
         )}
         {match.smokes && (

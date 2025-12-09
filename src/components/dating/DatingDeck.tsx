@@ -9,7 +9,6 @@ import { useToast } from "@/components/ui/use-toast";
 import Image from "next/image";
 import PotentialMatchCard from "./PotentialMatchCard";
 import MatchCelebration from "./MatchCelebration";
-import FilterPanel from "./FilterPanel";
 import BasicFiltersPanel from "./BasicFiltersPanel";
 import SafetyTips from "./SafetyTips";
 import { Shield } from "lucide-react";
@@ -24,7 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import TravelModeDialogContent from "./TravelModeDialogContent";
+import LocationDialogContent from "./LocationDialogContent";
 
 interface MatchProfile {
   id: string;
@@ -33,12 +32,15 @@ interface MatchProfile {
   age: number | null;
   height: number | null;
   gender: string | null;
+  sexualOrientation: string | null;
+  coronavirusVaccinated: string | null;
+  religion: string | null;
   bio: string;
   hasKids: boolean | null;
   smokes: string | null;
   drinks: string | null;
   activity: string | null;
-  college: string | null;
+  education: string | null;
   job: string | null;
   pets: string | null;
   interests: string[];
@@ -69,8 +71,7 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
   const [showMessageInput, setShowMessageInput] = useState(false);
   const [likeMessage, setLikeMessage] = useState("");
   const [showBasicFilters, setShowBasicFilters] = useState(false);
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [showTravelMode, setShowTravelMode] = useState(false);
+  const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [filters, setFilters] = useState<{
     preferredInstruments: string[];
     preferredSkills: string[];
@@ -78,9 +79,12 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
     preferredInstruments: [],
     preferredSkills: [],
   });
-  const [recentSwipes, setRecentSwipes] = useState<Array<{ id: string; toUserId: string; direction: string; createdAt: Date }>>([]);
+  const [recentSwipes, setRecentSwipes] = useState<Array<{ id: string; toUserId: string; direction: string; createdAt: Date; canUnlike: boolean }>>([]);
   const [undoing, setUndoing] = useState(false);
   const [showSafetyTips, setShowSafetyTips] = useState(false);
+  const [prefetching, setPrefetching] = useState(false);
+  const [userPreferences, setUserPreferences] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
 
   const fetchMatches = async (cursor?: string) => {
     try {
@@ -166,23 +170,56 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
     fetchMatches();
   }, [filters]);
 
+  // Prefetch next batch when 5 cards remain (Tinder/Bumble pattern)
+  useEffect(() => {
+    const cardsRemaining = matches.length - currentIndex;
+    if (cardsRemaining <= 5 && nextCursor && !prefetching && !loading) {
+      setPrefetching(true);
+      // Prefetch silently in background without affecting current state
+      fetchMatches(nextCursor)
+        .then(() => setPrefetching(false))
+        .catch(() => setPrefetching(false));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex, matches.length, nextCursor, prefetching, loading]);
+
+  // Fetch preferences and profile when showing empty state
+  useEffect(() => {
+    const isEmptyState = (matches.length === 0 && !loading) || currentIndex >= matches.length;
+    if (isEmptyState && !userPreferences) {
+      Promise.all([
+        kyInstance.get("/api/dating/preferences").json().catch(() => null),
+        kyInstance.get("/api/dating/profile").json().catch(() => null),
+      ]).then(([prefs, profileData]: [any, any]) => {
+        if (prefs) setUserPreferences(prefs);
+        if (profileData) setUserProfile(profileData.profile || profileData);
+      });
+    }
+  }, [matches.length, currentIndex, loading, userPreferences]);
+
   useEffect(() => {
     // Fetch recent swipes for undo functionality
+    // This runs on mount and when swiping, ensuring undo persists across sessions
     const fetchRecentSwipes = async () => {
       try {
         const response = await kyInstance
-          .get("/api/dating/history?type=all")
-          .json<{ swipes: Array<{ id: string; toUserId: string; direction: string; createdAt: string }> }>();
+          .get("/api/dating/history?type=all&light=true")
+          .json<{ swipes: Array<{ id: string; toUserId: string; direction: string; createdAt: string; canUnlike: boolean }> }>();
         
-        // Take only the last 10 swipes (most recent)
-        setRecentSwipes(
-          response.swipes.slice(0, 10).map(s => ({
+        // Filter to only include swipes that can be undone (LIKE swipes, not matched)
+        // Take only the last 10 undoable swipes (most recent)
+        const undoableSwipes = response.swipes
+          .filter(s => s.canUnlike === true)
+          .slice(0, 10)
+          .map(s => ({
             id: s.id,
             toUserId: s.toUserId,
             direction: s.direction,
             createdAt: new Date(s.createdAt),
-          }))
-        );
+            canUnlike: s.canUnlike,
+          }));
+        
+        setRecentSwipes(undoableSwipes);
       } catch (error) {
         console.error("Error fetching recent swipes:", error);
       }
@@ -220,86 +257,116 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
     const currentMatch = matches[currentIndex];
     if (!currentMatch || processing) return;
 
-    try {
-      setProcessing(true);
-      const response = await kyInstance
-        .post("/api/dating/decision", {
-          json: {
-            targetUserId: currentMatch.id,
-            decision,
-            message,
-          },
+    // OPTIMISTIC UI: Move to next card immediately for instant feel
+    const nextIndex = currentIndex + 1;
+    const hasMoreInBatch = nextIndex < matches.length;
+    const shouldPrefetchNextBatch = !hasMoreInBatch && nextCursor;
+
+    // Immediately advance to next card if available
+    if (hasMoreInBatch) {
+      setCurrentIndex(nextIndex);
+    } else if (shouldPrefetchNextBatch) {
+      // Start prefetching next batch in background
+      fetchMatches(nextCursor).catch(console.error);
+      // Show loading state only if no more matches locally
+      setCurrentIndex(nextIndex); // Will show empty state until prefetch completes
+    } else {
+      // No more matches at all - advance index to show empty state
+      // No toast needed - the empty state UI provides clear feedback
+      setCurrentIndex(nextIndex); // This will trigger empty state UI
+    }
+
+    // Brief processing state for animation (200ms)
+    setProcessing(true);
+    setTimeout(() => setProcessing(false), 200);
+
+    // Fire decision API async (non-blocking)
+    const decisionPromise = kyInstance
+      .post("/api/dating/decision", {
+        json: {
+          targetUserId: currentMatch.id,
+          decision,
+          message,
+        },
+      })
+      .json<{ success: boolean; isMatch: boolean; matchId?: string }>()
+      .then((response) => {
+        // Handle match celebration (no toast - full-screen modal provides better UX)
+        if (response.isMatch) {
+          setMatchedUser(currentMatch);
+          setShowMatchCelebration(true);
+        }
+        // No toast for ordinary likes/dislikes - visual feedback (card animation) is sufficient
+      })
+      .catch((error: any) => {
+        console.error("Error recording decision:", error);
+        // Rollback optimistic update on error
+        if (hasMoreInBatch || shouldPrefetchNextBatch) {
+          setCurrentIndex(currentIndex);
+        }
+        
+        if (error.response?.status === 403) {
+          error.response.json().then((errorData: any) => {
+            toast({
+              variant: "destructive",
+              description: errorData.error || "Verification required to like users",
+            });
+          }).catch(() => {});
+        } else if (error.response?.status === 429) {
+          toast({
+            variant: "destructive",
+            description: "Rate limit exceeded. Maximum 100 likes per hour.",
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            description: "Failed to record decision",
+          });
+        }
+      });
+
+    // CONDITIONAL/ASYNC History Fetch: Only for likes, and only if undo might be needed
+    // Skip for dislikes entirely (undo not supported)
+    if (decision === "LIKE" && currentIndex < 5) {
+      // Fire-and-forget: Update undo list in background without blocking UI
+      kyInstance
+        .get("/api/dating/history?type=all&light=true")
+        .json<{ swipes: Array<{ id: string; toUserId: string; direction: string; createdAt: string; canUnlike: boolean }> }>()
+        .then((swipeResponse) => {
+          // Filter to only include swipes that can be undone (LIKE swipes, not matched)
+          const undoableSwipes = swipeResponse.swipes
+            .filter(s => s.canUnlike === true)
+            .slice(0, 10)
+            .map(s => ({
+              id: s.id,
+              toUserId: s.toUserId,
+              direction: s.direction,
+              createdAt: new Date(s.createdAt),
+              canUnlike: s.canUnlike,
+            }));
+          setRecentSwipes(undoableSwipes);
         })
-        .json<{ success: boolean; isMatch: boolean; matchId?: string }>();
+        .catch(() => {
+          // Silently fail - undo list can be stale
+        });
+    }
 
-      if (response.isMatch) {
-        setMatchedUser(currentMatch);
-        setShowMatchCelebration(true);
-        toast({
-          description: `It's a match with ${currentMatch.displayName}! 🎉`,
-        });
-      } else if (decision === "LIKE") {
-        toast({
-          description: `Liked ${currentMatch.displayName}${message ? " with a message" : ""}`,
-        });
-      }
-
-      // Refresh recent swipes for undo
-      const swipeResponse = await kyInstance
-        .get("/api/dating/history?type=all")
-        .json<{ swipes: Array<{ id: string; toUserId: string; direction: string; createdAt: string }> }>()
-        .catch(() => ({ swipes: [] }));
-      
-      setRecentSwipes(
-        swipeResponse.swipes.slice(0, 10).map(s => ({
-          id: s.id,
-          toUserId: s.toUserId,
-          direction: s.direction,
-          createdAt: new Date(s.createdAt),
-        }))
-      );
-
-      // Move to next match
-      if (currentIndex < matches.length - 1) {
-        setCurrentIndex(currentIndex + 1);
-      } else if (nextCursor) {
-        // Load more matches
-        await fetchMatches(nextCursor);
-      } else {
-        // No more matches
-        toast({
-          description: "No more potential matches. Check back later!",
-        });
-      }
-    } catch (error: any) {
-      console.error("Error recording decision:", error);
-      if (error.response?.status === 403) {
-        const errorData = await error.response.json().catch(() => ({}));
-        toast({
-          variant: "destructive",
-          description: errorData.error || "Verification required to like users",
-        });
-      } else if (error.response?.status === 429) {
-        toast({
-          variant: "destructive",
-          description: "Rate limit exceeded. Maximum 100 likes per hour.",
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          description: "Failed to record decision",
-        });
-      }
-    } finally {
-      setProcessing(false);
+    // Wait for decision to complete (but UI already moved to next card)
+    // This ensures errors are handled even though UI updated optimistically
+    try {
+      await decisionPromise;
+    } catch {
+      // Error already handled in decisionPromise catch block
     }
   };
 
   const handleUndo = async () => {
+    // Only allow undo if there are undoable swipes
     if (undoing || recentSwipes.length === 0) return;
 
     const lastSwipe = recentSwipes[0];
-    if (!lastSwipe) return;
+    // Double-check that this swipe can be undone (should always be true due to filtering, but safety check)
+    if (!lastSwipe || !lastSwipe.canUnlike || lastSwipe.direction !== "LIKE") return;
 
     try {
       setUndoing(true);
@@ -308,17 +375,15 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
       // Remove the undone swipe from the list
       setRecentSwipes((prev) => prev.slice(1));
 
-      // If we're not at the first match, go back one
-      if (currentIndex > 0) {
+      // If we're in the middle of the deck, go back one card
+      // If we're at the start or deck is empty, refresh matches to include the undone user
+      if (currentIndex > 0 && currentIndex < matches.length) {
         setCurrentIndex(currentIndex - 1);
       } else {
-        // Refresh matches to include the undone user
+        // Refresh matches to include the undone user (handles empty deck case)
         await fetchMatches();
       }
-
-      toast({
-        description: "Undone successfully",
-      });
+      // No toast needed - visual feedback (card returning) is sufficient
     } catch (error: any) {
       console.error("Error undoing swipe:", error);
       const errorData = await error.response?.json().catch(() => ({}));
@@ -342,13 +407,156 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
       <div className="w-full min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-purple-500 mx-auto mb-4" />
-          <p className="text-gray-600">Loading potential matches...</p>
+          <p className="text-gray-600">Finding matches near you{userProfile?.city ? `, ${userProfile.city}` : ''}...</p>
         </div>
       </div>
     );
   }
 
-  const currentMatch = matches.length > 0 ? matches[currentIndex] : null;
+  const currentMatch = (matches.length > 0 && currentIndex < matches.length) ? matches[currentIndex] : null;
+
+  // Helper function to format filters for display
+  const formatFilters = () => {
+    if (!userPreferences) return null;
+
+    const prefs = userPreferences;
+    const filters: string[] = [];
+
+    // Age
+    if (prefs.preferredMinAge && prefs.preferredMaxAge) {
+      if (prefs.preferredMinAge === 18 && prefs.preferredMaxAge === 130) {
+        filters.push("Age: Any");
+      } else {
+        filters.push(`Age: ${prefs.preferredMinAge}-${prefs.preferredMaxAge}`);
+      }
+    } else {
+      filters.push("Age: Not specified");
+    }
+
+    // Gender
+    if (prefs.preferredGender) {
+      try {
+        const genders = JSON.parse(prefs.preferredGender);
+        if (Array.isArray(genders) && genders.length > 0) {
+          const genderNames = genders.map((g: any) => g.gender).join(", ");
+          filters.push(`Gender: ${genderNames}`);
+        } else {
+          filters.push(`Gender: ${prefs.preferredGender}`);
+        }
+      } catch {
+        filters.push(`Gender: ${prefs.preferredGender}`);
+      }
+    } else {
+      filters.push("Gender: Not specified");
+    }
+
+    // Sexual Orientation
+    if (prefs.preferredSexualOrientation) {
+      filters.push(`Sexual Orientation: ${prefs.preferredSexualOrientation}`);
+    } else {
+      filters.push("Sexual Orientation: Not specified");
+    }
+
+    // Distance
+    if (prefs.preferredMaxDistanceKm !== undefined && prefs.preferredMaxDistanceKm !== null) {
+      const miles = Math.round(prefs.preferredMaxDistanceKm * 0.621371);
+      if (miles >= 6200) { // 10,000 km = ~6200 miles
+        filters.push("Distance: Any");
+      } else {
+        const zipCode = userProfile?.zipCode || "your location";
+        const city = userProfile?.city || "";
+        const location = city ? `${zipCode} (${city})` : zipCode;
+        filters.push(`Distance: ${miles} miles from your location at ${location}`);
+      }
+    } else {
+      filters.push("Distance: Not specified");
+    }
+
+    // Height
+    if (prefs.preferredMinHeight && prefs.preferredMaxHeight) {
+      const minFeet = Math.floor(prefs.preferredMinHeight / 12);
+      const minInches = prefs.preferredMinHeight % 12;
+      const maxFeet = Math.floor(prefs.preferredMaxHeight / 12);
+      const maxInches = prefs.preferredMaxHeight % 12;
+      
+      if (prefs.preferredMinHeight === 36 && prefs.preferredMaxHeight === 94) {
+        filters.push("Height: Any");
+      } else {
+        filters.push(`Height: ${minFeet}'${minInches}" - ${maxFeet}'${maxInches}"`);
+      }
+    } else {
+      filters.push("Height: Not specified");
+    }
+
+    // Vaccination status
+    if (prefs.preferredCoronavirusVaccinated) {
+      filters.push(`Vaccination: ${prefs.preferredCoronavirusVaccinated}`);
+    } else {
+      filters.push("Vaccination: Not specified");
+    }
+
+    // Religions
+    if (prefs.preferredReligions && Array.isArray(prefs.preferredReligions) && prefs.preferredReligions.length > 0) {
+      filters.push(`Religion: ${prefs.preferredReligions.join(", ")}`);
+    } else {
+      filters.push("Religion: Not specified");
+    }
+
+    // Music filters
+    if (prefs.preferredInstruments && Array.isArray(prefs.preferredInstruments) && prefs.preferredInstruments.length > 0) {
+      filters.push(`Instruments: ${prefs.preferredInstruments.join(", ")}`);
+    }
+    if (prefs.preferredSkills && Array.isArray(prefs.preferredSkills) && prefs.preferredSkills.length > 0) {
+      filters.push(`Skills: ${prefs.preferredSkills.join(", ")}`);
+    }
+
+    // Additional preferences
+    if (prefs.preferredHasKids) {
+      filters.push(`Has Kids: ${prefs.preferredHasKids}`);
+    } else {
+      filters.push("Has Kids: Not specified");
+    }
+    
+    if (prefs.preferredSmokes) {
+      filters.push(`Smokes: ${prefs.preferredSmokes}`);
+    } else {
+      filters.push("Smokes: Not specified");
+    }
+    
+    if (prefs.preferredDrinks) {
+      filters.push(`Drinks: ${prefs.preferredDrinks}`);
+    } else {
+      filters.push("Drinks: Not specified");
+    }
+    
+    if (prefs.preferredActivity) {
+      filters.push(`Activity Level: ${prefs.preferredActivity}`);
+    } else {
+      filters.push("Activity Level: Not specified");
+    }
+
+    // Music filters - show "Not specified" if empty
+    if (prefs.preferredInstruments && Array.isArray(prefs.preferredInstruments) && prefs.preferredInstruments.length > 0) {
+      filters.push(`Instruments: ${prefs.preferredInstruments.join(", ")}`);
+    } else {
+      filters.push("Instruments: Not specified");
+    }
+    
+    if (prefs.preferredSkills && Array.isArray(prefs.preferredSkills) && prefs.preferredSkills.length > 0) {
+      filters.push(`Skills: ${prefs.preferredSkills.join(", ")}`);
+    } else {
+      filters.push("Skills: Not specified");
+    }
+
+    // Match Music Tastes
+    if (prefs.matchMusicTastes !== undefined && prefs.matchMusicTastes !== null) {
+      filters.push(`Prioritize Music Compatibility: ${prefs.matchMusicTastes ? "Yes" : "No"}`);
+    } else {
+      filters.push("Prioritize Music Compatibility: Not specified");
+    }
+
+    return filters;
+  };
 
   return (
     <>
@@ -392,11 +600,11 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
                 Filters
               </Button>
 
-              {/* Location/Travel Mode Button */}
+              {/* Location Button */}
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setShowTravelMode(true)}
+                onClick={() => setShowLocationDialog(true)}
                 className="flex items-center gap-2 bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
               >
                 <MapPin className="w-4 h-4" />
@@ -422,18 +630,6 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
                   <DropdownMenuItem onClick={() => router.push("/dating/matches")}>
                     <MessageCircle className="mr-2 h-4 w-4" />
                     Matches
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setShowAdvancedFilters(true)}>
-                    <Music className="mr-2 h-4 w-4" />
-                    Advanced Filters
-                    {(filters.preferredInstruments.length > 0 ||
-                      filters.preferredSkills.length > 0) && (
-                      <span className="ml-auto bg-purple-500 text-white text-xs px-1.5 py-0.5 rounded-full">
-                        {filters.preferredInstruments.length +
-                          filters.preferredSkills.length}
-                      </span>
-                    )}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => router.push("/dating/profile")}>
@@ -522,7 +718,7 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
               onDislike={() => handleDecision("DISLIKE")}
               processing={processing}
             />
-          ) : matches.length === 0 && !loading && (
+          ) : ((matches.length === 0 && !loading) || currentIndex >= matches.length) ? (
             <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
               <div className="w-64 h-96 bg-gray-100 rounded-xl mx-auto mb-6 flex items-center justify-center">
                 <div className="text-center">
@@ -534,13 +730,33 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
                 </div>
               </div>
               <Button
-                onClick={() => router.push("/dating/profile")}
+                onClick={() => setShowBasicFilters(true)}
                 className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
               >
                 Update Preferences
               </Button>
+              
+              {/* Current Filters Display */}
+              {userPreferences && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <h3 className="text-md font-semibold text-gray-700 mb-3 text-center">Your Current Filters:</h3>
+                  <div className="space-y-2 gap-2 flex flex-col items-center">
+                    {formatFilters()?.map((filter, index) => {
+                      const [key, ...valueParts] = filter.split(':');
+                      const value = valueParts.join(':').trim();
+                      return (
+                        <div key={index} className="text-sm text-gray-600 flex justify-start">
+                          <span className="text-gray-400 mr-2">•</span>
+                          <span className="font-bold text-gray-700">{key}:</span>
+                          <span className="ml-1">{value}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+          ) : null}
 
           {/* Message Input Modal - PRESERVED FOR FUTURE USE */}
           {/* TODO: When implementing photo-specific likes/comments (like Hinge/Bumble),
@@ -586,55 +802,62 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
             </div>
           )} */}
 
-          {/* Floating Decision Buttons - Fixed at bottom - Only show when there's a match */}
-          {currentMatch && (
+          {/* Floating Decision Buttons - Fixed at bottom */}
+          {/* Show full button bar when there's a match, or just undo button when deck is empty */}
+          {(currentMatch || recentSwipes.length > 0) && (
             <div className="fixed bottom-0 left-0 right-0 mb-16 border-gray-200 shadow-lg z-50 pb-safe">
               <div className="w-full px-2 sm:px-4 lg:max-w-2xl lg:mx-auto">
                 <div className="flex justify-around items-center gap-4 sm:gap-6 py-4">
-                  {/* Dislike Button */}
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-red-500 hover:bg-red-50 transition-all active:scale-95 bg-white"
-                    onClick={() => handleDecision("DISLIKE")}
-                    disabled={processing}
-                    aria-label="Dislike"
-                  >
-                    <X className="w-6 h-6 sm:w-8 sm:h-8 text-red-500" />
-                  </Button>
+                  {/* Dislike Button - Only show when there's a current match */}
+                  {currentMatch && (
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-red-500 hover:bg-red-50 transition-all active:scale-95 bg-white"
+                      onClick={() => handleDecision("DISLIKE")}
+                      disabled={processing}
+                      aria-label="Dislike"
+                    >
+                      <X className="w-6 h-6 sm:w-8 sm:h-8 text-red-500" />
+                    </Button>
+                  )}
 
-                  {/* Undo Button */}
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 transition-all active:scale-95 bg-white ${
-                      recentSwipes.length > 0 && !undoing
-                        ? "border-yellow-500 bg-yellow-50 hover:bg-yellow-100"
-                        : "border-gray-300 bg-gray-50 cursor-not-allowed opacity-50"
-                    }`}
-                    onClick={handleUndo}
-                    disabled={undoing || recentSwipes.length === 0}
-                    aria-label="Undo last swipe"
-                    title={recentSwipes.length > 0 ? "Undo last swipe" : "No swipes to undo"}
-                  >
-                    <RotateCcw className={`w-5 h-5 sm:w-6 sm:h-6 ${recentSwipes.length > 0 ? "text-yellow-600" : "text-gray-400"}`} />
-                  </Button>
+                  {/* Undo Button - Always show if there are recent swipes, even when deck is empty */}
+                  {recentSwipes.length > 0 && (
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 transition-all active:scale-95 bg-white ${
+                        !undoing
+                          ? "border-yellow-500 bg-yellow-50 hover:bg-yellow-100"
+                          : "border-gray-300 bg-gray-50 cursor-not-allowed opacity-50"
+                      }`}
+                      onClick={handleUndo}
+                      disabled={undoing}
+                      aria-label="Undo last swipe"
+                      title="Undo last swipe"
+                    >
+                      <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" />
+                    </Button>
+                  )}
                   
-                  {/* Like Button */}
-                  <Button
-                    size="icon"
-                    className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full transition-all active:scale-95 ${
-                      isVerified
-                        ? "bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
-                        : "bg-gray-400 cursor-not-allowed"
-                    }`}
-                    onClick={handleLikeClick}
-                    disabled={processing || !isVerified}
-                    title={!isVerified ? "Verify your email to like users" : ""}
-                    aria-label="Like"
-                  >
-                    <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                  </Button>
+                  {/* Like Button - Only show when there's a current match */}
+                  {currentMatch && (
+                    <Button
+                      size="icon"
+                      className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full transition-all active:scale-95 ${
+                        isVerified
+                          ? "bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
+                          : "bg-gray-400 cursor-not-allowed"
+                      }`}
+                      onClick={handleLikeClick}
+                      disabled={processing || !isVerified}
+                      title={!isVerified ? "Verify your email to like users" : ""}
+                      aria-label="Like"
+                    >
+                      <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
@@ -677,31 +900,12 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
           fetchMatches();
         }}
       />
-      <FilterPanel
-        open={showAdvancedFilters}
-        onOpenChange={setShowAdvancedFilters}
-        filters={filters}
-        onFiltersChange={(newFilters) => {
-          setFilters(newFilters);
-          // Save filters to preferences
-          kyInstance
-            .post("/api/dating/preferences", {
-              json: {
-                preferredInstruments: newFilters.preferredInstruments,
-                preferredSkills: newFilters.preferredSkills,
-              },
-            })
-            .catch(console.error);
-          // Refetch matches when advanced filters change
-          fetchMatches();
-        }}
-      />
-      <Dialog open={showTravelMode} onOpenChange={setShowTravelMode}>
+      <Dialog open={showLocationDialog} onOpenChange={setShowLocationDialog}>
         <DialogContent className="max-w-md bg-gray-950 border-gray-800">
-          <TravelModeDialogContent
-            onClose={() => setShowTravelMode(false)}
+          <LocationDialogContent
+            onClose={() => setShowLocationDialog(false)}
             onUpdate={() => {
-              // Refetch matches when travel mode changes
+              // Refetch matches when location changes
               fetchMatches();
             }}
           />

@@ -133,6 +133,39 @@ const MAX_HEIGHT_INCHES = 94; // 8'0"
 const MIN_AGE = 18;
 const MAX_AGE = 130;
 
+// Optional profile fields for random distribution
+const SMOKES_OPTIONS = ["Yes", "No", "Social"];
+const DRINKS_OPTIONS = ["Yes", "No", "Social"];
+const ACTIVITY_OPTIONS = ["Active", "Sporting", "Super active", "Couch potato", "Hiker", "Moderate", "Very active"];
+const INTERESTS_OPTIONS = [
+  "Gamer", "Foodie", "Traveler", "Photographer", "Musician", "Artist", "Writer",
+  "Fitness enthusiast", "Yoga", "Reading", "Movies", "Cooking", "Dancing", "Hiking",
+  "Surfing", "Cycling", "Running", "Swimming", "Tennis", "Basketball", "Soccer",
+  "Golf", "Rock climbing", "Skiing", "Snowboarding", "Camping", "Fishing",
+  "Gardening", "Volunteering", "Meditation", "Podcasts", "Comedy", "Theater",
+  "Concerts", "Festivals", "Wine tasting", "Coffee", "Craft beer", "Board games",
+  "Video games", "Anime", "Comics", "Fashion", "Shopping", "Beauty", "Makeup",
+  "Skincare", "Fashion design", "Interior design", "DIY", "Crafts", "Knitting",
+  "Sewing", "Painting", "Drawing", "Sculpting", "Pottery", "Woodworking",
+  "Cars", "Motorcycles", "Technology", "Coding", "Entrepreneurship", "Business",
+  "Finance", "Investing", "Real estate", "Politics", "History", "Science",
+  "Astronomy", "Philosophy", "Languages", "Learning", "Education", "Teaching",
+  "Pets", "Dogs", "Cats", "Animals", "Wildlife", "Nature", "Environmentalism",
+  "Sustainability", "Vegan", "Vegetarian", "Health", "Wellness", "Nutrition",
+  "Fitness", "Bodybuilding", "CrossFit", "Martial arts", "Boxing", "MMA",
+  "Dancing", "Ballet", "Hip hop", "Salsa", "Bachata", "Ballroom", "Latin",
+  "Jazz", "Blues", "Country", "Electronic", "EDM", "House", "Techno",
+  "Trance", "Dubstep", "Hip hop music", "Rap", "R&B", "Pop", "Rock",
+  "Metal", "Punk", "Indie", "Alternative", "Folk", "Classical", "Jazz",
+  "Blues", "Reggae", "World music", "K-pop", "J-pop", "Latin music",
+  "Salsa music", "Bachata music", "Merengue", "Cumbia", "Reggaeton",
+  "Flamenco", "Tango", "Samba", "Bossa nova", "Afrobeat", "Afrobeats",
+];
+
+// Photo count range - increased for more variety
+const MIN_PHOTOS = 1;
+const MAX_PHOTOS = 6;
+
 /**
  * Deletes existing dating test users from database and StreamChat
  * This ensures clean state before seeding new dating users
@@ -726,7 +759,10 @@ export async function seedDatingProfiles(
       };
       usersToCreate.push(userData);
 
-      // Create dating profile
+      // Create dating profile with random optional fields
+      // Randomly decide profile completeness (0-100% filled)
+      const profileCompleteness = faker.number.float({ min: 0.3, max: 1.0 }); // 30-100% complete
+      
       const profileId = generateIdFromEntropySize(10);
       const profileData: Prisma.user_dating_profileCreateInput = {
         id: profileId,
@@ -741,6 +777,34 @@ export async function seedDatingProfiles(
         city: locationCity, // Store city name (geocoded)
         latitude: locationLat,
         longitude: locationLon,
+        // Randomly populate optional fields based on completeness
+        bio: faker.datatype.boolean({ probability: profileCompleteness * 0.8 }) 
+          ? faker.lorem.paragraph({ min: 1, max: 3 }) 
+          : null,
+        hasKids: faker.datatype.boolean({ probability: profileCompleteness * 0.7 })
+          ? faker.datatype.boolean()
+          : null,
+        smokes: faker.datatype.boolean({ probability: profileCompleteness * 0.9 })
+          ? faker.helpers.arrayElement(SMOKES_OPTIONS)
+          : null,
+        drinks: faker.datatype.boolean({ probability: profileCompleteness * 0.9 })
+          ? faker.helpers.arrayElement(DRINKS_OPTIONS)
+          : null,
+        activity: faker.datatype.boolean({ probability: profileCompleteness * 0.8 })
+          ? faker.helpers.arrayElement(ACTIVITY_OPTIONS)
+          : null,
+        education: faker.datatype.boolean({ probability: profileCompleteness * 0.7 })
+          ? faker.helpers.arrayElement(["high_school", "some_college", "bachelors", "masters", "phd", "professional"])
+          : null,
+        job: faker.datatype.boolean({ probability: profileCompleteness * 0.75 })
+          ? faker.person.jobTitle()
+          : null,
+        pets: faker.datatype.boolean({ probability: profileCompleteness * 0.6 })
+          ? faker.helpers.arrayElement(["Dog", "Cat", "Bird", "Fish", "Rabbit", "Hamster", "Snake", "Lizard", "None"])
+          : null,
+        interests: faker.datatype.boolean({ probability: profileCompleteness * 0.85 })
+          ? faker.helpers.arrayElements(INTERESTS_OPTIONS, { min: 1, max: Math.min(8, Math.floor(profileCompleteness * 10)) })
+          : [],
       };
       profilesToCreate.push(profileData);
 
@@ -789,8 +853,8 @@ export async function seedDatingProfiles(
       };
       preferencesToCreate.push(preferencesData);
 
-      // Create 1-4 photos per user
-      const photoCount = faker.number.int({ min: 1, max: 4 });
+      // Create variable number of photos per user (MIN_PHOTOS to MAX_PHOTOS)
+      const photoCount = faker.number.int({ min: MIN_PHOTOS, max: MAX_PHOTOS });
       for (let k = 0; k < photoCount; k++) {
         const photoId = generateIdFromEntropySize(10);
         const photoData: Prisma.user_photosCreateInput = {
@@ -858,7 +922,10 @@ export async function seedDatingProfiles(
     };
     usersToCreate.push(userData);
 
-    // Create dating profile
+    // Create dating profile with random optional fields
+    // Randomly decide profile completeness (0-100% filled)
+    const profileCompleteness = faker.number.float({ min: 0.3, max: 1.0 }); // 30-100% complete
+    
     const profileId = generateIdFromEntropySize(10);
     const profileData: Prisma.user_dating_profileCreateInput = {
       id: profileId,
@@ -873,6 +940,34 @@ export async function seedDatingProfiles(
       city: locationCity, // Store city name (geocoded)
       latitude: locationLat,
       longitude: locationLon,
+      // Randomly populate optional fields based on completeness
+      bio: faker.datatype.boolean({ probability: profileCompleteness * 0.8 }) 
+        ? faker.lorem.paragraph({ min: 1, max: 3 }) 
+        : null,
+      hasKids: faker.datatype.boolean({ probability: profileCompleteness * 0.7 })
+        ? faker.datatype.boolean()
+        : null,
+      smokes: faker.datatype.boolean({ probability: profileCompleteness * 0.9 })
+        ? faker.helpers.arrayElement(SMOKES_OPTIONS)
+        : null,
+      drinks: faker.datatype.boolean({ probability: profileCompleteness * 0.9 })
+        ? faker.helpers.arrayElement(DRINKS_OPTIONS)
+        : null,
+      activity: faker.datatype.boolean({ probability: profileCompleteness * 0.8 })
+        ? faker.helpers.arrayElement(ACTIVITY_OPTIONS)
+        : null,
+      education: faker.datatype.boolean({ probability: profileCompleteness * 0.7 })
+        ? faker.helpers.arrayElement(["high_school", "some_college", "bachelors", "masters", "phd", "professional"])
+        : null,
+      job: faker.datatype.boolean({ probability: profileCompleteness * 0.75 })
+        ? faker.person.jobTitle()
+        : null,
+      pets: faker.datatype.boolean({ probability: profileCompleteness * 0.6 })
+        ? faker.helpers.arrayElement(["Dog", "Cat", "Bird", "Fish", "Rabbit", "Hamster", "Snake", "Lizard", "None"])
+        : null,
+      interests: faker.datatype.boolean({ probability: profileCompleteness * 0.85 })
+        ? faker.helpers.arrayElements(INTERESTS_OPTIONS, { min: 1, max: Math.min(8, Math.floor(profileCompleteness * 10)) })
+        : [],
     };
     profilesToCreate.push(profileData);
 

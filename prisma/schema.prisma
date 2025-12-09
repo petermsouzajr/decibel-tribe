@@ -446,11 +446,15 @@ model user_dating_profile {
   religion              String?
   bio                   String?
   hasKids               Boolean?
+  wantsKids             String? // "yes" | "no" | "maybe" | "not_sure" - future kids preference
   smokes                String? // "Yes" | "No" | "Social"
   drinks                String? // "Yes" | "No" | "Social"
   activity              String? // "Active" | "Sporting" | "Super active" | "Couch potato" | "Hiker" | etc.
-  college               String?   @db.VarChar(100)
+  education             String? // "high_school" | "some_college" | "bachelors" | "masters" | "phd" | "professional"
   job                   String?   @db.VarChar(100)
+  politicalViews        String? // "liberal" | "moderate" | "conservative" | "apolitical" | "other"
+  diet                  String? // "omnivore" | "vegetarian" | "vegan" | "pescatarian" | "kosher" | "halal" | "other"
+  relationshipType      String? // "monogamous" | "ethical_non_monogamous" | "open_to_both"
   pets                  String?   @db.VarChar(150)
   interests             String[] // Array of interests like "Gamer", "Foodie", etc.
   createdAt             DateTime? @default(now()) @db.Timestamp(6)
@@ -502,9 +506,18 @@ model user_dating_preferences {
   preferredSkills                String[] // Music filter: preferred skills
   matchMusicTastes               Boolean  @default(true) // User preference: prioritize music compatibility
   preferredHasKids               String? // "yes" | "no" | "any" | null
+  preferredWantsKids             String? // "yes" | "no" | "maybe" | "any" | null - future kids preference
   preferredSmokes                String? // "Yes" | "No" | "Social" | null
   preferredDrinks                String? // "Yes" | "No" | "Social" | null
   preferredActivity              String? // Activity level preference
+  preferredEducation             String[] // Array of education levels
+  preferredPoliticalViews        String[] // Array of political views
+  preferredDiet                  String[] // Array of diet preferences
+  preferredRelationshipType      String[] // Array of relationship types
+  // Match strictness controls
+  exactMatchAllFilters           Boolean  @default(false) // Strict matching: all preferences must match exactly
+  minimumMatchPercentage         Int      @default(70) // Minimum compatibility percentage (0-100)
+  nonNegotiableFields            String[] // Array of field names that are dealbreakers (e.g., ["smokes", "hasKids", "religion"])
   users                          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 

@@ -27,10 +27,28 @@ async function geocodeZipCode(zipCode: string): Promise<{ lat: number; lon: numb
       
       const data = await response.json();
       if (data && data.length > 0) {
+        // Extract city name from address, avoiding zip code
+        let cityName = data[0].address?.city || data[0].address?.town || data[0].address?.village || null;
+        
+        // If no city in address, try to extract from display_name
+        if (!cityName && data[0].display_name) {
+          const parts = data[0].display_name.split(",");
+          // Usually format is: "City, State, Country" or "Neighborhood, City, State"
+          // Try to find a non-numeric part that's not a state abbreviation
+          for (const part of parts) {
+            const trimmed = part.trim();
+            // Skip if it's numeric (could be zip code) or too short, or is a state abbreviation
+            if (trimmed && !/^\d+$/.test(trimmed) && trimmed.length > 2 && trimmed.length < 50) {
+              cityName = trimmed;
+              break;
+            }
+          }
+        }
+        
         return {
           lat: parseFloat(data[0].lat),
           lon: parseFloat(data[0].lon),
-          city: data[0].address?.city || data[0].address?.town || data[0].address?.village || data[0].display_name.split(",")[0] || null,
+          city: cityName || null,
         };
       }
     }
@@ -51,10 +69,28 @@ async function geocodeZipCode(zipCode: string): Promise<{ lat: number; lon: numb
 
     const data = await response.json();
     if (data && data.length > 0) {
+      // Extract city name from address, avoiding zip code
+      let cityName = data[0].address?.city || data[0].address?.town || data[0].address?.village || null;
+      
+      // If no city in address, try to extract from display_name
+      if (!cityName && data[0].display_name) {
+        const parts = data[0].display_name.split(",");
+        // Usually format is: "City, State, Country" or "Neighborhood, City, State"
+        // Try to find a non-numeric part that's not a state abbreviation
+        for (const part of parts) {
+          const trimmed = part.trim();
+          // Skip if it's numeric (could be zip code) or too short, or is a state abbreviation
+          if (trimmed && !/^\d+$/.test(trimmed) && trimmed.length > 2 && trimmed.length < 50) {
+            cityName = trimmed;
+            break;
+          }
+        }
+      }
+      
       return {
         lat: parseFloat(data[0].lat),
         lon: parseFloat(data[0].lon),
-        city: data[0].address?.city || data[0].address?.town || data[0].address?.village || data[0].display_name.split(",")[0] || null,
+        city: cityName || null,
       };
     }
 
@@ -124,7 +160,7 @@ export async function PUT(request: NextRequest) {
       smokes,
       drinks,
       activity,
-      college,
+      education,
       job,
       pets,
       interests,
@@ -135,12 +171,20 @@ export async function PUT(request: NextRequest) {
     let latitude: number | null = null;
     let longitude: number | null = null;
     
-    if (zipCode !== undefined && zipCode) {
-      const geocoded = await geocodeZipCode(zipCode);
+    if (zipCode !== undefined && zipCode && zipCode.trim()) {
+      const geocoded = await geocodeZipCode(zipCode.trim());
       if (geocoded) {
-        city = geocoded.city || null;
+        // Only set city if geocoding returned a valid city name (not zip code)
+        if (geocoded.city && geocoded.city.trim() && geocoded.city !== zipCode.trim()) {
+          city = geocoded.city.trim();
+        }
         latitude = geocoded.lat;
         longitude = geocoded.lon;
+      } else {
+        // If geocoding fails, log it but don't set city to zipCode
+        if (process.env.NODE_ENV === "development") {
+          console.log(`[Profile Update] Geocoding failed for zip code: ${zipCode}`);
+        }
       }
     }
 
@@ -158,7 +202,7 @@ export async function PUT(request: NextRequest) {
       smokes !== undefined ||
       drinks !== undefined ||
       activity !== undefined ||
-      college !== undefined ||
+      education !== undefined ||
       job !== undefined ||
       pets !== undefined ||
       interests !== undefined ||
@@ -186,7 +230,7 @@ export async function PUT(request: NextRequest) {
           ...(smokes !== undefined && { smokes }),
           ...(drinks !== undefined && { drinks }),
           ...(activity !== undefined && { activity }),
-          ...(college !== undefined && { college }),
+          ...(education !== undefined && { education }),
           ...(job !== undefined && { job }),
           ...(pets !== undefined && { pets }),
           ...(interests !== undefined && { interests }),
@@ -210,7 +254,7 @@ export async function PUT(request: NextRequest) {
           smokes: smokes || null,
           drinks: drinks || null,
           activity: activity || null,
-          college: college || null,
+          education: education || null,
           job: job || null,
           pets: pets || null,
           interests: interests || [],

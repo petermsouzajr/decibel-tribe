@@ -28,7 +28,7 @@ interface OnboardingData {
   smokes: string;
   drinks: string;
   activity: string;
-  college: string;
+  education: string;
   job: string;
   pets: string;
   interests: string[];
@@ -46,6 +46,10 @@ interface OnboardingData {
   preferredMaxDistance: number;
   preferredCoronavirusVaccinated: string;
   preferredReligions: string[];
+  // Match strictness controls
+  exactMatchAllFilters: boolean;
+  minimumMatchPercentage: number;
+  nonNegotiableFields: string[];
 }
 
 interface DatingOnboardingFlowProps {
@@ -102,7 +106,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
     smokes: existingProfile?.smokes || "",
     drinks: existingProfile?.drinks || "",
     activity: existingProfile?.activity || "",
-    college: existingProfile?.college || "",
+    education: existingProfile?.education || "",
     job: existingProfile?.job || "",
     pets: existingProfile?.pets || "",
     interests: existingProfile?.interests || [],
@@ -118,7 +122,10 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
     preferredMaxHeight: existingPreferences?.preferredMaxHeight || 0,
     preferredMaxDistance: existingPreferences?.preferredMaxDistanceKm || 0,
     preferredCoronavirusVaccinated: existingPreferences?.preferredCoronavirusVaccinated || "",
-    preferredReligions: existingPreferences?.preferredReligions || []
+    preferredReligions: existingPreferences?.preferredReligions || [],
+    exactMatchAllFilters: existingPreferences?.exactMatchAllFilters ?? false,
+    minimumMatchPercentage: existingPreferences?.minimumMatchPercentage ?? 70,
+    nonNegotiableFields: existingPreferences?.nonNegotiableFields || []
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -194,6 +201,10 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
             formData.preferredGenders[0].sexualOrientation.length > 0
             ? formData.preferredGenders[0].sexualOrientation[0]
             : "",
+        // Include match strictness fields
+        exactMatchAllFilters: formData.exactMatchAllFilters,
+        minimumMatchPercentage: formData.minimumMatchPercentage,
+        nonNegotiableFields: formData.nonNegotiableFields,
       };
       
       // Save dating preferences to database
@@ -448,16 +459,20 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
               </div>
 
               <div>
-                <label className="block text-sm text-gray-900 font-bold mb-2">
-                  College
-                </label>
-                <input
-                  type="text"
-                  className="w-full h-11 px-3 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="e.g., UCLA, Stanford University (optional)"
-                  maxLength={100}
-                  value={formData.college}
-                  onChange={(e) => setFormData({...formData, college: e.target.value})}
+                <DropdownSelector
+                  value={formData.education}
+                  onChange={(value) => setFormData({...formData, education: value})}
+                  options={[
+                    { label: "Select education level (optional)", value: "" },
+                    { label: "High School", value: "high_school" },
+                    { label: "Some College", value: "some_college" },
+                    { label: "Bachelor's", value: "bachelors" },
+                    { label: "Master's", value: "masters" },
+                    { label: "PhD", value: "phd" },
+                    { label: "Professional", value: "professional" },
+                  ]}
+                  label="Education Level"
+                  placeholder="Select education level (optional)"
                 />
               </div>
 
@@ -968,6 +983,75 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                       <span className="text-sm font-medium text-gray-900">{religion}</span>
                     </label>
                   ))}
+                </div>
+              </div>
+
+              {/* Match Strictness Controls */}
+              <div className="pt-6 border-t border-gray-300 space-y-6">
+                <h3 className="text-lg font-semibold text-gray-900">Match Strictness</h3>
+                
+                {/* Exact Match All Filters */}
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.exactMatchAllFilters}
+                      onChange={(e) =>
+                        setFormData({ ...formData, exactMatchAllFilters: e.target.checked })
+                      }
+                      className="w-5 h-5 rounded border-gray-300 bg-white text-purple-500 focus:ring-purple-500"
+                    />
+                    <div className="flex-1">
+                      <span className="text-sm font-semibold text-gray-900">Exact Match All Filters</span>
+                      <p className="text-xs text-gray-600 mt-1">
+                        Require all preferences to match exactly. This is the strictest matching mode.
+                      </p>
+                    </div>
+                  </label>
+                </div>
+
+                {/* Percentage Match Slider */}
+                {!formData.exactMatchAllFilters && (
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="block text-sm font-semibold text-gray-900">
+                        Minimum Match Percentage
+                      </label>
+                      <span className="text-lg font-bold text-purple-600">
+                        {formData.minimumMatchPercentage}%
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="5"
+                      value={formData.minimumMatchPercentage}
+                      onChange={(e) =>
+                        setFormData({ ...formData, minimumMatchPercentage: parseInt(e.target.value) })
+                      }
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                      style={{
+                        background: `linear-gradient(to right, rgb(168, 85, 247) 0%, rgb(168, 85, 247) ${formData.minimumMatchPercentage}%, rgb(229, 231, 235) ${formData.minimumMatchPercentage}%, rgb(229, 231, 235) 100%)`
+                      }}
+                    />
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>0% (Any match)</span>
+                      <span>50%</span>
+                      <span>100% (Perfect match)</span>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-2">
+                      Show only users with at least {formData.minimumMatchPercentage}% compatibility based on your preferences
+                    </p>
+                  </div>
+                )}
+
+                {/* Non-Negotiable Fields Info */}
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <p className="text-xs text-gray-700">
+                    <strong>Tip:</strong> You can mark specific preferences as &quot;Non-Negotiable&quot; (dealbreakers) in your filter settings after completing onboarding. 
+                    These will always be required to match exactly, regardless of your match percentage setting.
+                  </p>
                 </div>
               </div>
                    

@@ -19,7 +19,7 @@ export default function DatingProfileEditor() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<"profile" | "photos" | "preferences">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "photos">("profile");
 
   const [formData, setFormData] = useState({
     bio: "",
@@ -34,7 +34,7 @@ export default function DatingProfileEditor() {
     smokes: "",
     drinks: "",
     activity: "",
-    college: "",
+    education: "",
     job: "",
     pets: "",
     interests: [] as string[],
@@ -68,7 +68,7 @@ export default function DatingProfileEditor() {
           smokes: response.profile.smokes || "",
           drinks: response.profile.drinks || "",
           activity: response.profile.activity || "",
-          college: response.profile.college || "",
+          education: response.profile.education || "",
           job: response.profile.job || "",
           pets: response.profile.pets || "",
           interests: response.profile.interests || [],
@@ -145,16 +145,6 @@ export default function DatingProfileEditor() {
               }`}
             >
               Photos
-            </button>
-            <button
-              onClick={() => setActiveTab("preferences")}
-              className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                activeTab === "preferences"
-                  ? "bg-purple-500 text-white"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              Preferences
             </button>
           </div>
         </div>
@@ -328,16 +318,20 @@ export default function DatingProfileEditor() {
                 />
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2">
-                    College
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full h-11 px-3 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="e.g., UCLA, Stanford University"
-                    maxLength={100}
-                    value={formData.college}
-                    onChange={(e) => setFormData({ ...formData, college: e.target.value })}
+                  <DropdownSelector
+                    value={formData.education}
+                    onChange={(value) => setFormData({ ...formData, education: value })}
+                    options={[
+                      { label: "Select education level", value: "" },
+                      { label: "High School", value: "high_school" },
+                      { label: "Some College", value: "some_college" },
+                      { label: "Bachelor's", value: "bachelors" },
+                      { label: "Master's", value: "masters" },
+                      { label: "PhD", value: "phd" },
+                      { label: "Professional", value: "professional" },
+                    ]}
+                    label="Education Level"
+                    placeholder="Select education level"
                   />
                 </div>
 
@@ -435,8 +429,6 @@ export default function DatingProfileEditor() {
           )}
 
           {activeTab === "photos" && <PhotoManager />}
-
-          {activeTab === "preferences" && <DatingPreferencesForm />}
         </div>
       </div>
     </div>
