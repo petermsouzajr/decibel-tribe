@@ -719,7 +719,7 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
               processing={processing}
             />
           ) : ((matches.length === 0 && !loading) || currentIndex >= matches.length) ? (
-            <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
+            <div className="bg-white rounded-2xl p-8 text-center">
               <div className="w-64 h-96 bg-gray-100 rounded-xl mx-auto mb-6 flex items-center justify-center">
                 <div className="text-center">
                   <Heart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
