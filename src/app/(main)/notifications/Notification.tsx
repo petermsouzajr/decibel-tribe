@@ -64,7 +64,7 @@ export default function Notification({ notification }: NotificationProps) {
     },
     MATCH: {
       issuer: notification.issuer,
-      message: "matched with you",
+      message: `You matched with ${notification.issuer.displayName}`,
       icon: <User2 className="size-7 text-primary" />,
       href: `/dating/matches`,
     },

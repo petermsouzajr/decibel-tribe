@@ -69,6 +69,19 @@ export default async function ChatPage(
       ? match.users_matches_user2IdTousers
       : match.users_matches_user1IdTousers;
 
+  // Mark match as read when user views the chat
+  const updateData: { user1LastViewedAt?: Date; user2LastViewedAt?: Date } = {};
+  if (match.user1Id === user.id) {
+    updateData.user1LastViewedAt = new Date();
+  } else {
+    updateData.user2LastViewedAt = new Date();
+  }
+
+  await prisma.matches.update({
+    where: { id: params.matchId },
+    data: updateData,
+  });
+
   return <DatingChatInterface matchId={params.matchId} otherUser={otherUser} />;
 }
 

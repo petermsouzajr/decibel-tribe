@@ -79,6 +79,12 @@ export async function GET(request: NextRequest) {
             ? match.users_matches_user2IdTousers
             : match.users_matches_user1IdTousers;
 
+        // Determine if this match is "new" (unread) for the current user
+        const lastViewedAt = match.user1Id === user.id 
+          ? match.user1LastViewedAt 
+          : match.user2LastViewedAt;
+        const isNew = !lastViewedAt || lastViewedAt < match.createdAt;
+
         // Get last message from Stream Chat
         let lastMessage = null;
         let unreadCount = 0;
@@ -133,6 +139,7 @@ export async function GET(request: NextRequest) {
             : null,
           unreadCount,
           matchedAt: match.createdAt,
+          isNew, // Flag to show "New!" badge
         };
       })
     );

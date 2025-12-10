@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import { PrismaClient, Prisma, NotificationType } from "@prisma/client";
 import {
   faker,
   generateIdFromEntropySize,
@@ -124,6 +124,18 @@ const RELIGIONS = [
 
 // Coronavirus vaccination status
 const VACCINATION_STATUS = ["Yes", "No", ""];
+
+// Education levels
+const EDUCATION_LEVELS = ["high_school", "some_college", "bachelors", "masters", "phd", "professional"];
+
+// Political views
+const POLITICAL_VIEWS = ["Liberal", "Conservative", "Moderate", "Progressive", "Libertarian", "Apolitical", "Other"];
+
+// Diet preferences
+const DIET_OPTIONS = ["Omnivore", "Vegetarian", "Vegan", "Pescatarian", "Kosher", "Halal", "Gluten-free", "Keto", "Paleo", "Other"];
+
+// Relationship type
+const RELATIONSHIP_TYPES = ["Monogamous", "Ethical Non-Monogamy", "Open to Both"];
 
 // Height range in inches (for US)
 const MIN_HEIGHT_INCHES = 36; // 3'0"
@@ -764,6 +776,9 @@ export async function seedDatingProfiles(
       const profileCompleteness = faker.number.float({ min: 0.3, max: 1.0 }); // 30-100% complete
       
       const profileId = generateIdFromEntropySize(10);
+      const hasKids = faker.datatype.boolean({ probability: profileCompleteness * 0.7 })
+        ? faker.datatype.boolean()
+        : null;
       const profileData: Prisma.user_dating_profileCreateInput = {
         id: profileId,
         user: { connect: { id: userId } },
@@ -781,9 +796,7 @@ export async function seedDatingProfiles(
         bio: faker.datatype.boolean({ probability: profileCompleteness * 0.8 }) 
           ? faker.lorem.paragraph({ min: 1, max: 3 }) 
           : null,
-        hasKids: faker.datatype.boolean({ probability: profileCompleteness * 0.7 })
-          ? faker.datatype.boolean()
-          : null,
+        hasKids,
         smokes: faker.datatype.boolean({ probability: profileCompleteness * 0.9 })
           ? faker.helpers.arrayElement(SMOKES_OPTIONS)
           : null,
@@ -794,7 +807,19 @@ export async function seedDatingProfiles(
           ? faker.helpers.arrayElement(ACTIVITY_OPTIONS)
           : null,
         education: faker.datatype.boolean({ probability: profileCompleteness * 0.7 })
-          ? faker.helpers.arrayElement(["high_school", "some_college", "bachelors", "masters", "phd", "professional"])
+          ? faker.helpers.arrayElement(EDUCATION_LEVELS)
+          : null,
+        wantsKids: faker.datatype.boolean({ probability: profileCompleteness * 0.6 })
+          ? faker.helpers.arrayElement(["yes", "no", "maybe", "not_sure"])
+          : null,
+        politicalViews: faker.datatype.boolean({ probability: profileCompleteness * 0.5 })
+          ? faker.helpers.arrayElement(POLITICAL_VIEWS)
+          : null,
+        diet: faker.datatype.boolean({ probability: profileCompleteness * 0.4 })
+          ? faker.helpers.arrayElement(DIET_OPTIONS)
+          : null,
+        relationshipType: faker.datatype.boolean({ probability: profileCompleteness * 0.5 })
+          ? faker.helpers.arrayElement(RELATIONSHIP_TYPES)
           : null,
         job: faker.datatype.boolean({ probability: profileCompleteness * 0.75 })
           ? faker.person.jobTitle()
@@ -847,9 +872,42 @@ export async function seedDatingProfiles(
           min: 0,
           max: 3,
         }),
+        preferredHasKids: faker.helpers.arrayElement([
+          hasKids !== null ? (hasKids ? "Yes" : "No") : null,
+          null,
+          faker.helpers.arrayElement(["Yes", "No", ""]),
+        ]),
+        preferredWantsKids: faker.datatype.boolean({ probability: 0.6 })
+          ? faker.helpers.arrayElement(["yes", "no", "maybe", "any"])
+          : null,
+        preferredEducation: faker.datatype.boolean({ probability: 0.5 })
+          ? faker.helpers.arrayElements(EDUCATION_LEVELS, { min: 1, max: 3 })
+          : [],
+        preferredPoliticalViews: faker.datatype.boolean({ probability: 0.4 })
+          ? faker.helpers.arrayElements(POLITICAL_VIEWS, { min: 1, max: 3 })
+          : [],
+        preferredDiet: faker.datatype.boolean({ probability: 0.3 })
+          ? faker.helpers.arrayElements(DIET_OPTIONS, { min: 1, max: 2 })
+          : [],
+        preferredRelationshipType: faker.datatype.boolean({ probability: 0.4 })
+          ? faker.helpers.arrayElements(RELATIONSHIP_TYPES, { min: 1, max: 2 })
+          : [],
         preferredInstruments: [],
         preferredSkills: [],
         matchMusicTastes: faker.datatype.boolean(),
+        exactMatchAllFilters: faker.datatype.boolean({ probability: 0.2 }), // 20% want exact match
+        minimumMatchPercentage: faker.number.int({ min: 70, max: 100 }),
+        nonNegotiableFields: faker.datatype.boolean({ probability: 0.3 })
+          ? faker.helpers.arrayElements([
+              "height",
+              "religion",
+              "education",
+              "politicalViews",
+              "diet",
+              "relationshipType",
+              "activity",
+            ], { min: 1, max: 3 })
+          : [],
       };
       preferencesToCreate.push(preferencesData);
 
@@ -927,6 +985,9 @@ export async function seedDatingProfiles(
     const profileCompleteness = faker.number.float({ min: 0.3, max: 1.0 }); // 30-100% complete
     
     const profileId = generateIdFromEntropySize(10);
+    const hasKids = faker.datatype.boolean({ probability: profileCompleteness * 0.7 })
+      ? faker.datatype.boolean()
+      : null;
     const profileData: Prisma.user_dating_profileCreateInput = {
       id: profileId,
       user: { connect: { id: userId } },
@@ -944,9 +1005,7 @@ export async function seedDatingProfiles(
       bio: faker.datatype.boolean({ probability: profileCompleteness * 0.8 }) 
         ? faker.lorem.paragraph({ min: 1, max: 3 }) 
         : null,
-      hasKids: faker.datatype.boolean({ probability: profileCompleteness * 0.7 })
-        ? faker.datatype.boolean()
-        : null,
+      hasKids,
       smokes: faker.datatype.boolean({ probability: profileCompleteness * 0.9 })
         ? faker.helpers.arrayElement(SMOKES_OPTIONS)
         : null,
@@ -956,18 +1015,30 @@ export async function seedDatingProfiles(
       activity: faker.datatype.boolean({ probability: profileCompleteness * 0.8 })
         ? faker.helpers.arrayElement(ACTIVITY_OPTIONS)
         : null,
-      education: faker.datatype.boolean({ probability: profileCompleteness * 0.7 })
-        ? faker.helpers.arrayElement(["high_school", "some_college", "bachelors", "masters", "phd", "professional"])
-        : null,
-      job: faker.datatype.boolean({ probability: profileCompleteness * 0.75 })
-        ? faker.person.jobTitle()
-        : null,
-      pets: faker.datatype.boolean({ probability: profileCompleteness * 0.6 })
-        ? faker.helpers.arrayElement(["Dog", "Cat", "Bird", "Fish", "Rabbit", "Hamster", "Snake", "Lizard", "None"])
-        : null,
-      interests: faker.datatype.boolean({ probability: profileCompleteness * 0.85 })
-        ? faker.helpers.arrayElements(INTERESTS_OPTIONS, { min: 1, max: Math.min(8, Math.floor(profileCompleteness * 10)) })
-        : [],
+        education: faker.datatype.boolean({ probability: profileCompleteness * 0.7 })
+          ? faker.helpers.arrayElement(EDUCATION_LEVELS)
+          : null,
+        wantsKids: faker.datatype.boolean({ probability: profileCompleteness * 0.6 })
+          ? faker.helpers.arrayElement(["yes", "no", "maybe", "not_sure"])
+          : null,
+        politicalViews: faker.datatype.boolean({ probability: profileCompleteness * 0.5 })
+          ? faker.helpers.arrayElement(POLITICAL_VIEWS)
+          : null,
+        diet: faker.datatype.boolean({ probability: profileCompleteness * 0.4 })
+          ? faker.helpers.arrayElement(DIET_OPTIONS)
+          : null,
+        relationshipType: faker.datatype.boolean({ probability: profileCompleteness * 0.5 })
+          ? faker.helpers.arrayElement(RELATIONSHIP_TYPES)
+          : null,
+        job: faker.datatype.boolean({ probability: profileCompleteness * 0.75 })
+          ? faker.person.jobTitle()
+          : null,
+        pets: faker.datatype.boolean({ probability: profileCompleteness * 0.6 })
+          ? faker.helpers.arrayElement(["Dog", "Cat", "Bird", "Fish", "Rabbit", "Hamster", "Snake", "Lizard", "None"])
+          : null,
+        interests: faker.datatype.boolean({ probability: profileCompleteness * 0.85 })
+          ? faker.helpers.arrayElements(INTERESTS_OPTIONS, { min: 1, max: Math.min(8, Math.floor(profileCompleteness * 10)) })
+          : [],
     };
     profilesToCreate.push(profileData);
 
@@ -1006,13 +1077,46 @@ export async function seedDatingProfiles(
         null,
         faker.helpers.arrayElement(VACCINATION_STATUS),
       ]),
-      preferredReligions: faker.helpers.arrayElements(RELIGIONS, {
-        min: 0,
-        max: 3,
-      }),
-      preferredInstruments: [], // Can be populated if needed
-      preferredSkills: [], // Can be populated if needed
-      matchMusicTastes: faker.datatype.boolean(),
+        preferredReligions: faker.helpers.arrayElements(RELIGIONS, {
+          min: 0,
+          max: 3,
+        }),
+        preferredHasKids: faker.helpers.arrayElement([
+          hasKids !== null ? (hasKids ? "Yes" : "No") : null,
+          null,
+          faker.helpers.arrayElement(["Yes", "No", ""]),
+        ]),
+        preferredWantsKids: faker.datatype.boolean({ probability: 0.6 })
+          ? faker.helpers.arrayElement(["yes", "no", "maybe", "any"])
+          : null,
+        preferredEducation: faker.datatype.boolean({ probability: 0.5 })
+          ? faker.helpers.arrayElements(EDUCATION_LEVELS, { min: 1, max: 3 })
+          : [],
+        preferredPoliticalViews: faker.datatype.boolean({ probability: 0.4 })
+          ? faker.helpers.arrayElements(POLITICAL_VIEWS, { min: 1, max: 3 })
+          : [],
+        preferredDiet: faker.datatype.boolean({ probability: 0.3 })
+          ? faker.helpers.arrayElements(DIET_OPTIONS, { min: 1, max: 2 })
+          : [],
+        preferredRelationshipType: faker.datatype.boolean({ probability: 0.4 })
+          ? faker.helpers.arrayElements(RELATIONSHIP_TYPES, { min: 1, max: 2 })
+          : [],
+        preferredInstruments: [], // Can be populated if needed
+        preferredSkills: [], // Can be populated if needed
+        matchMusicTastes: faker.datatype.boolean(),
+        exactMatchAllFilters: faker.datatype.boolean({ probability: 0.2 }), // 20% want exact match
+        minimumMatchPercentage: faker.number.int({ min: 70, max: 100 }),
+        nonNegotiableFields: faker.datatype.boolean({ probability: 0.3 })
+          ? faker.helpers.arrayElements([
+              "height",
+              "religion",
+              "education",
+              "politicalViews",
+              "diet",
+              "relationshipType",
+              "activity",
+            ], { min: 1, max: 3 })
+          : [],
     };
     preferencesToCreate.push(preferencesData);
 
@@ -1163,22 +1267,69 @@ export async function seedDatingProfiles(
     // Create matches for test users
     if (matchesToCreate.length > 0) {
       console.log(`Creating ${matchesToCreate.length} matches for test users...`);
+      const createdMatchIds: string[] = [];
       for (const match of matchesToCreate) {
         try {
+          const matchId = generateIdFromEntropySize(10);
           await tx.matches.create({
             data: {
-              id: generateIdFromEntropySize(10),
+              id: matchId,
               user1Id: match.user1Id,
               user2Id: match.user2Id,
               createdAt: new Date(),
             },
           });
+          createdMatchIds.push(matchId);
         } catch (error) {
           // Skip if match already exists
           console.warn(`Match already exists or error: ${(error as Error).message}`);
         }
       }
       console.log(`...${matchesToCreate.length} matches created.`);
+
+      // Create match notifications for all created matches
+      if (createdMatchIds.length > 0) {
+        console.log(`Creating ${createdMatchIds.length * 2} match notifications...`);
+        const notificationsToCreate = [];
+        for (let i = 0; i < matchesToCreate.length; i++) {
+          const match = matchesToCreate[i];
+          const matchId = createdMatchIds[i];
+          if (matchId) {
+            // Create notification for user1
+            notificationsToCreate.push({
+              id: generateIdFromEntropySize(10),
+              recipientId: match.user1Id,
+              issuerId: match.user2Id,
+              type: NotificationType.MATCH,
+              matchId: matchId,
+              read: false,
+              createdAt: new Date(),
+            });
+            // Create notification for user2
+            notificationsToCreate.push({
+              id: generateIdFromEntropySize(10),
+              recipientId: match.user2Id,
+              issuerId: match.user1Id,
+              type: NotificationType.MATCH,
+              matchId: matchId,
+              read: false,
+              createdAt: new Date(),
+            });
+          }
+        }
+        
+        if (notificationsToCreate.length > 0) {
+          try {
+            await tx.notification.createMany({
+              data: notificationsToCreate,
+              skipDuplicates: true,
+            });
+            console.log(`...${notificationsToCreate.length} match notifications created.`);
+          } catch (error) {
+            console.warn(`Error creating match notifications: ${(error as Error).message}`);
+          }
+        }
+      }
     }
 
     console.log(

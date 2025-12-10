@@ -70,6 +70,11 @@ export async function GET(req: NextRequest) {
             location: true,
           },
         },
+        match: {
+          select: {
+            id: true,
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
       take: pageSize + 1,

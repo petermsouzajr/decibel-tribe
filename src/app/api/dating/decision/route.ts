@@ -165,6 +165,18 @@ export async function POST(request: NextRequest) {
           // Create notifications asynchronously
           (async () => {
             try {
+              // Fetch user display names for personalized notifications
+              const [currentUserData, targetUserData] = await Promise.all([
+                prisma.user.findUnique({
+                  where: { id: user.id },
+                  select: { displayName: true },
+                }),
+                prisma.user.findUnique({
+                  where: { id: targetUserId },
+                  select: { displayName: true },
+                }),
+              ]);
+
               await Promise.all([
                 prisma.notification.create({
                   data: {
@@ -172,6 +184,7 @@ export async function POST(request: NextRequest) {
                     recipientId: user.id,
                     issuerId: targetUserId,
                     type: NotificationType.MATCH,
+                    matchId: match.id,
                     read: false,
                     createdAt: new Date(),
                   },
@@ -182,6 +195,7 @@ export async function POST(request: NextRequest) {
                     recipientId: targetUserId,
                     issuerId: user.id,
                     type: NotificationType.MATCH,
+                    matchId: match.id,
                     read: false,
                     createdAt: new Date(),
                   },

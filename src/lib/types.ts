@@ -261,6 +261,7 @@ export interface NotificationData {
   type: NotificationType; // Correctly imported type
   read: boolean;
   eventId: string | null;
+  matchId: string | null; // Link to match for MATCH type notifications
   createdAt: Date;
 
   issuer: UserWithFollowerStatus;

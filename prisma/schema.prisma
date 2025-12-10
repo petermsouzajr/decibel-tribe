@@ -340,11 +340,13 @@ model Notification {
   type        NotificationType
   read        Boolean          @default(false)
   eventId     String?
+  matchId     String? // Link to match for MATCH type notifications
   createdAt   DateTime         @default(now())
   event       Event?           @relation(fields: [eventId], references: [id], onDelete: Cascade)
   issuer      User             @relation("Issuer", fields: [issuerId], references: [id], onDelete: Cascade)
   post        Post?            @relation(fields: [postId], references: [id], onDelete: Cascade)
   recipient   User             @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  match       matches?         @relation(fields: [matchId], references: [id], onDelete: Cascade)
 
   @@unique([recipientId, eventId, type])
   @@map("notifications")
@@ -392,9 +394,12 @@ model matches {
   user1Id                      String
   user2Id                      String
   createdAt                    DateTime  @default(now())
+  user1LastViewedAt            DateTime? // When user1 last viewed this match
+  user2LastViewedAt            DateTime? // When user2 last viewed this match
   users_matches_user1IdTousers User      @relation("matches_user1IdTousers", fields: [user1Id], references: [id], onDelete: Cascade)
   users_matches_user2IdTousers User      @relation("matches_user2IdTousers", fields: [user2Id], references: [id], onDelete: Cascade)
   messages                     Message[]
+  notifications                Notification[]
 
   @@unique([user1Id, user2Id])
   @@index([user1Id])

@@ -29,6 +29,7 @@ interface Match {
   } | null;
   unreadCount: number;
   matchedAt: Date;
+  isNew: boolean; // Flag to show "New!" badge
 }
 
 export default function MatchList() {
@@ -58,6 +59,7 @@ export default function MatchList() {
               createdAt: new Date(match.lastMessage.createdAt),
             }
           : null,
+        isNew: match.isNew ?? false, // Ensure isNew is included
       }));
 
       setMatches(processedMatches);
@@ -141,6 +143,23 @@ export default function MatchList() {
                 key={match.matchId}
                 href={`/dating/chat/${match.matchId}`}
                 className="block bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-4"
+                onClick={async () => {
+                  // Mark match as read when user clicks on it
+                  if (match.isNew) {
+                    try {
+                      await kyInstance.post(`/api/dating/matches/${match.matchId}/read`);
+                      // Update local state to remove "New!" badge immediately
+                      setMatches(prevMatches =>
+                        prevMatches.map(m =>
+                          m.matchId === match.matchId ? { ...m, isNew: false } : m
+                        )
+                      );
+                    } catch (error) {
+                      // Silently fail - non-critical
+                      console.error("Error marking match as read:", error);
+                    }
+                  }
+                }}
               >
                 <div className="flex items-center gap-4">
                   <div className="relative w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
@@ -159,9 +178,16 @@ export default function MatchList() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-semibold text-gray-900 truncate">
-                        {match.user.displayName}
-                      </h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-gray-900 truncate">
+                          {match.user.displayName}
+                        </h3>
+                        {match.isNew && (
+                          <span className="px-2 py-0.5 bg-purple-500 text-white text-xs font-bold rounded-full">
+                            New!
+                          </span>
+                        )}
+                      </div>
                       {match.lastMessage && (
                         <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
                           {formatRelativeDate(match.lastMessage.createdAt)}
