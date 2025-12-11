@@ -48,7 +48,7 @@ exports[`Calendar Page > should match snapshot 1`] = `
           <input
             class="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 w-auto text-center"
             type="date"
-            value="2025-04-11"
+            value="2025-12-11"
           />
           <button
             class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-8 px-4 py-2"
@@ -94,9 +94,6 @@ exports[`Calendar Page > should match snapshot 1`] = `
           >
             Sat
           </div>
-          <div
-            class="rounded-md border p-2 text-center"
-          />
           <div
             class="rounded-md border p-2 text-center"
           />
@@ -249,6 +246,11 @@ exports[`Calendar Page > should match snapshot 1`] = `
             class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
           >
             30
+          </div>
+          <div
+            class="cursor-pointer rounded-md border bg-card p-2 text-center text-muted-foreground "
+          >
+            31
           </div>
         </div>
       </div>

@@ -2,10 +2,6 @@
 
 exports[`Group Details Page > should match snapshot 1`] = `
 <body>
-  <div>
-    <p>
-      Loading group...
-    </p>
-  </div>
+  <div />
 </body>
 `;

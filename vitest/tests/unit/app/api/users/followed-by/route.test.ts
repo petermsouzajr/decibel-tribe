@@ -261,7 +261,12 @@ describe("GET /api/users/followed-by", () => {
     expect(mockUserFindUnique).not.toHaveBeenCalled(); // No target user lookup
     expect(mockGetUserDataSelect).toHaveBeenCalledWith(loggedInUserId);
     expect(mockFollowFindMany).toHaveBeenCalledWith({
-      where: { followingId: loggedInUserId }, // Should fetch followers of loggedInUser
+      where: {
+        followingId: loggedInUserId,
+        follower: {
+          deletedAt: null,
+        },
+      },
       select: {
         followerId: true,
         follower: { select: mockUserDataSelectObject },
@@ -313,7 +318,12 @@ describe("GET /api/users/followed-by", () => {
     expect(mockGetUserDataSelect).toHaveBeenCalledWith(loggedInUserId);
     // Prisma query assertion
     expect(mockFollowFindMany).toHaveBeenCalledWith({
-      where: { followingId: targetUserId },
+      where: {
+        followingId: targetUserId,
+        follower: {
+          deletedAt: null,
+        },
+      },
       select: {
         followerId: true, // Ensure followerId is selected
         follower: { select: mockUserDataSelectObject }, // Use the correct mocked select object

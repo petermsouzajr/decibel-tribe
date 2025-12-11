@@ -173,6 +173,10 @@ describe("GET /api/users/{userId}/posts", () => {
       where: {
         userId: targetUserId,
         groupId: null,
+        user: {
+          deletedAt: null,
+          blocksReceived: { none: { blockerId: loggedInUserId } },
+        },
       },
       include: mockGetPostDataInclude(loggedInUserId), // Use mock fn directly
       orderBy: { createdAt: "desc" },
@@ -209,6 +213,10 @@ describe("GET /api/users/{userId}/posts", () => {
       where: {
         userId: targetUserId,
         groupId: null,
+        user: {
+          deletedAt: null,
+          blocksReceived: { none: { blockerId: loggedInUserId } },
+        },
       },
       include: mockGetPostDataInclude(loggedInUserId), // Use mock fn directly
       orderBy: { createdAt: "desc" },

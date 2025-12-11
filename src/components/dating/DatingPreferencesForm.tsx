@@ -738,7 +738,7 @@ export default function DatingPreferencesForm() {
             />
             <div className="flex-1">
               <span className="text-sm font-semibold text-gray-900">
-                Prioritize music compatibility
+                Prioritize instrument and skill match
               </span>
               <p className="text-xs text-gray-600 mt-1">
                 When enabled, matches will be ranked by music taste compatibility (instruments & skills). 

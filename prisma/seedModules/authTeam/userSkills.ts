@@ -2,7 +2,11 @@ import { PrismaClient, Prisma } from "@prisma/client";
 import {
   faker,
 } from "../../seedUtils.js";
-import skillsList from "../../../src/data/skillsList.json";
+import * as fs from "fs";
+import * as path from "path";
+
+const skillsListPath = path.join(process.cwd(), "src/data/skillsList.json");
+const skillsList = JSON.parse(fs.readFileSync(skillsListPath, "utf-8")) as string[];
 
 interface UserInput {
   id: string;

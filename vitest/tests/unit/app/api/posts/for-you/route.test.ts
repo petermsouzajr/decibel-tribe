@@ -233,11 +233,18 @@ describe("API Route: GET /api/posts/for-you", () => {
     expect(prisma.post.findMany).toHaveBeenCalledTimes(1);
     expect(mockedTypes.getPostDataInclude).toHaveBeenCalledWith(loggedInUserId);
     expect(prisma.post.findMany).toHaveBeenCalledWith({
-      where: { groupId: null },
+      where: {
+        groupId: null,
+        user: {
+          deletedAt: null,
+          blocksReceived: { none: { blockerId: loggedInUserId } },
+        },
+      },
       include: mockedTypes.getPostDataInclude(loggedInUserId),
       orderBy: { createdAt: "desc" },
       take: 11, // pageSize + 1
       cursor: undefined,
+      skip: undefined,
     });
   });
 
@@ -258,7 +265,13 @@ describe("API Route: GET /api/posts/for-you", () => {
     expect(mockedTypes.getPostDataInclude).toHaveBeenCalledWith(loggedInUserId);
     expect(prisma.post.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { groupId: null },
+        where: expect.objectContaining({
+          groupId: null,
+          user: expect.objectContaining({
+            deletedAt: null,
+            blocksReceived: { none: { blockerId: loggedInUserId } },
+          }),
+        }),
         take: 11,
         cursor: undefined,
       }),
@@ -282,10 +295,16 @@ describe("API Route: GET /api/posts/for-you", () => {
     expect(prisma.post.findMany).toHaveBeenCalledTimes(1);
     expect(prisma.post.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { groupId: null },
+        where: expect.objectContaining({
+          groupId: null,
+          user: expect.objectContaining({
+            deletedAt: null,
+            blocksReceived: { none: { blockerId: loggedInUserId } },
+          }),
+        }),
         take: 11,
         cursor: undefined,
-        skip: undefined, // Ensure skip is undefined here
+        skip: undefined,
       }),
     );
   });
@@ -308,7 +327,13 @@ describe("API Route: GET /api/posts/for-you", () => {
     expect(prisma.post.findMany).toHaveBeenCalledTimes(1);
     expect(prisma.post.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { groupId: null },
+        where: expect.objectContaining({
+          groupId: null,
+          user: expect.objectContaining({
+            deletedAt: null,
+            blocksReceived: { none: { blockerId: loggedInUserId } },
+          }),
+        }),
         take: 11,
         cursor: { id: cursor }, // Check cursor is used
         skip: 1, // Check skip is used

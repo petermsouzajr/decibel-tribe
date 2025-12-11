@@ -116,6 +116,8 @@ describe("API Route: GET /api/posts/following", () => {
   const expectedPostFindManyWhereClause = {
     user: {
       followers: { some: { followerId: loggedInUserId } },
+      deletedAt: null,
+      blocksReceived: { none: { blockerId: loggedInUserId } },
     },
     groupId: null,
   };

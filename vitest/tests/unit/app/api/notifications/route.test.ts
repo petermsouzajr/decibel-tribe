@@ -255,7 +255,12 @@ describe("GET /api/notifications", () => {
     expect(response.status).toBe(200);
     expect(mockNotificationFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { recipientId: loggedInUserId },
+        where: expect.objectContaining({
+          recipientId: loggedInUserId,
+          issuer: expect.objectContaining({
+            deletedAt: null,
+          }),
+        }),
         take: 11,
         cursor: undefined,
         orderBy: { createdAt: "desc" },
@@ -308,7 +313,12 @@ describe("GET /api/notifications", () => {
     expect(response.status).toBe(200);
     expect(mockNotificationFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { recipientId: loggedInUserId },
+        where: expect.objectContaining({
+          recipientId: loggedInUserId,
+          issuer: expect.objectContaining({
+            deletedAt: null,
+          }),
+        }),
         take: pageSize + 1,
         cursor: { id: cursor },
         orderBy: { createdAt: "desc" },

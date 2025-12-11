@@ -88,15 +88,15 @@ exports[`Sign Up Page > should match the snapshot 1`] = `
               >
                 <label
                   class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  for=":rl:-form-item"
+                  for="_r_l_-form-item"
                 >
                   Username
                 </label>
                 <input
-                  aria-describedby=":rl:-form-item-description"
+                  aria-describedby="_r_l_-form-item-description"
                   aria-invalid="false"
                   class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  id=":rl:-form-item"
+                  id="_r_l_-form-item"
                   name="username"
                   placeholder="Pick a username"
                   value=""
@@ -107,15 +107,15 @@ exports[`Sign Up Page > should match the snapshot 1`] = `
               >
                 <label
                   class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  for=":rm:-form-item"
+                  for="_r_m_-form-item"
                 >
                   Email
                 </label>
                 <input
-                  aria-describedby=":rm:-form-item-description"
+                  aria-describedby="_r_m_-form-item-description"
                   aria-invalid="false"
                   class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  id=":rm:-form-item"
+                  id="_r_m_-form-item"
                   name="email"
                   placeholder="Email - We will send a verification code"
                   type="email"
@@ -127,7 +127,7 @@ exports[`Sign Up Page > should match the snapshot 1`] = `
               >
                 <label
                   class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  for=":rn:-form-item"
+                  for="_r_n_-form-item"
                 >
                   Password
                 </label>
@@ -135,10 +135,10 @@ exports[`Sign Up Page > should match the snapshot 1`] = `
                   class="relative"
                 >
                   <input
-                    aria-describedby=":rn:-form-item-description"
+                    aria-describedby="_r_n_-form-item-description"
                     aria-invalid="false"
                     class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pe-10"
-                    id=":rn:-form-item"
+                    id="_r_n_-form-item"
                     name="password"
                     placeholder="Password, 8 characters minimum"
                     type="password"

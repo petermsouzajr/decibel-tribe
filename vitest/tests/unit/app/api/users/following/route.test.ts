@@ -194,11 +194,15 @@ describe("GET /api/users/following", () => {
     expect(mockGetUserDataSelect).toHaveBeenCalledWith(loggedInUserId);
     const expectedSelect = mockGetUserDataSelect(loggedInUserId); // Get expected select object
     expect(mockFollowFindMany).toHaveBeenCalledWith({
-      where: { followerId: loggedInUserId },
+      where: {
+        followerId: loggedInUserId,
+        following: {
+          deletedAt: null,
+        },
+      },
       select: { following: { select: expectedSelect } }, // Use the select object
       take: 11,
       orderBy: { createdAt: "desc" },
-      // Removed expectation of skip: 0
     });
     expect(body.users).toHaveLength(2);
     expect(body.users[0].id).toBe("user-1");
@@ -239,7 +243,12 @@ describe("GET /api/users/following", () => {
     expect(mockGetUserDataSelect).toHaveBeenCalledWith(loggedInUserId);
     const expectedSelect = mockGetUserDataSelect(loggedInUserId);
     expect(mockFollowFindMany).toHaveBeenCalledWith({
-      where: { followerId: targetUserId },
+      where: {
+        followerId: targetUserId,
+        following: {
+          deletedAt: null,
+        },
+      },
       select: { following: { select: expectedSelect } },
       take: pageSize + 1,
       cursor: {
@@ -320,7 +329,12 @@ describe("GET /api/users/following", () => {
     });
     expect(mockFollowFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { followerId: loggedInUserId }, // Still uses loggedInUserId
+        where: expect.objectContaining({
+          followerId: loggedInUserId,
+          following: expect.objectContaining({
+            deletedAt: null,
+          }),
+        }),
       }),
     );
   });

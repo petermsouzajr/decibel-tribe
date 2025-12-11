@@ -253,9 +253,22 @@ describe("API Route: GET /api/search", () => {
       where: {
         OR: [
           { content: { contains: query, mode: "insensitive" } },
-          { user: { displayName: { contains: query, mode: "insensitive" } } },
-          { user: { username: { contains: query, mode: "insensitive" } } },
+          { 
+            user: { 
+              displayName: { contains: query, mode: "insensitive" },
+              deletedAt: null,
+            },
+          },
+          { 
+            user: { 
+              username: { contains: query, mode: "insensitive" },
+              deletedAt: null,
+            },
+          },
         ],
+        user: {
+          deletedAt: null,
+        },
       },
       include: mockGetPostDataInclude(loggedInUserId),
       orderBy: { createdAt: "desc" },

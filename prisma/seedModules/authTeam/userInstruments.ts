@@ -2,7 +2,11 @@ import { PrismaClient, Prisma } from "@prisma/client";
 import {
   faker,
 } from "../../seedUtils.js";
-import instrumentList from "../../../src/data/instrumentList.json";
+import * as fs from "fs";
+import * as path from "path";
+
+const instrumentListPath = path.join(process.cwd(), "src/data/instrumentList.json");
+const instrumentList = JSON.parse(fs.readFileSync(instrumentListPath, "utf-8")) as string[];
 
 interface UserInput {
   id: string;

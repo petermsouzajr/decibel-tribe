@@ -84,15 +84,15 @@ exports[`Login Page > should match snapshot 1`] = `
               >
                 <label
                   class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  for=":re:-form-item"
+                  for="_r_e_-form-item"
                 >
                   Username/Email
                 </label>
                 <input
-                  aria-describedby=":re:-form-item-description"
+                  aria-describedby="_r_e_-form-item-description"
                   aria-invalid="false"
                   class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  id=":re:-form-item"
+                  id="_r_e_-form-item"
                   name="username"
                   placeholder="Username/Email"
                   value=""
@@ -103,7 +103,7 @@ exports[`Login Page > should match snapshot 1`] = `
               >
                 <label
                   class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  for=":rf:-form-item"
+                  for="_r_f_-form-item"
                 >
                   Password
                 </label>
@@ -111,10 +111,10 @@ exports[`Login Page > should match snapshot 1`] = `
                   class="relative"
                 >
                   <input
-                    aria-describedby=":rf:-form-item-description"
+                    aria-describedby="_r_f_-form-item-description"
                     aria-invalid="false"
                     class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pe-10"
-                    id=":rf:-form-item"
+                    id="_r_f_-form-item"
                     name="password"
                     placeholder="Password"
                     type="password"
@@ -176,7 +176,6 @@ exports[`Login Page > should match snapshot 1`] = `
           data-nimg="1"
           decoding="async"
           height="1792"
-          loading="lazy"
           src="/_next/image?url=%2Fsrc%2Fassets%2Flogin-image.jpg&w=2048&q=75"
           srcset="/_next/image?url=%2Fsrc%2Fassets%2Flogin-image.jpg&w=1080&q=75 1x, /_next/image?url=%2Fsrc%2Fassets%2Flogin-image.jpg&w=2048&q=75 2x"
           style="color: transparent;"
