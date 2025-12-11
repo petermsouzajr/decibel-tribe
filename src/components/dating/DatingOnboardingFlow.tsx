@@ -942,8 +942,8 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                     onChange={(value) => setFormData({...formData, preferredCoronavirusVaccinated: value})}
                     options={[
                       { label: "No preference", value: "" },
-                      { label: "Vaccinated", value: "Yes" },
-                      { label: "Not vaccinated", value: "No" },
+                      { label: "Coronavirus Vaccinated", value: "Yes" },
+                      { label: "Not Coronavirus Vaccinated", value: "No" },
                     ]}
                     label="Preferred Vaccination Status"
                     placeholder="No preference"

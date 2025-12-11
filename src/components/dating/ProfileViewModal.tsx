@@ -314,7 +314,7 @@ export default function ProfileViewModal({
             )}
             {profile.coronavirusVaccinated && (
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-md font-semibold text-gray-700 min-w-[80px]">Vaccinated:</span>
+                <span className="text-md font-semibold text-gray-700 min-w-[80px]">Coronavirus Vaccinated:</span>
                 <span className="text-md text-gray-900">{profile.coronavirusVaccinated}</span>
               </div>
             )}

@@ -51,12 +51,43 @@ export async function deleteTestUsers(prismaClient: any): Promise<string[]> {
     }
 
     // Delete related data first using the passed prismaClient
+    // Get post IDs before deleting posts so we can delete associated media
+    const postsToDelete = await prismaClient.post.findMany({
+      where: { userId: { in: userIds } },
+      select: { id: true },
+    });
+    const postIds = postsToDelete.map((p: { id: string }) => p.id);
+
     await prismaClient.event.deleteMany({
       where: { createdById: { in: userIds } },
     });
+    
+    // Delete media associated with posts before deleting posts
+    // Note: This is redundant since cascade delete handles it, but ensures cleanup
+    if (postIds.length > 0) {
+      await prismaClient.media.deleteMany({
+        where: { postId: { in: postIds } },
+      });
+    }
+    
     await prismaClient.post.deleteMany({
       where: { userId: { in: userIds } },
     });
+    
+    // Clean up orphaned media (media with postId: null) that are older than 1 hour
+    // This handles cases where media was uploaded but never attached to a post
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const orphanedMediaCount = await prismaClient.media.deleteMany({
+      where: {
+        postId: null,
+        createdAt: {
+          lte: oneHourAgo,
+        },
+      },
+    });
+    if (orphanedMediaCount.count > 0) {
+      console.log(`...Deleted ${orphanedMediaCount.count} orphaned media records (postId: null).`);
+    }
     await prismaClient.comment.deleteMany({
       where: { userId: { in: userIds } },
     });
@@ -81,6 +112,16 @@ export async function deleteTestUsers(prismaClient: any): Promise<string[]> {
     await prismaClient.follow.deleteMany({
       where: {
         OR: [{ followerId: { in: userIds } }, { followingId: { in: userIds } }],
+      },
+    });
+    // Delete reports where users are reporters, reported users, or admins who resolved
+    await prismaClient.report.deleteMany({
+      where: {
+        OR: [
+          { reporterId: { in: userIds } },
+          { reportedId: { in: userIds } },
+          { resolvedBy: { in: userIds } },
+        ],
       },
     });
     // Delete the users themselves last

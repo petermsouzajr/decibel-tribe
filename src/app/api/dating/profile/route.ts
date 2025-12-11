@@ -153,6 +153,9 @@ export async function PUT(request: NextRequest) {
       height,
       gender,
       zipCode,
+      city: cityInput,
+      latitude: latitudeInput,
+      longitude: longitudeInput,
       coronavirusVaccinated,
       religion,
       sexualOrientation,
@@ -166,12 +169,19 @@ export async function PUT(request: NextRequest) {
       interests,
     } = await request.json();
 
-    // Geocode zipCode if provided (only called once when user updates their zip code)
+    // Handle location updates
     let city: string | null = null;
     let latitude: number | null = null;
     let longitude: number | null = null;
     
-    if (zipCode !== undefined && zipCode && zipCode.trim()) {
+    // If city, latitude, and longitude are provided directly, use them
+    if (cityInput !== undefined && latitudeInput !== undefined && longitudeInput !== undefined) {
+      city = cityInput?.trim() || null;
+      latitude = typeof latitudeInput === 'number' ? latitudeInput : null;
+      longitude = typeof longitudeInput === 'number' ? longitudeInput : null;
+    } 
+    // Otherwise, geocode zipCode if provided (only called once when user updates their zip code)
+    else if (zipCode !== undefined && zipCode && zipCode.trim()) {
       const geocoded = await geocodeZipCode(zipCode.trim());
       if (geocoded) {
         // Only set city if geocoding returned a valid city name (not zip code)
@@ -195,6 +205,9 @@ export async function PUT(request: NextRequest) {
       height !== undefined ||
       gender !== undefined ||
       zipCode !== undefined ||
+      cityInput !== undefined ||
+      latitudeInput !== undefined ||
+      longitudeInput !== undefined ||
       coronavirusVaccinated !== undefined ||
       religion !== undefined ||
       sexualOrientation !== undefined ||

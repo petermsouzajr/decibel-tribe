@@ -27,7 +27,7 @@ export interface CreatedDatingUser {
  * - Honolulu, HI (10 users) - lat: 21.3099, lon: -157.8581
  *
  * The remaining 150 users are randomly distributed across mainland US cities.
- * Testers can use Travel Mode to set their location to any of these cities
+ * Testers can update their zip code to set their location to any of these cities
  * to find guaranteed users for testing.
  */
 
@@ -335,9 +335,6 @@ export async function deleteDatingTestUsers(
     await tx.user_dating_profile.deleteMany({
       where: { userId: { in: userIds } },
     });
-    await tx.dating_location_overrides.deleteMany({
-      where: { userId: { in: userIds } },
-    });
     await tx.swipes.deleteMany({
       where: {
         OR: [
@@ -424,7 +421,7 @@ export async function seedDatingProfiles(
       gender: "Male",
       sexualOrientation: "Straight",
       location: GUARANTEED_TEST_CITIES[0], // Los Angeles
-      preferredGender: "Female",
+      preferredGender: JSON.stringify([{ gender: "Female", sexualOrientation: ["Straight"] }]),
       preferredSexualOrientation: "Straight",
       preferredMinAge: 23,
       preferredMaxAge: 35,
@@ -436,7 +433,7 @@ export async function seedDatingProfiles(
       gender: "Female",
       sexualOrientation: "Straight",
       location: GUARANTEED_TEST_CITIES[0], // Los Angeles
-      preferredGender: "Male",
+      preferredGender: JSON.stringify([{ gender: "Male", sexualOrientation: ["Straight"] }]),
       preferredSexualOrientation: "Straight",
       preferredMinAge: 23,
       preferredMaxAge: 32,
@@ -448,7 +445,11 @@ export async function seedDatingProfiles(
       gender: "Male",
       sexualOrientation: "Bisexual",
       location: GUARANTEED_TEST_CITIES[1], // San Francisco
-      preferredGender: null, // Open to any
+      preferredGender: JSON.stringify([
+        { gender: "Female", sexualOrientation: ["Straight", "Bisexual"] },
+        { gender: "Male", sexualOrientation: ["Gay", "Bisexual"] },
+        { gender: "Non-binary", sexualOrientation: [] }
+      ]), // Open to any - set all genders
       preferredSexualOrientation: null,
       preferredMinAge: 25,
       preferredMaxAge: 40,
@@ -460,7 +461,7 @@ export async function seedDatingProfiles(
       gender: "Female",
       sexualOrientation: "Straight",
       location: GUARANTEED_TEST_CITIES[2], // Chicago
-      preferredGender: "Male",
+      preferredGender: JSON.stringify([{ gender: "Male", sexualOrientation: ["Straight"] }]),
       preferredSexualOrientation: "Straight",
       preferredMinAge: 20,
       preferredMaxAge: 30,
@@ -472,7 +473,7 @@ export async function seedDatingProfiles(
       gender: "Male",
       sexualOrientation: "Straight",
       location: GUARANTEED_TEST_CITIES[0], // Los Angeles
-      preferredGender: "Female",
+      preferredGender: JSON.stringify([{ gender: "Female", sexualOrientation: ["Straight"] }]),
       preferredSexualOrientation: "Straight",
       preferredMinAge: 22,
       preferredMaxAge: 32,
@@ -491,7 +492,7 @@ export async function seedDatingProfiles(
         gender: "Female",
         sexualOrientation: "Straight",
         location: GUARANTEED_TEST_CITIES[0], // Same city as DeckReady
-        preferredGender: "Male",
+        preferredGender: JSON.stringify([{ gender: "Male", sexualOrientation: ["Straight"] }]),
         preferredSexualOrientation: "Straight",
         preferredMinAge: 25,
         preferredMaxAge: 35,
@@ -511,7 +512,7 @@ export async function seedDatingProfiles(
         gender: "Male",
         sexualOrientation: "Straight",
         location: GUARANTEED_TEST_CITIES[0], // Same city
-        preferredGender: "Female",
+        preferredGender: JSON.stringify([{ gender: "Female", sexualOrientation: ["Straight"] }]),
         preferredSexualOrientation: "Straight",
         preferredMinAge: 22,
         preferredMaxAge: 30,
@@ -531,7 +532,11 @@ export async function seedDatingProfiles(
         gender: i === 0 ? "Female" : "Male",
         sexualOrientation: i === 0 ? "Straight" : "Bisexual",
         location: GUARANTEED_TEST_CITIES[1], // San Francisco
-        preferredGender: null,
+        preferredGender: JSON.stringify([
+          { gender: "Female", sexualOrientation: ["Straight", "Bisexual"] },
+          { gender: "Male", sexualOrientation: ["Gay", "Bisexual"] },
+          { gender: "Non-binary", sexualOrientation: [] }
+        ]), // Open to any - set all genders
         preferredSexualOrientation: null,
         preferredMinAge: 25,
         preferredMaxAge: 40,
@@ -551,7 +556,7 @@ export async function seedDatingProfiles(
         gender: "Female",
         sexualOrientation: "Straight",
         location: GUARANTEED_TEST_CITIES[0], // Los Angeles
-        preferredGender: "Male",
+        preferredGender: JSON.stringify([{ gender: "Male", sexualOrientation: ["Straight"] }]),
         preferredSexualOrientation: "Straight",
         preferredMinAge: 25,
         preferredMaxAge: 35,
@@ -616,6 +621,8 @@ export async function seedDatingProfiles(
 
     // Create dating preferences
     const preferencesId = generateIdFromEntropySize(10);
+    
+    // preferredGender is already in JSON format from config, so use it directly
     const preferencesData: Prisma.user_dating_preferencesCreateInput = {
       id: preferencesId,
       users: { connect: { id: userId } },
@@ -624,13 +631,22 @@ export async function seedDatingProfiles(
       preferredMaxDistanceKm: 50, // 50km for test users
       preferredMinHeight: 60, // 5'0" in inches
       preferredMaxHeight: 72, // 6'0" in inches
-      preferredGender: config.preferredGender,
+      preferredGender: config.preferredGender, // Already JSON string from config
       preferredSexualOrientation: config.preferredSexualOrientation,
       preferredCoronavirusVaccinated: null,
       preferredReligions: [],
+      preferredHasKids: null,
+      preferredWantsKids: null,
+      preferredEducation: [],
+      preferredPoliticalViews: [],
+      preferredDiet: [],
+      preferredRelationshipType: [],
       preferredInstruments: [],
       preferredSkills: [],
       matchMusicTastes: false,
+      exactMatchAllFilters: false,
+      minimumMatchPercentage: 70,
+      nonNegotiableFields: [],
     };
     preferencesToCreate.push(preferencesData);
 
@@ -1161,22 +1177,48 @@ export async function seedDatingProfiles(
       },
       select: { id: true, username: true },
     });
-    const createdUserIds = new Set(actualCreatedUsers.map((u: { id: string; username: string }) => u.id));
+    
+    // Create a mapping from attempted user ID to actual user ID (by username)
+    const userIdMap = new Map<string, string>();
+    type UserWithIdAndUsername = { id: string; username: string };
+    for (const attemptedUser of usersToCreate) {
+      const actualUser = actualCreatedUsers.find((u: UserWithIdAndUsername) => u.username === attemptedUser.username);
+      if (actualUser) {
+        userIdMap.set(attemptedUser.id!, actualUser.id);
+      }
+    }
+    
+    const createdUserIds = new Set(actualCreatedUsers.map((u: UserWithIdAndUsername) => u.id));
     console.log(`...Fetched ${actualCreatedUsers.length} actual users from DB.`);
 
     // Filter profiles, preferences, and photos to only include users that were actually created
-    const validProfiles = profilesToCreate.filter((p) => {
-      const userId = (p.user as { connect: { id: string } }).connect.id;
-      return createdUserIds.has(userId);
-    });
-    const validPreferences = preferencesToCreate.filter((p) => {
-      const userId = (p.users as { connect: { id: string } }).connect.id;
-      return createdUserIds.has(userId);
-    });
-    const validPhotos = photosToCreate.filter((p) => {
-      const userId = (p.users as { connect: { id: string } }).connect.id;
-      return createdUserIds.has(userId);
-    });
+    // and map their user IDs to the actual IDs from the database
+    const validProfiles = profilesToCreate
+      .map((p) => {
+        const attemptedUserId = (p.user as { connect: { id: string } }).connect.id;
+        const actualUserId = userIdMap.get(attemptedUserId);
+        if (!actualUserId) return null;
+        return { ...p, actualUserId };
+      })
+      .filter((p): p is NonNullable<typeof p> => p !== null);
+      
+    const validPreferences = preferencesToCreate
+      .map((p) => {
+        const attemptedUserId = (p.users as { connect: { id: string } }).connect.id;
+        const actualUserId = userIdMap.get(attemptedUserId);
+        if (!actualUserId) return null;
+        return { ...p, actualUserId };
+      })
+      .filter((p): p is NonNullable<typeof p> => p !== null);
+      
+    const validPhotos = photosToCreate
+      .map((p) => {
+        const attemptedUserId = (p.users as { connect: { id: string } }).connect.id;
+        const actualUserId = userIdMap.get(attemptedUserId);
+        if (!actualUserId) return null;
+        return { ...p, actualUserId };
+      })
+      .filter((p): p is NonNullable<typeof p> => p !== null);
 
     if (validProfiles.length < profilesToCreate.length) {
       console.log(
@@ -1184,108 +1226,181 @@ export async function seedDatingProfiles(
       );
     }
 
-    // Add users to StreamChat (batch in groups of 100)
-    if (streamClient) {
-      const streamChatUsers = usersToCreate
-        .filter((user) => createdUserIds.has(user.id!))
-        .map((user) => ({
-        id: user.id!,
-        name: user.displayName!,
-        image: user.avatarUrl,
-        email: user.email!,
-      }));
-      try {
-        // StreamChat has a limit of 100 users per batch
-        const batchSize = 100;
-        let upsertedCount = 0;
-        for (let i = 0; i < streamChatUsers.length; i += batchSize) {
-          const batch = streamChatUsers.slice(i, i + batchSize);
-          await streamClient.upsertUsers(batch);
-          upsertedCount += batch.length;
-          console.log(`...${upsertedCount}/${streamChatUsers.length} users upserted to StreamChat.`);
-        }
-        console.log(
-          `...${streamChatUsers.length} users upserted to StreamChat.`,
-        );
-      } catch (error) {
-        console.error(
-          `Failed to add users to StreamChat:`,
-          (error as Error).message,
-        );
-      }
-    }
-
-    // Create dating profiles (only for users that were actually created)
+    // Create dating profiles using batch operations (convert relations to direct IDs)
     console.log(`Creating ${validProfiles.length} dating profiles...`);
-    for (const profile of validProfiles) {
-      await tx.user_dating_profile.create({
-        data: profile,
+    const profilesData = validProfiles.map((p) => {
+      const userId = p.actualUserId;
+      return {
+        id: p.id,
+        userId,
+        age: p.age,
+        height: p.height,
+        gender: p.gender,
+        sexualOrientation: p.sexualOrientation,
+        religion: p.religion,
+        coronavirusVaccinated: p.coronavirusVaccinated,
+        zipCode: p.zipCode,
+        city: p.city,
+        latitude: p.latitude,
+        longitude: p.longitude,
+        bio: p.bio,
+        hasKids: p.hasKids,
+        smokes: p.smokes,
+        drinks: p.drinks,
+        activity: p.activity,
+        education: p.education,
+        wantsKids: p.wantsKids,
+        politicalViews: p.politicalViews,
+        diet: p.diet,
+        relationshipType: p.relationshipType,
+        job: p.job,
+        pets: p.pets,
+        interests: p.interests || [],
+      };
+    });
+    
+    // Batch create profiles in chunks of 50
+    const profileBatchSize = 50;
+    for (let i = 0; i < profilesData.length; i += profileBatchSize) {
+      const batch = profilesData.slice(i, i + profileBatchSize);
+      await tx.user_dating_profile.createMany({
+        data: batch,
+        skipDuplicates: true,
       });
     }
     console.log(`...${validProfiles.length} profiles created.`);
 
-    // Create dating preferences (only for users that were actually created)
+    // Create dating preferences using batch operations
     console.log(`Creating ${validPreferences.length} dating preferences...`);
-    for (const prefs of validPreferences) {
-      await tx.user_dating_preferences.create({
-        data: prefs,
+    const preferencesData = validPreferences.map((p) => {
+      const userId = p.actualUserId;
+      return {
+        id: p.id,
+        userId,
+        preferredMinAge: p.preferredMinAge,
+        preferredMaxAge: p.preferredMaxAge,
+        preferredMaxDistanceKm: p.preferredMaxDistanceKm,
+        preferredMinHeight: p.preferredMinHeight,
+        preferredMaxHeight: p.preferredMaxHeight,
+        preferredGender: p.preferredGender,
+        preferredSexualOrientation: p.preferredSexualOrientation,
+        preferredCoronavirusVaccinated: p.preferredCoronavirusVaccinated,
+        preferredReligions: p.preferredReligions || [],
+        preferredHasKids: p.preferredHasKids,
+        preferredWantsKids: p.preferredWantsKids,
+        preferredEducation: p.preferredEducation || [],
+        preferredPoliticalViews: p.preferredPoliticalViews || [],
+        preferredDiet: p.preferredDiet || [],
+        preferredRelationshipType: p.preferredRelationshipType || [],
+        preferredInstruments: p.preferredInstruments || [],
+        preferredSkills: p.preferredSkills || [],
+        matchMusicTastes: p.matchMusicTastes,
+        exactMatchAllFilters: p.exactMatchAllFilters,
+        minimumMatchPercentage: p.minimumMatchPercentage,
+        nonNegotiableFields: p.nonNegotiableFields || [],
+      };
+    });
+    
+    // Batch create preferences in chunks of 50
+    const preferencesBatchSize = 50;
+    for (let i = 0; i < preferencesData.length; i += preferencesBatchSize) {
+      const batch = preferencesData.slice(i, i + preferencesBatchSize);
+      await tx.user_dating_preferences.createMany({
+        data: batch,
+        skipDuplicates: true,
       });
     }
     console.log(`...${validPreferences.length} preferences created.`);
 
-    // Create photos (only for users that were actually created)
+    // Create photos using batch operations
     console.log(`Creating ${validPhotos.length} user photos...`);
-    for (const photo of validPhotos) {
-      await tx.user_photos.create({
-        data: photo,
+    const photosData = validPhotos.map((p) => {
+      const userId = p.actualUserId;
+      return {
+        id: p.id,
+        userId,
+        url: p.url,
+        isPrimary: p.isPrimary,
+      };
+    });
+    
+    // Batch create photos in chunks of 100
+    const photosBatchSize = 100;
+    for (let i = 0; i < photosData.length; i += photosBatchSize) {
+      const batch = photosData.slice(i, i + photosBatchSize);
+      await tx.user_photos.createMany({
+        data: batch,
+        skipDuplicates: true,
       });
     }
     console.log(`...${validPhotos.length} photos created.`);
 
     // Create swipes (likes/dislikes) for test users
+    // Map swipe user IDs to actual user IDs from database
     if (swipesToCreate.length > 0) {
       console.log(`Creating ${swipesToCreate.length} swipes for test users...`);
+      let swipeCount = 0;
       for (const swipe of swipesToCreate) {
+        const actualFromUserId = userIdMap.get(swipe.fromUserId) || swipe.fromUserId;
+        const actualToUserId = userIdMap.get(swipe.toUserId) || swipe.toUserId;
+        
+        // Skip if either user ID doesn't exist in the database
+        if (!createdUserIds.has(actualFromUserId) || !createdUserIds.has(actualToUserId)) {
+          continue;
+        }
+        
         try {
           await tx.swipes.create({
             data: {
               id: generateIdFromEntropySize(10),
-              fromUserId: swipe.fromUserId,
-              toUserId: swipe.toUserId,
+              fromUserId: actualFromUserId,
+              toUserId: actualToUserId,
               direction: swipe.direction,
               createdAt: new Date(),
             },
           });
+          swipeCount++;
         } catch (error) {
-          // Skip if swipe already exists
+          // Skip if swipe already exists or other error
           console.warn(`Swipe already exists or error: ${(error as Error).message}`);
         }
       }
-      console.log(`...${swipesToCreate.length} swipes created.`);
+      console.log(`...${swipeCount} swipes created.`);
     }
 
     // Create matches for test users
+    // Map match user IDs to actual user IDs from database
     if (matchesToCreate.length > 0) {
       console.log(`Creating ${matchesToCreate.length} matches for test users...`);
       const createdMatchIds: string[] = [];
+      let matchCount = 0;
       for (const match of matchesToCreate) {
+        const actualUser1Id = userIdMap.get(match.user1Id) || match.user1Id;
+        const actualUser2Id = userIdMap.get(match.user2Id) || match.user2Id;
+        
+        // Skip if either user ID doesn't exist in the database
+        if (!createdUserIds.has(actualUser1Id) || !createdUserIds.has(actualUser2Id)) {
+          continue;
+        }
+        
         try {
           const matchId = generateIdFromEntropySize(10);
           await tx.matches.create({
             data: {
               id: matchId,
-              user1Id: match.user1Id,
-              user2Id: match.user2Id,
+              user1Id: actualUser1Id,
+              user2Id: actualUser2Id,
               createdAt: new Date(),
             },
           });
           createdMatchIds.push(matchId);
+          matchCount++;
         } catch (error) {
           // Skip if match already exists
           console.warn(`Match already exists or error: ${(error as Error).message}`);
         }
       }
-      console.log(`...${matchesToCreate.length} matches created.`);
+      console.log(`...${matchCount} matches created.`);
 
       // Create match notifications for all created matches
       if (createdMatchIds.length > 0) {

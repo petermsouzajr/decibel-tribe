@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 export async function login(formData: FormData) {
   const username = formData.get("username") as string;
@@ -74,6 +75,10 @@ export async function login(formData: FormData) {
 
     redirect("/");
   } catch (error) {
+    // Re-throw redirect errors (they indicate successful redirect)
+    if (isRedirectError(error)) {
+      throw error;
+    }
     console.error("Login error:", error);
     return { error: "An error occurred during login" };
   }

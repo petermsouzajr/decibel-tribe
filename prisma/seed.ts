@@ -37,6 +37,12 @@ import {
 } from "./seedModules/notificationsTeam/notifications.js";
 import { seedReports } from "./seedModules/adminTeam/reports.js";
 import { seedDatingProfiles } from "./seedModules/datingTeam/datingProfiles.js";
+import { seedCommentLikes } from "./seedModules/socialTeam/commentLikes.js";
+import { seedBlocks } from "./seedModules/socialTeam/blocks.js";
+import { seedUserInstruments } from "./seedModules/authTeam/userInstruments.js";
+import { seedUserSkills } from "./seedModules/authTeam/userSkills.js";
+import { seedIdentityVerification } from "./seedModules/datingTeam/identityVerification.js";
+import { seedMatches } from "./seedModules/datingTeam/matches.js";
 
 async function main() {
   // --- Deletion (outside transaction) ---
@@ -83,32 +89,44 @@ async function main() {
           tx as any,
           createdUsers,
         );
+        console.log(`Created ${createdPublicPosts.length} public posts`);
+        
         const createdPublicComments = await seedPublicComments(
           tx as any,
           createdUsers,
           createdPublicPosts,
         );
+        console.log(`Created ${createdPublicComments.length} public comments`);
+        
         const createdEvents = await seedEvents(tx as any, createdUsers);
+        console.log(`Created ${createdEvents.length} events`);
+        
         const createdAttendees = await seedEventAttendees(
           tx as any,
           createdUsers,
           createdEvents,
         );
+        console.log(`Created ${createdAttendees.length} event attendees`);
+        
         const createdFollowers = await seedFollows(tx as any, createdUsers);
+        console.log(`Created ${createdFollowers.length} follows`);
 
         const createdGroupPosts = await seedGroupPosts(
           tx as any,
           createdGroups,
           createdGroupMembers,
         );
+        console.log(`Created ${createdGroupPosts.length} group posts`);
 
         const allPosts = [...createdPublicPosts, ...createdGroupPosts];
+        console.log(`Total posts for likes/dislikes: ${allPosts.length}`);
 
         const { createdLikes, createdDislikes } = await seedLikesDislikes(
           tx as any,
           createdUsers,
           allPosts,
         );
+        console.log(`Created ${createdLikes.length} likes and ${createdDislikes.length} dislikes`);
 
         await seedBookmarks(tx as any, createdUsers, allPosts);
         await seedMedia(tx as any, allPosts);
@@ -125,6 +143,9 @@ async function main() {
           ...createdGroupComments,
         ];
 
+        // Seed comment likes
+        await seedCommentLikes(tx as any, createdUsers, allComments);
+
         await seedNotifications(
           tx as any,
           allPosts,
@@ -135,6 +156,7 @@ async function main() {
           createdEvents,
           createdAttendees,
         );
+        console.log(`Notifications seeding completed`);
 
         // --- AdminTeam: seed reports ---
         const adminUsers = await tx.user.findMany({
@@ -154,13 +176,50 @@ async function main() {
           eventIds: allEventIds,
         });
 
+        // Seed blocks
+        await seedBlocks(tx as any, createdUsers);
+
+        // Seed user instruments and skills
+        await seedUserInstruments(tx as any, createdUsers);
+        await seedUserSkills(tx as any, createdUsers);
+
         // --- DatingTeam: seed dating profiles ---
-        await seedDatingProfiles(tx as any, streamChatClient, passwordHash);
+        const datingUsers = await seedDatingProfiles(tx as any, streamChatClient, passwordHash);
+        
+        // Get all dating active users for matches and identity verification
+        const allDatingActiveUsers = await tx.user.findMany({
+          where: { isDatingActive: true },
+          select: { id: true, isDatingActive: true },
+        });
+        
+        // Seed additional matches and identity verification
+        await seedMatches(tx as any, allDatingActiveUsers);
+        await seedIdentityVerification(tx as any, allDatingActiveUsers);
 
         console.log("Prisma transaction committed successfully.");
+        
+        // Add dating users to StreamChat AFTER transaction (non-blocking)
+        if (streamChatClient && datingUsers.length > 0) {
+          console.log("Adding dating users to StreamChat (outside transaction)...");
+          const streamChatUsers = datingUsers.map((u) => ({
+            id: u.userId,
+            name: u.username,
+            email: `${u.username}@${cypressEnv.testUserEmailDomain}`,
+          }));
+          try {
+            const batchSize = 100;
+            for (let i = 0; i < streamChatUsers.length; i += batchSize) {
+              const batch = streamChatUsers.slice(i, i + batchSize);
+              await streamChatClient.upsertUsers(batch);
+            }
+            console.log(`...${streamChatUsers.length} dating users upserted to StreamChat.`);
+          } catch (error) {
+            console.error("Failed to add dating users to StreamChat:", (error as Error).message);
+          }
+        }
       },
       {
-        timeout: 60000, // Increase timeout to 60 seconds (60000 ms)
+        timeout: 120000, // Increase timeout to 120 seconds (120000 ms) for large seed operations
       },
     ); // End of prisma.$transaction
 

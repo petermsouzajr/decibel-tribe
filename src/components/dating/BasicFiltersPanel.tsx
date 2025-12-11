@@ -273,8 +273,17 @@ export default function BasicFiltersPanel({
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Gender Preference with Nested Sexual Orientation */}
-            <div>
+            {/* Always Enforced Info Message */}
+            <div className="bg-blue-900/30 border border-blue-500/30 rounded-lg p-4">
+              <p className="text-xs text-blue-200">
+                <strong>Always Enforced:</strong> Gender, Age Range, Distance, Has Kids, Wants Kids, Smoking, Drinking, and Vaccination Status are automatically treated as deal-breakers unless you set them to &quot;No preference&quot;.
+              </p>
+            </div>
+
+            {/* Always Enforced Filters - Grouped Section */}
+            <div className="border border-blue-500/50 rounded-lg p-4 space-y-6 bg-blue-950/20">
+              {/* Gender Preference with Nested Sexual Orientation */}
+              <div>
               <label className="block text-sm font-semibold text-white mb-2">
                 Gender Preference
               </label>
@@ -474,13 +483,6 @@ export default function BasicFiltersPanel({
               )}
             </div>
 
-            {/* Hard-Coded Non-Negotiables Info */}
-            <div className="bg-blue-900/30 border border-blue-500/30 rounded-lg p-4">
-              <p className="text-xs text-blue-200 mb-2">
-                <strong>Always Enforced:</strong> Gender, Age Range, Distance, Has Kids, Wants Kids, Smoking, Drinking, and Vaccination Status are automatically treated as deal-breakers unless you set them to &quot;No preference&quot;.
-              </p>
-            </div>
-
             {/* Vaccination Status */}
             <div>
               <label className="block text-sm font-semibold text-white mb-2">
@@ -493,77 +495,13 @@ export default function BasicFiltersPanel({
                 }
                 options={[
                   { label: "No preference", value: "" },
-                  { label: "Vaccinated", value: "yes" },
-                  { label: "Not vaccinated", value: "no" },
+                  { label: "Coronavirus Vaccinated", value: "yes" },
+                  { label: "Not Coronavirus Vaccinated", value: "no" },
                 ]}
                 label=""
                 placeholder="No preference"
                 className="bg-gray-900 border-gray-700 text-white"
               />
-            </div>
-
-            {/* Religion */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-semibold text-white">
-                  Religion Preferences
-                </label>
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.nonNegotiableFields.includes("religion")}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setFormData({
-                          ...formData,
-                          nonNegotiableFields: [...formData.nonNegotiableFields, "religion"],
-                        });
-                      } else {
-                        setFormData({
-                          ...formData,
-                          nonNegotiableFields: formData.nonNegotiableFields.filter((f) => f !== "religion"),
-                        });
-                      }
-                    }}
-                    className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-red-500 focus:ring-red-500"
-                  />
-                  <span className="text-xs text-red-400">Non-Negotiable</span>
-                </label>
-              </div>
-              <div className="max-h-40 overflow-y-auto border border-gray-700 rounded-lg p-3 bg-gray-900/50">
-                <div className="grid grid-cols-2 gap-2">
-                  {religions.map((religion) => (
-                    <label
-                      key={religion}
-                      className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-gray-800 transition-colors ${
-                        formData.preferredReligions.includes(religion)
-                          ? "bg-purple-900/50 border border-purple-500"
-                          : "border border-gray-700"
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={formData.preferredReligions.includes(religion)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setFormData({
-                              ...formData,
-                              preferredReligions: [...formData.preferredReligions, religion],
-                            });
-                          } else {
-                            setFormData({
-                              ...formData,
-                              preferredReligions: formData.preferredReligions.filter((r) => r !== religion),
-                            });
-                          }
-                        }}
-                        className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-purple-500 focus:ring-purple-500"
-                      />
-                      <span className="text-sm text-gray-100">{religion}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
             </div>
 
             {/* Has Kids */}
@@ -676,6 +614,72 @@ export default function BasicFiltersPanel({
                 placeholder="No preference"
                 className="bg-gray-900 border-gray-700 text-white"
               />
+            </div>
+            </div>
+            {/* End of Always Enforced Filters Section */}
+
+            {/* Religion */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-semibold text-white">
+                  Religion Preferences
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.nonNegotiableFields.includes("religion")}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setFormData({
+                          ...formData,
+                          nonNegotiableFields: [...formData.nonNegotiableFields, "religion"],
+                        });
+                      } else {
+                        setFormData({
+                          ...formData,
+                          nonNegotiableFields: formData.nonNegotiableFields.filter((f) => f !== "religion"),
+                        });
+                      }
+                    }}
+                    className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-red-500 focus:ring-red-500"
+                  />
+                  <span className="text-xs text-red-400">Non-Negotiable</span>
+                </label>
+              </div>
+              <div className="max-h-40 overflow-y-auto border border-gray-700 rounded-lg p-3 bg-gray-900/50">
+                <div className="grid grid-cols-2 gap-2">
+                  {religions.map((religion) => (
+                    <label
+                      key={religion}
+                      className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-gray-800 transition-colors ${
+                        formData.preferredReligions.includes(religion)
+                          ? "bg-purple-900/50 border border-purple-500"
+                          : "border border-gray-700"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.preferredReligions.includes(religion)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFormData({
+                              ...formData,
+                              preferredReligions: [...formData.preferredReligions, religion],
+                            });
+                          } else {
+                            setFormData({
+                              ...formData,
+                              preferredReligions: formData.preferredReligions.filter((r) => r !== religion),
+                            });
+                          }
+                        }}
+                        className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-purple-500 focus:ring-purple-500"
+                      />
+                      <span className="text-sm text-gray-100">{religion}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Activity Level */}
@@ -1066,24 +1070,6 @@ export default function BasicFiltersPanel({
               </div>
             </div>
 
-            {/* Match Music Tastes */}
-            <div>
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.matchMusicTastes}
-                  onChange={(e) =>
-                    setFormData({ ...formData, matchMusicTastes: e.target.checked })
-                  }
-                  className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-purple-500"
-                />
-                <span className="text-sm font-semibold text-white">Prioritize music compatibility</span>
-              </label>
-              <p className="text-xs text-gray-400 mt-1 ml-6">
-                Show users with matching instruments and skills first (scoring only, never excludes)
-              </p>
-            </div>
-
             {/* Match Strictness Controls */}
             <div className="pt-6 border-t border-gray-700 space-y-6">
               <h3 className="text-lg font-semibold text-white">Match Strictness</h3>
@@ -1143,6 +1129,111 @@ export default function BasicFiltersPanel({
                   </p>
                 </div>
               )}
+            </div>
+
+            {/* Music Compatibility Filters - At Bottom */}
+            <div className="pt-6 border-t border-gray-700 space-y-6">
+              <h3 className="text-lg font-semibold text-white">Music Compatibility</h3>
+              
+              {/* Preferred Instruments */}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-2">
+                  Preferred Instruments
+                </label>
+                <div className="max-h-40 overflow-y-auto border border-gray-700 rounded-lg p-3 bg-gray-900/50">
+                  <div className="grid grid-cols-2 gap-2">
+                    {instrumentList.map((instrument) => (
+                      <label
+                        key={instrument}
+                        className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-gray-800 transition-colors ${
+                          formData.preferredInstruments.includes(instrument)
+                            ? "bg-purple-900/50 border border-purple-500"
+                            : "border border-gray-700"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.preferredInstruments.includes(instrument)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFormData({
+                                ...formData,
+                                preferredInstruments: [...formData.preferredInstruments, instrument],
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                preferredInstruments: formData.preferredInstruments.filter((i) => i !== instrument),
+                              });
+                            }
+                          }}
+                          className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-purple-500 focus:ring-purple-500"
+                        />
+                        <span className="text-sm text-gray-100">{instrument}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Preferred Skills */}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-2">
+                  Preferred Skills
+                </label>
+                <div className="max-h-40 overflow-y-auto border border-gray-700 rounded-lg p-3 bg-gray-900/50">
+                  <div className="grid grid-cols-2 gap-2">
+                    {skillsList.map((skill) => (
+                      <label
+                        key={skill}
+                        className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-gray-800 transition-colors ${
+                          formData.preferredSkills.includes(skill)
+                            ? "bg-purple-900/50 border border-purple-500"
+                            : "border border-gray-700"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.preferredSkills.includes(skill)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFormData({
+                                ...formData,
+                                preferredSkills: [...formData.preferredSkills, skill],
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                preferredSkills: formData.preferredSkills.filter((s) => s !== skill),
+                              });
+                            }
+                          }}
+                          className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-purple-500 focus:ring-purple-500"
+                        />
+                        <span className="text-sm text-gray-100">{skill}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Match Music Tastes */}
+              <div>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.matchMusicTastes}
+                    onChange={(e) =>
+                      setFormData({ ...formData, matchMusicTastes: e.target.checked })
+                    }
+                    className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-purple-500"
+                  />
+                  <span className="text-sm font-semibold text-white">Prioritize instrument and skill match</span>
+                </label>
+                <p className="text-xs text-gray-400 mt-1 ml-6">
+                  Show users with matching instruments and skills first (scoring only, never excludes)
+                </p>
+              </div>
             </div>
 
             {/* Actions */}

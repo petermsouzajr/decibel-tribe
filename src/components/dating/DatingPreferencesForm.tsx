@@ -221,10 +221,19 @@ export default function DatingPreferencesForm() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <label className="block text-sm font-semibold text-gray-900 mb-4">
-          Gender Preference
-        </label>
+      {/* Always Enforced Info Message */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <p className="text-xs text-blue-800">
+          <strong>Always Enforced:</strong> Gender, Age Range, Distance, Has Kids, Wants Kids, Smoking, Drinking, and Vaccination Status are automatically treated as deal-breakers unless you set them to &quot;No preference&quot;.
+        </p>
+      </div>
+
+      {/* Always Enforced Filters - Grouped Section */}
+      <div className="border border-blue-300 rounded-lg p-4 space-y-6 bg-blue-50/50">
+        <div>
+          <label className="block text-sm font-semibold text-gray-900 mb-4">
+            Gender Preference
+          </label>
         <p className="text-sm text-gray-600 mb-4">
           You can select multiple genders, each with their own orientation preference.
         </p>
@@ -481,13 +490,63 @@ export default function DatingPreferencesForm() {
             }
           options={[
             { label: "No preference", value: "" },
-            { label: "Vaccinated", value: "Yes" },
-            { label: "Not vaccinated", value: "No" },
+            { label: "Coronavirus Vaccinated", value: "Yes" },
+            { label: "Not Coronavirus Vaccinated", value: "No" },
           ]}
           label="Preferred Vaccination Status"
           placeholder="No preference"
         />
       </div>
+
+      {/* Additional Preferences - Has Kids, Smokes, Drinks, Activity */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <DropdownSelector
+          value={formData.preferredHasKids}
+          onChange={(value) =>
+            setFormData({ ...formData, preferredHasKids: value as "" | "yes" | "no" | "any" })
+          }
+          options={[
+            { label: "No preference", value: "" },
+            { label: "Has kids", value: "yes" },
+            { label: "Doesn't have kids", value: "no" },
+            { label: "Any", value: "any" },
+          ]}
+          label="Has Kids"
+          placeholder="No preference"
+        />
+
+        <DropdownSelector
+          value={formData.preferredSmokes}
+          onChange={(value) =>
+            setFormData({ ...formData, preferredSmokes: value })
+          }
+          options={[
+            { label: "No preference", value: "" },
+            { label: "Yes", value: "Yes" },
+            { label: "No", value: "No" },
+            { label: "Social", value: "Social" },
+          ]}
+          label="Smoking Preference"
+          placeholder="No preference"
+        />
+
+        <DropdownSelector
+          value={formData.preferredDrinks}
+          onChange={(value) =>
+            setFormData({ ...formData, preferredDrinks: value })
+          }
+          options={[
+            { label: "No preference", value: "" },
+            { label: "Yes", value: "Yes" },
+            { label: "No", value: "No" },
+            { label: "Social", value: "Social" },
+          ]}
+          label="Drinking Preference"
+          placeholder="No preference"
+        />
+      </div>
+      </div>
+      {/* End of Always Enforced Filters Section */}
 
       <div>
         <label className="block text-sm font-semibold text-gray-900 mb-2">
@@ -536,15 +595,43 @@ export default function DatingPreferencesForm() {
         </div>
       </div>
 
-      {/* Music Filters */}
+      {/* Activity Level */}
       <div>
-        <div className="flex items-center gap-2 mb-3">
+        <label className="block text-sm font-semibold text-gray-900 mb-2">
+          Activity Level
+        </label>
+        <DropdownSelector
+          value={formData.preferredActivity}
+          onChange={(value) =>
+            setFormData({ ...formData, preferredActivity: value })
+          }
+          options={[
+            { label: "No preference", value: "" },
+            { label: "Active", value: "Active" },
+            { label: "Sporting", value: "Sporting" },
+            { label: "Super active", value: "Super active" },
+            { label: "Couch potato", value: "Couch potato" },
+            { label: "Hiker", value: "Hiker" },
+            { label: "Gym enthusiast", value: "Gym enthusiast" },
+            { label: "Yoga lover", value: "Yoga lover" },
+            { label: "Outdoor adventurer", value: "Outdoor adventurer" },
+            { label: "Weekend warrior", value: "Weekend warrior" },
+            { label: "Moderately active", value: "Moderately active" },
+          ]}
+          label=""
+          placeholder="No preference"
+        />
+      </div>
+
+      {/* Music Compatibility Filters - At Bottom */}
+      <div className="border-t pt-6 space-y-6">
+        <div className="flex items-center gap-2">
           <Music className="w-5 h-5 text-purple-500" />
           <h3 className="text-lg font-semibold text-gray-900">
-            Music Preferences (Optional)
+            Music Compatibility
           </h3>
         </div>
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm text-gray-600">
           Filter matches by preferred instruments and skills
         </p>
 
@@ -637,103 +724,29 @@ export default function DatingPreferencesForm() {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Additional Preferences */}
-      <div className="border-t pt-6 space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Additional Preferences</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <DropdownSelector
-            value={formData.preferredHasKids}
-            onChange={(value) =>
-              setFormData({ ...formData, preferredHasKids: value as "" | "yes" | "no" | "any" })
-            }
-            options={[
-              { label: "No preference", value: "" },
-              { label: "Has kids", value: "yes" },
-              { label: "Doesn't have kids", value: "no" },
-              { label: "Any", value: "any" },
-            ]}
-            label="Has Kids"
-            placeholder="No preference"
-          />
-
-          <DropdownSelector
-            value={formData.preferredSmokes}
-            onChange={(value) =>
-              setFormData({ ...formData, preferredSmokes: value })
-            }
-            options={[
-              { label: "No preference", value: "" },
-              { label: "Yes", value: "Yes" },
-              { label: "No", value: "No" },
-              { label: "Social", value: "Social" },
-            ]}
-            label="Smoking Preference"
-            placeholder="No preference"
-          />
-
-          <DropdownSelector
-            value={formData.preferredDrinks}
-            onChange={(value) =>
-              setFormData({ ...formData, preferredDrinks: value })
-            }
-            options={[
-              { label: "No preference", value: "" },
-              { label: "Yes", value: "Yes" },
-              { label: "No", value: "No" },
-              { label: "Social", value: "Social" },
-            ]}
-            label="Drinking Preference"
-            placeholder="No preference"
-          />
-
-          <DropdownSelector
-            value={formData.preferredActivity}
-            onChange={(value) =>
-              setFormData({ ...formData, preferredActivity: value })
-            }
-            options={[
-              { label: "No preference", value: "" },
-              { label: "Active", value: "Active" },
-              { label: "Sporting", value: "Sporting" },
-              { label: "Super active", value: "Super active" },
-              { label: "Couch potato", value: "Couch potato" },
-              { label: "Hiker", value: "Hiker" },
-              { label: "Gym enthusiast", value: "Gym enthusiast" },
-              { label: "Yoga lover", value: "Yoga lover" },
-              { label: "Outdoor adventurer", value: "Outdoor adventurer" },
-              { label: "Weekend warrior", value: "Weekend warrior" },
-              { label: "Moderately active", value: "Moderately active" },
-            ]}
-            label="Activity Level"
-            placeholder="No preference"
-          />
+        {/* Music Compatibility Preference */}
+        <div>
+          <label className="flex items-center space-x-3 cursor-pointer p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+            <input
+              type="checkbox"
+              checked={formData.matchMusicTastes}
+              onChange={(e) =>
+                setFormData({ ...formData, matchMusicTastes: e.target.checked })
+              }
+              className="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+            />
+            <div className="flex-1">
+              <span className="text-sm font-semibold text-gray-900">
+                Prioritize music compatibility
+              </span>
+              <p className="text-xs text-gray-600 mt-1">
+                When enabled, matches will be ranked by music taste compatibility (instruments & skills). 
+                Disable to match based on other factors only.
+              </p>
+            </div>
+          </label>
         </div>
-      </div>
-
-      {/* Music Compatibility Preference */}
-      <div className="border-t pt-6">
-        <label className="flex items-center space-x-3 cursor-pointer p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-          <input
-            type="checkbox"
-            checked={formData.matchMusicTastes}
-            onChange={(e) =>
-              setFormData({ ...formData, matchMusicTastes: e.target.checked })
-            }
-            className="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-          />
-          <div className="flex-1">
-            <span className="text-sm font-semibold text-gray-900">
-              Prioritize music compatibility
-            </span>
-            <p className="text-xs text-gray-600 mt-1">
-              When enabled, matches will be ranked by music taste compatibility (instruments & skills). 
-              Disable to match based on other factors only.
-            </p>
-          </div>
-        </label>
       </div>
 
       <div className="flex justify-end">

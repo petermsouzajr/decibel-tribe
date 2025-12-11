@@ -407,7 +407,7 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
       <div className="w-full min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-purple-500 mx-auto mb-4" />
-          <p className="text-gray-600">Finding matches near you{userProfile?.city ? `, ${userProfile.city}` : ''}...</p>
+          <p className="text-gray-600">Finding matches near{userProfile?.city ? `, ${userProfile.city}` : ', you'}...</p>
         </div>
       </div>
     );
@@ -465,7 +465,7 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
       } else {
         const zipCode = userProfile?.zipCode || "your location";
         const city = userProfile?.city || "";
-        const location = city ? `${zipCode} (${city})` : zipCode;
+        const location = city ? `${city}` : zipCode;
         filters.push(`Distance: ${miles} miles from your location at ${location}`);
       }
     } else {
@@ -550,9 +550,9 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
 
     // Match Music Tastes
     if (prefs.matchMusicTastes !== undefined && prefs.matchMusicTastes !== null) {
-      filters.push(`Prioritize Music Compatibility: ${prefs.matchMusicTastes ? "Yes" : "No"}`);
+      filters.push(`Prioritize instrument and skill match: ${prefs.matchMusicTastes ? "Yes" : "No"}`);
     } else {
-      filters.push("Prioritize Music Compatibility: Not specified");
+      filters.push("Prioritize instrument and skill match: Not specified");
     }
 
     return filters;

@@ -218,62 +218,43 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Check for active location override (travel mode)
-    const locationOverride = await prisma.dating_location_overrides.findUnique({
-      where: { userId: user.id },
-    });
-
-    // Use override location if active and not expired, otherwise use profile location
+    // Get current user's location coordinates from profile
+    const locationStart = Date.now();
     let userLatitude: number | null = null;
     let userLongitude: number | null = null;
     
-    if (locationOverride && locationOverride.expiresAt > new Date()) {
-      // Travel mode is active
-      userLatitude = locationOverride.latitude;
-      userLongitude = locationOverride.longitude;
-    } else if (locationOverride && locationOverride.expiresAt <= new Date()) {
-      // Clean up expired override
-      await prisma.dating_location_overrides.delete({
-        where: { id: locationOverride.id },
-      });
-    }
+    const currentUserProfile = await prisma.user_dating_profile.findUnique({
+      where: { userId: user.id },
+      select: { zipCode: true, city: true, latitude: true, longitude: true },
+    });
     
-    // Get current user's location coordinates
-    const locationStart = Date.now();
-    if (!userLatitude || !userLongitude) {
-      const currentUserProfile = await prisma.user_dating_profile.findUnique({
-        where: { userId: user.id },
-        select: { zipCode: true, city: true, latitude: true, longitude: true },
-      });
-      
-      if (currentUserProfile?.latitude && currentUserProfile?.longitude) {
-        // Use cached coordinates
-        userLatitude = currentUserProfile.latitude;
-        userLongitude = currentUserProfile.longitude;
-        if (isDev) {
-          console.log(`[Potential Matches] Using cached coordinates in ${Date.now() - locationStart}ms`);
-        }
-      } else if (currentUserProfile?.zipCode) {
-        // Geocode the zip code and cache coordinates + city
-        const geocodeStart = Date.now();
-        const geocoded = await geocodeZipCode(currentUserProfile.zipCode);
-        if (isDev) {
-          console.log(`[Potential Matches] Geocoding took ${Date.now() - geocodeStart}ms`);
-        }
-        if (geocoded) {
-          userLatitude = geocoded.lat;
-          userLongitude = geocoded.lon;
-          
-          // Cache the coordinates and city in the profile
-          await prisma.user_dating_profile.update({
-            where: { userId: user.id },
-            data: {
-              latitude: geocoded.lat,
-              longitude: geocoded.lon,
-              city: geocoded.city || null,
-            },
-          });
-        }
+    if (currentUserProfile?.latitude && currentUserProfile?.longitude) {
+      // Use cached coordinates
+      userLatitude = currentUserProfile.latitude;
+      userLongitude = currentUserProfile.longitude;
+      if (isDev) {
+        console.log(`[Potential Matches] Using cached coordinates in ${Date.now() - locationStart}ms`);
+      }
+    } else if (currentUserProfile?.zipCode) {
+      // Geocode the zip code and cache coordinates + city
+      const geocodeStart = Date.now();
+      const geocoded = await geocodeZipCode(currentUserProfile.zipCode);
+      if (isDev) {
+        console.log(`[Potential Matches] Geocoding took ${Date.now() - geocodeStart}ms`);
+      }
+      if (geocoded) {
+        userLatitude = geocoded.lat;
+        userLongitude = geocoded.lon;
+        
+        // Cache the coordinates and city in the profile
+        await prisma.user_dating_profile.update({
+          where: { userId: user.id },
+          data: {
+            latitude: geocoded.lat,
+            longitude: geocoded.lon,
+            city: geocoded.city || null,
+          },
+        });
       }
     }
     if (isDev) {

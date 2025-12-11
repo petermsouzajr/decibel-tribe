@@ -82,7 +82,7 @@
 - Super likes (PAUSED - per master plan)
 - ~~Travel mode~~ ✅ **COMPLETED** - Browse matches in different cities with expiration dates
 - ~~Match insights~~ ✅ **COMPLETED** - Shows compatibility scores, common interests, music overlap, and conversation starters
-- ~~Music compatibility scoring (40% weight algorithm)~~ ✅ **COMPLETED** - Implemented as user preference setting "Prioritize music compatibility" checkbox
+- ~~Music compatibility scoring (40% weight algorithm)~~ ✅ **COMPLETED** - Implemented as user preference setting "Prioritize instrument and skill match" checkbox
 - ~~Safety Features~~ ✅ **COMPLETED** - Report/block functionality, safety tips component
 - ~~Database Indexes~~ ✅ **COMPLETED** - Added indexes for swipes, matches, blocks, and photos
 - Video profiles -DO NOT IMPLEMENT, we are doing PHOTO ONLY
