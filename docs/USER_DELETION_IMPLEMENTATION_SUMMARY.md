@@ -211,6 +211,92 @@ No new dependencies added. Uses existing:
 - `@prisma/client` for database operations
 - `next/cache` for revalidation
 
+## Deleted Account Login Solution
+
+### Problem Statement
+
+When a user tries to log in with credentials from a deleted account, the system offers a choice between reactivation and starting fresh. This approach:
+
+- **Respects user intent**: If they deleted intentionally, they can start fresh
+- **Provides flexibility**: If they deleted accidentally, they can recover
+- **Maintains GDPR compliance**: Users have control over their data
+- **Improves UX**: Clear options with explanations
+
+### Implementation Details
+
+**File: `src/app/(auth)/login/actions.ts`**
+
+The login action checks if a user is deleted and returns specific error codes:
+
+```typescript
+// Check if user is deleted
+if (user.deletedAt) {
+  const gracePeriod = 90 * 24 * 60 * 60 * 1000; // 90 days
+  const timeSinceDeletion = Date.now() - user.deletedAt.getTime();
+  
+  if (timeSinceDeletion <= gracePeriod) {
+    return { 
+      error: "ACCOUNT_DELETED_WITHIN_GRACE_PERIOD",
+      deletedAt: user.deletedAt?.toISOString(),
+      daysRemaining: Math.ceil((gracePeriod - timeSinceDeletion) / (24 * 60 * 60 * 1000)),
+      userId: user.id
+    };
+  } else {
+    return { 
+      error: "ACCOUNT_DELETED_EXPIRED",
+      deletedAt: user.deletedAt?.toISOString(),
+      userId: user.id
+    };
+  }
+}
+```
+
+**File: `src/components/DeletedAccountRecoveryDialog.tsx`**
+
+A dialog component that offers users two options:
+
+#### For Accounts Within Grace Period:
+- **Reactivate Account**: Restore all data and continue as before
+- **Start Fresh**: Create a new account with the same username
+
+#### For Expired Accounts:
+- **Start Fresh**: Only option available (grace period expired)
+
+**File: `src/app/(auth)/login/LoginForm.tsx`**
+
+The login form handles deleted account scenarios and shows the recovery dialog when appropriate.
+
+### User Experience Flow
+
+**Scenario 1: Recently Deleted Account (Within 90 Days)**
+1. User enters credentials for deleted account
+2. Login form shows recovery dialog
+3. User sees two options: Reactivate Account or Start Fresh
+4. User chooses option and proceeds accordingly
+
+**Scenario 2: Expired Deleted Account (After 90 Days)**
+1. User enters credentials for deleted account
+2. Login form shows recovery dialog
+3. User sees only one option: Start Fresh
+4. User is redirected to signup with username pre-filled
+
+### Security Considerations
+
+- **Password Verification**: Original password is still required for reactivation
+- **No Bypass**: No bypass of authentication for deleted accounts
+- **Session Management**: Reactivated accounts get new sessions
+- **Data Protection**: Deleted data remains deleted unless explicitly reactivated
+
+### Testing
+
+**File: `vitest/tests/unit/auth/loginDeletedAccount.test.ts`**
+
+Comprehensive test coverage for:
+- Grace period detection
+- Expired account handling
+- Error message validation
+- Edge cases (missing credentials, invalid passwords)
+
 ## Conclusion
 
 The user account deletion feature has been successfully implemented with:
@@ -218,7 +304,8 @@ The user account deletion feature has been successfully implemented with:
 - **Soft delete strategy** for data safety
 - **Comprehensive content filtering** for user privacy
 - **GDPR compliance** with data export functionality
-- **Grace period** for account recovery
+- **Grace period** for account recovery (90 days)
+- **Deleted account login solution** with reactivation option
 - **Complete test coverage** for reliability
 - **User-friendly interface** with clear warnings and confirmations
 
