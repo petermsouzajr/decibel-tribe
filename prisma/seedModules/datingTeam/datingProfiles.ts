@@ -326,16 +326,16 @@ export async function deleteDatingTestUsers(
         OR: [{ blockerId: { in: userIds } }, { blockedId: { in: userIds } }],
       },
     });
-    await tx.user_photos.deleteMany({
+    await tx.userDatingPhoto.deleteMany({
       where: { userId: { in: userIds } },
     });
-    await tx.user_dating_preferences.deleteMany({
+    await tx.userDatingPreferences.deleteMany({
       where: { userId: { in: userIds } },
     });
-    await tx.user_dating_profile.deleteMany({
+    await tx.userDatingProfile.deleteMany({
       where: { userId: { in: userIds } },
     });
-    await tx.swipes.deleteMany({
+    await tx.swipe.deleteMany({
       where: {
         OR: [
           { fromUserId: { in: userIds } },
@@ -343,7 +343,7 @@ export async function deleteDatingTestUsers(
         ],
       },
     });
-    await tx.matches.deleteMany({
+    await tx.match.deleteMany({
       where: {
         OR: [
           { user1Id: { in: userIds } },
@@ -394,9 +394,9 @@ export async function seedDatingProfiles(
   const hashedPassword = await hasher(cypressEnv.password as string); // Default password for test users
   const createdDatingUsers: CreatedDatingUser[] = [];
   const usersToCreate: Prisma.UserCreateInput[] = [];
-  const profilesToCreate: Prisma.user_dating_profileCreateInput[] = [];
-  const preferencesToCreate: Prisma.user_dating_preferencesCreateInput[] = [];
-  const photosToCreate: Prisma.user_photosCreateInput[] = [];
+  const profilesToCreate: Prisma.userDatingProfileCreateInput[] = [];
+  const preferencesToCreate: Prisma.userDatingPreferencesCreateInput[] = [];
+  const photosToCreate: Prisma.userDatingPhotoCreateInput[] = [];
   const swipesToCreate: Array<{ fromUserId: string; toUserId: string; direction: string }> = [];
   const matchesToCreate: Array<{ user1Id: string; user2Id: string }> = [];
 
@@ -603,7 +603,7 @@ export async function seedDatingProfiles(
 
     // Create dating profile
     const profileId = generateIdFromEntropySize(10);
-    const profileData: Prisma.user_dating_profileCreateInput = {
+    const profileData: Prisma.userDatingProfileCreateInput = {
       id: profileId,
       user: { connect: { id: userId } },
       age: config.age,
@@ -623,7 +623,7 @@ export async function seedDatingProfiles(
     const preferencesId = generateIdFromEntropySize(10);
     
     // preferredGender is already in JSON format from config, so use it directly
-    const preferencesData: Prisma.user_dating_preferencesCreateInput = {
+    const preferencesData: Prisma.userDatingPreferencesCreateInput = {
       id: preferencesId,
       users: { connect: { id: userId } },
       preferredMinAge: config.preferredMinAge,
@@ -653,7 +653,7 @@ export async function seedDatingProfiles(
     // Create photos
     for (let j = 0; j < 2; j++) {
       const photoId = generateIdFromEntropySize(10);
-      const photoData: Prisma.user_photosCreateInput = {
+      const photoData: Prisma.userDatingPhotoCreateInput = {
         id: photoId,
         users: { connect: { id: userId } },
         url: `https://i.pravatar.cc/400?img=${faker.number.int({ min: 1, max: 70 })}`,
@@ -795,7 +795,7 @@ export async function seedDatingProfiles(
       const hasKids = faker.datatype.boolean({ probability: profileCompleteness * 0.7 })
         ? faker.datatype.boolean()
         : null;
-      const profileData: Prisma.user_dating_profileCreateInput = {
+      const profileData: Prisma.userDatingProfileCreateInput = {
         id: profileId,
         user: { connect: { id: userId } },
         age,
@@ -867,7 +867,7 @@ export async function seedDatingProfiles(
         faker.helpers.arrayElement(SEXUAL_ORIENTATIONS),
       ]);
 
-      const preferencesData: Prisma.user_dating_preferencesCreateInput = {
+      const preferencesData: Prisma.userDatingPreferencesCreateInput = {
         id: preferencesId,
         users: { connect: { id: userId } },
         preferredMinAge,
@@ -931,7 +931,7 @@ export async function seedDatingProfiles(
       const photoCount = faker.number.int({ min: MIN_PHOTOS, max: MAX_PHOTOS });
       for (let k = 0; k < photoCount; k++) {
         const photoId = generateIdFromEntropySize(10);
-        const photoData: Prisma.user_photosCreateInput = {
+        const photoData: Prisma.userDatingPhotoCreateInput = {
           id: photoId,
           users: { connect: { id: userId } },
           url: `https://i.pravatar.cc/400?img=${faker.number.int({
@@ -1004,7 +1004,7 @@ export async function seedDatingProfiles(
     const hasKids = faker.datatype.boolean({ probability: profileCompleteness * 0.7 })
       ? faker.datatype.boolean()
       : null;
-    const profileData: Prisma.user_dating_profileCreateInput = {
+    const profileData: Prisma.userDatingProfileCreateInput = {
       id: profileId,
       user: { connect: { id: userId } },
       age,
@@ -1076,7 +1076,7 @@ export async function seedDatingProfiles(
       faker.helpers.arrayElement(SEXUAL_ORIENTATIONS),
     ]);
 
-    const preferencesData: Prisma.user_dating_preferencesCreateInput = {
+    const preferencesData: Prisma.userDatingPreferencesCreateInput = {
       id: preferencesId,
       users: { connect: { id: userId } },
       preferredMinAge,
@@ -1140,7 +1140,7 @@ export async function seedDatingProfiles(
     const photoCount = faker.number.int({ min: 1, max: 4 });
     for (let k = 0; k < photoCount; k++) {
       const photoId = generateIdFromEntropySize(10);
-      const photoData: Prisma.user_photosCreateInput = {
+      const photoData: Prisma.userDatingPhotoCreateInput = {
         id: photoId,
         users: { connect: { id: userId } },
         url: `https://i.pravatar.cc/400?img=${faker.number.int({
@@ -1263,7 +1263,7 @@ export async function seedDatingProfiles(
     const profileBatchSize = 50;
     for (let i = 0; i < profilesData.length; i += profileBatchSize) {
       const batch = profilesData.slice(i, i + profileBatchSize);
-      await tx.user_dating_profile.createMany({
+      await tx.userDatingProfile.createMany({
         data: batch,
         skipDuplicates: true,
       });
@@ -1305,7 +1305,7 @@ export async function seedDatingProfiles(
     const preferencesBatchSize = 50;
     for (let i = 0; i < preferencesData.length; i += preferencesBatchSize) {
       const batch = preferencesData.slice(i, i + preferencesBatchSize);
-      await tx.user_dating_preferences.createMany({
+      await tx.userDatingPreferences.createMany({
         data: batch,
         skipDuplicates: true,
       });
@@ -1328,7 +1328,7 @@ export async function seedDatingProfiles(
     const photosBatchSize = 100;
     for (let i = 0; i < photosData.length; i += photosBatchSize) {
       const batch = photosData.slice(i, i + photosBatchSize);
-      await tx.user_photos.createMany({
+      await tx.userDatingPhoto.createMany({
         data: batch,
         skipDuplicates: true,
       });
@@ -1350,7 +1350,7 @@ export async function seedDatingProfiles(
         }
         
         try {
-          await tx.swipes.create({
+          await tx.swipe.create({
             data: {
               id: generateIdFromEntropySize(10),
               fromUserId: actualFromUserId,
@@ -1385,7 +1385,7 @@ export async function seedDatingProfiles(
         
         try {
           const matchId = generateIdFromEntropySize(10);
-          await tx.matches.create({
+          await tx.match.create({
             data: {
               id: matchId,
               user1Id: actualUser1Id,

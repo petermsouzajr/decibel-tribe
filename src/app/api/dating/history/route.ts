@@ -41,12 +41,12 @@ export async function GET(request: NextRequest) {
     const takeLimit = light ? 10 : 100;
 
     // Get swipe history with conditional includes based on light mode
-    const swipes = await prisma.swipes.findMany({
+    const swipes = await prisma.swipe.findMany({
       where: whereClause,
       include: light
         ? {
             // Lightweight: Only essential fields for undo list
-            users_swipes_toUserIdTousers: {
+            toUser: {
               select: {
                 id: true,
                 username: true,
@@ -57,20 +57,20 @@ export async function GET(request: NextRequest) {
           }
         : {
             // Full: All data for history page
-            users_swipes_toUserIdTousers: {
+            toUser: {
               select: {
                 id: true,
                 username: true,
                 displayName: true,
                 avatarUrl: true,
-                user_dating_profile: {
+                userDatingProfile: {
                   select: {
                     age: true,
                     city: true,
                     zipCode: true,
                   },
                 },
-                user_photos: {
+                userDatingPhoto: {
                   where: { isPrimary: true },
                   take: 1,
                 },
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
     // Check which ones are now matches (can be unliked) - only if not in light mode
     let matchedUserIds: string[] = [];
     if (!light) {
-      matchedUserIds = await prisma.matches.findMany({
+      matchedUserIds = await prisma.match.findMany({
         where: {
           OR: [{ user1Id: user.id }, { user2Id: user.id }],
         },
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
 
     // Format response
     const formattedSwipes = swipes.map((swipe) => {
-      const targetUser = swipe.users_swipes_toUserIdTousers;
+      const targetUser = swipe.toUser;
       const isMatched = light ? false : matchedUserIds.includes(targetUser.id);
 
       return {
@@ -106,11 +106,11 @@ export async function GET(request: NextRequest) {
         avatarUrl: targetUser.avatarUrl,
         primaryPhotoUrl: light 
           ? targetUser.avatarUrl 
-          : ((targetUser as any).user_photos?.[0]?.url || targetUser.avatarUrl),
-        age: light ? null : ((targetUser as any).user_dating_profile?.age || null),
+          : ((targetUser as any).userDatingPhoto?.[0]?.url || targetUser.avatarUrl),
+        age: light ? null : ((targetUser as any).userDatingProfile?.age || null),
         location: light 
           ? null 
-          : ((targetUser as any).user_dating_profile?.city || (targetUser as any).user_dating_profile?.zipCode || null),
+          : ((targetUser as any).userDatingProfile?.city || (targetUser as any).userDatingProfile?.zipCode || null),
         direction: swipe.direction,
         message: swipe.message || null,
         createdAt: swipe.createdAt,
@@ -146,7 +146,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Verify the swipe belongs to the current user
-    const swipe = await prisma.swipes.findUnique({
+    const swipe = await prisma.swipe.findUnique({
       where: { id: swipeId },
     });
 
@@ -162,7 +162,7 @@ export async function DELETE(request: NextRequest) {
     
     // For LIKES: Check if matched (matched users cannot be unliked)
     if (swipe.direction === "LIKE") {
-      const isMatched = await prisma.matches.findFirst({
+      const isMatched = await prisma.match.findFirst({
         where: {
           OR: [
             { user1Id: user.id, user2Id: swipe.toUserId },
@@ -182,7 +182,7 @@ export async function DELETE(request: NextRequest) {
     // No time window restrictions - users can reverse decisions at any time
 
     // Delete the swipe
-    await prisma.swipes.delete({
+    await prisma.swipe.delete({
       where: { id: swipeId },
     });
 

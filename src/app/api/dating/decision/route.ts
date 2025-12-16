@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if swipe already exists
-    const existingSwipe = await prisma.swipes.findUnique({
+    const existingSwipe = await prisma.swipe.findUnique({
       where: {
         fromUserId_toUserId: {
           fromUserId: user.id,
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create swipe record
-    const swipe = await prisma.swipes.create({
+    const swipe = await prisma.swipe.create({
       data: {
         id: crypto.randomUUID(),
         fromUserId: user.id,
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
 
     // If it's a LIKE, check for mutual like
     if (decision === "LIKE") {
-      const reciprocalSwipe = await prisma.swipes.findUnique({
+      const reciprocalSwipe = await prisma.swipe.findUnique({
         where: {
           fromUserId_toUserId: {
             fromUserId: targetUserId,
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
         // Mutual like! Create match
         const user1Id = user.id < targetUserId ? user.id : targetUserId;
         const user2Id = user.id < targetUserId ? targetUserId : user.id;
-        const match = await prisma.matches.create({
+        const match = await prisma.match.create({
           data: {
             id: crypto.randomUUID(),
             user1Id,

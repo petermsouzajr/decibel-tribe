@@ -30,7 +30,7 @@ export async function seedIdentityVerification(
     isDatingActive: u.isDatingActive ?? true,
   })).filter((u) => u.id && u.isDatingActive);
 
-  const verificationData: Prisma.user_dating_identity_verificationCreateManyInput[] = [];
+  const verificationData: Prisma.userDatingIdentityVerificationCreateManyInput[] = [];
 
   // 30-40% of dating users will have verification records
   const usersToVerify = faker.helpers
@@ -41,15 +41,15 @@ export async function seedIdentityVerification(
     // Randomly assign verification status
     const statuses = ["not_started", "pending", "verified", "failed", "requires_input"];
     const verificationStatus = faker.helpers.arrayElement(statuses);
-    const isVerified = verificationStatus === "verified";
+    const isIDVerified = verificationStatus === "verified";
 
     verificationData.push({
       userId: user.id,
-      isVerified,
+      isIDVerified,
       verificationStatus,
       verificationMethod: faker.helpers.arrayElement(["stripe_identity", "manual", null]),
       documentType: faker.helpers.arrayElement(["passport", "drivers_license", "id_card", null]),
-      verifiedAt: isVerified ? faker.date.recent({ days: 30 }) : null,
+      verifiedAt: isIDVerified ? faker.date.recent({ days: 30 }) : null,
       failureReason: verificationStatus === "failed" ? faker.lorem.sentence() : null,
       attemptsCount: faker.number.int({ min: 0, max: 3 }),
       lastAttemptAt: verificationStatus !== "not_started" ? faker.date.recent({ days: 30 }) : null,
@@ -63,7 +63,7 @@ export async function seedIdentityVerification(
   }
 
   try {
-    const result = await prismaClient.user_dating_identity_verification.createMany({
+    const result = await prismaClient.userDatingIdentityVerification.createMany({
       data: verificationData,
       skipDuplicates: true,
     });

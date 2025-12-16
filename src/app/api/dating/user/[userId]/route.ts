@@ -18,7 +18,7 @@ export async function GET(
     // Check if dating is active
     const currentUser = await prisma.user.findUnique({
       where: { id: user.id },
-      select: { isDatingActive: true, user_dating_profile: true },
+      select: { isDatingActive: true, userDatingProfile: true },
     });
 
     if (!currentUser?.isDatingActive) {
@@ -32,8 +32,8 @@ export async function GET(
     const targetUser = await prisma.user.findUnique({
       where: { id: userId },
       include: {
-        user_dating_profile: true,
-        user_photos: {
+        userDatingProfile: true,
+        userDatingPhoto: {
           orderBy: { isPrimary: "desc" },
         },
         userInstruments: {
@@ -49,7 +49,7 @@ export async function GET(
       },
     });
 
-    if (!targetUser || !targetUser.user_dating_profile) {
+    if (!targetUser || !targetUser.userDatingProfile) {
       return NextResponse.json(
         { error: "User not found or profile not available" },
         { status: 404 }
@@ -57,7 +57,7 @@ export async function GET(
     }
 
     // Check if user has already swiped on this person
-    const existingSwipe = await prisma.swipes.findFirst({
+    const existingSwipe = await prisma.swipe.findFirst({
       where: {
         fromUserId: user.id,
         toUserId: userId,
@@ -66,7 +66,7 @@ export async function GET(
     });
 
     // Check if matched
-    const isMatched = await prisma.matches.findFirst({
+    const isMatched = await prisma.match.findFirst({
       where: {
         OR: [
           { user1Id: user.id, user2Id: userId },
@@ -78,29 +78,29 @@ export async function GET(
     // Calculate distance if both users have location data
     let distance: number | null = null;
     if (
-      currentUser.user_dating_profile?.latitude &&
-      currentUser.user_dating_profile?.longitude &&
-      targetUser.user_dating_profile.latitude &&
-      targetUser.user_dating_profile.longitude
+      currentUser.userDatingProfile?.latitude &&
+      currentUser.userDatingProfile?.longitude &&
+      targetUser.userDatingProfile.latitude &&
+      targetUser.userDatingProfile.longitude
     ) {
       const R = 6371; // Earth's radius in km
       const dLat =
-        ((targetUser.user_dating_profile.latitude -
-          currentUser.user_dating_profile.latitude) *
+        ((targetUser.userDatingProfile.latitude -
+          currentUser.userDatingProfile.latitude) *
           Math.PI) /
         180;
       const dLon =
-        ((targetUser.user_dating_profile.longitude -
-          currentUser.user_dating_profile.longitude) *
+        ((targetUser.userDatingProfile.longitude -
+          currentUser.userDatingProfile.longitude) *
           Math.PI) /
         180;
       const a =
         Math.sin(dLat / 2) * Math.sin(dLat / 2) +
         Math.cos(
-          (currentUser.user_dating_profile.latitude * Math.PI) / 180
+          (currentUser.userDatingProfile.latitude * Math.PI) / 180
         ) *
           Math.cos(
-            (targetUser.user_dating_profile.latitude * Math.PI) / 180
+            (targetUser.userDatingProfile.latitude * Math.PI) / 180
           ) *
           Math.sin(dLon / 2) *
           Math.sin(dLon / 2);
@@ -113,33 +113,33 @@ export async function GET(
       id: targetUser.id,
       username: targetUser.username,
       displayName: targetUser.displayName || targetUser.username,
-      age: targetUser.user_dating_profile.age,
-      height: targetUser.user_dating_profile.height,
-      gender: targetUser.user_dating_profile.gender,
-      sexualOrientation: targetUser.user_dating_profile.sexualOrientation,
-      coronavirusVaccinated: targetUser.user_dating_profile.coronavirusVaccinated,
-      religion: targetUser.user_dating_profile.religion,
-      bio: targetUser.user_dating_profile.bio || "",
-      hasKids: targetUser.user_dating_profile.hasKids,
-      smokes: targetUser.user_dating_profile.smokes,
-      drinks: targetUser.user_dating_profile.drinks,
-      activity: targetUser.user_dating_profile.activity,
-      education: targetUser.user_dating_profile.education,
-      job: targetUser.user_dating_profile.job,
-      pets: targetUser.user_dating_profile.pets,
-      interests: targetUser.user_dating_profile.interests || [],
-      photos: targetUser.user_photos.map((p) => ({
+      age: targetUser.userDatingProfile.age,
+      height: targetUser.userDatingProfile.height,
+      gender: targetUser.userDatingProfile.gender,
+      sexualOrientation: targetUser.userDatingProfile.sexualOrientation,
+      coronavirusVaccinated: targetUser.userDatingProfile.coronavirusVaccinated,
+      religion: targetUser.userDatingProfile.religion,
+      bio: targetUser.userDatingProfile.bio || "",
+      hasKids: targetUser.userDatingProfile.hasKids,
+      smokes: targetUser.userDatingProfile.smokes,
+      drinks: targetUser.userDatingProfile.drinks,
+      activity: targetUser.userDatingProfile.activity,
+      education: targetUser.userDatingProfile.education,
+      job: targetUser.userDatingProfile.job,
+      pets: targetUser.userDatingProfile.pets,
+      interests: targetUser.userDatingProfile.interests || [],
+      photos: targetUser.userDatingPhoto.map((p) => ({
         url: p.url,
         isPrimary: p.isPrimary,
       })),
       primaryPhotoUrl:
-        targetUser.user_photos.find((p) => p.isPrimary)?.url ||
+        targetUser.userDatingPhoto.find((p) => p.isPrimary)?.url ||
         targetUser.avatarUrl ||
         null,
       distance,
       location:
-        targetUser.user_dating_profile.city ||
-        targetUser.user_dating_profile.zipCode ||
+        targetUser.userDatingProfile.city ||
+        targetUser.userDatingProfile.zipCode ||
         null,
       musicInfo: {
         instruments: targetUser.userInstruments.map((ui) => ui.instrument.name),

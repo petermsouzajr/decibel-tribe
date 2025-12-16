@@ -82,7 +82,7 @@ export async function seedMatches(
     let createdCount = 0;
     for (const match of matchesData) {
       try {
-        await prismaClient.matches.create({
+        await prismaClient.match.create({
           data: match,
         });
         createdCount++;

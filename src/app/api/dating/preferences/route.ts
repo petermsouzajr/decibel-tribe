@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const preferences = await prisma.user_dating_preferences.findUnique({
+    const preferences = await prisma.userDatingPreferences.findUnique({
       where: { userId: user.id },
     });
 
@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
       latitude !== null ||
       longitude !== null
     ) {
-      await prisma.user_dating_profile.upsert({
+      await prisma.userDatingProfile.upsert({
         where: {
           userId: user.id,
         },
@@ -232,7 +232,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create or update user dating preferences
-    const datingPreferences = await prisma.user_dating_preferences.upsert({
+    const datingPreferences = await prisma.userDatingPreferences.upsert({
       where: {
         userId: user.id,
       },

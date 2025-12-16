@@ -115,7 +115,7 @@ export const fileRouter = {
       if (!user) throw new UploadThingError("Unauthorized");
 
       // Check photo count limit
-      const photoCount = await prisma.user_photos.count({
+      const photoCount = await prisma.userDatingPhoto.count({
         where: { userId: user.id },
       });
 
@@ -142,11 +142,11 @@ export const fileRouter = {
       );
 
       // Check if this is the first photo (make it primary)
-      const photoCount = await prisma.user_photos.count({
+      const photoCount = await prisma.userDatingPhoto.count({
         where: { userId: metadata.user.id },
       });
 
-      const photo = await prisma.user_photos.create({
+      const photo = await prisma.userDatingPhoto.create({
         data: {
           id: crypto.randomUUID(),
           userId: metadata.user.id,

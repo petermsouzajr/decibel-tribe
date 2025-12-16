@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all users who have matched with current user
-    const existingMatches = await prisma.matches.findMany({
+    const existingMatches = await prisma.match.findMany({
       where: {
         OR: [{ user1Id: user.id }, { user2Id: user.id }],
       },
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     );
 
     // Get all users who have liked the current user (but haven't been matched yet)
-    const likesReceived = await prisma.swipes.findMany({
+    const likesReceived = await prisma.swipe.findMany({
       where: {
         toUserId: user.id,
         direction: "LIKE",
@@ -43,13 +43,13 @@ export async function GET(request: NextRequest) {
         },
       },
       include: {
-        users_swipes_fromUserIdTousers: {
+        fromUser: {
           select: {
             id: true,
             username: true,
             displayName: true,
             avatarUrl: true,
-            user_dating_profile: {
+            userDatingProfile: {
               select: {
                 age: true,
                 height: true,
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
                 zipCode: true,
               },
             },
-            user_photos: {
+            userDatingPhoto: {
               where: { isPrimary: true },
               take: 1,
             },
@@ -70,17 +70,17 @@ export async function GET(request: NextRequest) {
 
     // Format response
     const formattedLikes = likesReceived.map((swipe) => {
-      const liker = swipe.users_swipes_fromUserIdTousers;
+      const liker = swipe.fromUser;
       return {
         id: liker.id,
         username: liker.username,
         displayName: liker.displayName,
         avatarUrl: liker.avatarUrl,
-        primaryPhotoUrl: liker.user_photos[0]?.url || liker.avatarUrl,
-        age: liker.user_dating_profile?.age || null,
-        height: liker.user_dating_profile?.height || null,
-        gender: liker.user_dating_profile?.gender || null,
-        location: liker.user_dating_profile?.city || liker.user_dating_profile?.zipCode || null,
+        primaryPhotoUrl: liker.userDatingPhoto[0]?.url || liker.avatarUrl,
+        age: liker.userDatingProfile?.age || null,
+        height: liker.userDatingProfile?.height || null,
+        gender: liker.userDatingProfile?.gender || null,
+        location: liker.userDatingProfile?.city || liker.userDatingProfile?.zipCode || null,
         likedAt: swipe.createdAt,
         message: swipe.message || null, // Message attached to the like
       };

@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's dating photos
-    const photos = await prisma.user_photos.findMany({
+    const photos = await prisma.userDatingPhoto.findMany({
       where: { userId: user.id },
       orderBy: [
         { isPrimary: "desc" },
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check current photo count
-    const currentPhotoCount = await prisma.user_photos.count({
+    const currentPhotoCount = await prisma.userDatingPhoto.count({
       where: { userId: user.id },
     });
 
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     const isFirstPhoto = currentPhotoCount === 0;
 
     // Create photo
-    const photo = await prisma.user_photos.create({
+    const photo = await prisma.userDatingPhoto.create({
       data: {
         id: crypto.randomUUID(),
         userId: user.id,
@@ -101,7 +101,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Verify photo belongs to user
-    const photo = await prisma.user_photos.findUnique({
+    const photo = await prisma.userDatingPhoto.findUnique({
       where: { id: photoId },
     });
 
@@ -114,7 +114,7 @@ export async function PUT(request: NextRequest) {
 
     // If setting as primary, unset other primary photos
     if (isPrimary === true) {
-      await prisma.user_photos.updateMany({
+      await prisma.userDatingPhoto.updateMany({
         where: {
           userId: user.id,
           id: { not: photoId },
@@ -124,7 +124,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update photo
-    const updatedPhoto = await prisma.user_photos.update({
+    const updatedPhoto = await prisma.userDatingPhoto.update({
       where: { id: photoId },
       data: { isPrimary: isPrimary ?? photo.isPrimary },
     });
@@ -157,7 +157,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Verify photo belongs to user
-    const photo = await prisma.user_photos.findUnique({
+    const photo = await prisma.userDatingPhoto.findUnique({
       where: { id: photoId },
     });
 
@@ -169,7 +169,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Check current photo count
-    const currentPhotoCount = await prisma.user_photos.count({
+    const currentPhotoCount = await prisma.userDatingPhoto.count({
       where: { userId: user.id },
     });
 
@@ -182,7 +182,7 @@ export async function DELETE(request: NextRequest) {
 
     // If deleting primary photo, set another as primary
     if (photo.isPrimary) {
-      const nextPhoto = await prisma.user_photos.findFirst({
+      const nextPhoto = await prisma.userDatingPhoto.findFirst({
         where: {
           userId: user.id,
           id: { not: photoId },
@@ -191,7 +191,7 @@ export async function DELETE(request: NextRequest) {
       });
 
       if (nextPhoto) {
-        await prisma.user_photos.update({
+        await prisma.userDatingPhoto.update({
           where: { id: nextPhoto.id },
           data: { isPrimary: true },
         });
@@ -199,7 +199,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete photo
-    await prisma.user_photos.delete({
+    await prisma.userDatingPhoto.delete({
       where: { id: photoId },
     });
 

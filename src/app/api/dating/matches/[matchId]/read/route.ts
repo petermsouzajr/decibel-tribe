@@ -15,7 +15,7 @@ export async function POST(
     const { matchId } = await props.params;
 
     // Get the match to determine which user field to update
-    const match = await prisma.matches.findUnique({
+    const match = await prisma.match.findUnique({
       where: { id: matchId },
       select: { user1Id: true, user2Id: true },
     });
@@ -37,7 +37,7 @@ export async function POST(
       updateData.user2LastViewedAt = new Date();
     }
 
-    await prisma.matches.update({
+    await prisma.match.update({
       where: { id: matchId },
       data: updateData,
     });

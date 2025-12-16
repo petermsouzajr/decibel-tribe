@@ -145,7 +145,7 @@ export async function GET(request: NextRequest) {
 
     // Get user's dating preferences
     const prefStart = Date.now();
-    const preferences = await prisma.user_dating_preferences.findUnique({
+    const preferences = await prisma.userDatingPreferences.findUnique({
       where: { userId: user.id },
     });
     if (isDev) {
@@ -204,7 +204,7 @@ export async function GET(request: NextRequest) {
 
     // Get user's dating profile
     const profileStart = Date.now();
-    const profile = await prisma.user_dating_profile.findUnique({
+    const profile = await prisma.userDatingProfile.findUnique({
       where: { userId: user.id },
     });
     if (isDev) {
@@ -223,7 +223,7 @@ export async function GET(request: NextRequest) {
     let userLatitude: number | null = null;
     let userLongitude: number | null = null;
     
-    const currentUserProfile = await prisma.user_dating_profile.findUnique({
+    const currentUserProfile = await prisma.userDatingProfile.findUnique({
       where: { userId: user.id },
       select: { zipCode: true, city: true, latitude: true, longitude: true },
     });
@@ -247,7 +247,7 @@ export async function GET(request: NextRequest) {
         userLongitude = geocoded.lon;
         
         // Cache the coordinates and city in the profile
-        await prisma.user_dating_profile.update({
+        await prisma.userDatingProfile.update({
           where: { userId: user.id },
           data: {
             latitude: geocoded.lat,
@@ -268,14 +268,14 @@ export async function GET(request: NextRequest) {
 
     // Get users the current user has already swiped on
     const excludeStart = Date.now();
-    const swipedUserIds = await prisma.swipes.findMany({
+    const swipedUserIds = await prisma.swipe.findMany({
       where: { fromUserId: user.id },
       select: { toUserId: true },
     });
     const swipedIds = swipedUserIds.map((s) => s.toUserId);
 
     // Get users the current user has already matched with
-    const matchedUserIds = await prisma.matches.findMany({
+    const matchedUserIds = await prisma.match.findMany({
       where: {
         OR: [{ user1Id: user.id }, { user2Id: user.id }],
       },
@@ -317,7 +317,7 @@ export async function GET(request: NextRequest) {
         deletedAt: null,
         isVerified: true, // Only show verified users in decks (non-verified users can browse but won't appear)
         isDatingActive: true,
-        user_dating_profile: {
+        userDatingProfile: {
           // Match gender preference - check if their gender matches any of our preferred genders
           ...(preferredGenders.length > 0 && preferredGenders.some(p => p.gender) ? {
             gender: { in: preferredGenders.map(p => p.gender).filter(Boolean) }
@@ -377,7 +377,7 @@ export async function GET(request: NextRequest) {
         },
         // Reciprocal preference check: they must also prefer the current user
         // This is handled in post-processing since we need to parse their preferredGender JSON
-        user_dating_preferences: {
+        userDatingPreferences: {
           ...(profile.age ? {
             preferredMinAge: { lte: profile.age },
             preferredMaxAge: { gte: profile.age },
@@ -412,9 +412,9 @@ export async function GET(request: NextRequest) {
           : {}),
       },
       include: {
-        user_dating_profile: true,
-        user_dating_preferences: true,
-        user_photos: {
+        userDatingProfile: true,
+        userDatingPreferences: true,
+        userDatingPhoto: {
           // Include all photos to check count requirement (at least 1 required)
           take: 5, // Max photos is 5
         },
@@ -455,12 +455,12 @@ export async function GET(request: NextRequest) {
     // Filter matches by reciprocal preferences (they must also want us)
     // Also filter by distance and photo requirements
     const reciprocalMatches = matches.filter((match) => {
-      if (!match.user_dating_preferences) return false;
+      if (!match.userDatingPreferences) return false;
       
       // REQUIREMENT: Users must be verified AND have at least 1 dating photo
       // Note: isVerified is already filtered in DB query, but we check photos here as a safety measure
       // (in case a verified user deletes all photos, or if verification doesn't strictly enforce photos)
-      if (!match.user_photos || match.user_photos.length === 0) {
+      if (!match.userDatingPhoto || match.userDatingPhoto.length === 0) {
         if (isDev) {
           console.log(`[Potential Matches] Filtering out match ${match.id}: No dating photos (verified users should have photos)`);
         }
@@ -473,12 +473,12 @@ export async function GET(request: NextRequest) {
       if (
         userLatitude && 
         userLongitude && 
-        match.user_dating_profile?.latitude && 
-        match.user_dating_profile?.longitude &&
+        match.userDatingProfile?.latitude && 
+        match.userDatingProfile?.longitude &&
         preferences.preferredMaxDistanceKm
       ) {
-        const matchLatitude = match.user_dating_profile.latitude;
-        const matchLongitude = match.user_dating_profile.longitude;
+        const matchLatitude = match.userDatingProfile.latitude;
+        const matchLongitude = match.userDatingProfile.longitude;
         const distanceKm = calculateDistance(
           userLatitude, 
           userLongitude, 
@@ -499,24 +499,24 @@ export async function GET(request: NextRequest) {
       // Parse their preferredGender (support both formats)
       let theirPreferredGenders: Array<{ gender: string; sexualOrientation: string }> = [];
       try {
-        if (match.user_dating_preferences.preferredGender) {
-          const parsed = JSON.parse(match.user_dating_preferences.preferredGender);
+        if (match.userDatingPreferences.preferredGender) {
+          const parsed = JSON.parse(match.userDatingPreferences.preferredGender);
           if (Array.isArray(parsed)) {
             theirPreferredGenders = parsed;
           } else {
             // Old format
             theirPreferredGenders = [{
-              gender: match.user_dating_preferences.preferredGender,
-              sexualOrientation: match.user_dating_preferences.preferredSexualOrientation || ""
+              gender: match.userDatingPreferences.preferredGender,
+              sexualOrientation: match.userDatingPreferences.preferredSexualOrientation || ""
             }];
           }
         }
       } catch {
         // Not JSON, use as single value
-        if (match.user_dating_preferences.preferredGender) {
+        if (match.userDatingPreferences.preferredGender) {
           theirPreferredGenders = [{
-            gender: match.user_dating_preferences.preferredGender,
-            sexualOrientation: match.user_dating_preferences.preferredSexualOrientation || ""
+            gender: match.userDatingPreferences.preferredGender,
+            sexualOrientation: match.userDatingPreferences.preferredSexualOrientation || ""
           }];
         }
       }
@@ -583,7 +583,7 @@ export async function GET(request: NextRequest) {
     const formattedMatches = await Promise.all(
       reciprocalMatches.map(async (match) => {
         // Find primary photo (or use first photo if no primary set)
-        const primaryPhoto = match.user_photos.find(p => p.isPrimary) || match.user_photos[0];
+        const primaryPhoto = match.userDatingPhoto.find(p => p.isPrimary) || match.userDatingPhoto[0];
         const instruments = match.userInstruments.map((ui) => ui.instrument.name);
         const skills = match.userSkills.map((us) => us.skill.name);
 
@@ -597,11 +597,11 @@ export async function GET(request: NextRequest) {
 
         const profileCompleteness = calculateProfileCompleteness({
           bio: match.bio,
-          age: match.user_dating_profile?.age || null,
-          height: match.user_dating_profile?.height || null,
-          gender: match.user_dating_profile?.gender || null,
-          location: match.user_dating_profile?.zipCode || null,
-          photos: match.user_photos.length,
+          age: match.userDatingProfile?.age || null,
+          height: match.userDatingProfile?.height || null,
+          gender: match.userDatingProfile?.gender || null,
+          location: match.userDatingProfile?.zipCode || null,
+          photos: match.userDatingPhoto.length,
         });
 
         // Get match's post count from batched query
@@ -612,11 +612,11 @@ export async function GET(request: NextRequest) {
         // Calculate distance if we have coordinates for both users
         // Use cached city name from profile
         let distance: number | null = null;
-        const cityName: string | null = match.user_dating_profile?.city || null;
+        const cityName: string | null = match.userDatingProfile?.city || null;
         
-        if (userLatitude && userLongitude && match.user_dating_profile?.latitude && match.user_dating_profile?.longitude) {
-          const matchLatitude = match.user_dating_profile.latitude;
-          const matchLongitude = match.user_dating_profile.longitude;
+        if (userLatitude && userLongitude && match.userDatingProfile?.latitude && match.userDatingProfile?.longitude) {
+          const matchLatitude = match.userDatingProfile.latitude;
+          const matchLongitude = match.userDatingProfile.longitude;
           distance = calculateDistance(userLatitude, userLongitude, matchLatitude, matchLongitude);
         }
         
@@ -647,28 +647,28 @@ export async function GET(request: NextRequest) {
           id: match.id,
           username: match.username,
           displayName: match.displayName,
-          age: match.user_dating_profile?.age || null,
-          height: match.user_dating_profile?.height || null,
-          gender: match.user_dating_profile?.gender || null,
-          sexualOrientation: match.user_dating_profile?.sexualOrientation || null,
-          coronavirusVaccinated: match.user_dating_profile?.coronavirusVaccinated || null,
-          religion: match.user_dating_profile?.religion || null,
-          bio: match.user_dating_profile?.bio || match.bio || "",
-          hasKids: match.user_dating_profile?.hasKids ?? null,
-          smokes: match.user_dating_profile?.smokes || null,
-          drinks: match.user_dating_profile?.drinks || null,
-          activity: match.user_dating_profile?.activity || null,
-          education: match.user_dating_profile?.education || null,
-          job: match.user_dating_profile?.job || null,
-          pets: match.user_dating_profile?.pets || null,
-          interests: match.user_dating_profile?.interests || [],
-          photos: match.user_photos.map((p) => ({
+          age: match.userDatingProfile?.age || null,
+          height: match.userDatingProfile?.height || null,
+          gender: match.userDatingProfile?.gender || null,
+          sexualOrientation: match.userDatingProfile?.sexualOrientation || null,
+          coronavirusVaccinated: match.userDatingProfile?.coronavirusVaccinated || null,
+          religion: match.userDatingProfile?.religion || null,
+          bio: match.userDatingProfile?.bio || match.bio || "",
+          hasKids: match.userDatingProfile?.hasKids ?? null,
+          smokes: match.userDatingProfile?.smokes || null,
+          drinks: match.userDatingProfile?.drinks || null,
+          activity: match.userDatingProfile?.activity || null,
+          education: match.userDatingProfile?.education || null,
+          job: match.userDatingProfile?.job || null,
+          pets: match.userDatingProfile?.pets || null,
+          interests: match.userDatingProfile?.interests || [],
+          photos: match.userDatingPhoto.map((p) => ({
             url: p.url,
             isPrimary: p.isPrimary,
           })),
           primaryPhotoUrl: primaryPhoto?.url || match.avatarUrl,
           distance: distance,
-          location: cityName || match.user_dating_profile?.zipCode || null,
+          location: cityName || match.userDatingProfile?.zipCode || null,
           musicInfo: {
             instruments,
             skills,

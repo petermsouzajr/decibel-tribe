@@ -24,44 +24,44 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all matches for the current user
-    const matches = await prisma.matches.findMany({
+    const matches = await prisma.match.findMany({
       where: {
         OR: [{ user1Id: user.id }, { user2Id: user.id }],
       },
       include: {
-        users_matches_user1IdTousers: {
+        user1: {
           select: {
             id: true,
             username: true,
             displayName: true,
             avatarUrl: true,
-            user_dating_profile: {
+            userDatingProfile: {
               select: {
                 age: true,
                 city: true,
                 zipCode: true,
               },
             },
-            user_photos: {
+            userDatingPhoto: {
               where: { isPrimary: true },
               take: 1,
             },
           },
         },
-        users_matches_user2IdTousers: {
+        user2: {
           select: {
             id: true,
             username: true,
             displayName: true,
             avatarUrl: true,
-            user_dating_profile: {
+            userDatingProfile: {
               select: {
                 age: true,
                 city: true,
                 zipCode: true,
               },
             },
-            user_photos: {
+            userDatingPhoto: {
               where: { isPrimary: true },
               take: 1,
             },
@@ -76,8 +76,8 @@ export async function GET(request: NextRequest) {
       matches.map(async (match) => {
         const otherUser =
           match.user1Id === user.id
-            ? match.users_matches_user2IdTousers
-            : match.users_matches_user1IdTousers;
+            ? match.user2
+            : match.user1;
 
         // Determine if this match is "new" (unread) for the current user
         const lastViewedAt = match.user1Id === user.id 
@@ -125,9 +125,9 @@ export async function GET(request: NextRequest) {
             username: otherUser.username,
             displayName: otherUser.displayName,
             avatarUrl: otherUser.avatarUrl,
-            primaryPhotoUrl: otherUser.user_photos[0]?.url || otherUser.avatarUrl,
-            age: otherUser.user_dating_profile?.age || null,
-            location: otherUser.user_dating_profile?.city || otherUser.user_dating_profile?.zipCode || null,
+            primaryPhotoUrl: otherUser.userDatingPhoto[0]?.url || otherUser.avatarUrl,
+            age: otherUser.userDatingProfile?.age || null,
+            location: otherUser.userDatingProfile?.city || otherUser.userDatingProfile?.zipCode || null,
           },
           lastMessage: lastMessage
             ? {

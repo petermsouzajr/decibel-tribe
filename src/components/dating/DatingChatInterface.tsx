@@ -25,7 +25,7 @@ interface DatingChatInterfaceProps {
     username: string;
     displayName: string;
     avatarUrl: string | null;
-    user_photos: Array<{ url: string }>;
+    userDatingPhoto: Array<{ url: string }>;
   };
 }
 
@@ -38,7 +38,7 @@ function DatingChatContent({
   const [showInsights, setShowInsights] = useState(false);
 
   const photoUrl =
-    otherUser.user_photos[0]?.url ||
+    otherUser.userDatingPhoto[0]?.url ||
     otherUser.avatarUrl ||
     "/assets/avatar-placeholder.png";
 

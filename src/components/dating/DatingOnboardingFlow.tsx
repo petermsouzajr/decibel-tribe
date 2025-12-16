@@ -61,8 +61,8 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   
   // Load existing data from the new table structure
-  const existingProfile = (user as any).user_dating_profile;
-  const existingPreferences = (user as any).user_dating_preferences;
+  const existingProfile = (user as any).userDatingProfile;
+  const existingPreferences = (user as any).userDatingPreferences;
   const isVerified = (user as any).isVerified ?? false;
   
   // Parse existing preferences - support both old format (single gender) and new format (multiple)

@@ -12,7 +12,7 @@ export function getUserDataSelect(loggedInUserId?: string | null) {
     passwordHash: true,
     deletedAt: true, // Include deletedAt field
     isDatingActive: true,
-    user_dating_profile: {
+    userDatingProfile: {
       select: {
         id: true,
         age: true,
@@ -30,7 +30,7 @@ export function getUserDataSelect(loggedInUserId?: string | null) {
         calendar: true,
       },
     },
-            user_dating_preferences: {
+            userDatingPreferences: {
           select: {
             id: true,
             preferredGender: true,
@@ -216,7 +216,7 @@ export type UserWithFollowerStatus = {
   passwordHash: string | null;
   deletedAt: Date | null; // Include deletedAt field
       isDatingActive: boolean;
-    user_dating_preferences: {
+    userDatingPreferences: {
       id: string;
       preferredGender: string;
       preferredSexualOrientation: string;

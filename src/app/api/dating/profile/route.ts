@@ -109,11 +109,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's dating profile and preferences
-    const profile = await prisma.user_dating_profile.findUnique({
+    const profile = await prisma.userDatingProfile.findUnique({
       where: { userId: user.id },
     });
 
-    const preferences = await prisma.user_dating_preferences.findUnique({
+    const preferences = await prisma.userDatingPreferences.findUnique({
       where: { userId: user.id },
     });
 
@@ -223,7 +223,7 @@ export async function PUT(request: NextRequest) {
       latitude !== null ||
       longitude !== null
     ) {
-      await prisma.user_dating_profile.upsert({
+      await prisma.userDatingProfile.upsert({
         where: { userId: user.id },
         update: {
           ...(bio !== undefined && { bio }),

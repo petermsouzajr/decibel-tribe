@@ -26,28 +26,28 @@ export default async function ChatPage(
   }
 
   // Verify user is part of this match
-  const match = await prisma.matches.findUnique({
+  const match = await prisma.match.findUnique({
     where: { id: params.matchId },
     include: {
-      users_matches_user1IdTousers: {
+      user1: {
         select: {
           id: true,
           username: true,
           displayName: true,
           avatarUrl: true,
-          user_photos: {
+          userDatingPhoto: {
             where: { isPrimary: true },
             take: 1,
           },
         },
       },
-      users_matches_user2IdTousers: {
+      user2: {
         select: {
           id: true,
           username: true,
           displayName: true,
           avatarUrl: true,
-          user_photos: {
+          userDatingPhoto: {
             where: { isPrimary: true },
             take: 1,
           },
@@ -66,8 +66,8 @@ export default async function ChatPage(
 
   const otherUser =
     match.user1Id === user.id
-      ? match.users_matches_user2IdTousers
-      : match.users_matches_user1IdTousers;
+      ? match.user2
+      : match.user1;
 
   // Mark match as read when user views the chat
   const updateData: { user1LastViewedAt?: Date; user2LastViewedAt?: Date } = {};
@@ -77,7 +77,7 @@ export default async function ChatPage(
     updateData.user2LastViewedAt = new Date();
   }
 
-  await prisma.matches.update({
+  await prisma.match.update({
     where: { id: params.matchId },
     data: updateData,
   });

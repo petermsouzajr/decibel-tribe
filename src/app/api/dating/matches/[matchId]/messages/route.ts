@@ -27,7 +27,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ match
     const { matchId } = params;
 
     // Verify user is part of this match
-    const match = await prisma.matches.findUnique({
+    const match = await prisma.match.findUnique({
       where: { id: matchId },
     });
 
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ matc
     }
 
     // Verify user is part of this match
-    const match = await prisma.matches.findUnique({
+    const match = await prisma.match.findUnique({
       where: { id: matchId },
     });
 

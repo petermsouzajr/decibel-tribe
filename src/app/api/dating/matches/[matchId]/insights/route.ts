@@ -20,7 +20,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ match
     const { matchId } = params;
 
     // Verify user is part of this match
-    const match = await prisma.matches.findUnique({
+    const match = await prisma.match.findUnique({
       where: { id: matchId },
     });
 
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ match
       prisma.user.findUnique({
         where: { id: user.id },
         include: {
-          user_dating_profile: true,
+          userDatingProfile: true,
           userInstruments: { include: { instrument: true } },
           userSkills: { include: { skill: true } },
           _count: { select: { posts: true } },
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ match
       prisma.user.findUnique({
         where: { id: otherUserId },
         include: {
-          user_dating_profile: true,
+          userDatingProfile: true,
           userInstruments: { include: { instrument: true } },
           userSkills: { include: { skill: true } },
           _count: { select: { posts: true } },
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ match
     }
 
     // Get preferences
-    const preferences = await prisma.user_dating_preferences.findUnique({
+    const preferences = await prisma.userDatingPreferences.findUnique({
       where: { userId: user.id },
     });
 
@@ -90,19 +90,19 @@ export async function GET(request: NextRequest, props: { params: Promise<{ match
 
     const currentUserProfileCompleteness = calculateProfileCompleteness({
       bio: currentUser.bio,
-      age: currentUser.user_dating_profile?.age || null,
-      height: currentUser.user_dating_profile?.height || null,
-      gender: currentUser.user_dating_profile?.gender || null,
-      location: currentUser.user_dating_profile?.city || currentUser.user_dating_profile?.zipCode || null,
+      age: currentUser.userDatingProfile?.age || null,
+      height: currentUser.userDatingProfile?.height || null,
+      gender: currentUser.userDatingProfile?.gender || null,
+      location: currentUser.userDatingProfile?.city || currentUser.userDatingProfile?.zipCode || null,
       photos: 0, // We'd need to fetch photos separately
     });
 
     const otherUserProfileCompleteness = calculateProfileCompleteness({
       bio: otherUser.bio,
-      age: otherUser.user_dating_profile?.age || null,
-      height: otherUser.user_dating_profile?.height || null,
-      gender: otherUser.user_dating_profile?.gender || null,
-      location: otherUser.user_dating_profile?.city || otherUser.user_dating_profile?.zipCode || null,
+      age: otherUser.userDatingProfile?.age || null,
+      height: otherUser.userDatingProfile?.height || null,
+      gender: otherUser.userDatingProfile?.gender || null,
+      location: otherUser.userDatingProfile?.city || otherUser.userDatingProfile?.zipCode || null,
       photos: 0,
     });
 

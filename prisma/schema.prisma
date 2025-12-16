@@ -9,49 +9,49 @@ datasource db {
 }
 
 model User {
-  id                                String                             @id @default(cuid())
-  username                          String                             @unique
-  displayName                       String
-  email                             String?                            @unique
-  passwordHash                      String?
-  isVerified                        Boolean                            @default(false)
-  googleId                          String?                            @unique
-  avatarUrl                         String?
-  bio                               String?
-  createdAt                         DateTime                           @default(now())
-  pendingEmail                      String?
-  deletedAt                         DateTime?
-  isDatingActive                    Boolean                            @default(false)
-  isAdmin                           Boolean                            @default(false)
-  preferredUnits                    String?                            @default("metric")
-  EmailVerification                 EmailVerification[]
-  groups                            GroupMember[]
-  userInstruments                   UserInstrument[]
-  userSkills                        UserSkill[]
-  bookmarks                         Bookmark[]
-  commentLikes                      CommentLike[]
-  comments                          Comment[]
-  dislikes                          Dislike[]
-  EventAttendee                     EventAttendee[]
-  events                            Event[]                            @relation("CreatedEvents")
-  following                         Follow[]                           @relation("Following")
-  followers                         Follow[]                           @relation("Followers")
-  ownedGroups                       Group[]                            @relation("GroupOwner")
-  likes                             Like[]
-  matches_matches_user1IdTousers    matches[]                          @relation("matches_user1IdTousers")
-  matches_matches_user2IdTousers    matches[]                          @relation("matches_user2IdTousers")
-  issuedNotifications               Notification[]                     @relation("Issuer")
-  receivedNotifications             Notification[]                     @relation("Recipient")
-  posts                             Post[]
-  sessions                          Session[]
-  swipes_swipes_fromUserIdTousers   swipes[]                           @relation("swipes_fromUserIdTousers")
-  swipes_swipes_toUserIdTousers     swipes[]                           @relation("swipes_toUserIdTousers")
-  user_dating_preferences           user_dating_preferences?
-  user_dating_profile               user_dating_profile?
-  user_dating_identity_verification user_dating_identity_verification?
-  user_photos                       user_photos[]
-  userPreferences                   UserPreferences?
-  sentMessages                      Message[]                          @relation("MessageSender")
+  id                             String                          @id @default(cuid())
+  username                       String                          @unique
+  displayName                    String
+  email                          String?                         @unique
+  passwordHash                   String?
+  isVerified                     Boolean                         @default(false)
+  googleId                       String?                         @unique
+  avatarUrl                      String?
+  bio                            String?
+  createdAt                      DateTime                        @default(now())
+  pendingEmail                   String?
+  deletedAt                      DateTime?
+  isDatingActive                 Boolean                         @default(false)
+  isAdmin                        Boolean                         @default(false)
+  preferredUnits                 String?                         @default("metric")
+  EmailVerification              EmailVerification[]
+  groups                         GroupMember[]
+  userInstruments                UserInstrument[]
+  userSkills                     UserSkill[]
+  bookmarks                      Bookmark[]
+  commentLikes                   CommentLike[]
+  comments                       Comment[]
+  dislikes                       Dislike[]
+  EventAttendee                  EventAttendee[]
+  events                         Event[]                         @relation("CreatedEvents")
+  following                      Follow[]                        @relation("Following")
+  followers                      Follow[]                        @relation("Followers")
+  ownedGroups                    Group[]                         @relation("GroupOwner")
+  likes                          Like[]
+  matchesAsUser1                 Match[]                         @relation("matches_user1IdTousers")
+  matchesAsUser2                 Match[]                         @relation("matches_user2IdTousers")
+  issuedNotifications            Notification[]                  @relation("Issuer")
+  receivedNotifications          Notification[]                  @relation("Recipient")
+  posts                          Post[]
+  sessions                       Session[]
+  swipesFromUser                 Swipe[]                         @relation("swipes_fromUserIdTousers")
+  swipesToUser                   Swipe[]                         @relation("swipes_toUserIdTousers")
+  userDatingPreferences          UserDatingPreferences?
+  userDatingProfile              UserDatingProfile?
+  userDatingIdentityVerification UserDatingIdentityVerification?
+  userDatingPhotos               UserDatingPhoto[]
+  userPreferences                UserPreferences?
+  sentMessages                   Message[]                       @relation("MessageSender")
 
   // Reports relations
   reportsMade          Report[] @relation("UserReports")
@@ -345,7 +345,7 @@ model Notification {
   issuer      User             @relation("Issuer", fields: [issuerId], references: [id], onDelete: Cascade)
   post        Post?            @relation(fields: [postId], references: [id], onDelete: Cascade)
   recipient   User             @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
-  match       matches?         @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  match       Match?           @relation(fields: [matchId], references: [id], onDelete: Cascade)
 
   @@unique([recipientId, eventId, type])
   @@map("notifications")
@@ -388,41 +388,43 @@ model EventAttendee {
   @@map("event_attendees")
 }
 
-model matches {
-  id                           String         @id
-  user1Id                      String
-  user2Id                      String
-  createdAt                    DateTime       @default(now())
-  user1LastViewedAt            DateTime? // When user1 last viewed this match
-  user2LastViewedAt            DateTime? // When user2 last viewed this match
-  users_matches_user1IdTousers User           @relation("matches_user1IdTousers", fields: [user1Id], references: [id], onDelete: Cascade)
-  users_matches_user2IdTousers User           @relation("matches_user2IdTousers", fields: [user2Id], references: [id], onDelete: Cascade)
-  messages                     Message[]
-  notifications                Notification[]
+model Match {
+  id                String         @id
+  user1Id           String
+  user2Id           String
+  createdAt         DateTime       @default(now())
+  user1LastViewedAt DateTime? // When user1 last viewed this match
+  user2LastViewedAt DateTime? // When user2 last viewed this match
+  user1             User           @relation("matches_user1IdTousers", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2             User           @relation("matches_user2IdTousers", fields: [user2Id], references: [id], onDelete: Cascade)
+  messages          Message[]
+  notifications     Notification[]
 
   @@unique([user1Id, user2Id])
   @@index([user1Id])
   @@index([user2Id])
   @@index([user1Id, createdAt])
   @@index([user2Id, createdAt])
+  @@map("matches")
 }
 
-model swipes {
-  id                             String    @id
-  fromUserId                     String
-  toUserId                       String
-  direction                      String
-  message                        String? // Optional message with like
-  undoExpiresAt                  DateTime? // For undo functionality (3-hour window)
-  createdAt                      DateTime  @default(now())
-  users_swipes_fromUserIdTousers User      @relation("swipes_fromUserIdTousers", fields: [fromUserId], references: [id], onDelete: Cascade)
-  users_swipes_toUserIdTousers   User      @relation("swipes_toUserIdTousers", fields: [toUserId], references: [id], onDelete: Cascade)
+model Swipe {
+  id            String    @id
+  fromUserId    String
+  toUserId      String
+  direction     String
+  message       String? // Optional message with like
+  undoExpiresAt DateTime? // For undo functionality (3-hour window)
+  createdAt     DateTime  @default(now())
+  fromUser      User      @relation("swipes_fromUserIdTousers", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser        User      @relation("swipes_toUserIdTousers", fields: [toUserId], references: [id], onDelete: Cascade)
 
   @@unique([fromUserId, toUserId])
   @@index([fromUserId])
   @@index([toUserId])
   @@index([fromUserId, createdAt])
   @@index([direction, createdAt])
+  @@map("swipes")
 }
 
 model Message {
@@ -432,14 +434,14 @@ model Message {
   content   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
-  match     matches  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
   sender    User     @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
 
   @@index([matchId, createdAt])
   @@map("messages")
 }
 
-model user_dating_profile {
+model UserDatingProfile {
   id                    String    @id
   userId                String    @unique
   age                   Int?
@@ -468,12 +470,14 @@ model user_dating_profile {
   latitude              Float? // Cached geocoded latitude (from zip code)
   longitude             Float? // Cached geocoded longitude (from zip code)
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("user_dating_profiles")
 }
 
-model user_dating_identity_verification {
+model UserDatingIdentityVerification {
   id                    String    @id @default(cuid())
   userId                String    @unique
-  isVerified            Boolean   @default(false)
+  isIDVerified          Boolean   @default(false)
   verificationStatus    String    @default("not_started") // "not_started" | "pending" | "verified" | "failed" | "requires_input"
   verificationMethod    String? // "stripe_identity" | "manual" | future methods
   stripeVerificationId  String?   @unique // Stripe Identity VerificationSession ID
@@ -487,12 +491,12 @@ model user_dating_identity_verification {
   updatedAt             DateTime  @updatedAt
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId, isVerified])
+  @@index([userId, isIDVerified])
   @@index([stripeVerificationId])
   @@map("user_dating_identity_verifications")
 }
 
-model user_dating_preferences {
+model UserDatingPreferences {
   id                             String   @id
   userId                         String   @unique
   preferredMinAge                Int
@@ -522,19 +526,22 @@ model user_dating_preferences {
   exactMatchAllFilters           Boolean  @default(false) // Strict matching: all preferences must match exactly
   minimumMatchPercentage         Int      @default(70) // Minimum compatibility percentage (0-100)
   nonNegotiableFields            String[] // Array of field names that are dealbreakers (e.g., ["smokes", "hasKids", "religion"])
-  users                          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_dating_preferences")
 }
 
-model user_photos {
+model UserDatingPhoto {
   id        String   @id
   userId    String
   url       String
   isPrimary Boolean  @default(false)
   createdAt DateTime @default(now())
-  users     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([userId, isPrimary])
+  @@map("user_photos")
 }
 
 enum GroupRole {
