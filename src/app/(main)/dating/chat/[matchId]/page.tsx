@@ -35,7 +35,7 @@ export default async function ChatPage(
           username: true,
           displayName: true,
           avatarUrl: true,
-          userDatingPhoto: {
+          userDatingPhotos: {
             where: { isPrimary: true },
             take: 1,
           },
@@ -47,7 +47,7 @@ export default async function ChatPage(
           username: true,
           displayName: true,
           avatarUrl: true,
-          userDatingPhoto: {
+          userDatingPhotos: {
             where: { isPrimary: true },
             take: 1,
           },
@@ -82,6 +82,9 @@ export default async function ChatPage(
     data: updateData,
   });
 
-  return <DatingChatInterface matchId={params.matchId} otherUser={otherUser} />;
+  return <DatingChatInterface matchId={params.matchId} otherUser={{
+    ...otherUser,
+    userDatingPhotos: otherUser.userDatingPhotos || [],
+  }} />;
 }
 

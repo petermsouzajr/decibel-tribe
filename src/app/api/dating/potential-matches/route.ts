@@ -414,7 +414,7 @@ export async function GET(request: NextRequest) {
       include: {
         userDatingProfile: true,
         userDatingPreferences: true,
-        userDatingPhoto: {
+        userDatingPhotos: {
           // Include all photos to check count requirement (at least 1 required)
           take: 5, // Max photos is 5
         },
@@ -460,7 +460,7 @@ export async function GET(request: NextRequest) {
       // REQUIREMENT: Users must be verified AND have at least 1 dating photo
       // Note: isVerified is already filtered in DB query, but we check photos here as a safety measure
       // (in case a verified user deletes all photos, or if verification doesn't strictly enforce photos)
-      if (!match.userDatingPhoto || match.userDatingPhoto.length === 0) {
+      if (!match.userDatingPhotos || match.userDatingPhotos.length === 0) {
         if (isDev) {
           console.log(`[Potential Matches] Filtering out match ${match.id}: No dating photos (verified users should have photos)`);
         }
@@ -583,7 +583,7 @@ export async function GET(request: NextRequest) {
     const formattedMatches = await Promise.all(
       reciprocalMatches.map(async (match) => {
         // Find primary photo (or use first photo if no primary set)
-        const primaryPhoto = match.userDatingPhoto.find(p => p.isPrimary) || match.userDatingPhoto[0];
+        const primaryPhoto = match.userDatingPhotos.find((p: { isPrimary: boolean }) => p.isPrimary) || match.userDatingPhotos[0];
         const instruments = match.userInstruments.map((ui) => ui.instrument.name);
         const skills = match.userSkills.map((us) => us.skill.name);
 
@@ -601,7 +601,7 @@ export async function GET(request: NextRequest) {
           height: match.userDatingProfile?.height || null,
           gender: match.userDatingProfile?.gender || null,
           location: match.userDatingProfile?.zipCode || null,
-          photos: match.userDatingPhoto.length,
+          photos: match.userDatingPhotos.length,
         });
 
         // Get match's post count from batched query
@@ -662,7 +662,7 @@ export async function GET(request: NextRequest) {
           job: match.userDatingProfile?.job || null,
           pets: match.userDatingProfile?.pets || null,
           interests: match.userDatingProfile?.interests || [],
-          photos: match.userDatingPhoto.map((p) => ({
+          photos: match.userDatingPhotos.map((p) => ({
             url: p.url,
             isPrimary: p.isPrimary,
           })),

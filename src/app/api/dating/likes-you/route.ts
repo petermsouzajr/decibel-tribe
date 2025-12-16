@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
                 zipCode: true,
               },
             },
-            userDatingPhoto: {
+            userDatingPhotos: {
               where: { isPrimary: true },
               take: 1,
             },
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
         username: liker.username,
         displayName: liker.displayName,
         avatarUrl: liker.avatarUrl,
-        primaryPhotoUrl: liker.userDatingPhoto[0]?.url || liker.avatarUrl,
+        primaryPhotoUrl: liker.userDatingPhotos[0]?.url || liker.avatarUrl,
         age: liker.userDatingProfile?.age || null,
         height: liker.userDatingProfile?.height || null,
         gender: liker.userDatingProfile?.gender || null,

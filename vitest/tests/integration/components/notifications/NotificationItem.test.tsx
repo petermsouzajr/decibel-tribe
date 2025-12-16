@@ -64,7 +64,7 @@ const createMockNotification = (
     userSkills: [],
     // Required new fields
     isDatingActive: false,
-    user_dating_preferences: null,
+    userDatingPreferences: null,
   } as any;
 
   const baseNotification = {

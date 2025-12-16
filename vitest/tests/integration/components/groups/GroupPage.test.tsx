@@ -121,7 +121,7 @@ const mockPostUser = {
   followers: [],
   following: [], // Also add 'following' if it exists on the type
   isDatingActive: false,
-  user_dating_preferences: null,
+  userDatingPreferences: null,
 };
 
 const mockGroupDetails = {

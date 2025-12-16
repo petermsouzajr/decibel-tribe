@@ -122,7 +122,7 @@ describe("API Route: /api/posts/[postId]", () => {
       userInstruments: [],
       userSkills: [],
       isDatingActive: false,
-      user_dating_preferences: null,
+      userDatingPreferences: null,
       _count: { posts: 0, followers: 0 },
       followers: [],
     },

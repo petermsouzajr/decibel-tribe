@@ -30,7 +30,7 @@ export async function seedIdentityVerification(
     isDatingActive: u.isDatingActive ?? true,
   })).filter((u) => u.id && u.isDatingActive);
 
-  const verificationData: Prisma.userDatingIdentityVerificationCreateManyInput[] = [];
+  const verificationData: Prisma.UserDatingIdentityVerificationCreateManyInput[] = [];
 
   // 30-40% of dating users will have verification records
   const usersToVerify = faker.helpers

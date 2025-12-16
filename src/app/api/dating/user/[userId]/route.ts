@@ -33,7 +33,7 @@ export async function GET(
       where: { id: userId },
       include: {
         userDatingProfile: true,
-        userDatingPhoto: {
+        userDatingPhotos: {
           orderBy: { isPrimary: "desc" },
         },
         userInstruments: {
@@ -128,12 +128,12 @@ export async function GET(
       job: targetUser.userDatingProfile.job,
       pets: targetUser.userDatingProfile.pets,
       interests: targetUser.userDatingProfile.interests || [],
-      photos: targetUser.userDatingPhoto.map((p) => ({
+      photos: targetUser.userDatingPhotos.map((p: { url: string; isPrimary: boolean }) => ({
         url: p.url,
         isPrimary: p.isPrimary,
       })),
       primaryPhotoUrl:
-        targetUser.userDatingPhoto.find((p) => p.isPrimary)?.url ||
+        targetUser.userDatingPhotos.find((p: { isPrimary: boolean }) => p.isPrimary)?.url ||
         targetUser.avatarUrl ||
         null,
       distance,

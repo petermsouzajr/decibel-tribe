@@ -244,14 +244,14 @@ export async function deleteDatingTestUsers(
           id: { $in: userIds },
         });
 
-        if (streamUsers.users.length > 0) {
+        if (streamUsers.user.length > 0) {
           console.log(
-            `...Found ${streamUsers.users.length} dating users in StreamChat (out of ${userIds.length} database users).`,
+            `...Found ${streamUsers.user.length} dating users in StreamChat (out of ${userIds.length} database users).`,
           );
 
-          if (streamUsers.users.length < userIds.length) {
+          if (streamUsers.user.length < userIds.length) {
             console.log(
-              `...Note: ${userIds.length - streamUsers.users.length} database users had no StreamChat entries (likely from incomplete previous seed).`,
+              `...Note: ${userIds.length - streamUsers.user.length} database users had no StreamChat entries (likely from incomplete previous seed).`,
             );
           }
 
@@ -394,9 +394,9 @@ export async function seedDatingProfiles(
   const hashedPassword = await hasher(cypressEnv.password as string); // Default password for test users
   const createdDatingUsers: CreatedDatingUser[] = [];
   const usersToCreate: Prisma.UserCreateInput[] = [];
-  const profilesToCreate: Prisma.userDatingProfileCreateInput[] = [];
-  const preferencesToCreate: Prisma.userDatingPreferencesCreateInput[] = [];
-  const photosToCreate: Prisma.userDatingPhotoCreateInput[] = [];
+  const profilesToCreate: Prisma.UserDatingProfileCreateInput[] = [];
+  const preferencesToCreate: Prisma.UserDatingPreferencesCreateInput[] = [];
+  const photosToCreate: Prisma.UserDatingPhotoCreateInput[] = [];
   const swipesToCreate: Array<{ fromUserId: string; toUserId: string; direction: string }> = [];
   const matchesToCreate: Array<{ user1Id: string; user2Id: string }> = [];
 
@@ -603,7 +603,7 @@ export async function seedDatingProfiles(
 
     // Create dating profile
     const profileId = generateIdFromEntropySize(10);
-    const profileData: Prisma.userDatingProfileCreateInput = {
+    const profileData: Prisma.UserDatingProfileCreateInput = {
       id: profileId,
       user: { connect: { id: userId } },
       age: config.age,
@@ -623,9 +623,9 @@ export async function seedDatingProfiles(
     const preferencesId = generateIdFromEntropySize(10);
     
     // preferredGender is already in JSON format from config, so use it directly
-    const preferencesData: Prisma.userDatingPreferencesCreateInput = {
+    const preferencesData: Prisma.UserDatingPreferencesCreateInput = {
       id: preferencesId,
-      users: { connect: { id: userId } },
+      user: { connect: { id: userId } },
       preferredMinAge: config.preferredMinAge,
       preferredMaxAge: config.preferredMaxAge,
       preferredMaxDistanceKm: 50, // 50km for test users
@@ -653,9 +653,9 @@ export async function seedDatingProfiles(
     // Create photos
     for (let j = 0; j < 2; j++) {
       const photoId = generateIdFromEntropySize(10);
-      const photoData: Prisma.userDatingPhotoCreateInput = {
+      const photoData: Prisma.UserDatingPhotoCreateInput = {
         id: photoId,
-        users: { connect: { id: userId } },
+        user: { connect: { id: userId } },
         url: `https://i.pravatar.cc/400?img=${faker.number.int({ min: 1, max: 70 })}`,
         isPrimary: j === 0,
       };
@@ -795,7 +795,7 @@ export async function seedDatingProfiles(
       const hasKids = faker.datatype.boolean({ probability: profileCompleteness * 0.7 })
         ? faker.datatype.boolean()
         : null;
-      const profileData: Prisma.userDatingProfileCreateInput = {
+      const profileData: Prisma.UserDatingProfileCreateInput = {
         id: profileId,
         user: { connect: { id: userId } },
         age,
@@ -867,9 +867,9 @@ export async function seedDatingProfiles(
         faker.helpers.arrayElement(SEXUAL_ORIENTATIONS),
       ]);
 
-      const preferencesData: Prisma.userDatingPreferencesCreateInput = {
+      const preferencesData: Prisma.UserDatingPreferencesCreateInput = {
         id: preferencesId,
-        users: { connect: { id: userId } },
+        user: { connect: { id: userId } },
         preferredMinAge,
         preferredMaxAge,
         preferredMaxDistanceKm: faker.helpers.arrayElement([
@@ -931,9 +931,9 @@ export async function seedDatingProfiles(
       const photoCount = faker.number.int({ min: MIN_PHOTOS, max: MAX_PHOTOS });
       for (let k = 0; k < photoCount; k++) {
         const photoId = generateIdFromEntropySize(10);
-        const photoData: Prisma.userDatingPhotoCreateInput = {
+        const photoData: Prisma.UserDatingPhotoCreateInput = {
           id: photoId,
-          users: { connect: { id: userId } },
+          user: { connect: { id: userId } },
           url: `https://i.pravatar.cc/400?img=${faker.number.int({
             min: 1,
             max: 70,
@@ -1004,7 +1004,7 @@ export async function seedDatingProfiles(
     const hasKids = faker.datatype.boolean({ probability: profileCompleteness * 0.7 })
       ? faker.datatype.boolean()
       : null;
-    const profileData: Prisma.userDatingProfileCreateInput = {
+    const profileData: Prisma.UserDatingProfileCreateInput = {
       id: profileId,
       user: { connect: { id: userId } },
       age,
@@ -1076,9 +1076,9 @@ export async function seedDatingProfiles(
       faker.helpers.arrayElement(SEXUAL_ORIENTATIONS),
     ]);
 
-    const preferencesData: Prisma.userDatingPreferencesCreateInput = {
+    const preferencesData: Prisma.UserDatingPreferencesCreateInput = {
       id: preferencesId,
-      users: { connect: { id: userId } },
+      user: { connect: { id: userId } },
       preferredMinAge,
       preferredMaxAge,
       preferredMaxDistanceKm: faker.helpers.arrayElement([
@@ -1140,9 +1140,9 @@ export async function seedDatingProfiles(
     const photoCount = faker.number.int({ min: 1, max: 4 });
     for (let k = 0; k < photoCount; k++) {
       const photoId = generateIdFromEntropySize(10);
-      const photoData: Prisma.userDatingPhotoCreateInput = {
+      const photoData: Prisma.UserDatingPhotoCreateInput = {
         id: photoId,
-        users: { connect: { id: userId } },
+        user: { connect: { id: userId } },
         url: `https://i.pravatar.cc/400?img=${faker.number.int({
           min: 1,
           max: 70,
@@ -1204,7 +1204,7 @@ export async function seedDatingProfiles(
       
     const validPreferences = preferencesToCreate
       .map((p) => {
-        const attemptedUserId = (p.users as { connect: { id: string } }).connect.id;
+        const attemptedUserId = (p.user as { connect: { id: string } }).connect.id;
         const actualUserId = userIdMap.get(attemptedUserId);
         if (!actualUserId) return null;
         return { ...p, actualUserId };
@@ -1213,7 +1213,7 @@ export async function seedDatingProfiles(
       
     const validPhotos = photosToCreate
       .map((p) => {
-        const attemptedUserId = (p.users as { connect: { id: string } }).connect.id;
+        const attemptedUserId = (p.user as { connect: { id: string } }).connect.id;
         const actualUserId = userIdMap.get(attemptedUserId);
         if (!actualUserId) return null;
         return { ...p, actualUserId };

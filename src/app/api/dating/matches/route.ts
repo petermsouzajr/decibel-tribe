@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
                 zipCode: true,
               },
             },
-            userDatingPhoto: {
+            userDatingPhotos: {
               where: { isPrimary: true },
               take: 1,
             },
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
                 zipCode: true,
               },
             },
-            userDatingPhoto: {
+            userDatingPhotos: {
               where: { isPrimary: true },
               take: 1,
             },
@@ -125,7 +125,7 @@ export async function GET(request: NextRequest) {
             username: otherUser.username,
             displayName: otherUser.displayName,
             avatarUrl: otherUser.avatarUrl,
-            primaryPhotoUrl: otherUser.userDatingPhoto[0]?.url || otherUser.avatarUrl,
+            primaryPhotoUrl: otherUser.userDatingPhotos[0]?.url || otherUser.avatarUrl,
             age: otherUser.userDatingProfile?.age || null,
             location: otherUser.userDatingProfile?.city || otherUser.userDatingProfile?.zipCode || null,
           },

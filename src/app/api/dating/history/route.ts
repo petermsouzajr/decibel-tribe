@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
                     zipCode: true,
                   },
                 },
-                userDatingPhoto: {
+                userDatingPhotos: {
                   where: { isPrimary: true },
                   take: 1,
                 },
@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
         avatarUrl: targetUser.avatarUrl,
         primaryPhotoUrl: light 
           ? targetUser.avatarUrl 
-          : ((targetUser as any).userDatingPhoto?.[0]?.url || targetUser.avatarUrl),
+          : ((targetUser as any).userDatingPhotos?.[0]?.url || targetUser.avatarUrl),
         age: light ? null : ((targetUser as any).userDatingProfile?.age || null),
         location: light 
           ? null 
