@@ -13,9 +13,6 @@ UploadThing v7 (version 7.7.4) requires `UPLOADTHING_TOKEN` environment variable
 In your `.env` file, rename the variable:
 
 Keep `NEXT_PUBLIC_UPLOADTHING_APP_ID` as is:
-```
-NEXT_PUBLIC_UPLOADTHING_APP_ID=ectxvokkiw
-```
 
 ### Option 2: Support Both Variables (Temporary)
 
