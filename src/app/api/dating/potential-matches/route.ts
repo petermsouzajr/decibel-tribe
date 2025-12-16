@@ -415,8 +415,8 @@ export async function GET(request: NextRequest) {
         user_dating_profile: true,
         user_dating_preferences: true,
         user_photos: {
-          where: { isPrimary: true },
-          take: 1,
+          // Include all photos to check count requirement (at least 1 required)
+          take: 5, // Max photos is 5
         },
         userInstruments: {
           include: { instrument: true },
@@ -453,8 +453,48 @@ export async function GET(request: NextRequest) {
       currentUserMusic?.userSkills.map((us) => us.skill.name) || [];
 
     // Filter matches by reciprocal preferences (they must also want us)
+    // Also filter by distance and photo requirements
     const reciprocalMatches = matches.filter((match) => {
       if (!match.user_dating_preferences) return false;
+      
+      // REQUIREMENT: Users must be verified AND have at least 1 dating photo
+      // Note: isVerified is already filtered in DB query, but we check photos here as a safety measure
+      // (in case a verified user deletes all photos, or if verification doesn't strictly enforce photos)
+      if (!match.user_photos || match.user_photos.length === 0) {
+        if (isDev) {
+          console.log(`[Potential Matches] Filtering out match ${match.id}: No dating photos (verified users should have photos)`);
+        }
+        return false;
+      }
+      
+      // REQUIREMENT: Filter by distance using SEARCHER's preference (unidirectional filter)
+      // User A with 100 mile preference will see User B at 80 miles, even if User B has 10 mile preference
+      // The filter is based on the searcher's preference, not mutual agreement
+      if (
+        userLatitude && 
+        userLongitude && 
+        match.user_dating_profile?.latitude && 
+        match.user_dating_profile?.longitude &&
+        preferences.preferredMaxDistanceKm
+      ) {
+        const matchLatitude = match.user_dating_profile.latitude;
+        const matchLongitude = match.user_dating_profile.longitude;
+        const distanceKm = calculateDistance(
+          userLatitude, 
+          userLongitude, 
+          matchLatitude, 
+          matchLongitude
+        );
+        
+        // Filter out matches beyond the SEARCHER's max distance preference
+        // This is unidirectional - uses current user's preference, not the match's preference
+        if (distanceKm > preferences.preferredMaxDistanceKm) {
+          if (isDev) {
+            console.log(`[Potential Matches] Filtering out match ${match.id}: Distance ${distanceKm.toFixed(2)}km exceeds searcher's max ${preferences.preferredMaxDistanceKm}km`);
+          }
+          return false;
+        }
+      }
       
       // Parse their preferredGender (support both formats)
       let theirPreferredGenders: Array<{ gender: string; sexualOrientation: string }> = [];
@@ -542,7 +582,8 @@ export async function GET(request: NextRequest) {
     // Format response with compatibility scores
     const formattedMatches = await Promise.all(
       reciprocalMatches.map(async (match) => {
-        const primaryPhoto = match.user_photos[0];
+        // Find primary photo (or use first photo if no primary set)
+        const primaryPhoto = match.user_photos.find(p => p.isPrimary) || match.user_photos[0];
         const instruments = match.userInstruments.map((ui) => ui.instrument.name);
         const skills = match.userSkills.map((us) => us.skill.name);
 

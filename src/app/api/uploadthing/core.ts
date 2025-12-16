@@ -5,6 +5,11 @@ import { createUploadthing, FileRouter } from "uploadthing/next";
 import { UploadThingError, UTApi } from "uploadthing/server";
 import crypto from "crypto";
 
+// UploadThing v7 uses UPLOADTHING_TOKEN, but support UPLOADTHING_SECRET for backward compatibility
+if (!process.env.UPLOADTHING_TOKEN && process.env.UPLOADTHING_SECRET) {
+  process.env.UPLOADTHING_TOKEN = process.env.UPLOADTHING_SECRET;
+}
+
 const f = createUploadthing();
 
 export const fileRouter = {
