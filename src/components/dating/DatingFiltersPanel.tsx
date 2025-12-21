@@ -359,7 +359,7 @@ export default function DatingFiltersPanel({
               {!formData.anyAge && (
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs text-gray-400 mb-2">Min Age</label>
+                    <label className="block text-sm font-semibold text-white mb-2">Min Age</label>
                     <input
                       type="number"
                       min="18"
@@ -372,7 +372,7 @@ export default function DatingFiltersPanel({
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-400 mb-2">Max Age</label>
+                    <label className="block text-sm font-semibold text-white mb-2">Max Age</label>
                     <input
                       type="number"
                       min="18"
@@ -408,13 +408,13 @@ export default function DatingFiltersPanel({
                     value={formData.preferredMinHeight}
                     onChange={(heightInInches) => setFormData({ ...formData, preferredMinHeight: heightInInches })}
                     label="Min Height"
-                    className="bg-gray-900 border-gray-700 text-white"
+                    className=" border-gray-700 "
                   />
                   <HeightSelector
                     value={formData.preferredMaxHeight}
                     onChange={(heightInInches) => setFormData({ ...formData, preferredMaxHeight: heightInInches })}
                     label="Max Height"
-                    className="bg-gray-900 border-gray-700 text-white"
+                    className=" border-gray-700 "
                   />
                 </div>
               )}

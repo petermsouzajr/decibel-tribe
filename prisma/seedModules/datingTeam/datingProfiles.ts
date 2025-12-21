@@ -126,16 +126,17 @@ const RELIGIONS = [
 const VACCINATION_STATUS = ["Yes", "No", ""];
 
 // Education levels
+// Education levels - DB format (used for both UserDatingProfile.education and UserDatingPreferences.preferredEducation)
 const EDUCATION_LEVELS = ["high_school", "some_college", "bachelors", "masters", "phd", "professional"];
 
-// Political views
-const POLITICAL_VIEWS = ["Liberal", "Conservative", "Moderate", "Progressive", "Libertarian", "Apolitical", "Other"];
+// Political views - DB format (lowercase)
+const POLITICAL_VIEWS = ["liberal", "moderate", "conservative", "progressive", "libertarian", "apolitical", "other"];
 
-// Diet preferences
-const DIET_OPTIONS = ["Omnivore", "Vegetarian", "Vegan", "Pescatarian", "Kosher", "Halal", "Gluten-free", "Keto", "Paleo", "Other"];
+// Diet preferences - DB format (lowercase)
+const DIET_OPTIONS = ["omnivore", "vegetarian", "vegan", "pescatarian", "kosher", "halal", "gluten-free", "keto", "paleo", "other"];
 
-// Relationship type
-const RELATIONSHIP_TYPES = ["Monogamous", "Ethical Non-Monogamy", "Open to Both"];
+// Relationship type - DB format
+const RELATIONSHIP_TYPES = ["monogamous", "ethical_non_monogamous", "open_to_both"];
 
 // Height range in inches (for US)
 const MIN_HEIGHT_INCHES = 36; // 3'0"
@@ -148,7 +149,7 @@ const MAX_AGE = 130;
 // Optional profile fields for random distribution
 const SMOKES_OPTIONS = ["Yes", "No", "Social"];
 const DRINKS_OPTIONS = ["Yes", "No", "Social"];
-const ACTIVITY_OPTIONS = ["Active", "Sporting", "Super active", "Couch potato", "Hiker", "Moderate", "Very active"];
+const ACTIVITY_OPTIONS = ["Active", "Sporting", "Super active", "Couch potato", "Hiker", "Moderate", "Very active", "Gym enthusiast", "Yoga lover", "Outdoor adventurer", "Weekend warrior"];
 const INTERESTS_OPTIONS = [
   "Gamer", "Foodie", "Traveler", "Photographer", "Musician", "Artist", "Writer",
   "Fitness enthusiast", "Yoga", "Reading", "Movies", "Cooking", "Dancing", "Hiking",
@@ -644,9 +645,8 @@ export async function seedDatingProfiles(
       preferredInstruments: [],
       preferredSkills: [],
       matchMusicTastes: false,
-      exactMatchAllFilters: false,
-      minimumMatchPercentage: 70,
-      nonNegotiableFields: [],
+      variabilityLevel: 0,
+      variabilityFilters: [],
     };
     preferencesToCreate.push(preferencesData);
 
@@ -908,21 +908,33 @@ export async function seedDatingProfiles(
         preferredRelationshipType: faker.datatype.boolean({ probability: 0.4 })
           ? faker.helpers.arrayElements(RELATIONSHIP_TYPES, { min: 1, max: 2 })
           : [],
+        preferredActivity: faker.datatype.boolean({ probability: 0.5 })
+          ? faker.helpers.arrayElements(ACTIVITY_OPTIONS, { min: 1, max: 3 })
+          : [],
         preferredInstruments: [],
         preferredSkills: [],
         matchMusicTastes: faker.datatype.boolean(),
-        exactMatchAllFilters: faker.datatype.boolean({ probability: 0.2 }), // 20% want exact match
-        minimumMatchPercentage: faker.number.int({ min: 70, max: 100 }),
-        nonNegotiableFields: faker.datatype.boolean({ probability: 0.3 })
+        variabilityLevel: faker.datatype.boolean({ probability: 0.2 }) 
+          ? 0 // 20% want exact match (0% variability)
+          : faker.number.int({ min: 10, max: 50 }), // Others have 10-50% variability
+        variabilityFilters: faker.datatype.boolean({ probability: 0.3 })
           ? faker.helpers.arrayElements([
+              "gender",
+              "age",
+              "distance",
               "height",
-              "religion",
-              "education",
-              "politicalViews",
-              "diet",
+              "hasKids",
+              "wantsKids",
+              "smokes",
+              "drinks",
+              "vaccination",
               "relationshipType",
               "activity",
-            ], { min: 1, max: 3 })
+              "diet",
+              "politicalViews",
+              "education",
+              "religion",
+            ], { min: 1, max: 5 })
           : [],
       };
       preferencesToCreate.push(preferencesData);
@@ -1117,21 +1129,33 @@ export async function seedDatingProfiles(
         preferredRelationshipType: faker.datatype.boolean({ probability: 0.4 })
           ? faker.helpers.arrayElements(RELATIONSHIP_TYPES, { min: 1, max: 2 })
           : [],
+        preferredActivity: faker.datatype.boolean({ probability: 0.5 })
+          ? faker.helpers.arrayElements(ACTIVITY_OPTIONS, { min: 1, max: 3 })
+          : [],
         preferredInstruments: [], // Can be populated if needed
         preferredSkills: [], // Can be populated if needed
         matchMusicTastes: faker.datatype.boolean(),
-        exactMatchAllFilters: faker.datatype.boolean({ probability: 0.2 }), // 20% want exact match
-        minimumMatchPercentage: faker.number.int({ min: 70, max: 100 }),
-        nonNegotiableFields: faker.datatype.boolean({ probability: 0.3 })
+        variabilityLevel: faker.datatype.boolean({ probability: 0.2 }) 
+          ? 0 // 20% want exact match (0% variability)
+          : faker.number.int({ min: 10, max: 50 }), // Others have 10-50% variability
+        variabilityFilters: faker.datatype.boolean({ probability: 0.3 })
           ? faker.helpers.arrayElements([
+              "gender",
+              "age",
+              "distance",
               "height",
-              "religion",
-              "education",
-              "politicalViews",
-              "diet",
+              "hasKids",
+              "wantsKids",
+              "smokes",
+              "drinks",
+              "vaccination",
               "relationshipType",
               "activity",
-            ], { min: 1, max: 3 })
+              "diet",
+              "politicalViews",
+              "education",
+              "religion",
+            ], { min: 1, max: 5 })
           : [],
     };
     preferencesToCreate.push(preferencesData);
@@ -1295,9 +1319,8 @@ export async function seedDatingProfiles(
         preferredInstruments: p.preferredInstruments || [],
         preferredSkills: p.preferredSkills || [],
         matchMusicTastes: p.matchMusicTastes,
-        exactMatchAllFilters: p.exactMatchAllFilters,
-        minimumMatchPercentage: p.minimumMatchPercentage,
-        nonNegotiableFields: p.nonNegotiableFields || [],
+        variabilityLevel: p.variabilityLevel ?? 0,
+        variabilityFilters: p.variabilityFilters || [],
       };
     });
     
@@ -1372,7 +1395,7 @@ export async function seedDatingProfiles(
     // Map match user IDs to actual user IDs from database
     if (matchesToCreate.length > 0) {
       console.log(`Creating ${matchesToCreate.length} matches for test users...`);
-      const createdMatchIds: string[] = [];
+      const createdMatches: Array<{ matchId: string; user1Id: string; user2Id: string }> = [];
       let matchCount = 0;
       for (const match of matchesToCreate) {
         const actualUser1Id = userIdMap.get(match.user1Id) || match.user1Id;
@@ -1393,7 +1416,11 @@ export async function seedDatingProfiles(
               createdAt: new Date(),
             },
           });
-          createdMatchIds.push(matchId);
+          createdMatches.push({
+            matchId,
+            user1Id: actualUser1Id,
+            user2Id: actualUser2Id,
+          });
           matchCount++;
         } catch (error) {
           // Skip if match already exists
@@ -1403,34 +1430,30 @@ export async function seedDatingProfiles(
       console.log(`...${matchCount} matches created.`);
 
       // Create match notifications for all created matches
-      if (createdMatchIds.length > 0) {
-        console.log(`Creating ${createdMatchIds.length * 2} match notifications...`);
+      if (createdMatches.length > 0) {
+        console.log(`Creating ${createdMatches.length * 2} match notifications...`);
         const notificationsToCreate = [];
-        for (let i = 0; i < matchesToCreate.length; i++) {
-          const match = matchesToCreate[i];
-          const matchId = createdMatchIds[i];
-          if (matchId) {
-            // Create notification for user1
-            notificationsToCreate.push({
-              id: generateIdFromEntropySize(10),
-              recipientId: match.user1Id,
-              issuerId: match.user2Id,
-              type: NotificationType.MATCH,
-              matchId: matchId,
-              read: false,
-              createdAt: new Date(),
-            });
-            // Create notification for user2
-            notificationsToCreate.push({
-              id: generateIdFromEntropySize(10),
-              recipientId: match.user2Id,
-              issuerId: match.user1Id,
-              type: NotificationType.MATCH,
-              matchId: matchId,
-              read: false,
-              createdAt: new Date(),
-            });
-          }
+        for (const match of createdMatches) {
+          // Create notification for user1
+          notificationsToCreate.push({
+            id: generateIdFromEntropySize(10),
+            recipientId: match.user1Id,
+            issuerId: match.user2Id,
+            type: NotificationType.MATCH,
+            matchId: match.matchId,
+            read: false,
+            createdAt: new Date(),
+          });
+          // Create notification for user2
+          notificationsToCreate.push({
+            id: generateIdFromEntropySize(10),
+            recipientId: match.user2Id,
+            issuerId: match.user1Id,
+            type: NotificationType.MATCH,
+            matchId: match.matchId,
+            read: false,
+            createdAt: new Date(),
+          });
         }
         
         if (notificationsToCreate.length > 0) {

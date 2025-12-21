@@ -1434,14 +1434,14 @@ var VACCINATION_STATUS = ["Yes", "No", ""];
 var EDUCATION_LEVELS = ["high_school", "some_college", "bachelors", "masters", "phd", "professional"];
 var POLITICAL_VIEWS = ["Liberal", "Conservative", "Moderate", "Progressive", "Libertarian", "Apolitical", "Other"];
 var DIET_OPTIONS = ["Omnivore", "Vegetarian", "Vegan", "Pescatarian", "Kosher", "Halal", "Gluten-free", "Keto", "Paleo", "Other"];
-var RELATIONSHIP_TYPES = ["Monogamous", "Ethical Non-Monogamy", "Open to Both"];
+var RELATIONSHIP_TYPES = ["Monogamous", "Open Relationship", "Casual Dating", "Friends with Benefits", "Long-term Relationship", "Short-term Fun", "Not Sure Yet"];
 var MIN_HEIGHT_INCHES = 36;
 var MAX_HEIGHT_INCHES = 94;
 var MIN_AGE = 18;
 var MAX_AGE = 130;
 var SMOKES_OPTIONS = ["Yes", "No", "Social"];
 var DRINKS_OPTIONS = ["Yes", "No", "Social"];
-var ACTIVITY_OPTIONS = ["Active", "Sporting", "Super active", "Couch potato", "Hiker", "Moderate", "Very active"];
+var ACTIVITY_OPTIONS = ["Active", "Sporting", "Super active", "Couch potato", "Hiker", "Moderate", "Very active", "Gym enthusiast", "Yoga lover", "Outdoor adventurer", "Weekend warrior"];
 var INTERESTS_OPTIONS = [
   "Gamer",
   "Foodie",
@@ -1815,7 +1815,7 @@ async function seedDatingProfiles(tx, streamClient, hasher) {
     const preferencesId = generateIdFromEntropySize(10);
     const preferencesData = {
       id: preferencesId,
-      users: { connect: { id: userId } },
+      user: { connect: { id: userId } },
       preferredMinAge: config.preferredMinAge,
       preferredMaxAge: config.preferredMaxAge,
       preferredMaxDistanceKm: 50,
@@ -1847,7 +1847,7 @@ async function seedDatingProfiles(tx, streamClient, hasher) {
       const photoId = generateIdFromEntropySize(10);
       const photoData = {
         id: photoId,
-        users: { connect: { id: userId } },
+        user: { connect: { id: userId } },
         url: `https://i.pravatar.cc/400?img=${faker.number.int({ min: 1, max: 70 })}`,
         isPrimary: j === 0
       };
@@ -2007,7 +2007,7 @@ async function seedDatingProfiles(tx, streamClient, hasher) {
       ]);
       const preferencesData = {
         id: preferencesId,
-        users: { connect: { id: userId } },
+        user: { connect: { id: userId } },
         preferredMinAge,
         preferredMaxAge,
         preferredMaxDistanceKm: faker.helpers.arrayElement([
@@ -2040,6 +2040,7 @@ async function seedDatingProfiles(tx, streamClient, hasher) {
         preferredPoliticalViews: faker.datatype.boolean({ probability: 0.4 }) ? faker.helpers.arrayElements(POLITICAL_VIEWS, { min: 1, max: 3 }) : [],
         preferredDiet: faker.datatype.boolean({ probability: 0.3 }) ? faker.helpers.arrayElements(DIET_OPTIONS, { min: 1, max: 2 }) : [],
         preferredRelationshipType: faker.datatype.boolean({ probability: 0.4 }) ? faker.helpers.arrayElements(RELATIONSHIP_TYPES, { min: 1, max: 2 }) : [],
+        preferredActivity: faker.datatype.boolean({ probability: 0.5 }) ? faker.helpers.arrayElements(ACTIVITY_OPTIONS, { min: 1, max: 3 }) : [],
         preferredInstruments: [],
         preferredSkills: [],
         matchMusicTastes: faker.datatype.boolean(),
@@ -2062,7 +2063,7 @@ async function seedDatingProfiles(tx, streamClient, hasher) {
         const photoId = generateIdFromEntropySize(10);
         const photoData = {
           id: photoId,
-          users: { connect: { id: userId } },
+          user: { connect: { id: userId } },
           url: `https://i.pravatar.cc/400?img=${faker.number.int({
             min: 1,
             max: 70
@@ -2168,7 +2169,7 @@ async function seedDatingProfiles(tx, streamClient, hasher) {
     ]);
     const preferencesData = {
       id: preferencesId,
-      users: { connect: { id: userId } },
+      user: { connect: { id: userId } },
       preferredMinAge,
       preferredMaxAge,
       preferredMaxDistanceKm: faker.helpers.arrayElement([
@@ -2201,6 +2202,7 @@ async function seedDatingProfiles(tx, streamClient, hasher) {
       preferredPoliticalViews: faker.datatype.boolean({ probability: 0.4 }) ? faker.helpers.arrayElements(POLITICAL_VIEWS, { min: 1, max: 3 }) : [],
       preferredDiet: faker.datatype.boolean({ probability: 0.3 }) ? faker.helpers.arrayElements(DIET_OPTIONS, { min: 1, max: 2 }) : [],
       preferredRelationshipType: faker.datatype.boolean({ probability: 0.4 }) ? faker.helpers.arrayElements(RELATIONSHIP_TYPES, { min: 1, max: 2 }) : [],
+      preferredActivity: faker.datatype.boolean({ probability: 0.5 }) ? faker.helpers.arrayElements(ACTIVITY_OPTIONS, { min: 1, max: 3 }) : [],
       preferredInstruments: [],
       // Can be populated if needed
       preferredSkills: [],
@@ -2225,7 +2227,7 @@ async function seedDatingProfiles(tx, streamClient, hasher) {
       const photoId = generateIdFromEntropySize(10);
       const photoData = {
         id: photoId,
-        users: { connect: { id: userId } },
+        user: { connect: { id: userId } },
         url: `https://i.pravatar.cc/400?img=${faker.number.int({
           min: 1,
           max: 70
@@ -2271,13 +2273,13 @@ async function seedDatingProfiles(tx, streamClient, hasher) {
       return { ...p, actualUserId };
     }).filter((p) => p !== null);
     const validPreferences = preferencesToCreate.map((p) => {
-      const attemptedUserId = p.users.connect.id;
+      const attemptedUserId = p.user.connect.id;
       const actualUserId = userIdMap.get(attemptedUserId);
       if (!actualUserId) return null;
       return { ...p, actualUserId };
     }).filter((p) => p !== null);
     const validPhotos = photosToCreate.map((p) => {
-      const attemptedUserId = p.users.connect.id;
+      const attemptedUserId = p.user.connect.id;
       const actualUserId = userIdMap.get(attemptedUserId);
       if (!actualUserId) return null;
       return { ...p, actualUserId };
@@ -2321,7 +2323,7 @@ async function seedDatingProfiles(tx, streamClient, hasher) {
     const profileBatchSize = 50;
     for (let i = 0; i < profilesData.length; i += profileBatchSize) {
       const batch = profilesData.slice(i, i + profileBatchSize);
-      await tx.user_dating_profile.createMany({
+      await tx.userDatingProfile.createMany({
         data: batch,
         skipDuplicates: true
       });
@@ -2359,7 +2361,7 @@ async function seedDatingProfiles(tx, streamClient, hasher) {
     const preferencesBatchSize = 50;
     for (let i = 0; i < preferencesData.length; i += preferencesBatchSize) {
       const batch = preferencesData.slice(i, i + preferencesBatchSize);
-      await tx.user_dating_preferences.createMany({
+      await tx.userDatingPreferences.createMany({
         data: batch,
         skipDuplicates: true
       });
@@ -2378,7 +2380,7 @@ async function seedDatingProfiles(tx, streamClient, hasher) {
     const photosBatchSize = 100;
     for (let i = 0; i < photosData.length; i += photosBatchSize) {
       const batch = photosData.slice(i, i + photosBatchSize);
-      await tx.user_photos.createMany({
+      await tx.userDatingPhoto.createMany({
         data: batch,
         skipDuplicates: true
       });
@@ -2394,7 +2396,7 @@ async function seedDatingProfiles(tx, streamClient, hasher) {
           continue;
         }
         try {
-          await tx.swipes.create({
+          await tx.swipe.create({
             data: {
               id: generateIdFromEntropySize(10),
               fromUserId: actualFromUserId,
@@ -2422,7 +2424,7 @@ async function seedDatingProfiles(tx, streamClient, hasher) {
         }
         try {
           const matchId = generateIdFromEntropySize(10);
-          await tx.matches.create({
+          await tx.match.create({
             data: {
               id: matchId,
               user1Id: actualUser1Id,
@@ -2580,171 +2582,11 @@ async function seedBlocks(prismaClient, createdUsers) {
   }
 }
 
-// src/data/instrumentList.json
-var instrumentList_default = [
-  "Accordion",
-  "Alto Clarinet",
-  "Alto Flute",
-  "Alto Horn",
-  "Alto Saxophone",
-  "Bagpipes",
-  "Balalaika",
-  "Bandoneon",
-  "Banjo",
-  "Baritone Horn",
-  "Baritone Saxophone",
-  "Baroque Guitar",
-  "Bass Clarinet",
-  "Bass Flute",
-  "Bass Guitar",
-  "Bass Recorder",
-  "Bass Saxophone",
-  "Bass Trombone",
-  "Bass Trumpet",
-  "Bassoon",
-  "Bawu",
-  "Berimbau",
-  "Bodhr\xE1n",
-  "Bongo Drums",
-  "Bouzouki",
-  "Bugle",
-  "Caj\xF3n",
-  "Calliope",
-  "Cello",
-  "Celtic Harp",
-  "Chapman Stick",
-  "Charango",
-  "Chimes",
-  "Cimbalom",
-  "Clarinet",
-  "Clavichord",
-  "Clavinet",
-  "Concertina",
-  "Conga Drums",
-  "Contrabass Clarinet",
-  "Contrabass Saxophone",
-  "Cor Anglais",
-  "Cornet",
-  "Cowbell",
-  "Crwth",
-  "Cuatro",
-  "Cymbals",
-  "Darbuka",
-  "Dhol",
-  "Didgeridoo",
-  "Djembe",
-  "Dobro",
-  "Dombra",
-  "Double Bass",
-  "Dulcimer",
-  "Ektara",
-  "English Horn",
-  "Euphonium",
-  "Fiddle",
-  "Flugelhorn",
-  "Flute",
-  "French Horn",
-  "Gamelan",
-  "Glockenspiel",
-  "Gong",
-  "Gottuvadhyam",
-  "Guitar",
-  "Guqin",
-  "Guzheng",
-  "Harmonica",
-  "Harmonium",
-  "Harp",
-  "Harpsichord",
-  "Horn",
-  "Hurdy-Gurdy",
-  "Kalimba",
-  "Kamancheh",
-  "Kantele",
-  "Kazoo",
-  "Kemenche",
-  "Kenny G's Saxophone",
-  "Kithara",
-  "Klarino",
-  "Kora",
-  "Koto",
-  "Kundu",
-  "Lagerphone",
-  "La\xFAd",
-  "Lute",
-  "Lyre",
-  "Mandocello",
-  "Mandolin",
-  "Maracas",
-  "Marimba",
-  "Mellophone",
-  "Melodica",
-  "Moog Synthesizer",
-  "Musical Saw",
-  "Ney",
-  "Oboe",
-  "Ocarina",
-  "Octobass",
-  "Ophicleide",
-  "Organ",
-  "Pan Flute",
-  "Pennywhistle",
-  "Piano",
-  "Piccolo",
-  "Pipa",
-  "Psaltery",
-  "Quena",
-  "Rackett",
-  "Recorder",
-  "Reed Organ",
-  "Riq",
-  "Sarangi",
-  "Sarod",
-  "Sarrusophone",
-  "Saxophone",
-  "Shamisen",
-  "Shawm",
-  "Shehnai",
-  "Sitar",
-  "Snare Drum",
-  "Sopranino Saxophone",
-  "Soprano Saxophone",
-  "Sousaphone",
-  "Spinet",
-  "Steel Drums",
-  "Surbahar",
-  "Susap",
-  "Synthesizer",
-  "Tabla",
-  "Tambura",
-  "Tambourine",
-  "Tenor Horn",
-  "Tenor Saxophone",
-  "Theremin",
-  "Timpani",
-  "Tiple",
-  "Tom-Tom Drums",
-  "Triangle",
-  "Trombone",
-  "Trumpet",
-  "Tuba",
-  "Ukulele",
-  "Veena",
-  "Vibraphone",
-  "Viola",
-  "Violin",
-  "Virginal",
-  "Washtub Bass",
-  "Whamola",
-  "Wobble Board",
-  "Xylophone",
-  "Yangqin",
-  "Yayl\u0131 Tambur",
-  "Zampo\xF1a",
-  "Zither",
-  "Zurna"
-];
-
 // prisma/seedModules/authTeam/userInstruments.ts
+import * as fs from "fs";
+import * as path from "path";
+var instrumentListPath = path.join(process.cwd(), "src/data/instrumentList.json");
+var instrumentList = JSON.parse(fs.readFileSync(instrumentListPath, "utf-8"));
 async function seedUserInstruments(prismaClient, createdUsers) {
   if (!prismaClient) {
     console.error("Prisma client is not available for seedUserInstruments.");
@@ -2755,7 +2597,7 @@ async function seedUserInstruments(prismaClient, createdUsers) {
     return;
   }
   console.log("Creating user instruments...");
-  const instrumentsToCreate = instrumentList_default.map((name) => ({
+  const instrumentsToCreate = instrumentList.map((name) => ({
     name
   }));
   await prismaClient.instrument.createMany({
@@ -2792,225 +2634,11 @@ async function seedUserInstruments(prismaClient, createdUsers) {
   }
 }
 
-// src/data/skillsList.json
-var skillsList_default = [
-  "A&R Representative",
-  "Accountant",
-  "Artist Manager",
-  "Assistant Tour Manager",
-  "Audio Engineer",
-  "Backup Dancer",
-  "Booking Agent",
-  "Business Manager",
-  "Catering Manager",
-  "Concert Organizer",
-  "Concert Promoter",
-  "Content Creator",
-  "Costume Designer",
-  "Creative Director",
-  "Dance Choreographer",
-  "Dancer",
-  "Digital Marketing Specialist",
-  "Event Coordinator",
-  "Event Planner",
-  "Festival Organizer",
-  "Film Composer",
-  "Graphic Designer",
-  "Guitar Technician",
-  "Lighting Designer",
-  "Lighting Technician",
-  "Live Sound Engineer",
-  "Logistics Coordinator",
-  "Lyricist",
-  "Marketing Director",
-  "Marketing Manager",
-  "Media Buyer",
-  "Media Director",
-  "Merchandise Designer",
-  "Merchandise Manager",
-  "Merchandise Seller",
-  "Music Agent",
-  "Music Arranger",
-  "Music Critic",
-  "Music Director",
-  "Music Journalist",
-  "Music Lawyer",
-  "Music Librarian",
-  "Music Manager",
-  "Music Marketing Consultant",
-  "Music Producer",
-  "Music Promoter",
-  "Music Publisher",
-  "Music Publicist",
-  "Music Teacher",
-  "Music Therapist",
-  "Music Video Director",
-  "Music Video Editor",
-  "Music Video Producer",
-  "Orchestra Manager",
-  "Podcast Host",
-  "Podcast Producer",
-  "Poster Designer",
-  "Production Assistant",
-  "Production Manager",
-  "Production Runner",
-  "Public Relations Specialist",
-  "Publicist",
-  "Radio DJ",
-  "Radio Host",
-  "Recording Engineer",
-  "Recording Studio Manager",
-  "Recording Technician",
-  "Record Producer",
-  "Rehearsal Director",
-  "Remixer",
-  "Road Manager",
-  "Roadie",
-  "Scriptwriter",
-  "Security Guard",
-  "Set Designer",
-  "Social Media Manager",
-  "Sound Designer",
-  "Sound Engineer",
-  "Sound Mixer",
-  "Sound Technician",
-  "Stagehand",
-  "Stage Manager",
-  "Streaming Specialist",
-  "Studio Manager",
-  "Talent Agent",
-  "Talent Buyer",
-  "Talent Manager",
-  "Technical Director",
-  "Tour Bus Driver",
-  "Tour Manager",
-  "Tour Planner",
-  "Tour Publicist",
-  "Touring Crew",
-  "Video Director",
-  "Video Editor",
-  "Video Producer",
-  "Voice Over Artist",
-  "Wardrobe Manager",
-  "Web Designer",
-  "Web Developer",
-  "YouTube Content Creator",
-  "Advertising Specialist",
-  "Audio-Visual Technician",
-  "Brand Manager",
-  "CD/DVD Manufacturer",
-  "Communications Director",
-  "Crowd Management Specialist",
-  "Data Analyst",
-  "Distribution Manager",
-  "Event Security",
-  "Fan Engagement Specialist",
-  "Grant Writer",
-  "Hospitality Coordinator",
-  "Insurance Broker",
-  "Investor Relations Specialist",
-  "Legal Advisor",
-  "Lighting Director",
-  "Logistics Manager",
-  "Media Planner",
-  "Multimedia Specialist",
-  "Operations Manager",
-  "Payroll Specialist",
-  "Performance Coach",
-  "Personal Assistant",
-  "Photographer",
-  "Printer",
-  "Public Affairs Specialist",
-  "Public Speaking Coach",
-  "Record Store Owner",
-  "Rehearsal Space Owner",
-  "Researcher",
-  "Retail Manager",
-  "Road Crew",
-  "Sales Manager",
-  "SEO Specialist",
-  "Set Builder",
-  "Social Media Influencer",
-  "Soundproofing Specialist",
-  "Sponsorship Coordinator",
-  "Stage Designer",
-  "Streaming Platform Representative",
-  "Studio Owner",
-  "Talent Scout",
-  "Ticket Sales Manager",
-  "Ticket Taker",
-  "Tour Accountant",
-  "Tour Coordinator",
-  "Tour Guide",
-  "Tour Public Relations",
-  "Translator",
-  "Travel Agent",
-  "Video Content Creator",
-  "Visual Effects Artist",
-  "Voice Coach",
-  "Volunteer Coordinator",
-  "Wardrobe Assistant",
-  "Website Administrator",
-  "Writer",
-  "3D Animator",
-  "Album Cover Designer",
-  "Art Director",
-  "Audio Archivist",
-  "Band Photographer",
-  "Blog Writer",
-  "Camera Operator",
-  "Catering Staff",
-  "CD Pressing Plant Operator",
-  "Charity Coordinator",
-  "Digital Content Manager",
-  "Digital Strategist",
-  "Distribution Specialist",
-  "E-commerce Manager",
-  "Entertainment Lawyer",
-  "Event Designer",
-  "Event Ticketing Manager",
-  "Fan Club Manager",
-  "Festival Director",
-  "Graphic Artist",
-  "Interactive Media Designer",
-  "Journalist",
-  "Label Executive",
-  "Lighting Operator",
-  "Lyric Video Creator",
-  "Marketing Analyst",
-  "Market Researcher",
-  "Media Relations Specialist",
-  "Merchandise Distributor",
-  "Music Blogger",
-  "Music Historian",
-  "Music Licensing Specialist",
-  "Music Public Relations",
-  "Nonprofit Manager",
-  "Online Community Manager",
-  "Podcast Editor",
-  "Print Shop Operator",
-  "Production Coordinator",
-  "Props Manager",
-  "Public Relations Manager",
-  "Record Label Owner",
-  "Recording Studio Owner",
-  "Retail Sales Associate",
-  "Sales Representative",
-  "Show Host",
-  "Social Media Coordinator",
-  "Sound Editor",
-  "Sponsorship Manager",
-  "Stage Lighting Technician",
-  "Talent Booker",
-  "Tour Merchandiser",
-  "Tour Photographer",
-  "Tour Videographer",
-  "Videographer",
-  "Voice Artist",
-  "Web Content Manager"
-];
-
 // prisma/seedModules/authTeam/userSkills.ts
+import * as fs2 from "fs";
+import * as path2 from "path";
+var skillsListPath = path2.join(process.cwd(), "src/data/skillsList.json");
+var skillsList = JSON.parse(fs2.readFileSync(skillsListPath, "utf-8"));
 async function seedUserSkills(prismaClient, createdUsers) {
   if (!prismaClient) {
     console.error("Prisma client is not available for seedUserSkills.");
@@ -3021,7 +2649,7 @@ async function seedUserSkills(prismaClient, createdUsers) {
     return;
   }
   console.log("Creating user skills...");
-  const skillsToCreate = skillsList_default.map((name) => ({
+  const skillsToCreate = skillsList.map((name) => ({
     name
   }));
   await prismaClient.skill.createMany({
@@ -3078,14 +2706,14 @@ async function seedIdentityVerification(prismaClient, datingUsers) {
   for (const user of usersToVerify) {
     const statuses = ["not_started", "pending", "verified", "failed", "requires_input"];
     const verificationStatus = faker.helpers.arrayElement(statuses);
-    const isVerified = verificationStatus === "verified";
+    const isIDVerified = verificationStatus === "verified";
     verificationData.push({
       userId: user.id,
-      isVerified,
+      isIDVerified,
       verificationStatus,
       verificationMethod: faker.helpers.arrayElement(["stripe_identity", "manual", null]),
       documentType: faker.helpers.arrayElement(["passport", "drivers_license", "id_card", null]),
-      verifiedAt: isVerified ? faker.date.recent({ days: 30 }) : null,
+      verifiedAt: isIDVerified ? faker.date.recent({ days: 30 }) : null,
       failureReason: verificationStatus === "failed" ? faker.lorem.sentence() : null,
       attemptsCount: faker.number.int({ min: 0, max: 3 }),
       lastAttemptAt: verificationStatus !== "not_started" ? faker.date.recent({ days: 30 }) : null,
@@ -3097,7 +2725,7 @@ async function seedIdentityVerification(prismaClient, datingUsers) {
     return;
   }
   try {
-    const result = await prismaClient.user_dating_identity_verification.createMany({
+    const result = await prismaClient.userDatingIdentityVerification.createMany({
       data: verificationData,
       skipDuplicates: true
     });
@@ -3153,7 +2781,7 @@ async function seedMatches(prismaClient, datingUsers) {
     let createdCount = 0;
     for (const match of matchesData) {
       try {
-        await prismaClient.matches.create({
+        await prismaClient.match.create({
           data: match
         });
         createdCount++;

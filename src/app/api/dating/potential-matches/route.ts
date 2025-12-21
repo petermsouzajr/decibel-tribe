@@ -168,39 +168,103 @@ export async function GET(request: NextRequest) {
     }
 
     // Parse preferredGender - support both old format (single string) and new format (JSON array)
-    let preferredGenders: Array<{ gender: string; sexualOrientation: string }> = [];
+    // New format: sexualOrientation is an array of strings
+    let preferredGenders: Array<{ gender: string; sexualOrientation: string[] }> = [];
     try {
       if (preferences.preferredGender) {
         const parsed = JSON.parse(preferences.preferredGender);
         if (Array.isArray(parsed)) {
-          preferredGenders = parsed.filter(p => p && p.gender); // Filter out invalid entries
+          // New format: array of gender preferences
+          preferredGenders = parsed.filter(p => p && p.gender).map(p => ({
+            gender: p.gender,
+            sexualOrientation: Array.isArray(p.sexualOrientation) ? p.sexualOrientation : (p.sexualOrientation ? [p.sexualOrientation] : [])
+          }));
+        } else if (typeof parsed === 'string') {
+          // JSON string containing a single gender string
+          preferredGenders = [{
+            gender: parsed,
+            sexualOrientation: preferences.preferredSexualOrientation ? [preferences.preferredSexualOrientation] : []
+          }];
         } else {
-          // Old format: single gender with single orientation
-          if (preferences.preferredGender) {
+          // Parsed object but not an array (shouldn't happen, but handle gracefully)
           preferredGenders = [{
             gender: preferences.preferredGender,
-            sexualOrientation: preferences.preferredSexualOrientation || ""
+            sexualOrientation: preferences.preferredSexualOrientation ? [preferences.preferredSexualOrientation] : []
           }];
         }
-      }
       }
     } catch (parseError) {
       // Not JSON, use as single value (old format)
       if (preferences.preferredGender) {
         preferredGenders = [{
           gender: preferences.preferredGender,
-          sexualOrientation: preferences.preferredSexualOrientation || ""
+          sexualOrientation: preferences.preferredSexualOrientation ? [preferences.preferredSexualOrientation] : []
         }];
       }
     }
 
-    // Validate that we have at least one gender preference
-    if (preferredGenders.length === 0) {
+    // Validate that we have at least one gender preference with at least one orientation
+    if (preferredGenders.length === 0 || !preferredGenders.some(p => p.sexualOrientation && p.sexualOrientation.length > 0)) {
       return NextResponse.json(
         { error: "No gender preferences set. Please update your dating preferences." },
         { status: 400 }
       );
     }
+
+    // Get variability settings
+    const variabilityLevel = preferences.variabilityLevel ?? 0;
+    const variabilityFilters = preferences.variabilityFilters || [];
+    const hasVariability = variabilityLevel > 0 && variabilityFilters.length > 0;
+
+    // Helper function to apply variability to numeric ranges
+    const applyVariabilityToRange = (min: number, max: number, filterKey: string): { min: number; max: number } => {
+      if (!hasVariability || !variabilityFilters.includes(filterKey)) {
+        return { min, max };
+      }
+      
+      const range = max - min;
+      const expansion = Math.round((range * variabilityLevel) / 100);
+      return {
+        min: Math.max(0, min - expansion), // Don't go below 0
+        max: max + expansion,
+      };
+    };
+
+    // Helper function to normalize values for comparison (handle UI vs DB format differences)
+    const normalizeValue = (value: string | null | undefined): string | null => {
+      if (!value) return null;
+      return value.toLowerCase().trim();
+    };
+
+    // Helper function to normalize relationship type values
+    const normalizeRelationshipType = (value: string | null | undefined): string | null => {
+      if (!value) return null;
+      const normalized = value.toLowerCase().trim();
+      // Map UI values to DB values
+      const mapping: Record<string, string> = {
+        "open relationship": "ethical_non_monogamous",
+        "casual dating": "open_to_both",
+        "friends with benefits": "open_to_both",
+        "long-term relationship": "monogamous",
+        "short-term fun": "open_to_both",
+        "not sure yet": "open_to_both",
+      };
+      return mapping[normalized] || normalized;
+    };
+
+    // Helper function to normalize education values
+    const normalizeEducation = (value: string | null | undefined): string | null => {
+      if (!value) return null;
+      const normalized = value.toLowerCase().trim();
+      // Map UI values to DB values
+      const mapping: Record<string, string> = {
+        "high school": "high_school",
+        "some college": "some_college",
+        "bachelor's": "bachelors",
+        "master's": "masters",
+      };
+      return mapping[normalized] || normalized;
+    };
 
     // Get user's dating profile
     const profileStart = Date.now();
@@ -319,59 +383,121 @@ export async function GET(request: NextRequest) {
         isDatingActive: true,
         userDatingProfile: {
           // Match gender preference - check if their gender matches any of our preferred genders
-          ...(preferredGenders.length > 0 && preferredGenders.some(p => p.gender) ? {
+          // Skip this filter if gender is in variabilityFilters (allow any gender)
+          ...(preferredGenders.length > 0 && preferredGenders.some(p => p.gender) && (!hasVariability || !variabilityFilters.includes("gender")) ? {
             gender: { in: preferredGenders.map(p => p.gender).filter(Boolean) }
           } : {}),
           // Match age range (only if both min and max are set)
-          ...(preferences.preferredMinAge && preferences.preferredMaxAge ? {
-          age: {
-            gte: preferences.preferredMinAge,
-            lte: preferences.preferredMaxAge,
-          },
-          } : {}),
+          // Apply variability if age is in variabilityFilters
+          ...(preferences.preferredMinAge && preferences.preferredMaxAge ? (() => {
+            const ageRange = applyVariabilityToRange(
+              preferences.preferredMinAge,
+              preferences.preferredMaxAge,
+              "age"
+            );
+            return {
+              age: {
+                gte: ageRange.min,
+                lte: ageRange.max,
+              },
+            };
+          })() : {}),
           // Match height range if specified
+          // Apply variability if height is in variabilityFilters
           ...(preferences.preferredMinHeight && preferences.preferredMaxHeight
-            ? {
-                height: {
-                  gte: preferences.preferredMinHeight,
-                  lte: preferences.preferredMaxHeight,
-                },
-              }
+            ? (() => {
+                const heightRange = applyVariabilityToRange(
+                  preferences.preferredMinHeight,
+                  preferences.preferredMaxHeight,
+                  "height"
+                );
+                return {
+                  height: {
+                    gte: heightRange.min,
+                    lte: heightRange.max,
+                  },
+                };
+              })()
             : {}),
           // Match vaccination preference if specified
-          ...(preferences.preferredCoronavirusVaccinated
+          // Apply variability probabilistically in post-processing
+          ...(preferences.preferredCoronavirusVaccinated && (!hasVariability || !variabilityFilters.includes("vaccination"))
             ? {
                 coronavirusVaccinated: preferences.preferredCoronavirusVaccinated,
               }
             : {}),
           // Match religion if specified
-          ...(preferences.preferredReligions.length > 0
+          // Apply variability probabilistically in post-processing
+          ...(preferences.preferredReligions.length > 0 && (!hasVariability || !variabilityFilters.includes("religion"))
             ? {
                 religion: { in: preferences.preferredReligions },
               }
             : {}),
           // Match hasKids preference if specified
-          ...(preferences.preferredHasKids && preferences.preferredHasKids !== "any"
+          // Apply variability probabilistically in post-processing
+          ...(preferences.preferredHasKids && preferences.preferredHasKids !== "any" && (!hasVariability || !variabilityFilters.includes("hasKids"))
             ? {
                 hasKids: preferences.preferredHasKids === "yes",
               }
             : {}),
           // Match smokes preference if specified
-          ...(preferences.preferredSmokes
+          // Apply variability probabilistically in post-processing
+          ...(preferences.preferredSmokes && (!hasVariability || !variabilityFilters.includes("smokes"))
             ? {
                 smokes: preferences.preferredSmokes,
               }
             : {}),
           // Match drinks preference if specified
-          ...(preferences.preferredDrinks
+          // Apply variability probabilistically in post-processing
+          ...(preferences.preferredDrinks && (!hasVariability || !variabilityFilters.includes("drinks"))
             ? {
                 drinks: preferences.preferredDrinks,
               }
             : {}),
-          // Match activity preference if specified
-          ...(preferences.preferredActivity
+          // Match activity preference if specified (preferredActivity is now an array)
+          // Apply variability probabilistically in post-processing
+          ...(preferences.preferredActivity && preferences.preferredActivity.length > 0 && (!hasVariability || !variabilityFilters.includes("activity"))
             ? {
-                activity: preferences.preferredActivity,
+                activity: { in: preferences.preferredActivity },
+              }
+            : {}),
+          // Match wantsKids preference if specified
+          // Apply variability probabilistically in post-processing
+          ...(preferences.preferredWantsKids && preferences.preferredWantsKids !== "any" && (!hasVariability || !variabilityFilters.includes("wantsKids"))
+            ? {
+                wantsKids: preferences.preferredWantsKids,
+              }
+            : {}),
+          // Match relationshipType preference if specified
+          // Apply variability probabilistically in post-processing
+          // Preferences are stored in DB format, so direct comparison
+          ...(preferences.preferredRelationshipType && preferences.preferredRelationshipType.length > 0 && (!hasVariability || !variabilityFilters.includes("relationshipType"))
+            ? {
+                relationshipType: { in: preferences.preferredRelationshipType },
+              }
+            : {}),
+          // Match diet preference if specified
+          // Apply variability probabilistically in post-processing
+          // Preferences are stored in DB format, so direct comparison
+          ...(preferences.preferredDiet && preferences.preferredDiet.length > 0 && (!hasVariability || !variabilityFilters.includes("diet"))
+            ? {
+                diet: { in: preferences.preferredDiet },
+              }
+            : {}),
+          // Match politicalViews preference if specified
+          // Apply variability probabilistically in post-processing
+          // Preferences are stored in DB format, so direct comparison
+          ...(preferences.preferredPoliticalViews && preferences.preferredPoliticalViews.length > 0 && (!hasVariability || !variabilityFilters.includes("politicalViews"))
+            ? {
+                politicalViews: { in: preferences.preferredPoliticalViews },
+              }
+            : {}),
+          // Match education preference if specified
+          // Apply variability probabilistically in post-processing
+          // Preferences are stored in DB format, so direct comparison
+          ...(preferences.preferredEducation && preferences.preferredEducation.length > 0 && (!hasVariability || !variabilityFilters.includes("education"))
+            ? {
+                education: { in: preferences.preferredEducation },
               }
             : {}),
         },
@@ -470,6 +596,7 @@ export async function GET(request: NextRequest) {
       // REQUIREMENT: Filter by distance using SEARCHER's preference (unidirectional filter)
       // User A with 100 mile preference will see User B at 80 miles, even if User B has 10 mile preference
       // The filter is based on the searcher's preference, not mutual agreement
+      // Apply variability if distance is in variabilityFilters
       if (
         userLatitude && 
         userLongitude && 
@@ -486,37 +613,54 @@ export async function GET(request: NextRequest) {
           matchLongitude
         );
         
-        // Filter out matches beyond the SEARCHER's max distance preference
-        // This is unidirectional - uses current user's preference, not the match's preference
-        if (distanceKm > preferences.preferredMaxDistanceKm) {
+        // Calculate max distance with variability
+        let maxDistanceKm = preferences.preferredMaxDistanceKm;
+        if (hasVariability && variabilityFilters.includes("distance")) {
+          const expansion = Math.round((maxDistanceKm * variabilityLevel) / 100);
+          maxDistanceKm = maxDistanceKm + expansion;
+        }
+        
+        // Filter out matches beyond the SEARCHER's max distance preference (with variability)
+        if (distanceKm > maxDistanceKm) {
           if (isDev) {
-            console.log(`[Potential Matches] Filtering out match ${match.id}: Distance ${distanceKm.toFixed(2)}km exceeds searcher's max ${preferences.preferredMaxDistanceKm}km`);
+            console.log(`[Potential Matches] Filtering out match ${match.id}: Distance ${distanceKm.toFixed(2)}km exceeds searcher's max ${maxDistanceKm.toFixed(2)}km`);
           }
           return false;
         }
       }
       
       // Parse their preferredGender (support both formats)
-      let theirPreferredGenders: Array<{ gender: string; sexualOrientation: string }> = [];
+      // New format: sexualOrientation is an array of strings
+      let theirPreferredGenders: Array<{ gender: string; sexualOrientation: string[] }> = [];
       try {
         if (match.userDatingPreferences.preferredGender) {
           const parsed = JSON.parse(match.userDatingPreferences.preferredGender);
           if (Array.isArray(parsed)) {
-            theirPreferredGenders = parsed;
+            // New format: array of gender preferences
+            theirPreferredGenders = parsed.filter(p => p && p.gender).map(p => ({
+              gender: p.gender,
+              sexualOrientation: Array.isArray(p.sexualOrientation) ? p.sexualOrientation : (p.sexualOrientation ? [p.sexualOrientation] : [])
+            }));
+          } else if (typeof parsed === 'string') {
+            // JSON string containing a single gender string
+            theirPreferredGenders = [{
+              gender: parsed,
+              sexualOrientation: match.userDatingPreferences.preferredSexualOrientation ? [match.userDatingPreferences.preferredSexualOrientation] : []
+            }];
           } else {
-            // Old format
+            // Parsed object but not an array (shouldn't happen, but handle gracefully)
             theirPreferredGenders = [{
               gender: match.userDatingPreferences.preferredGender,
-              sexualOrientation: match.userDatingPreferences.preferredSexualOrientation || ""
+              sexualOrientation: match.userDatingPreferences.preferredSexualOrientation ? [match.userDatingPreferences.preferredSexualOrientation] : []
             }];
           }
         }
       } catch {
-        // Not JSON, use as single value
+        // Not JSON, use as single value (old format)
         if (match.userDatingPreferences.preferredGender) {
           theirPreferredGenders = [{
             gender: match.userDatingPreferences.preferredGender,
-            sexualOrientation: match.userDatingPreferences.preferredSexualOrientation || ""
+            sexualOrientation: match.userDatingPreferences.preferredSexualOrientation ? [match.userDatingPreferences.preferredSexualOrientation] : []
           }];
         }
       }
@@ -532,24 +676,194 @@ export async function GET(request: NextRequest) {
         return false;
       }
       
-      const matches = theirPreferredGenders.some(pref => {
+      // Check reciprocal gender preference with probabilistic variability
+      const genderMatches = theirPreferredGenders.some(pref => {
         const genderMatch = pref.gender?.toLowerCase() === ourGender.toLowerCase();
-        const orientationMatch = pref.sexualOrientation?.toLowerCase() === ourOrientation.toLowerCase();
+        const orientationMatch = Array.isArray(pref.sexualOrientation) 
+          ? pref.sexualOrientation.some(orientation => orientation.toLowerCase() === ourOrientation.toLowerCase())
+          : false;
         return genderMatch && orientationMatch;
       });
       
-      if (!matches && isDev) {
+      // Apply probabilistic variability to gender matching
+      if (hasVariability && variabilityFilters.includes("gender") && !genderMatches) {
+        // With variability: X% chance to allow this match even if gender doesn't match
+        const random = Math.random() * 100;
+        if (random < variabilityLevel) {
+          // Variability allows this match (outside preference)
+          return true;
+        }
+        // Variability didn't allow it, so require normal match
+        return false;
+      }
+      
+      if (!genderMatches && isDev) {
         console.log(`[Potential Matches] Filtering out match ${match.id}: No reciprocal preference match. Our: ${ourGender}/${ourOrientation}, Their preferences:`, theirPreferredGenders);
       }
       
-      return matches;
+      return genderMatches;
     });
+
+    // Apply probabilistic variability filtering to categorical filters in post-processing
+    // This allows matches outside preferences X% of the time based on variabilityLevel
+    const variabilityFilteredMatches = reciprocalMatches.filter((match) => {
+      if (!match.userDatingProfile) return true;
+
+      const profile = match.userDatingProfile;
+
+      // Vaccination filter with variability
+      if (hasVariability && variabilityFilters.includes("vaccination") && preferences.preferredCoronavirusVaccinated) {
+        const matchesPreference = profile.coronavirusVaccinated === preferences.preferredCoronavirusVaccinated;
+        if (!matchesPreference) {
+          const random = Math.random() * 100;
+          if (random >= variabilityLevel) {
+            // Variability didn't allow it (show within preference)
+            return false;
+          }
+          // Variability allowed it (show outside preference)
+        }
+      }
+
+      // Religion filter with variability
+      if (hasVariability && variabilityFilters.includes("religion") && preferences.preferredReligions.length > 0) {
+        const matchesPreference = profile.religion && preferences.preferredReligions.includes(profile.religion);
+        if (!matchesPreference) {
+          const random = Math.random() * 100;
+          if (random >= variabilityLevel) {
+            return false;
+          }
+        }
+      }
+
+      // HasKids filter with variability
+      if (hasVariability && variabilityFilters.includes("hasKids") && preferences.preferredHasKids && preferences.preferredHasKids !== "any") {
+        const preferredHasKidsBool = preferences.preferredHasKids === "yes";
+        const matchesPreference = profile.hasKids === preferredHasKidsBool;
+        if (!matchesPreference) {
+          // Variability: X% chance to show outside preference, (100-X)% chance to require match
+          const random = Math.random() * 100;
+          if (random >= variabilityLevel) {
+            // (100-X)% of the time: require match (show within preference)
+            return false;
+          }
+          // X% of the time: allow it (show outside preference)
+        }
+      }
+
+      // WantsKids filter with variability
+      if (hasVariability && variabilityFilters.includes("wantsKids") && preferences.preferredWantsKids && preferences.preferredWantsKids !== "any") {
+        // Normalize values for comparison (handle "not_sure" vs "maybe" variations)
+        const profileWantsKids = profile.wantsKids?.toLowerCase();
+        const preferredWantsKids = preferences.preferredWantsKids.toLowerCase();
+        // Map "not_sure" to "maybe" for comparison
+        const normalizedProfile = profileWantsKids === "not_sure" ? "maybe" : profileWantsKids;
+        const matchesPreference = normalizedProfile === preferredWantsKids;
+        if (!matchesPreference) {
+          const random = Math.random() * 100;
+          if (random >= variabilityLevel) {
+            return false;
+          }
+        }
+      }
+
+      // Smokes filter with variability
+      if (hasVariability && variabilityFilters.includes("smokes") && preferences.preferredSmokes) {
+        const matchesPreference = profile.smokes === preferences.preferredSmokes;
+        if (!matchesPreference) {
+          const random = Math.random() * 100;
+          if (random >= variabilityLevel) {
+            return false;
+          }
+        }
+      }
+
+      // Drinks filter with variability
+      if (hasVariability && variabilityFilters.includes("drinks") && preferences.preferredDrinks) {
+        const matchesPreference = profile.drinks === preferences.preferredDrinks;
+        if (!matchesPreference) {
+          const random = Math.random() * 100;
+          if (random >= variabilityLevel) {
+            return false;
+          }
+        }
+      }
+
+      // Activity filter with variability
+      if (hasVariability && variabilityFilters.includes("activity") && preferences.preferredActivity.length > 0) {
+        const matchesPreference = profile.activity && preferences.preferredActivity.includes(profile.activity);
+        if (!matchesPreference) {
+          const random = Math.random() * 100;
+          if (random >= variabilityLevel) {
+            return false;
+          }
+        }
+      }
+
+      // RelationshipType filter with variability
+      // Preferences are in DB format, profile may need normalization
+      if (hasVariability && variabilityFilters.includes("relationshipType") && preferences.preferredRelationshipType.length > 0) {
+        const normalizedProfile = normalizeRelationshipType(profile.relationshipType);
+        // Preferences are already in DB format, so direct comparison
+        const matchesPreference = normalizedProfile && preferences.preferredRelationshipType.includes(normalizedProfile);
+        if (!matchesPreference) {
+          const random = Math.random() * 100;
+          if (random >= variabilityLevel) {
+            return false;
+          }
+        }
+      }
+
+      // Diet filter with variability
+      // Preferences are in DB format, profile may need normalization
+      if (hasVariability && variabilityFilters.includes("diet") && preferences.preferredDiet.length > 0) {
+        const normalizedProfile = normalizeValue(profile.diet);
+        // Preferences are already in DB format, so direct comparison
+        const matchesPreference = normalizedProfile && preferences.preferredDiet.includes(normalizedProfile);
+        if (!matchesPreference) {
+          const random = Math.random() * 100;
+          if (random >= variabilityLevel) {
+            return false;
+          }
+        }
+      }
+
+      // PoliticalViews filter with variability
+      // Preferences are in DB format, profile may need normalization
+      if (hasVariability && variabilityFilters.includes("politicalViews") && preferences.preferredPoliticalViews.length > 0) {
+        const normalizedProfile = normalizeValue(profile.politicalViews);
+        // Preferences are already in DB format, so direct comparison
+        const matchesPreference = normalizedProfile && preferences.preferredPoliticalViews.includes(normalizedProfile);
+        if (!matchesPreference) {
+          const random = Math.random() * 100;
+          if (random >= variabilityLevel) {
+            return false;
+          }
+        }
+      }
+
+      // Education filter with variability
+      // Preferences are in DB format, profile may need normalization
+      if (hasVariability && variabilityFilters.includes("education") && preferences.preferredEducation.length > 0) {
+        const normalizedProfile = normalizeEducation(profile.education);
+        // Preferences are already in DB format, so direct comparison
+        const matchesPreference = normalizedProfile && preferences.preferredEducation.includes(normalizedProfile);
+        if (!matchesPreference) {
+          const random = Math.random() * 100;
+          if (random >= variabilityLevel) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    });
+
     if (isDev) {
-      console.log(`[Potential Matches] Filtered to ${reciprocalMatches.length} reciprocal matches`);
+      console.log(`[Potential Matches] Filtered to ${variabilityFilteredMatches.length} matches after variability filtering (from ${reciprocalMatches.length} reciprocal matches)`);
     }
 
     // Early return if no matches after filtering
-    if (reciprocalMatches.length === 0) {
+    if (variabilityFilteredMatches.length === 0) {
       return NextResponse.json({
         matches: [],
         nextCursor: null,
@@ -558,7 +872,7 @@ export async function GET(request: NextRequest) {
 
     // Batch fetch post counts for all matches to reduce database queries
     const formatStart = Date.now();
-    const matchIds = reciprocalMatches.map(m => m.id);
+    const matchIds = variabilityFilteredMatches.map(m => m.id);
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     
     // Get post counts for all matches in one query
@@ -581,7 +895,7 @@ export async function GET(request: NextRequest) {
 
     // Format response with compatibility scores
     const formattedMatches = await Promise.all(
-      reciprocalMatches.map(async (match) => {
+      variabilityFilteredMatches.map(async (match) => {
         // Find primary photo (or use first photo if no primary set)
         const primaryPhoto = match.userDatingPhotos.find((p: { isPrimary: boolean }) => p.isPrimary) || match.userDatingPhotos[0];
         const instruments = match.userInstruments.map((ui) => ui.instrument.name);

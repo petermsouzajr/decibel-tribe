@@ -7,7 +7,7 @@ import { Loader2, Save } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import PhotoManager from "./PhotoManager";
-import DatingPreferencesForm from "./DatingPreferencesForm";
+import DatingFiltersPanel from "./DatingFiltersPanel";
 import BackToDatingButton from "./BackToDatingButton";
 import datingInterests from "@/data/datingInterests.json";
 import HeightSelector from "./HeightSelector";
@@ -19,7 +19,7 @@ export default function DatingProfileEditor() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<"profile" | "photos">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "photos" | "preferences">("profile");
 
   const [formData, setFormData] = useState({
     bio: "",
@@ -429,6 +429,15 @@ export default function DatingProfileEditor() {
           )}
 
           {activeTab === "photos" && <PhotoManager />}
+          
+          {activeTab === "preferences" && (
+            <DatingFiltersPanel
+              asModal={false}
+              onFiltersChange={() => {
+                // Optional: show success message or refresh data
+              }}
+            />
+          )}
         </div>
       </div>
     </div>

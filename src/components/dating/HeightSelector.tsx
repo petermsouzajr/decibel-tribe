@@ -65,7 +65,7 @@ export default function HeightSelector({
     setIsOpen(false);
   };
 
-  const isDarkTheme = className.includes("bg-gray");
+  const isDarkTheme = className.includes("bg-gray") || className.includes("border-gray-700");
 
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
@@ -79,16 +79,16 @@ export default function HeightSelector({
         type="button"
         variant="outline"
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full justify-between text-sm h-11 ${error ? "border-red-500" : ""} ${
+        className={`w-full justify-between text-sm p-3 h-auto min-h-[44px] ${error ? "border-red-500" : ""} ${
           isDarkTheme 
-            ? "bg-gray-900 border-gray-700 text-white hover:bg-gray-800" 
+            ? "bg-gray-900 border-gray-700 text-white hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500" 
             : "bg-white border-gray-300 text-gray-900 hover:bg-gray-50"
         }`}
       >
         <span className={`text-sm ${!displayValue ? "text-gray-400" : isDarkTheme ? "text-white" : "text-gray-900"}`}>
           {displayValue || "Select height"}
         </span>
-        <ChevronDown className={`w-4 h-4 transition-transform text-gray-500 ${isOpen ? "rotate-180" : ""}`} />
+        <ChevronDown className={`w-4 h-4 transition-transform ${isDarkTheme ? "text-gray-300" : "text-gray-500"} ${isOpen ? "rotate-180" : ""}`} />
       </Button>
       
       {isOpen && (

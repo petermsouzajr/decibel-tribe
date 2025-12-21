@@ -9,7 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import Image from "next/image";
 import PotentialMatchCard from "./PotentialMatchCard";
 import MatchCelebration from "./MatchCelebration";
-import BasicFiltersPanel from "./BasicFiltersPanel";
+import DatingFiltersPanel from "./DatingFiltersPanel";
 import SafetyTips from "./SafetyTips";
 import { Shield } from "lucide-react";
 import {
@@ -805,7 +805,7 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
           {/* Floating Decision Buttons - Fixed at bottom */}
           {/* Show full button bar when there's a match, or just undo button when deck is empty */}
           {(currentMatch || recentSwipes.length > 0) && (
-            <div className="fixed bottom-0 left-0 right-0 mb-16 border-gray-200 shadow-lg z-50 pb-safe">
+            <div className="fixed bottom-0 left-0 right-0 mb-16 border-gray-200 z-50 pb-safe">
               <div className="w-full px-2 sm:px-4 lg:max-w-2xl lg:mx-auto">
                 <div className="flex justify-around items-center gap-4 sm:gap-6 py-4">
                   {/* Dislike Button - Only show when there's a current match */}
@@ -892,13 +892,14 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
         />
       )}
 
-      <BasicFiltersPanel
+      <DatingFiltersPanel
         open={showBasicFilters}
         onOpenChange={setShowBasicFilters}
         onFiltersChange={() => {
           // Refetch matches when basic filters change
           fetchMatches();
         }}
+        asModal={true}
       />
       <Dialog open={showLocationDialog} onOpenChange={setShowLocationDialog}>
         <DialogContent className="max-w-md bg-gray-950 border-gray-800">

@@ -33,13 +33,20 @@ export default function DatingPreferencesForm() {
     preferredHasKids: "" as "" | "yes" | "no" | "any",
     preferredSmokes: "",
     preferredDrinks: "",
-    preferredActivity: "",
+    preferredActivity: [] as string[],
+    preferredEducation: [] as string[],
+    preferredPoliticalViews: [] as string[],
+    preferredDiet: [] as string[],
+    preferredRelationshipType: [] as string[],
     preferredInstruments: [] as string[],
     preferredSkills: [] as string[],
     matchMusicTastes: false,
     anyAge: false,
     anyHeight: false,
     anyDistance: false,
+    // Mix It Up controls
+    variabilityLevel: 0, // 0-100% variability slider
+    variabilityFilters: [] as string[], // Array of filter names to include in variability
   });
 
   useEffect(() => {
@@ -110,13 +117,19 @@ export default function DatingPreferencesForm() {
         preferredHasKids: (response as any).preferredHasKids || "",
         preferredSmokes: (response as any).preferredSmokes || "",
         preferredDrinks: (response as any).preferredDrinks || "",
-        preferredActivity: (response as any).preferredActivity || "",
+        preferredActivity: Array.isArray((response as any).preferredActivity) ? (response as any).preferredActivity : ((response as any).preferredActivity ? [(response as any).preferredActivity] : []),
+        preferredEducation: (response as any).preferredEducation || [],
+        preferredPoliticalViews: (response as any).preferredPoliticalViews || [],
+        preferredDiet: (response as any).preferredDiet || [],
+        preferredRelationshipType: (response as any).preferredRelationshipType || [],
         preferredInstruments: (response as any).preferredInstruments || [],
         preferredSkills: (response as any).preferredSkills || [],
         matchMusicTastes: (response as any).matchMusicTastes ?? false,
         anyAge: minAge === 18 && maxAge === 130,
         anyHeight: minHeight === 36 && maxHeight === 94, // 3'0" to 7'10"
         anyDistance: maxDistance >= 10000,
+        variabilityLevel: (response as any).variabilityLevel ?? 0,
+        variabilityFilters: (response as any).variabilityFilters || [],
       });
     } catch (error) {
       console.error("Error fetching preferences:", error);
@@ -190,10 +203,16 @@ export default function DatingPreferencesForm() {
           preferredHasKids: formData.preferredHasKids || undefined,
           preferredSmokes: formData.preferredSmokes || undefined,
           preferredDrinks: formData.preferredDrinks || undefined,
-          preferredActivity: formData.preferredActivity || undefined,
+          preferredActivity: formData.preferredActivity,
+          preferredEducation: formData.preferredEducation,
+          preferredPoliticalViews: formData.preferredPoliticalViews,
+          preferredDiet: formData.preferredDiet,
+          preferredRelationshipType: formData.preferredRelationshipType,
           preferredInstruments: formData.preferredInstruments,
           preferredSkills: formData.preferredSkills,
           matchMusicTastes: formData.matchMusicTastes,
+          variabilityLevel: formData.variabilityLevel,
+          variabilityFilters: formData.variabilityFilters,
         },
       });
 
@@ -221,15 +240,14 @@ export default function DatingPreferencesForm() {
 
   return (
     <div className="space-y-6">
-      {/* Always Enforced Info Message */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <p className="text-xs text-blue-800">
-          <strong>Always Enforced:</strong> Gender, Age Range, Distance, Has Kids, Wants Kids, Smoking, Drinking, and Vaccination Status are automatically treated as deal-breakers unless you set them to &quot;No preference&quot;.
-        </p>
-      </div>
-
-      {/* Always Enforced Filters - Grouped Section */}
+      {/* Non-Negotiable Filters Box */}
       <div className="border border-blue-300 rounded-lg p-4 space-y-6 bg-blue-50/50">
+        {/* Disclaimer */}
+        <div className="bg-blue-100 border border-blue-200 rounded-lg p-3">
+          <p className="text-sm text-blue-800">
+            <strong>Non-Negotiable Filters:</strong> These filters are automatically treated as deal-breakers unless you set them to &quot;No preference&quot;. Matches must meet these requirements exactly.
+          </p>
+        </div>
         <div>
           <label className="block text-sm font-semibold text-gray-900 mb-4">
             Gender Preference
@@ -346,10 +364,11 @@ export default function DatingPreferencesForm() {
         </div>
       </div>
 
+      {/* Height Range */}
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="block text-sm font-semibold text-gray-900">
-            Preferred Height Range
+            Height Range
           </label>
           <label className="flex items-center space-x-2 cursor-pointer">
             <input
@@ -447,11 +466,12 @@ export default function DatingPreferencesForm() {
         </div>
       </div>
 
+      {/* Distance */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="block text-sm font-semibold text-gray-900">
-              Maximum Distance (miles)
+              Maximum Distance
             </label>
             <label className="flex items-center space-x-2 cursor-pointer">
               <input
@@ -509,7 +529,6 @@ export default function DatingPreferencesForm() {
             { label: "No preference", value: "" },
             { label: "Has kids", value: "yes" },
             { label: "Doesn't have kids", value: "no" },
-            { label: "Any", value: "any" },
           ]}
           label="Has Kids"
           placeholder="No preference"
@@ -545,12 +564,210 @@ export default function DatingPreferencesForm() {
           placeholder="No preference"
         />
       </div>
-      </div>
-      {/* End of Always Enforced Filters Section */}
 
+      {/* Relationship Type */}
       <div>
         <label className="block text-sm font-semibold text-gray-900 mb-2">
-          Preferred Religions (Optional)
+          Relationship Type
+        </label>
+        <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50">
+          <div className="grid grid-cols-2 gap-2">
+            {["Monogamous", "Open Relationship", "Casual Dating", "Friends with Benefits", "Long-term Relationship", "Short-term Fun", "Not Sure Yet"].map((type) => (
+              <label
+                key={type}
+                className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-gray-100 transition-colors ${
+                  formData.preferredRelationshipType.includes(type)
+                    ? "bg-purple-50 border border-purple-500"
+                    : "border border-gray-300"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={formData.preferredRelationshipType.includes(type)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setFormData({
+                        ...formData,
+                        preferredRelationshipType: [...formData.preferredRelationshipType, type],
+                      });
+                    } else {
+                      setFormData({
+                        ...formData,
+                        preferredRelationshipType: formData.preferredRelationshipType.filter((t) => t !== type),
+                      });
+                    }
+                  }}
+                  className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                />
+                <span className="text-sm text-gray-900">{type}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Activity Level */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-900 mb-2">
+          Activity Level
+        </label>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {["Active", "Sporting", "Super active", "Couch potato", "Hiker", "Moderate", "Very active", "Gym enthusiast", "Yoga lover", "Outdoor adventurer", "Weekend warrior"].map((activity) => (
+            <label
+              key={activity}
+              className="flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+            >
+              <input
+                type="checkbox"
+                className="w-5 h-5 rounded border-2 border-gray-300 bg-white checked:bg-purple-500 checked:border-purple-500"
+                checked={formData.preferredActivity.includes(activity)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setFormData({
+                      ...formData,
+                      preferredActivity: [...formData.preferredActivity, activity],
+                    });
+                  } else {
+                    setFormData({
+                      ...formData,
+                      preferredActivity: formData.preferredActivity.filter((a) => a !== activity),
+                    });
+                  }
+                }}
+              />
+              <span className="text-sm font-medium text-gray-900">{activity}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Diet */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-900 mb-2">
+          Diet Preferences
+        </label>
+        <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50">
+          <div className="grid grid-cols-2 gap-2">
+            {["Omnivore", "Vegetarian", "Vegan", "Pescatarian", "Kosher", "Halal", "Gluten-free", "Keto", "Paleo", "Other"].map((diet) => (
+              <label
+                key={diet}
+                className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-gray-100 transition-colors ${
+                  formData.preferredDiet.includes(diet)
+                    ? "bg-purple-50 border border-purple-500"
+                    : "border border-gray-300"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={formData.preferredDiet.includes(diet)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setFormData({
+                        ...formData,
+                        preferredDiet: [...formData.preferredDiet, diet],
+                      });
+                    } else {
+                      setFormData({
+                        ...formData,
+                        preferredDiet: formData.preferredDiet.filter((d) => d !== diet),
+                      });
+                    }
+                  }}
+                  className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                />
+                <span className="text-sm text-gray-900">{diet}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Political Views */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-900 mb-2">
+          Political Views
+        </label>
+        <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50">
+          <div className="grid grid-cols-2 gap-2">
+            {["Liberal", "Moderate", "Conservative", "Progressive", "Libertarian", "Apolitical", "Other"].map((view) => (
+              <label
+                key={view}
+                className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-gray-100 transition-colors ${
+                  formData.preferredPoliticalViews.includes(view)
+                    ? "bg-purple-50 border border-purple-500"
+                    : "border border-gray-300"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={formData.preferredPoliticalViews.includes(view)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setFormData({
+                        ...formData,
+                        preferredPoliticalViews: [...formData.preferredPoliticalViews, view],
+                      });
+                    } else {
+                      setFormData({
+                        ...formData,
+                        preferredPoliticalViews: formData.preferredPoliticalViews.filter((v) => v !== view),
+                      });
+                    }
+                  }}
+                  className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                />
+                <span className="text-sm text-gray-900">{view}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Education Level */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-900 mb-2">
+          Education Level
+        </label>
+        <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50">
+          <div className="grid grid-cols-2 gap-2">
+            {["High School", "Some College", "Bachelor's", "Master's", "PhD", "Professional"].map((edu) => (
+              <label
+                key={edu}
+                className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-gray-100 transition-colors ${
+                  formData.preferredEducation.includes(edu)
+                    ? "bg-purple-50 border border-purple-500"
+                    : "border border-gray-300"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={formData.preferredEducation.includes(edu)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setFormData({
+                        ...formData,
+                        preferredEducation: [...formData.preferredEducation, edu],
+                      });
+                    } else {
+                      setFormData({
+                        ...formData,
+                        preferredEducation: formData.preferredEducation.filter((e) => e !== edu),
+                      });
+                    }
+                  }}
+                  className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                />
+                <span className="text-sm text-gray-900">{edu}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Religion */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-900 mb-2">
+          Religion Preferences
         </label>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {[
@@ -595,35 +812,9 @@ export default function DatingPreferencesForm() {
         </div>
       </div>
 
-      {/* Activity Level */}
-      <div>
-        <label className="block text-sm font-semibold text-gray-900 mb-2">
-          Activity Level
-        </label>
-        <DropdownSelector
-          value={formData.preferredActivity}
-          onChange={(value) =>
-            setFormData({ ...formData, preferredActivity: value })
-          }
-          options={[
-            { label: "No preference", value: "" },
-            { label: "Active", value: "Active" },
-            { label: "Sporting", value: "Sporting" },
-            { label: "Super active", value: "Super active" },
-            { label: "Couch potato", value: "Couch potato" },
-            { label: "Hiker", value: "Hiker" },
-            { label: "Gym enthusiast", value: "Gym enthusiast" },
-            { label: "Yoga lover", value: "Yoga lover" },
-            { label: "Outdoor adventurer", value: "Outdoor adventurer" },
-            { label: "Weekend warrior", value: "Weekend warrior" },
-            { label: "Moderately active", value: "Moderately active" },
-          ]}
-          label=""
-          placeholder="No preference"
-        />
-      </div>
 
-      {/* Music Compatibility Filters - At Bottom */}
+      {/* Music Compatibility Filters - COMMENTED OUT */}
+      {false && (
       <div className="border-t pt-6 space-y-6">
         <div className="flex items-center gap-2">
           <Music className="w-5 h-5 text-purple-500" />
@@ -725,7 +916,6 @@ export default function DatingPreferencesForm() {
           </div>
         </div>
 
-        {/* Music Compatibility Preference */}
         <div>
           <label className="flex items-center space-x-3 cursor-pointer p-4 border rounded-lg hover:bg-gray-50 transition-colors">
             <input
@@ -746,6 +936,107 @@ export default function DatingPreferencesForm() {
               </p>
             </div>
           </label>
+        </div>
+      </div>
+      )}
+      </div>
+      {/* End of Non-Negotiable Filters Box */}
+
+      {/* Mix It Up Section */}
+      <div className="pt-6 border-t border-gray-300 space-y-6">
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Mix It Up</h3>
+          <p className="text-sm text-gray-700 mb-4">
+            Add some surprise! Loosen some preferences to discover unexpected connections. Select which filters you&apos;d like to include in variability.
+          </p>
+          
+          {/* Variability Level Slider */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-sm font-semibold text-gray-900">
+                Variability Level
+              </label>
+              <span className="text-lg font-bold text-purple-600">
+                {formData.variabilityLevel}%
+              </span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="5"
+              value={formData.variabilityLevel}
+              onChange={(e) =>
+                setFormData({ ...formData, variabilityLevel: parseInt(e.target.value) })
+              }
+              className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-purple-500"
+              style={{
+                background: `linear-gradient(to right, rgb(168, 85, 247) 0%, rgb(168, 85, 247) ${formData.variabilityLevel}%, rgb(209, 213, 219) ${formData.variabilityLevel}%, rgb(209, 213, 219) 100%)`
+              }}
+            />
+            <div className="flex justify-between text-xs text-gray-600 mt-1">
+              <span>0% (Exact matches only)</span>
+              <span>50%</span>
+              <span>100% (Maximum variety)</span>
+            </div>
+            <p className="text-xs text-gray-600 mt-2">
+              Higher variability = more diverse matches, including some outside your usual preferences.
+            </p>
+          </div>
+
+          {/* Apply Variability To Checkboxes */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-900 mb-3">
+              Apply variability to:
+            </label>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {[
+                { key: "gender", label: "Gender Preference" },
+                { key: "age", label: "Age Range" },
+                { key: "distance", label: "Maximum Distance" },
+                { key: "height", label: "Height Range" },
+                { key: "hasKids", label: "Has Kids" },
+                { key: "wantsKids", label: "Wants Kids" },
+                { key: "smokes", label: "Smoking Preference" },
+                { key: "drinks", label: "Drinking Preference" },
+                { key: "vaccination", label: "Vaccination Status" },
+                { key: "relationshipType", label: "Relationship Type" },
+                { key: "activity", label: "Activity Level" },
+                { key: "diet", label: "Diet Preferences" },
+                { key: "politicalViews", label: "Political Views" },
+                { key: "education", label: "Education Level" },
+                { key: "religion", label: "Religion" },
+              ].map((filter) => (
+                <label
+                  key={filter.key}
+                  className="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-gray-100 transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={formData.variabilityFilters.includes(filter.key)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setFormData({
+                          ...formData,
+                          variabilityFilters: [...formData.variabilityFilters, filter.key],
+                        });
+                      } else {
+                        setFormData({
+                          ...formData,
+                          variabilityFilters: formData.variabilityFilters.filter((f) => f !== filter.key),
+                        });
+                      }
+                    }}
+                    className="w-4 h-4 rounded border-gray-300 bg-white text-purple-600 focus:ring-purple-500"
+                  />
+                  <span className="text-sm text-gray-900">{filter.label}</span>
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-gray-600 mt-3">
+              All filters are non-negotiable by default. Check the boxes above to allow variability for those specific filters.
+            </p>
+          </div>
         </div>
       </div>
 

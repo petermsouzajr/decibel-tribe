@@ -2,6 +2,14 @@ import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import {
+  normalizeEducationArrayToDB,
+  normalizeRelationshipTypeArrayToDB,
+  normalizeValueArrayToDB,
+  normalizeEducationArrayToUI,
+  normalizeRelationshipTypeArrayToUI,
+  normalizeValueArrayToUI,
+} from "@/lib/dating/valueNormalization";
 
 // Geocode zip code to lat/lon/city using OpenStreetMap Nominatim API
 async function geocodeZipCode(zipCode: string): Promise<{ lat: number; lon: number; city?: string } | null> {
@@ -80,7 +88,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(preferences);
+    // Convert DB format to UI format for display
+    return NextResponse.json({
+      ...preferences,
+      preferredEducation: normalizeEducationArrayToUI(preferences.preferredEducation),
+      preferredPoliticalViews: normalizeValueArrayToUI(preferences.preferredPoliticalViews),
+      preferredDiet: normalizeValueArrayToUI(preferences.preferredDiet),
+      preferredRelationshipType: normalizeRelationshipTypeArrayToUI(preferences.preferredRelationshipType),
+      preferredActivity: normalizeValueArrayToUI(preferences.preferredActivity),
+    });
   } catch (error) {
     console.error("Error fetching preferences:", error);
     return NextResponse.json(
@@ -135,9 +151,8 @@ export async function POST(request: NextRequest) {
       preferredPoliticalViews,
       preferredDiet,
       preferredRelationshipType,
-      exactMatchAllFilters,
-      minimumMatchPercentage,
-      nonNegotiableFields,
+      variabilityLevel,
+      variabilityFilters,
     } = await request.json();
 
     // Geocode zipCode if provided (only called once when user updates their zip code)
@@ -259,14 +274,33 @@ export async function POST(request: NextRequest) {
         ...(preferredWantsKids !== undefined && { preferredWantsKids }),
         ...(preferredSmokes !== undefined && { preferredSmokes }),
         ...(preferredDrinks !== undefined && { preferredDrinks }),
-        ...(preferredActivity !== undefined && { preferredActivity }),
-        ...(preferredEducation !== undefined && { preferredEducation }),
-        ...(preferredPoliticalViews !== undefined && { preferredPoliticalViews }),
-        ...(preferredDiet !== undefined && { preferredDiet }),
-        ...(preferredRelationshipType !== undefined && { preferredRelationshipType }),
-        ...(exactMatchAllFilters !== undefined && { exactMatchAllFilters }),
-        ...(minimumMatchPercentage !== undefined && { minimumMatchPercentage }),
-        ...(nonNegotiableFields !== undefined && { nonNegotiableFields }),
+        ...(preferredActivity !== undefined && { 
+          preferredActivity: Array.isArray(preferredActivity) 
+            ? normalizeValueArrayToDB(preferredActivity) 
+            : (preferredActivity ? normalizeValueArrayToDB([preferredActivity]) : []) 
+        }),
+        ...(preferredEducation !== undefined && { 
+          preferredEducation: Array.isArray(preferredEducation) 
+            ? normalizeEducationArrayToDB(preferredEducation) 
+            : [] 
+        }),
+        ...(preferredPoliticalViews !== undefined && { 
+          preferredPoliticalViews: Array.isArray(preferredPoliticalViews) 
+            ? normalizeValueArrayToDB(preferredPoliticalViews) 
+            : [] 
+        }),
+        ...(preferredDiet !== undefined && { 
+          preferredDiet: Array.isArray(preferredDiet) 
+            ? normalizeValueArrayToDB(preferredDiet) 
+            : [] 
+        }),
+        ...(preferredRelationshipType !== undefined && { 
+          preferredRelationshipType: Array.isArray(preferredRelationshipType) 
+            ? normalizeRelationshipTypeArrayToDB(preferredRelationshipType) 
+            : [] 
+        }),
+        ...(variabilityLevel !== undefined && { variabilityLevel }),
+        ...(variabilityFilters !== undefined && { variabilityFilters }),
         updatedAt: new Date(),
       },
       create: {
@@ -288,14 +322,23 @@ export async function POST(request: NextRequest) {
         preferredWantsKids: preferredWantsKids || null,
         preferredSmokes: preferredSmokes || null,
         preferredDrinks: preferredDrinks || null,
-        preferredActivity: preferredActivity || null,
-        preferredEducation: preferredEducation || [],
-        preferredPoliticalViews: preferredPoliticalViews || [],
-        preferredDiet: preferredDiet || [],
-        preferredRelationshipType: preferredRelationshipType || [],
-        exactMatchAllFilters: exactMatchAllFilters !== undefined ? exactMatchAllFilters : false,
-        minimumMatchPercentage: minimumMatchPercentage !== undefined ? minimumMatchPercentage : 70,
-        nonNegotiableFields: nonNegotiableFields || [],
+        preferredActivity: Array.isArray(preferredActivity) 
+          ? normalizeValueArrayToDB(preferredActivity) 
+          : (preferredActivity ? normalizeValueArrayToDB([preferredActivity]) : []),
+        preferredEducation: Array.isArray(preferredEducation) 
+          ? normalizeEducationArrayToDB(preferredEducation) 
+          : [],
+        preferredPoliticalViews: Array.isArray(preferredPoliticalViews) 
+          ? normalizeValueArrayToDB(preferredPoliticalViews) 
+          : [],
+        preferredDiet: Array.isArray(preferredDiet) 
+          ? normalizeValueArrayToDB(preferredDiet) 
+          : [],
+        preferredRelationshipType: Array.isArray(preferredRelationshipType) 
+          ? normalizeRelationshipTypeArrayToDB(preferredRelationshipType) 
+          : [],
+        variabilityLevel: variabilityLevel !== undefined ? variabilityLevel : 0,
+        variabilityFilters: variabilityFilters || [],
         updatedAt: new Date(),
       },
     });

@@ -517,15 +517,14 @@ model UserDatingPreferences {
   preferredWantsKids             String? // "yes" | "no" | "maybe" | "any" | null - future kids preference
   preferredSmokes                String? // "Yes" | "No" | "Social" | null
   preferredDrinks                String? // "Yes" | "No" | "Social" | null
-  preferredActivity              String? // Activity level preference
+  preferredActivity              String[] // Activity level preference (multi-select)
   preferredEducation             String[] // Array of education levels
   preferredPoliticalViews        String[] // Array of political views
   preferredDiet                  String[] // Array of diet preferences
   preferredRelationshipType      String[] // Array of relationship types
-  // Match strictness controls
-  exactMatchAllFilters           Boolean  @default(false) // Strict matching: all preferences must match exactly
-  minimumMatchPercentage         Int      @default(70) // Minimum compatibility percentage (0-100)
-  nonNegotiableFields            String[] // Array of field names that are dealbreakers (e.g., ["smokes", "hasKids", "religion"])
+  // Mix It Up controls
+  variabilityLevel               Int      @default(0) // 0-100% variability slider
+  variabilityFilters             String[] // Array of filter names to include in variability (e.g., ["gender", "age", "distance", "height", "hasKids", "wantsKids", "smokes", "drinks", "vaccination", "relationshipType", "activity", "diet", "politicalViews", "education", "religion"])
   user                           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_dating_preferences")

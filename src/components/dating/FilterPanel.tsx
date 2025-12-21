@@ -69,7 +69,9 @@ export default function FilterPanel({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Instruments Filter */}
+          {/* COMMENTED OUT - Music Compatibility Filters */}
+          {false && (
+          <>
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Music className="w-5 h-5 text-purple-400" />
@@ -106,7 +108,6 @@ export default function FilterPanel({
             </div>
           </div>
 
-          {/* Skills Filter */}
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Music className="w-5 h-5 text-blue-400" />
@@ -142,6 +143,8 @@ export default function FilterPanel({
               </div>
             </div>
           </div>
+          </>
+          )}
 
           {/* Actions */}
           <div className="flex justify-between items-center pt-4 border-t">
