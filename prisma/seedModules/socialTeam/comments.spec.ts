@@ -74,6 +74,8 @@ describe("SocialTeam - seedPublicComments Module", () => {
       // Add required fields from Prisma User type
       displayName: "Commenter One",
       email: "commenter1@test.com",
+      isBanned: false,
+      bannedAt: null,
       pendingEmail: null,
       passwordHash: "hashedpassword",
       isVerified: true,
@@ -92,6 +94,8 @@ describe("SocialTeam - seedPublicComments Module", () => {
       // Add required fields
       displayName: "Commenter Two",
       email: "commenter2@test.com",
+      isBanned: false,
+      bannedAt: null,
       pendingEmail: null,
       passwordHash: "hashedpassword",
       isVerified: true,
@@ -110,6 +114,8 @@ describe("SocialTeam - seedPublicComments Module", () => {
       // Add required fields
       displayName: "No Comments User",
       email: "nocomments@test.com",
+      isBanned: false,
+      bannedAt: null,
       pendingEmail: null,
       passwordHash: "hashedpassword",
       isVerified: true,

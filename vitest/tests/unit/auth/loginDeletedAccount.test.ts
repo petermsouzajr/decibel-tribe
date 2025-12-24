@@ -42,6 +42,8 @@ describe("login with deleted accounts", () => {
     username: "testuser",
     displayName: "Test User",
     email: "test@example.com",
+    isBanned: false,
+    bannedAt: null,
     pendingEmail: null,
     passwordHash: "hashedpassword",
     isVerified: true,

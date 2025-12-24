@@ -30,6 +30,8 @@ const mockUserData = {
   username: "testuser",
   displayName: "Test User",
   email: "test@example.com",
+  isBanned: false,
+  bannedAt: null,
   avatarUrl: null,
   bio: "Test bio",
   isDatingActive: false,
