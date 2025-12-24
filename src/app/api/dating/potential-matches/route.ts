@@ -236,6 +236,30 @@ export async function GET(request: NextRequest) {
       return value.toLowerCase().trim();
     };
 
+    // Normalize religion across legacy + UI variants
+    const normalizeReligion = (value: string | null | undefined): string | null => {
+      const v = normalizeValue(value);
+      if (!v) return null;
+      const mapping: Record<string, string> = {
+        christian: "christianity",
+        catholic: "catholicism",
+        jewish: "judaism",
+        muslim: "islam",
+        atheist: "atheism",
+        agnostic: "agnosticism",
+      };
+      return mapping[v] || v;
+    };
+
+    // Normalize yes/no values (e.g. "Yes" vs "yes")
+    const normalizeYesNo = (value: string | null | undefined): "yes" | "no" | null => {
+      const v = normalizeValue(value);
+      if (!v) return null;
+      if (v === "yes" || v === "y" || v === "true") return "yes";
+      if (v === "no" || v === "n" || v === "false") return "no";
+      return null;
+    };
+
     // Helper function to normalize relationship type values
     const normalizeRelationshipType = (value: string | null | undefined): string | null => {
       if (!value) return null;
@@ -419,25 +443,12 @@ export async function GET(request: NextRequest) {
                 };
               })()
             : {}),
-          // Match vaccination preference if specified
-          // Apply variability probabilistically in post-processing
-          ...(preferences.preferredCoronavirusVaccinated && (!hasVariability || !variabilityFilters.includes("vaccination"))
-            ? {
-                coronavirusVaccinated: preferences.preferredCoronavirusVaccinated,
-              }
-            : {}),
-          // Match religion if specified
-          // Apply variability probabilistically in post-processing
-          ...(preferences.preferredReligions.length > 0 && (!hasVariability || !variabilityFilters.includes("religion"))
-            ? {
-                religion: { in: preferences.preferredReligions },
-              }
-            : {}),
+          // Vaccination + Religion are handled in post-processing so we can normalize legacy values
           // Match hasKids preference if specified
           // Apply variability probabilistically in post-processing
           ...(preferences.preferredHasKids && preferences.preferredHasKids !== "any" && (!hasVariability || !variabilityFilters.includes("hasKids"))
             ? {
-                hasKids: preferences.preferredHasKids === "yes",
+                hasKids: normalizeValue(preferences.preferredHasKids) === "yes",
               }
             : {}),
           // Match smokes preference if specified
@@ -456,22 +467,16 @@ export async function GET(request: NextRequest) {
             : {}),
           // Match activity preference if specified (preferredActivity is now an array)
           // Apply variability probabilistically in post-processing
-          ...(preferences.preferredActivity && preferences.preferredActivity.length > 0 && (!hasVariability || !variabilityFilters.includes("activity"))
+          ...(Array.isArray(preferences.preferredActivity) && preferences.preferredActivity.length > 0 && (!hasVariability || !variabilityFilters.includes("activity"))
             ? {
                 activity: { in: preferences.preferredActivity },
               }
             : {}),
-          // Match wantsKids preference if specified
-          // Apply variability probabilistically in post-processing
-          ...(preferences.preferredWantsKids && preferences.preferredWantsKids !== "any" && (!hasVariability || !variabilityFilters.includes("wantsKids"))
-            ? {
-                wantsKids: preferences.preferredWantsKids,
-              }
-            : {}),
+          // WantsKids is handled in post-processing (normalize not_sure/maybe)
           // Match relationshipType preference if specified
           // Apply variability probabilistically in post-processing
           // Preferences are stored in DB format, so direct comparison
-          ...(preferences.preferredRelationshipType && preferences.preferredRelationshipType.length > 0 && (!hasVariability || !variabilityFilters.includes("relationshipType"))
+          ...(Array.isArray(preferences.preferredRelationshipType) && preferences.preferredRelationshipType.length > 0 && (!hasVariability || !variabilityFilters.includes("relationshipType"))
             ? {
                 relationshipType: { in: preferences.preferredRelationshipType },
               }
@@ -479,7 +484,7 @@ export async function GET(request: NextRequest) {
           // Match diet preference if specified
           // Apply variability probabilistically in post-processing
           // Preferences are stored in DB format, so direct comparison
-          ...(preferences.preferredDiet && preferences.preferredDiet.length > 0 && (!hasVariability || !variabilityFilters.includes("diet"))
+          ...(Array.isArray(preferences.preferredDiet) && preferences.preferredDiet.length > 0 && (!hasVariability || !variabilityFilters.includes("diet"))
             ? {
                 diet: { in: preferences.preferredDiet },
               }
@@ -487,7 +492,7 @@ export async function GET(request: NextRequest) {
           // Match politicalViews preference if specified
           // Apply variability probabilistically in post-processing
           // Preferences are stored in DB format, so direct comparison
-          ...(preferences.preferredPoliticalViews && preferences.preferredPoliticalViews.length > 0 && (!hasVariability || !variabilityFilters.includes("politicalViews"))
+          ...(Array.isArray(preferences.preferredPoliticalViews) && preferences.preferredPoliticalViews.length > 0 && (!hasVariability || !variabilityFilters.includes("politicalViews"))
             ? {
                 politicalViews: { in: preferences.preferredPoliticalViews },
               }
@@ -495,9 +500,23 @@ export async function GET(request: NextRequest) {
           // Match education preference if specified
           // Apply variability probabilistically in post-processing
           // Preferences are stored in DB format, so direct comparison
-          ...(preferences.preferredEducation && preferences.preferredEducation.length > 0 && (!hasVariability || !variabilityFilters.includes("education"))
+          ...(Array.isArray(preferences.preferredEducation) && preferences.preferredEducation.length > 0 && (!hasVariability || !variabilityFilters.includes("education"))
             ? {
                 education: { in: preferences.preferredEducation },
+              }
+            : {}),
+          // Body type preference (single-select)
+          // Apply variability probabilistically in post-processing
+          ...(preferences.preferredBodyType && (!hasVariability || !variabilityFilters.includes("bodyType"))
+            ? {
+                bodyType: preferences.preferredBodyType,
+              }
+            : {}),
+          // Pets preference (multi-select)
+          // Apply variability probabilistically in post-processing
+          ...(Array.isArray(preferences.preferredPets) && preferences.preferredPets.length > 0 && (!hasVariability || !variabilityFilters.includes("pets"))
+            ? {
+                pets: { hasSome: preferences.preferredPets },
               }
             : {}),
         },
@@ -711,33 +730,47 @@ export async function GET(request: NextRequest) {
 
       const profile = match.userDatingProfile;
 
-      // Vaccination filter with variability
-      if (hasVariability && variabilityFilters.includes("vaccination") && preferences.preferredCoronavirusVaccinated) {
-        const matchesPreference = profile.coronavirusVaccinated === preferences.preferredCoronavirusVaccinated;
-        if (!matchesPreference) {
+      // -------------------------
+      // Preference behavior for "no preference" / missing profile fields
+      //
+      // - If a preference is NOT set (null/empty/[]/"any"), it should not filter anyone out.
+      // - If a preference IS set, require a match (unless variability includes that filter).
+      // - If the match has "Prefer not to say" (null), they will not satisfy a set preference.
+      // -------------------------
+
+      // Vaccination (supports legacy "Yes"/"No")
+      if (preferences.preferredCoronavirusVaccinated) {
+        const pref = normalizeYesNo(preferences.preferredCoronavirusVaccinated);
+        const prof = normalizeYesNo(profile.coronavirusVaccinated);
+        const matchesPreference = !!pref && !!prof && pref === prof;
+
+        if (hasVariability && variabilityFilters.includes("vaccination") && !matchesPreference) {
           const random = Math.random() * 100;
-          if (random >= variabilityLevel) {
-            // Variability didn't allow it (show within preference)
-            return false;
-          }
-          // Variability allowed it (show outside preference)
+          if (random >= variabilityLevel) return false;
+        } else if ((!hasVariability || !variabilityFilters.includes("vaccination")) && !matchesPreference) {
+          return false;
         }
       }
 
-      // Religion filter with variability
-      if (hasVariability && variabilityFilters.includes("religion") && preferences.preferredReligions.length > 0) {
-        const matchesPreference = profile.religion && preferences.preferredReligions.includes(profile.religion);
-        if (!matchesPreference) {
+      // Religion (normalize legacy values like "Christian" vs "Christianity")
+      if (Array.isArray(preferences.preferredReligions) && preferences.preferredReligions.length > 0) {
+        const prefSet = new Set(
+          preferences.preferredReligions.map(normalizeReligion).filter(Boolean) as string[],
+        );
+        const prof = normalizeReligion(profile.religion);
+        const matchesPreference = !!prof && prefSet.has(prof);
+
+        if (hasVariability && variabilityFilters.includes("religion") && !matchesPreference) {
           const random = Math.random() * 100;
-          if (random >= variabilityLevel) {
-            return false;
-          }
+          if (random >= variabilityLevel) return false;
+        } else if ((!hasVariability || !variabilityFilters.includes("religion")) && !matchesPreference) {
+          return false;
         }
       }
 
       // HasKids filter with variability
       if (hasVariability && variabilityFilters.includes("hasKids") && preferences.preferredHasKids && preferences.preferredHasKids !== "any") {
-        const preferredHasKidsBool = preferences.preferredHasKids === "yes";
+        const preferredHasKidsBool = normalizeValue(preferences.preferredHasKids) === "yes";
         const matchesPreference = profile.hasKids === preferredHasKidsBool;
         if (!matchesPreference) {
           // Variability: X% chance to show outside preference, (100-X)% chance to require match
@@ -750,19 +783,19 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // WantsKids filter with variability
-      if (hasVariability && variabilityFilters.includes("wantsKids") && preferences.preferredWantsKids && preferences.preferredWantsKids !== "any") {
-        // Normalize values for comparison (handle "not_sure" vs "maybe" variations)
-        const profileWantsKids = profile.wantsKids?.toLowerCase();
-        const preferredWantsKids = preferences.preferredWantsKids.toLowerCase();
-        // Map "not_sure" to "maybe" for comparison
+      // WantsKids (strict + variability; normalize not_sure -> maybe)
+      if (preferences.preferredWantsKids && preferences.preferredWantsKids !== "any") {
+        const profileWantsKids = normalizeValue(profile.wantsKids);
+        const preferredWantsKids = normalizeValue(preferences.preferredWantsKids);
         const normalizedProfile = profileWantsKids === "not_sure" ? "maybe" : profileWantsKids;
-        const matchesPreference = normalizedProfile === preferredWantsKids;
-        if (!matchesPreference) {
+        const matchesPreference =
+          !!preferredWantsKids && !!normalizedProfile && normalizedProfile === preferredWantsKids;
+
+        if (hasVariability && variabilityFilters.includes("wantsKids") && !matchesPreference) {
           const random = Math.random() * 100;
-          if (random >= variabilityLevel) {
-            return false;
-          }
+          if (random >= variabilityLevel) return false;
+        } else if ((!hasVariability || !variabilityFilters.includes("wantsKids")) && !matchesPreference) {
+          return false;
         }
       }
 
@@ -789,7 +822,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Activity filter with variability
-      if (hasVariability && variabilityFilters.includes("activity") && preferences.preferredActivity.length > 0) {
+      if (hasVariability && variabilityFilters.includes("activity") && Array.isArray(preferences.preferredActivity) && preferences.preferredActivity.length > 0) {
         const matchesPreference = profile.activity && preferences.preferredActivity.includes(profile.activity);
         if (!matchesPreference) {
           const random = Math.random() * 100;
@@ -801,7 +834,7 @@ export async function GET(request: NextRequest) {
 
       // RelationshipType filter with variability
       // Preferences are in DB format, profile may need normalization
-      if (hasVariability && variabilityFilters.includes("relationshipType") && preferences.preferredRelationshipType.length > 0) {
+      if (hasVariability && variabilityFilters.includes("relationshipType") && Array.isArray(preferences.preferredRelationshipType) && preferences.preferredRelationshipType.length > 0) {
         const normalizedProfile = normalizeRelationshipType(profile.relationshipType);
         // Preferences are already in DB format, so direct comparison
         const matchesPreference = normalizedProfile && preferences.preferredRelationshipType.includes(normalizedProfile);
@@ -815,7 +848,7 @@ export async function GET(request: NextRequest) {
 
       // Diet filter with variability
       // Preferences are in DB format, profile may need normalization
-      if (hasVariability && variabilityFilters.includes("diet") && preferences.preferredDiet.length > 0) {
+      if (hasVariability && variabilityFilters.includes("diet") && Array.isArray(preferences.preferredDiet) && preferences.preferredDiet.length > 0) {
         const normalizedProfile = normalizeValue(profile.diet);
         // Preferences are already in DB format, so direct comparison
         const matchesPreference = normalizedProfile && preferences.preferredDiet.includes(normalizedProfile);
@@ -829,7 +862,7 @@ export async function GET(request: NextRequest) {
 
       // PoliticalViews filter with variability
       // Preferences are in DB format, profile may need normalization
-      if (hasVariability && variabilityFilters.includes("politicalViews") && preferences.preferredPoliticalViews.length > 0) {
+      if (hasVariability && variabilityFilters.includes("politicalViews") && Array.isArray(preferences.preferredPoliticalViews) && preferences.preferredPoliticalViews.length > 0) {
         const normalizedProfile = normalizeValue(profile.politicalViews);
         // Preferences are already in DB format, so direct comparison
         const matchesPreference = normalizedProfile && preferences.preferredPoliticalViews.includes(normalizedProfile);
@@ -843,10 +876,33 @@ export async function GET(request: NextRequest) {
 
       // Education filter with variability
       // Preferences are in DB format, profile may need normalization
-      if (hasVariability && variabilityFilters.includes("education") && preferences.preferredEducation.length > 0) {
+      if (hasVariability && variabilityFilters.includes("education") && Array.isArray(preferences.preferredEducation) && preferences.preferredEducation.length > 0) {
         const normalizedProfile = normalizeEducation(profile.education);
         // Preferences are already in DB format, so direct comparison
         const matchesPreference = normalizedProfile && preferences.preferredEducation.includes(normalizedProfile);
+        if (!matchesPreference) {
+          const random = Math.random() * 100;
+          if (random >= variabilityLevel) {
+            return false;
+          }
+        }
+      }
+
+      // Body type filter with variability (single-select)
+      if (hasVariability && variabilityFilters.includes("bodyType") && preferences.preferredBodyType) {
+        const matchesPreference = profile.bodyType && profile.bodyType === preferences.preferredBodyType;
+        if (!matchesPreference) {
+          const random = Math.random() * 100;
+          if (random >= variabilityLevel) {
+            return false;
+          }
+        }
+      }
+
+      // Pets filter with variability (multi-select)
+      if (hasVariability && variabilityFilters.includes("pets") && Array.isArray(preferences.preferredPets) && preferences.preferredPets.length > 0) {
+        const matchesPreference =
+          Array.isArray(profile.pets) && profile.pets.some((p) => preferences.preferredPets.includes(p));
         if (!matchesPreference) {
           const random = Math.random() * 100;
           if (random >= variabilityLevel) {
@@ -967,6 +1023,7 @@ export async function GET(request: NextRequest) {
           sexualOrientation: match.userDatingProfile?.sexualOrientation || null,
           coronavirusVaccinated: match.userDatingProfile?.coronavirusVaccinated || null,
           religion: match.userDatingProfile?.religion || null,
+          bodyType: match.userDatingProfile?.bodyType || null,
           bio: match.userDatingProfile?.bio || match.bio || "",
           hasKids: match.userDatingProfile?.hasKids ?? null,
           smokes: match.userDatingProfile?.smokes || null,
@@ -974,7 +1031,7 @@ export async function GET(request: NextRequest) {
           activity: match.userDatingProfile?.activity || null,
           education: match.userDatingProfile?.education || null,
           job: match.userDatingProfile?.job || null,
-          pets: match.userDatingProfile?.pets || null,
+          pets: match.userDatingProfile?.pets || [],
           interests: match.userDatingProfile?.interests || [],
           photos: match.userDatingPhotos.map((p) => ({
             url: p.url,

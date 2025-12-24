@@ -10,6 +10,8 @@ import skillsList from "@/data/skillsList.json";
 import DropdownSelector from "./DropdownSelector";
 import AgeSelector from "./AgeSelector";
 import HeightSelector from "./HeightSelector";
+import { PETS_OPTIONS } from "@/lib/dating/profileOptions";
+import { BODY_TYPE_OPTIONS } from "@/lib/dating/profileOptions";
 
 interface GenderPreference {
   gender: string;
@@ -33,11 +35,13 @@ export default function DatingPreferencesForm() {
     preferredHasKids: "" as "" | "yes" | "no" | "any",
     preferredSmokes: "",
     preferredDrinks: "",
+    preferredBodyType: "",
     preferredActivity: [] as string[],
     preferredEducation: [] as string[],
     preferredPoliticalViews: [] as string[],
     preferredDiet: [] as string[],
     preferredRelationshipType: [] as string[],
+    preferredPets: [] as string[],
     preferredInstruments: [] as string[],
     preferredSkills: [] as string[],
     matchMusicTastes: false,
@@ -117,11 +121,13 @@ export default function DatingPreferencesForm() {
         preferredHasKids: (response as any).preferredHasKids || "",
         preferredSmokes: (response as any).preferredSmokes || "",
         preferredDrinks: (response as any).preferredDrinks || "",
+        preferredBodyType: (response as any).preferredBodyType || "",
         preferredActivity: Array.isArray((response as any).preferredActivity) ? (response as any).preferredActivity : ((response as any).preferredActivity ? [(response as any).preferredActivity] : []),
         preferredEducation: (response as any).preferredEducation || [],
         preferredPoliticalViews: (response as any).preferredPoliticalViews || [],
         preferredDiet: (response as any).preferredDiet || [],
         preferredRelationshipType: (response as any).preferredRelationshipType || [],
+        preferredPets: (response as any).preferredPets || [],
         preferredInstruments: (response as any).preferredInstruments || [],
         preferredSkills: (response as any).preferredSkills || [],
         matchMusicTastes: (response as any).matchMusicTastes ?? false,
@@ -197,17 +203,23 @@ export default function DatingPreferencesForm() {
           preferredMaxAge: formData.anyAge ? 130 : formData.preferredMaxAge,
           preferredMinHeight: formData.anyHeight ? 36 : formData.preferredMinHeight,
           preferredMaxHeight: formData.anyHeight ? 94 : formData.preferredMaxHeight,
-          preferredMaxDistanceKm: formData.anyDistance ? 10000 : Math.round(formData.preferredMaxDistance / 0.621371),
-          preferredCoronavirusVaccinated: formData.preferredCoronavirusVaccinated,
+          // API expects km in `preferredMaxDistance` (stored as preferredMaxDistanceKm in DB)
+          preferredMaxDistance: formData.anyDistance ? 10000 : Math.round(formData.preferredMaxDistance / 0.621371),
+          // Send `null` to CLEAR a previous value when user selects "No preference"
+          preferredCoronavirusVaccinated: formData.preferredCoronavirusVaccinated
+            ? formData.preferredCoronavirusVaccinated
+            : null,
           preferredReligions: formData.preferredReligions,
-          preferredHasKids: formData.preferredHasKids || undefined,
-          preferredSmokes: formData.preferredSmokes || undefined,
-          preferredDrinks: formData.preferredDrinks || undefined,
+          preferredBodyType: formData.preferredBodyType ? formData.preferredBodyType : null,
+          preferredHasKids: formData.preferredHasKids ? formData.preferredHasKids : null,
+          preferredSmokes: formData.preferredSmokes ? formData.preferredSmokes : null,
+          preferredDrinks: formData.preferredDrinks ? formData.preferredDrinks : null,
           preferredActivity: formData.preferredActivity,
           preferredEducation: formData.preferredEducation,
           preferredPoliticalViews: formData.preferredPoliticalViews,
           preferredDiet: formData.preferredDiet,
           preferredRelationshipType: formData.preferredRelationshipType,
+          preferredPets: formData.preferredPets,
           preferredInstruments: formData.preferredInstruments,
           preferredSkills: formData.preferredSkills,
           matchMusicTastes: formData.matchMusicTastes,
@@ -565,6 +577,52 @@ export default function DatingPreferencesForm() {
         />
       </div>
 
+      {/* Body Type */}
+      <div>
+        <DropdownSelector
+          value={formData.preferredBodyType}
+          onChange={(value) => setFormData({ ...formData, preferredBodyType: value })}
+          options={[{ label: "No preference", value: "" }, ...BODY_TYPE_OPTIONS]}
+          label="Body Type"
+          placeholder="No preference"
+        />
+      </div>
+
+      {/* Pets */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-900 mb-2">
+          Pets (Select all that apply)
+        </label>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {PETS_OPTIONS.map((opt) => (
+            <label
+              key={opt.value}
+              className="flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+            >
+              <input
+                type="checkbox"
+                className="w-5 h-5 rounded border-2 border-gray-300 bg-white checked:bg-purple-500 checked:border-purple-500"
+                checked={formData.preferredPets.includes(opt.value)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setFormData({
+                      ...formData,
+                      preferredPets: [...formData.preferredPets, opt.value],
+                    });
+                  } else {
+                    setFormData({
+                      ...formData,
+                      preferredPets: formData.preferredPets.filter((p) => p !== opt.value),
+                    });
+                  }
+                }}
+              />
+              <span className="text-sm font-medium text-gray-900">{opt.label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
       {/* Relationship Type */}
       <div>
         <label className="block text-sm font-semibold text-gray-900 mb-2">
@@ -811,7 +869,6 @@ export default function DatingPreferencesForm() {
           ))}
         </div>
       </div>
-
 
       {/* Music Compatibility Filters - COMMENTED OUT */}
       {false && (

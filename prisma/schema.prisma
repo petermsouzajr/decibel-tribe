@@ -4,8 +4,6 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  url       = env("POSTGRES_PRISMA_URL")
-  directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 model User {
@@ -450,6 +448,7 @@ model UserDatingProfile {
   sexualOrientation     String?
   coronavirusVaccinated String?
   religion              String?
+  bodyType              String? // See BODY_TYPE_OPTIONS values
   bio                   String?
   hasKids               Boolean?
   wantsKids             String? // "yes" | "no" | "maybe" | "not_sure" - future kids preference
@@ -461,7 +460,7 @@ model UserDatingProfile {
   politicalViews        String? // "liberal" | "moderate" | "conservative" | "apolitical" | "other"
   diet                  String? // "omnivore" | "vegetarian" | "vegan" | "pescatarian" | "kosher" | "halal" | "other"
   relationshipType      String? // "monogamous" | "ethical_non_monogamous" | "open_to_both"
-  pets                  String?   @db.VarChar(150)
+  pets                  String[]  @default([]) // Multi-select
   interests             String[] // Array of interests like "Gamer", "Foodie", etc.
   createdAt             DateTime? @default(now()) @db.Timestamp(6)
   updatedAt             DateTime? @default(now()) @updatedAt @db.Timestamp(6)
@@ -510,6 +509,7 @@ model UserDatingPreferences {
   preferredReligions             String[]
   preferredGender                String?
   preferredSexualOrientation     String?
+  preferredBodyType              String?
   preferredInstruments           String[] // Music filter: preferred instruments
   preferredSkills                String[] // Music filter: preferred skills
   matchMusicTastes               Boolean  @default(true) // User preference: prioritize instrument and skill match
@@ -522,6 +522,7 @@ model UserDatingPreferences {
   preferredPoliticalViews        String[] // Array of political views
   preferredDiet                  String[] // Array of diet preferences
   preferredRelationshipType      String[] // Array of relationship types
+  preferredPets                  String[] @default([]) // Pets preference (multi-select)
   // Mix It Up controls
   variabilityLevel               Int      @default(0) // 0-100% variability slider
   variabilityFilters             String[] // Array of filter names to include in variability (e.g., ["gender", "age", "distance", "height", "hasKids", "wantsKids", "smokes", "drinks", "vaccination", "relationshipType", "activity", "diet", "politicalViews", "education", "religion"])

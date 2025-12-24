@@ -4,7 +4,7 @@
     "target": "ES2022",
     "noEmit": false,
     "outDir": "./dist",
-    "rootDir": "prisma",
+    "rootDir": ".",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "skipLibCheck": true,
@@ -16,6 +16,6 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": false
   },
-  "include": ["prisma/**/*.ts"],
-  "exclude": ["node_modules", "src", "cypress", "tests", "dist", "**/*.spec.ts"]
+  "include": ["prisma/**/*.ts", "src/lib/dating/profileOptions.ts"],
+  "exclude": ["node_modules", "cypress", "tests", "dist", "**/*.spec.ts"]
 }

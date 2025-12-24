@@ -50,4 +50,11 @@ const nextConfig = {
   },
 };
 
-export default MillionLint.next()(nextConfig); // Keep MillionLint wrapper
+// Million Lint currently breaks runtime in this app (React 19 / Next 15),
+// producing errors like "ReactCurrentOwner" and "[Million Lint] No open ports found".
+// Keep it available, but only enable it explicitly (or in production if you choose).
+const enableMillion =
+  process.env.MILLION_LINT === "1" ||
+  process.env.NEXT_PUBLIC_MILLION_LINT === "1";
+
+export default enableMillion ? MillionLint.next(nextConfig) : nextConfig;

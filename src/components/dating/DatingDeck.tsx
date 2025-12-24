@@ -3,27 +3,14 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import kyInstance from "@/lib/ky";
-import { Check, X, Heart, Loader2, MessageCircle, Filter, MapPin, Settings, History, RotateCcw, Music } from "lucide-react";
+import { Check, X, Heart, Loader2, MessageCircle, RotateCcw, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import Image from "next/image";
 import PotentialMatchCard from "./PotentialMatchCard";
 import MatchCelebration from "./MatchCelebration";
 import DatingFiltersPanel from "./DatingFiltersPanel";
-import SafetyTips from "./SafetyTips";
-import { Shield } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import LocationDialogContent from "./LocationDialogContent";
+import DatingHeader from "./DatingHeader";
 
 interface MatchProfile {
   id: string;
@@ -42,7 +29,7 @@ interface MatchProfile {
   activity: string | null;
   education: string | null;
   job: string | null;
-  pets: string | null;
+  pets: string[];
   interests: string[];
   photos: Array<{ url: string; isPrimary: boolean }>;
   primaryPhotoUrl: string | null;
@@ -71,7 +58,6 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
   const [showMessageInput, setShowMessageInput] = useState(false);
   const [likeMessage, setLikeMessage] = useState("");
   const [showBasicFilters, setShowBasicFilters] = useState(false);
-  const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [filters, setFilters] = useState<{
     preferredInstruments: string[];
     preferredSkills: string[];
@@ -81,7 +67,6 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
   });
   const [recentSwipes, setRecentSwipes] = useState<Array<{ id: string; toUserId: string; direction: string; createdAt: Date; canUnlike: boolean }>>([]);
   const [undoing, setUndoing] = useState(false);
-  const [showSafetyTips, setShowSafetyTips] = useState(false);
   const [prefetching, setPrefetching] = useState(false);
   const [userPreferences, setUserPreferences] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -583,133 +568,15 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
             </div>
           )}
 
-          <div className="flex items-center justify-between mb-4 mt-2">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Dating Tribe
-            </h1>
-            
-            <div className="flex items-center gap-2">
-              {/* Basic Filters Button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowBasicFilters(true)}
-                className="flex items-center gap-2 bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
-              >
-                <Filter className="w-4 h-4" />
-                Filters
-              </Button>
-
-              {/* Location Button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowLocationDialog(true)}
-                className="flex items-center gap-2 bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
-              >
-                <MapPin className="w-4 h-4" />
-                Location
-              </Button>
-            
-              {/* Settings Dropdown Menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-10 w-10 rounded-full flex-shrink-0 bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
-                  >
-                    <Settings className="w-5 h-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={() => router.push("/dating/likes-you")}>
-                    <Heart className="mr-2 h-4 w-4" />
-                    Likes You
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push("/dating/matches")}>
-                    <MessageCircle className="mr-2 h-4 w-4" />
-                    Matches
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => router.push("/dating/profile")}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Edit Profile
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => router.push("/dating/history")}>
-                    <History className="mr-2 h-4 w-4" />
-                    History
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setShowSafetyTips(true)}>
-                    <Shield className="mr-2 h-4 w-4" />
-                    Safety Tips
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-          
-          {/* Safety Tips Dialog */}
-          <Dialog open={showSafetyTips} onOpenChange={setShowSafetyTips}>
-            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-gray-950 border-gray-800">
-              <div className="space-y-6 mt-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <Shield className="w-5 h-5 text-purple-400" />
-                  <h2 className="text-xl font-semibold text-white">Dating Safety Tips</h2>
-                </div>
-                <p className="text-sm text-gray-300 mb-4">
-                  Your safety is our priority. Follow these guidelines to stay safe while dating.
-                </p>
-                
-                {/* Meeting in Person */}
-                <div className="border-l-4 border-purple-500 pl-4">
-                  <h3 className="font-semibold text-white mb-2 flex items-center gap-2">
-                    <Heart className="w-5 h-5 text-purple-400" />
-                    Meeting in Person
-                  </h3>
-                  <ul className="space-y-2 text-sm text-gray-200">
-                    <li>• Meet in a public place for your first few dates</li>
-                    <li>• Tell a friend or family member where you&apos;re going and who you&apos;re meeting</li>
-                    <li>• Keep your phone charged and with you</li>
-                    <li>• Trust your instincts - if something feels off, leave</li>
-                    <li>• Don&apos;t share your home address until you&apos;re comfortable</li>
-                  </ul>
-                </div>
-
-                {/* Online Safety */}
-                <div className="border-l-4 border-blue-500 pl-4">
-                  <h3 className="font-semibold text-white mb-2 flex items-center gap-2">
-                    <MessageCircle className="w-5 h-5 text-blue-400" />
-                    Online Safety
-                  </h3>
-                  <ul className="space-y-2 text-sm text-gray-200">
-                    <li>• Never share financial information or send money</li>
-                    <li>• Be cautious of users who ask for personal information too quickly</li>
-                    <li>• Report suspicious behavior or fake profiles immediately</li>
-                    <li>• Use the block feature if someone makes you uncomfortable</li>
-                    <li>• Keep conversations on the platform until you&apos;re comfortable</li>
-                  </ul>
-                </div>
-
-                {/* Red Flags */}
-                <div className="border-l-4 border-red-500 pl-4">
-                  <h3 className="font-semibold text-white mb-2 flex items-center gap-2">
-                    <X className="w-5 h-5 text-red-400" />
-                    Red Flags to Watch For
-                  </h3>
-                  <ul className="space-y-2 text-sm text-gray-200">
-                    <li>• Asking for money or financial help</li>
-                    <li>• Pressuring you to meet in private or isolated locations</li>
-                    <li>• Refusing to video chat or meet in person</li>
-                    <li>• Inconsistent stories or information</li>
-                    <li>• Aggressive or threatening language</li>
-                    <li>• Asking for explicit photos or content</li>
-                  </ul>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <DatingHeader
+            title="Dating Tribe"
+            showFiltersButton
+            onOpenFilters={() => setShowBasicFilters(true)}
+            onLocationUpdated={() => {
+              fetchMatches();
+            }}
+          />
+          {/* Safety tips are available from the header menu */}
 
           {currentMatch ? (
             <PotentialMatchCard
@@ -901,17 +768,6 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
         }}
         asModal={true}
       />
-      <Dialog open={showLocationDialog} onOpenChange={setShowLocationDialog}>
-        <DialogContent className="max-w-md bg-gray-950 border-gray-800">
-          <LocationDialogContent
-            onClose={() => setShowLocationDialog(false)}
-            onUpdate={() => {
-              // Refetch matches when location changes
-              fetchMatches();
-            }}
-          />
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

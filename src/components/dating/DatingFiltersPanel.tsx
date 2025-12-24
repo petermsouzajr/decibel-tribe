@@ -9,6 +9,7 @@ import HeightSelector from "./HeightSelector";
 import DropdownSelector from "./DropdownSelector";
 import instrumentList from "@/data/instrumentList.json";
 import skillsList from "@/data/skillsList.json";
+import { BODY_TYPE_OPTIONS, PETS_OPTIONS } from "@/lib/dating/profileOptions";
 
 interface GenderPreference {
   gender: string;
@@ -44,11 +45,13 @@ export default function DatingFiltersPanel({
     preferredWantsKids: "" as "" | "yes" | "no" | "maybe" | "any",
     preferredSmokes: "",
     preferredDrinks: "",
+    preferredBodyType: "",
     preferredActivity: [] as string[],
     preferredEducation: [] as string[],
     preferredPoliticalViews: [] as string[],
     preferredDiet: [] as string[],
     preferredRelationshipType: [] as string[],
+    preferredPets: [] as string[],
     preferredInstruments: [] as string[],
     preferredSkills: [] as string[],
     matchMusicTastes: true,
@@ -83,6 +86,7 @@ export default function DatingFiltersPanel({
           preferredMaxDistanceKm: number;
           preferredCoronavirusVaccinated: string;
           preferredReligions: string[];
+          preferredBodyType?: string | null;
           preferredHasKids?: string;
           preferredWantsKids?: string;
           preferredSmokes?: string;
@@ -92,6 +96,7 @@ export default function DatingFiltersPanel({
           preferredPoliticalViews?: string[];
           preferredDiet?: string[];
           preferredRelationshipType?: string[];
+          preferredPets?: string[];
           preferredInstruments?: string[];
           preferredSkills?: string[];
           matchMusicTastes?: boolean;
@@ -143,6 +148,7 @@ export default function DatingFiltersPanel({
         preferredMaxDistance: Math.round(maxDistanceKm * 0.621371), // Convert km to miles
         preferredCoronavirusVaccinated: response.preferredCoronavirusVaccinated || "",
         preferredReligions: response.preferredReligions || [],
+        preferredBodyType: (response as any).preferredBodyType || "",
         preferredHasKids: (response.preferredHasKids as "" | "yes" | "no" | "any") || "",
         preferredWantsKids: (response.preferredWantsKids as "" | "yes" | "no" | "maybe" | "any") || "",
         preferredSmokes: response.preferredSmokes || "",
@@ -152,6 +158,7 @@ export default function DatingFiltersPanel({
         preferredPoliticalViews: response.preferredPoliticalViews || [],
         preferredDiet: response.preferredDiet || [],
         preferredRelationshipType: response.preferredRelationshipType || [],
+        preferredPets: response.preferredPets || [],
         preferredInstruments: response.preferredInstruments || [],
         preferredSkills: response.preferredSkills || [],
         matchMusicTastes: response.matchMusicTastes ?? true,
@@ -215,18 +222,26 @@ export default function DatingFiltersPanel({
           preferredMaxAge: formData.anyAge ? 130 : formData.preferredMaxAge,
           preferredMinHeight: formData.anyHeight ? 36 : formData.preferredMinHeight,
           preferredMaxHeight: formData.anyHeight ? 94 : formData.preferredMaxHeight,
-          preferredMaxDistanceKm: formData.anyDistance ? 10000 : Math.round(formData.preferredMaxDistance / 0.621371), // Convert miles to km
-          preferredCoronavirusVaccinated: formData.preferredCoronavirusVaccinated || undefined,
+          // API expects km in `preferredMaxDistance` (stored as preferredMaxDistanceKm in DB)
+          preferredMaxDistance: formData.anyDistance
+            ? 10000
+            : Math.round(formData.preferredMaxDistance / 0.621371), // Convert miles to km
+          // Send `null` to CLEAR a previous value when user selects "No preference"
+          preferredCoronavirusVaccinated: formData.preferredCoronavirusVaccinated
+            ? formData.preferredCoronavirusVaccinated
+            : null,
           preferredReligions: formData.preferredReligions,
-          preferredHasKids: formData.preferredHasKids || undefined,
-          preferredWantsKids: formData.preferredWantsKids || undefined,
-          preferredSmokes: formData.preferredSmokes || undefined,
-          preferredDrinks: formData.preferredDrinks || undefined,
+          preferredBodyType: formData.preferredBodyType ? formData.preferredBodyType : null,
+          preferredHasKids: formData.preferredHasKids ? formData.preferredHasKids : null,
+          preferredWantsKids: formData.preferredWantsKids ? formData.preferredWantsKids : null,
+          preferredSmokes: formData.preferredSmokes ? formData.preferredSmokes : null,
+          preferredDrinks: formData.preferredDrinks ? formData.preferredDrinks : null,
           preferredActivity: formData.preferredActivity,
           preferredEducation: formData.preferredEducation,
           preferredPoliticalViews: formData.preferredPoliticalViews,
           preferredDiet: formData.preferredDiet,
           preferredRelationshipType: formData.preferredRelationshipType,
+          preferredPets: formData.preferredPets,
           preferredInstruments: formData.preferredInstruments,
           preferredSkills: formData.preferredSkills,
           matchMusicTastes: formData.matchMusicTastes,
@@ -559,6 +574,62 @@ export default function DatingFiltersPanel({
               />
             </div>
 
+            {/* Body Type */}
+            <div>
+              <label className="block text-sm font-semibold text-white mb-2">
+                Body Type
+              </label>
+              <DropdownSelector
+                value={formData.preferredBodyType}
+                onChange={(value) => setFormData({ ...formData, preferredBodyType: value })}
+                options={[{ label: "No preference", value: "" }, ...BODY_TYPE_OPTIONS]}
+                label=""
+                placeholder="No preference"
+                className="bg-gray-900 border-gray-700 text-white"
+              />
+            </div>
+
+            {/* Pets */}
+            <div>
+              <label className="block text-sm font-semibold text-white mb-2">
+                Pets
+              </label>
+              <div className="max-h-40 overflow-y-auto border border-gray-700 rounded-lg p-3 bg-gray-900/50">
+                <div className="grid grid-cols-2 gap-2">
+                  {PETS_OPTIONS.map((opt) => (
+                    <label
+                      key={opt.value}
+                      className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-gray-800 transition-colors ${
+                        formData.preferredPets.includes(opt.value)
+                          ? "bg-purple-900/50 border border-purple-500"
+                          : "border border-gray-700"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.preferredPets.includes(opt.value)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFormData({
+                              ...formData,
+                              preferredPets: [...formData.preferredPets, opt.value],
+                            });
+                          } else {
+                            setFormData({
+                              ...formData,
+                              preferredPets: formData.preferredPets.filter((p) => p !== opt.value),
+                            });
+                          }
+                        }}
+                        className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-purple-500 focus:ring-purple-500"
+                      />
+                      <span className="text-sm text-gray-100">{opt.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             {/* Relationship Type */}
             <div>
               <label className="block text-sm font-semibold text-white mb-2">
@@ -804,6 +875,7 @@ export default function DatingFiltersPanel({
                 </div>
               </div>
             </div>
+
             </div>
             {/* End of Non-Negotiable Filters Box */}
 
@@ -812,14 +884,14 @@ export default function DatingFiltersPanel({
               <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-4">
                 <h3 className="text-lg font-semibold text-white mb-2">Mix It Up!</h3>
                 <p className="text-sm text-gray-300 mb-4">
-Select which filters you would like to expand on, and how much.
+Select which filters you would like to flex, and how much.
 <br /> Add some surprise and find someone that isn&apos;t on your radar!                </p>
                 
                 {/* Variability Level Slider */}
                 <div className="mb-6">
                   <div className="flex items-center justify-start mb-3">
                     <label className="block text-sm font-semibold text-white">
-                       Expand My Preferences By
+                       Flex Preferences By
                     </label>
                     <span className="text-lg font-bold text-purple-400 ml-8">
                       {formData.variabilityLevel}%
@@ -852,7 +924,7 @@ Select which filters you would like to expand on, and how much.
                 {/* Apply Variability To Checkboxes */}
                 <div>
                   <label className="block text-sm font-semibold text-white mb-3">
-                    Choose preferences to expand on:
+                    Choose which preferences to flex:
                   </label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {[
@@ -871,6 +943,8 @@ Select which filters you would like to expand on, and how much.
                       { key: "politicalViews", label: "Political Views" },
                       { key: "education", label: "Education Level" },
                       { key: "religion", label: "Religion" },
+                      { key: "pets", label: "Pets" },
+                      { key: "bodyType", label: "Body Type" },
                     ].map((filter) => (
                       <label
                         key={filter.key}
@@ -1022,6 +1096,7 @@ Select which filters you would like to expand on, and how much.
                     preferredMaxDistance: 50,
                     preferredCoronavirusVaccinated: "",
                     preferredReligions: [],
+                    preferredBodyType: "",
                     preferredHasKids: "",
                     preferredWantsKids: "",
                     preferredSmokes: "",
@@ -1031,6 +1106,7 @@ Select which filters you would like to expand on, and how much.
                     preferredPoliticalViews: [],
                     preferredDiet: [],
                     preferredRelationshipType: [],
+                    preferredPets: [],
                     preferredInstruments: [],
                     preferredSkills: [],
                     matchMusicTastes: true,

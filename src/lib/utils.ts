@@ -1,10 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { formatDate, formatDistanceToNowStrict } from "date-fns";
 import { twMerge } from "tailwind-merge";
-import prisma from "@/lib/prisma";
-import { getEventDataInclude } from "@/lib/types";
-import { notFound } from "next/navigation";
-import { cache } from "react";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -31,17 +27,3 @@ export function slugify(input: string): string {
     .replace(/ /g, "-")
     .replace(/[^a-z0-9-]/g, "");
 }
-
-export const getEvent = cache(
-  async (eventId: string, loggedInUserId: string) => {
-    const event = await prisma.event.findUnique({
-      where: {
-        id: eventId,
-      },
-      include: getEventDataInclude(loggedInUserId),
-    });
-
-    if (!event) notFound();
-    return event;
-  },
-);

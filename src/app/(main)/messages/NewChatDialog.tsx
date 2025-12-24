@@ -14,7 +14,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Check, Loader2, SearchIcon, X } from "lucide-react";
 import { useState } from "react";
 import { UserResponse } from "stream-chat";
-import { DefaultStreamChatGenerics, useChatContext } from "stream-chat-react";
+import { useChatContext } from "stream-chat-react";
 import { useSession } from "../SessionProvider";
 
 interface NewChatDialogProps {
@@ -36,7 +36,7 @@ export default function NewChatDialog({
   const searchInputDebounced = useDebounce(searchInput);
 
   const [selectedUsers, setSelectedUsers] = useState<
-    UserResponse<DefaultStreamChatGenerics>[]
+    UserResponse[]
   >([]);
 
   const { data, isFetching, isError, isSuccess } = useQuery({
@@ -167,7 +167,7 @@ export default function NewChatDialog({
 }
 
 interface UserResultProps {
-  user: UserResponse<DefaultStreamChatGenerics>;
+  user: UserResponse;
   selected: boolean;
   onClick: () => void;
 }
@@ -179,7 +179,9 @@ function UserResult({ user, selected, onClick }: UserResultProps) {
       onClick={onClick}
     >
       <div className="flex items-center gap-2">
-        <UserAvatar avatarUrl={user.image} />
+        <UserAvatar
+          avatarUrl={typeof (user as any).image === "string" ? ((user as any).image as string) : undefined}
+        />
         <div className="flex flex-col text-start">
           <p className="font-bold">{user.name}</p>
           <p className="text-muted-foreground">@{user.username}</p>
@@ -196,7 +198,7 @@ function UserResult({ user, selected, onClick }: UserResultProps) {
 }
 
 interface SelectedUserTagProps {
-  user: UserResponse<DefaultStreamChatGenerics>;
+  user: UserResponse;
   onRemove: () => void;
 }
 
@@ -206,7 +208,10 @@ function SelectedUserTag({ user, onRemove }: SelectedUserTagProps) {
       onClick={onRemove}
       className="flex items-center gap-2 rounded-full border p-1 hover:bg-muted/50"
     >
-      <UserAvatar avatarUrl={user.image} size={24} />
+      <UserAvatar
+        avatarUrl={typeof (user as any).image === "string" ? ((user as any).image as string) : undefined}
+        size={24}
+      />
       <p className="font-bold">{user.name}</p>
       <X className="mx-2 size-5 text-muted-foreground" />
     </button>

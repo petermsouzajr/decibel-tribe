@@ -10,6 +10,7 @@ import {
   normalizeRelationshipTypeArrayToUI,
   normalizeValueArrayToUI,
 } from "@/lib/dating/valueNormalization";
+import { normalizeBodyTypeValue, normalizePetsArray } from "@/lib/dating/profileOptions";
 
 // Geocode zip code to lat/lon/city using OpenStreetMap Nominatim API
 async function geocodeZipCode(zipCode: string): Promise<{ lat: number; lon: number; city?: string } | null> {
@@ -121,6 +122,7 @@ export async function POST(request: NextRequest) {
       zipCode,
       coronavirusVaccinated,
       religion,
+      bodyType,
       sexualOrientation,
       hasKids,
       smokes,
@@ -137,8 +139,10 @@ export async function POST(request: NextRequest) {
       preferredMinHeight,
       preferredMaxHeight,
       preferredMaxDistance,
+      preferredMaxDistanceKm,
       preferredCoronavirusVaccinated,
       preferredReligions,
+      preferredBodyType,
       preferredInstruments,
       preferredSkills,
       matchMusicTastes,
@@ -151,9 +155,48 @@ export async function POST(request: NextRequest) {
       preferredPoliticalViews,
       preferredDiet,
       preferredRelationshipType,
+      preferredPets,
       variabilityLevel,
       variabilityFilters,
     } = await request.json();
+
+    const normalizedPets = pets === undefined ? undefined : normalizePetsArray(pets);
+    const normalizedBodyType =
+      bodyType === undefined ? undefined : normalizeBodyTypeValue(bodyType);
+
+    // Accept either `preferredMaxDistance` (km) or legacy `preferredMaxDistanceKm`
+    const maxDistanceKm: number | undefined =
+      typeof preferredMaxDistance === "number"
+        ? preferredMaxDistance
+        : typeof preferredMaxDistanceKm === "number"
+          ? preferredMaxDistanceKm
+          : undefined;
+
+    const normalizeYesNo = (value: unknown): string | null | undefined => {
+      if (value === undefined) return undefined;
+      if (value === null) return null;
+      if (typeof value !== "string") return null;
+      const v = value.trim().toLowerCase();
+      if (!v) return null;
+      if (v === "yes" || v === "y" || v === "true") return "yes";
+      if (v === "no" || v === "n" || v === "false") return "no";
+      return v;
+    };
+
+    const normalizeHasKidsPref = (value: unknown): string | null | undefined => {
+      if (value === undefined) return undefined;
+      if (value === null) return null;
+      if (typeof value !== "string") return null;
+      const v = value.trim().toLowerCase();
+      if (!v) return null;
+      if (v === "any") return "any";
+      if (v === "yes") return "yes";
+      if (v === "no") return "no";
+      // handle legacy values
+      if (v === "y" || v === "true") return "yes";
+      if (v === "n" || v === "false") return "no";
+      return v;
+    };
 
     // Geocode zipCode if provided (only called once when user updates their zip code)
     let city: string | null = null;
@@ -178,6 +221,7 @@ export async function POST(request: NextRequest) {
       zipCode !== undefined ||
       coronavirusVaccinated !== undefined ||
       religion !== undefined ||
+      bodyType !== undefined ||
       sexualOrientation !== undefined ||
       hasKids !== undefined ||
       smokes !== undefined ||
@@ -208,6 +252,9 @@ export async function POST(request: NextRequest) {
             coronavirusVaccinated,
           }),
           ...(religion !== undefined && { religion }),
+          ...(bodyType !== undefined && {
+            bodyType: normalizedBodyType ? normalizedBodyType : null,
+          }),
           ...(sexualOrientation !== undefined && { sexualOrientation }),
           ...(hasKids !== undefined && { hasKids }),
           ...(smokes !== undefined && { smokes }),
@@ -215,7 +262,7 @@ export async function POST(request: NextRequest) {
           ...(activity !== undefined && { activity }),
           ...(education !== undefined && { education }),
           ...(job !== undefined && { job }),
-          ...(pets !== undefined && { pets }),
+          ...(pets !== undefined && { pets: normalizedPets }),
           ...(interests !== undefined && { interests }),
           updatedAt: new Date(),
         },
@@ -232,6 +279,7 @@ export async function POST(request: NextRequest) {
           longitude: longitude,
           coronavirusVaccinated: coronavirusVaccinated || null,
           religion: religion || null,
+          bodyType: normalizedBodyType ? normalizedBodyType : null,
           sexualOrientation: sexualOrientation || null,
           hasKids: hasKids ?? null,
           smokes: smokes || null,
@@ -239,7 +287,7 @@ export async function POST(request: NextRequest) {
           activity: activity || null,
           education: education || null,
           job: job || null,
-          pets: pets || null,
+          pets: normalizedPets ?? [],
           interests: interests || [],
           updatedAt: new Date(),
         },
@@ -260,17 +308,23 @@ export async function POST(request: NextRequest) {
         ...(preferredMaxAge !== undefined && { preferredMaxAge }),
         ...(preferredMinHeight !== undefined && { preferredMinHeight }),
         ...(preferredMaxHeight !== undefined && { preferredMaxHeight }),
-        ...(preferredMaxDistance !== undefined && {
-          preferredMaxDistanceKm: preferredMaxDistance,
+        ...(maxDistanceKm !== undefined && {
+          preferredMaxDistanceKm: maxDistanceKm,
         }),
         ...(preferredCoronavirusVaccinated !== undefined && {
-          preferredCoronavirusVaccinated,
+          preferredCoronavirusVaccinated: normalizeYesNo(preferredCoronavirusVaccinated),
         }),
         ...(preferredReligions !== undefined && { preferredReligions }),
+        ...(preferredBodyType !== undefined && {
+          preferredBodyType:
+            typeof preferredBodyType === "string" && preferredBodyType.trim().length > 0
+              ? preferredBodyType
+              : null,
+        }),
         ...(preferredInstruments !== undefined && { preferredInstruments }),
         ...(preferredSkills !== undefined && { preferredSkills }),
         ...(matchMusicTastes !== undefined && { matchMusicTastes }),
-        ...(preferredHasKids !== undefined && { preferredHasKids }),
+        ...(preferredHasKids !== undefined && { preferredHasKids: normalizeHasKidsPref(preferredHasKids) }),
         ...(preferredWantsKids !== undefined && { preferredWantsKids }),
         ...(preferredSmokes !== undefined && { preferredSmokes }),
         ...(preferredDrinks !== undefined && { preferredDrinks }),
@@ -299,6 +353,9 @@ export async function POST(request: NextRequest) {
             ? normalizeRelationshipTypeArrayToDB(preferredRelationshipType) 
             : [] 
         }),
+        ...(preferredPets !== undefined && {
+          preferredPets: Array.isArray(preferredPets) ? preferredPets : [],
+        }),
         ...(variabilityLevel !== undefined && { variabilityLevel }),
         ...(variabilityFilters !== undefined && { variabilityFilters }),
         updatedAt: new Date(),
@@ -312,13 +369,17 @@ export async function POST(request: NextRequest) {
         preferredMaxAge: preferredMaxAge || 130,
           preferredMinHeight: preferredMinHeight ? Math.round(preferredMinHeight) : null,
           preferredMaxHeight: preferredMaxHeight ? Math.round(preferredMaxHeight) : null,
-        preferredMaxDistanceKm: preferredMaxDistance || 50,
-        preferredCoronavirusVaccinated: preferredCoronavirusVaccinated || null,
+        preferredMaxDistanceKm: maxDistanceKm || 50,
+        preferredCoronavirusVaccinated: normalizeYesNo(preferredCoronavirusVaccinated) || null,
         preferredReligions: preferredReligions || [],
+        preferredBodyType:
+          typeof preferredBodyType === "string" && preferredBodyType.trim().length > 0
+            ? preferredBodyType
+            : null,
         preferredInstruments: preferredInstruments || [],
         preferredSkills: preferredSkills || [],
         matchMusicTastes: matchMusicTastes !== undefined ? matchMusicTastes : true,
-        preferredHasKids: preferredHasKids || null,
+        preferredHasKids: normalizeHasKidsPref(preferredHasKids) || null,
         preferredWantsKids: preferredWantsKids || null,
         preferredSmokes: preferredSmokes || null,
         preferredDrinks: preferredDrinks || null,
@@ -337,6 +398,7 @@ export async function POST(request: NextRequest) {
         preferredRelationshipType: Array.isArray(preferredRelationshipType) 
           ? normalizeRelationshipTypeArrayToDB(preferredRelationshipType) 
           : [],
+        preferredPets: Array.isArray(preferredPets) ? preferredPets : [],
         variabilityLevel: variabilityLevel !== undefined ? variabilityLevel : 0,
         variabilityFilters: variabilityFilters || [],
         updatedAt: new Date(),

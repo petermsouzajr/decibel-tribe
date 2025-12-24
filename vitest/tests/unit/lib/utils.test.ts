@@ -5,13 +5,13 @@ import {
   formatNumber,
   cn /* ... other utils ... */,
   slugify,
-  getEvent,
 } from "@/lib/utils";
 import { formatDate, formatDistanceToNowStrict } from "date-fns";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { getEventDataInclude, EventData, UserData } from "@/lib/types";
+import { getEvent } from "@/lib/server/getEvent";
 
 // Mock date-fns functions
 vi.mock("date-fns", async (importOriginal) => {

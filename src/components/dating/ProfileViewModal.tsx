@@ -14,6 +14,7 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
+import { getJobLabel, getPetsLabels } from "@/lib/dating/profileOptions";
 
 interface MatchProfile {
   id: string;
@@ -32,7 +33,7 @@ interface MatchProfile {
   activity: string | null;
   education: string | null;
   job: string | null;
-  pets: string | null;
+  pets: string[];
   interests: string[];
   photos: Array<{ url: string; isPrimary: boolean }>;
   primaryPhotoUrl: string | null;
@@ -161,6 +162,8 @@ export default function ProfileViewModal({
   const matchingPreferences = getMatchingPreferences();
   const displayPhoto = profile?.primaryPhotoUrl || profile?.photos[0]?.url || "/assets/avatar-placeholder.png";
   const otherPhotos = profile?.photos.filter(p => !p.isPrimary && p.url !== displayPhoto) || [];
+  const jobLabel = getJobLabel(profile?.job) ?? profile?.job;
+  const petsLabels = getPetsLabels(profile?.pets);
 
   if (loading) {
     return (
@@ -357,16 +360,25 @@ export default function ProfileViewModal({
                 </div>
               </div>
             )}
-            {profile.job && (
+            {jobLabel && (
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-md font-semibold text-gray-700 min-w-[80px]">Job:</span>
-                <span className="text-md text-gray-900">{profile.job}</span>
+                <span className="text-md text-gray-900">{jobLabel}</span>
               </div>
             )}
-            {profile.pets && (
+            {petsLabels.length > 0 && (
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-md font-semibold text-gray-700 min-w-[80px]">Pets:</span>
-                <span className="text-md text-gray-900">{profile.pets}</span>
+                <div className="flex flex-wrap gap-2">
+                  {petsLabels.map((p) => (
+                    <span
+                      key={p}
+                      className="px-2 py-1 bg-purple-100 text-purple-700 text-md rounded-full"
+                    >
+                      {p}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
 

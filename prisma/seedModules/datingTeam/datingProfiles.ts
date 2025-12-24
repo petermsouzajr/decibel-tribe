@@ -6,6 +6,11 @@ import {
   streamChatClient,
   cypressEnv,
 } from "../../seedUtils.js";
+import {
+  JOB_OPTIONS as JOB_OPTIONS_UI,
+  PETS_OPTIONS as PETS_OPTIONS_UI,
+  BODY_TYPE_OPTIONS as BODY_TYPE_OPTIONS_UI,
+} from "../../../src/lib/dating/profileOptions.js";
 
 // Interface for the data returned by this module
 export interface CreatedDatingUser {
@@ -150,6 +155,10 @@ const MAX_AGE = 130;
 const SMOKES_OPTIONS = ["Yes", "No", "Social"];
 const DRINKS_OPTIONS = ["Yes", "No", "Social"];
 const ACTIVITY_OPTIONS = ["Active", "Sporting", "Super active", "Couch potato", "Hiker", "Moderate", "Very active", "Gym enthusiast", "Yoga lover", "Outdoor adventurer", "Weekend warrior"];
+// Use canonical app options (single source of truth)
+const JOB_OPTION_VALUES = JOB_OPTIONS_UI.map((o: { value: string }) => o.value).filter(Boolean);
+const PETS_OPTION_VALUES = PETS_OPTIONS_UI.map((o: { value: string }) => o.value).filter(Boolean);
+const BODY_TYPE_OPTION_VALUES = BODY_TYPE_OPTIONS_UI.map((o: { value: string }) => o.value).filter(Boolean);
 const INTERESTS_OPTIONS = [
   "Gamer", "Foodie", "Traveler", "Photographer", "Musician", "Artist", "Writer",
   "Fitness enthusiast", "Yoga", "Reading", "Movies", "Cooking", "Dancing", "Hiking",
@@ -629,6 +638,7 @@ export async function seedDatingProfiles(
       gender: config.gender,
       sexualOrientation: config.sexualOrientation,
       religion: "Atheist",
+      bodyType: null,
       coronavirusVaccinated: "Yes",
       zipCode: locationZip, // Store zip code
       city: locationCity, // Store city name (geocoded)
@@ -653,12 +663,14 @@ export async function seedDatingProfiles(
       preferredSexualOrientation: config.preferredSexualOrientation,
       preferredCoronavirusVaccinated: null,
       preferredReligions: [],
+      preferredBodyType: null,
       preferredHasKids: null,
       preferredWantsKids: null,
       preferredEducation: [],
       preferredPoliticalViews: [],
       preferredDiet: [],
       preferredRelationshipType: [],
+      preferredPets: [],
       preferredInstruments: [],
       preferredSkills: [],
       matchMusicTastes: false,
@@ -859,12 +871,15 @@ export async function seedDatingProfiles(
         relationshipType: faker.datatype.boolean({ probability: profileCompleteness * 0.5 })
           ? faker.helpers.arrayElement(RELATIONSHIP_TYPES)
           : null,
+        bodyType: faker.datatype.boolean({ probability: profileCompleteness * 0.5 })
+          ? faker.helpers.arrayElement(BODY_TYPE_OPTION_VALUES)
+          : null,
         job: faker.datatype.boolean({ probability: profileCompleteness * 0.75 })
-          ? faker.person.jobTitle()
+          ? faker.helpers.arrayElement(JOB_OPTION_VALUES)
           : null,
         pets: faker.datatype.boolean({ probability: profileCompleteness * 0.6 })
-          ? faker.helpers.arrayElement(["Dog", "Cat", "Bird", "Fish", "Rabbit", "Hamster", "Snake", "Lizard", "None"])
-          : null,
+          ? faker.helpers.arrayElements(PETS_OPTION_VALUES, { min: 1, max: 2 })
+          : [],
         interests: faker.datatype.boolean({ probability: profileCompleteness * 0.85 })
           ? faker.helpers.arrayElements(INTERESTS_OPTIONS, { min: 1, max: Math.min(8, Math.floor(profileCompleteness * 10)) })
           : [],
@@ -910,10 +925,13 @@ export async function seedDatingProfiles(
           min: 0,
           max: 3,
         }),
+        preferredBodyType: faker.datatype.boolean({ probability: 0.4 })
+          ? faker.helpers.arrayElement(BODY_TYPE_OPTION_VALUES)
+          : null,
         preferredHasKids: faker.helpers.arrayElement([
-          hasKids !== null ? (hasKids ? "Yes" : "No") : null,
+          hasKids !== null ? (hasKids ? "yes" : "no") : null,
           null,
-          faker.helpers.arrayElement(["Yes", "No", ""]),
+          faker.helpers.arrayElement(["yes", "no", "any", ""]),
         ]),
         preferredWantsKids: faker.datatype.boolean({ probability: 0.6 })
           ? faker.helpers.arrayElement(["yes", "no", "maybe", "any"])
@@ -956,6 +974,8 @@ export async function seedDatingProfiles(
               "politicalViews",
               "education",
               "religion",
+              "bodyType",
+              "pets",
             ], { min: 1, max: 5 })
           : [],
       };
@@ -1086,11 +1106,14 @@ export async function seedDatingProfiles(
           ? faker.helpers.arrayElement(RELATIONSHIP_TYPES)
           : null,
         job: faker.datatype.boolean({ probability: profileCompleteness * 0.75 })
-          ? faker.person.jobTitle()
+          ? faker.helpers.arrayElement(JOB_OPTION_VALUES)
+          : null,
+        bodyType: faker.datatype.boolean({ probability: profileCompleteness * 0.5 })
+          ? faker.helpers.arrayElement(BODY_TYPE_OPTION_VALUES)
           : null,
         pets: faker.datatype.boolean({ probability: profileCompleteness * 0.6 })
-          ? faker.helpers.arrayElement(["Dog", "Cat", "Bird", "Fish", "Rabbit", "Hamster", "Snake", "Lizard", "None"])
-          : null,
+          ? faker.helpers.arrayElements(PETS_OPTION_VALUES, { min: 1, max: 2 })
+          : [],
         interests: faker.datatype.boolean({ probability: profileCompleteness * 0.85 })
           ? faker.helpers.arrayElements(INTERESTS_OPTIONS, { min: 1, max: Math.min(8, Math.floor(profileCompleteness * 10)) })
           : [],
@@ -1136,6 +1159,9 @@ export async function seedDatingProfiles(
           min: 0,
           max: 3,
         }),
+        preferredBodyType: faker.datatype.boolean({ probability: 0.4 })
+          ? faker.helpers.arrayElement(BODY_TYPE_OPTION_VALUES)
+          : null,
         preferredHasKids: faker.helpers.arrayElement([
           hasKids !== null ? (hasKids ? "Yes" : "No") : null,
           null,
@@ -1182,6 +1208,8 @@ export async function seedDatingProfiles(
               "politicalViews",
               "education",
               "religion",
+              "bodyType",
+              "pets",
             ], { min: 1, max: 5 })
           : [],
     };

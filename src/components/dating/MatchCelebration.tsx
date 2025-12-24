@@ -23,7 +23,7 @@ interface MatchProfile {
   activity?: string | null;
   education?: string | null;
   job?: string | null;
-  pets?: string | null;
+  pets?: string[];
   interests?: string[];
 }
 

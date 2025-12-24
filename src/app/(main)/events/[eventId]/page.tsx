@@ -1,6 +1,6 @@
 import { validateRequest } from "@/auth";
 import EventPageContent from "@/components/events/eventPageContent";
-import { getEvent } from "@/lib/utils";
+import { getEvent } from "@/lib/server/getEvent";
 import { Metadata } from "next";
 
 interface PageProps {

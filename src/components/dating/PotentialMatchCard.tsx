@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import ReportModal from "@/components/reports/ReportModal";
 import BlockButton from "@/components/BlockButton";
 import { useBlockStatus } from "@/hooks/useBlockStatus";
+import { getJobLabel, getPetsLabels } from "@/lib/dating/profileOptions";
 
 interface MatchProfile {
   id: string;
@@ -26,7 +27,7 @@ interface MatchProfile {
   activity: string | null;
   education: string | null;
   job: string | null;
-  pets: string | null;
+  pets: string[];
   interests: string[];
   photos: Array<{ url: string; isPrimary: boolean }>;
   primaryPhotoUrl: string | null;
@@ -96,6 +97,8 @@ export default function PotentialMatchCard({
   };
 
   const matchingPreferences = getMatchingPreferences();
+  const jobLabel = getJobLabel(match.job) ?? match.job;
+  const petsLabels = getPetsLabels(match.pets);
 
   return (
     <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
@@ -246,16 +249,25 @@ export default function PotentialMatchCard({
             </div>
           </div>
         )}
-        {match.job && (
+        {jobLabel && (
           <div className="flex items-center gap-2 mb-2">
             <span className="text-md font-semibold text-gray-700 min-w-[80px]">Job:</span>
-            <span className="text-md text-gray-900">{match.job}</span>
+            <span className="text-md text-gray-900">{jobLabel}</span>
           </div>
         )}
-        {match.pets && (
+        {petsLabels.length > 0 && (
           <div className="flex items-center gap-2 mb-2">
             <span className="text-md font-semibold text-gray-700 min-w-[80px]">Pets:</span>
-            <span className="text-md text-gray-900">{match.pets}</span>
+            <div className="flex flex-wrap gap-2">
+              {petsLabels.map((p) => (
+                <span
+                  key={p}
+                  className="px-2 py-1 bg-purple-100 text-purple-700 text-md rounded-full"
+                >
+                  {p}
+                </span>
+              ))}
+            </div>
           </div>
         )}
 

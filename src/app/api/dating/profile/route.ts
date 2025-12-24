@@ -2,6 +2,7 @@ import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import { normalizeBodyTypeValue, normalizeJobValue, normalizePetsArray } from "@/lib/dating/profileOptions";
 
 // Geocode zip code to lat/lon/city using OpenStreetMap Nominatim API
 async function geocodeZipCode(zipCode: string): Promise<{ lat: number; lon: number; city?: string } | null> {
@@ -158,6 +159,7 @@ export async function PUT(request: NextRequest) {
       longitude: longitudeInput,
       coronavirusVaccinated,
       religion,
+      bodyType,
       sexualOrientation,
       hasKids,
       smokes,
@@ -168,6 +170,25 @@ export async function PUT(request: NextRequest) {
       pets,
       interests,
     } = await request.json();
+
+    const toNullIfBlank = (v: unknown): string | null | undefined => {
+      if (v === undefined) return undefined;
+      if (v === null) return null;
+      if (typeof v !== "string") return v as any;
+      const trimmed = v.trim();
+      return trimmed.length === 0 ? null : trimmed;
+    };
+
+    // Canonicalize values:
+    // - "Prefer not to say" / empty string should become NULL
+    // - job/pets should be stored as our fixed option values
+    const normalizedZip = toNullIfBlank(zipCode);
+    const normalizedJob =
+      job === undefined ? undefined : job === null ? null : normalizeJobValue(String(job));
+    const normalizedPets =
+      pets === undefined ? undefined : normalizePetsArray(pets);
+    const normalizedBodyType =
+      bodyType === undefined ? undefined : normalizeBodyTypeValue(bodyType);
 
     // Handle location updates
     let city: string | null = null;
@@ -181,11 +202,11 @@ export async function PUT(request: NextRequest) {
       longitude = typeof longitudeInput === 'number' ? longitudeInput : null;
     } 
     // Otherwise, geocode zipCode if provided (only called once when user updates their zip code)
-    else if (zipCode !== undefined && zipCode && zipCode.trim()) {
-      const geocoded = await geocodeZipCode(zipCode.trim());
+    else if (normalizedZip) {
+      const geocoded = await geocodeZipCode(normalizedZip);
       if (geocoded) {
         // Only set city if geocoding returned a valid city name (not zip code)
-        if (geocoded.city && geocoded.city.trim() && geocoded.city !== zipCode.trim()) {
+        if (geocoded.city && geocoded.city.trim() && geocoded.city !== normalizedZip) {
           city = geocoded.city.trim();
         }
         latitude = geocoded.lat;
@@ -193,7 +214,7 @@ export async function PUT(request: NextRequest) {
       } else {
         // If geocoding fails, log it but don't set city to zipCode
         if (process.env.NODE_ENV === "development") {
-          console.log(`[Profile Update] Geocoding failed for zip code: ${zipCode}`);
+          console.log(`[Profile Update] Geocoding failed for zip code: ${normalizedZip}`);
         }
       }
     }
@@ -229,23 +250,26 @@ export async function PUT(request: NextRequest) {
           ...(bio !== undefined && { bio }),
           ...(age !== undefined && { age }),
           ...(height !== undefined && { height: Math.round(height) }), // Round to integer
-          ...(gender !== undefined && { gender }),
-          ...(zipCode !== undefined && { zipCode }),
+          ...(gender !== undefined && { gender: toNullIfBlank(gender) }),
+          ...(zipCode !== undefined && { zipCode: normalizedZip }),
           ...(city !== null && { city }),
           ...(latitude !== null && { latitude }),
           ...(longitude !== null && { longitude }),
           ...(coronavirusVaccinated !== undefined && {
-            coronavirusVaccinated,
+            coronavirusVaccinated: toNullIfBlank(coronavirusVaccinated),
           }),
-          ...(religion !== undefined && { religion }),
-          ...(sexualOrientation !== undefined && { sexualOrientation }),
+          ...(religion !== undefined && { religion: toNullIfBlank(religion) }),
+          ...(bodyType !== undefined && {
+            bodyType: normalizedBodyType ? normalizedBodyType : null,
+          }),
+          ...(sexualOrientation !== undefined && { sexualOrientation: toNullIfBlank(sexualOrientation) }),
           ...(hasKids !== undefined && { hasKids }),
-          ...(smokes !== undefined && { smokes }),
-          ...(drinks !== undefined && { drinks }),
-          ...(activity !== undefined && { activity }),
-          ...(education !== undefined && { education }),
-          ...(job !== undefined && { job }),
-          ...(pets !== undefined && { pets }),
+          ...(smokes !== undefined && { smokes: toNullIfBlank(smokes) }),
+          ...(drinks !== undefined && { drinks: toNullIfBlank(drinks) }),
+          ...(activity !== undefined && { activity: toNullIfBlank(activity) }),
+          ...(education !== undefined && { education: toNullIfBlank(education) }),
+          ...(job !== undefined && { job: normalizedJob }),
+          ...(pets !== undefined && { pets: normalizedPets }),
           ...(interests !== undefined && { interests }),
           updatedAt: new Date(),
         },
@@ -255,21 +279,22 @@ export async function PUT(request: NextRequest) {
           bio: bio || null,
           age: age || null,
           height: height ? Math.round(height) : null, // Round to integer
-          gender: gender || null,
-          zipCode: zipCode || null,
+          gender: toNullIfBlank(gender) || null,
+          zipCode: normalizedZip || null,
           city: city,
           latitude: latitude,
           longitude: longitude,
-          coronavirusVaccinated: coronavirusVaccinated || null,
-          religion: religion || null,
-          sexualOrientation: sexualOrientation || null,
+          coronavirusVaccinated: toNullIfBlank(coronavirusVaccinated) || null,
+          religion: toNullIfBlank(religion) || null,
+          bodyType: normalizedBodyType ? normalizedBodyType : null,
+          sexualOrientation: toNullIfBlank(sexualOrientation) || null,
           hasKids: hasKids ?? null,
-          smokes: smokes || null,
-          drinks: drinks || null,
-          activity: activity || null,
-          education: education || null,
-          job: job || null,
-          pets: pets || null,
+          smokes: toNullIfBlank(smokes) || null,
+          drinks: toNullIfBlank(drinks) || null,
+          activity: toNullIfBlank(activity) || null,
+          education: toNullIfBlank(education) || null,
+          job: normalizedJob || null,
+          pets: normalizedPets ?? [],
           interests: interests || [],
           createdAt: new Date(),
           updatedAt: new Date(),

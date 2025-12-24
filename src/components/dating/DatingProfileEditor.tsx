@@ -8,11 +8,12 @@ import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import PhotoManager from "./PhotoManager";
 import DatingFiltersPanel from "./DatingFiltersPanel";
-import BackToDatingButton from "./BackToDatingButton";
+import DatingHeader from "./DatingHeader";
 import datingInterests from "@/data/datingInterests.json";
 import HeightSelector from "./HeightSelector";
 import DropdownSelector from "./DropdownSelector";
 import AgeSelector from "./AgeSelector";
+import { BODY_TYPE_OPTIONS, JOB_OPTIONS, PETS_OPTIONS, normalizeBodyTypeValue, normalizeJobValue, normalizePetsArray } from "@/lib/dating/profileOptions";
 
 export default function DatingProfileEditor() {
   const router = useRouter();
@@ -29,6 +30,7 @@ export default function DatingProfileEditor() {
     zipCode: "",
     coronavirusVaccinated: "",
     religion: "",
+    bodyType: "",
     sexualOrientation: "",
     hasKids: null as boolean | null,
     smokes: "",
@@ -36,7 +38,7 @@ export default function DatingProfileEditor() {
     activity: "",
     education: "",
     job: "",
-    pets: "",
+    pets: [] as string[],
     interests: [] as string[],
   });
 
@@ -63,14 +65,15 @@ export default function DatingProfileEditor() {
           zipCode: response.profile.zipCode || "",
           coronavirusVaccinated: response.profile.coronavirusVaccinated || "",
           religion: response.profile.religion || "",
+          bodyType: normalizeBodyTypeValue(response.profile.bodyType),
           sexualOrientation: response.profile.sexualOrientation || "",
           hasKids: response.profile.hasKids ?? null,
           smokes: response.profile.smokes || "",
           drinks: response.profile.drinks || "",
           activity: response.profile.activity || "",
           education: response.profile.education || "",
-          job: response.profile.job || "",
-          pets: response.profile.pets || "",
+          job: normalizeJobValue(response.profile.job),
+          pets: normalizePetsArray(response.profile.pets),
           interests: response.profile.interests || [],
         });
       }
@@ -117,9 +120,8 @@ export default function DatingProfileEditor() {
   return (
     <div className="w-full min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
       <div className="w-full px-2 sm:px-4 lg:max-w-4xl lg:mx-auto">
-        <BackToDatingButton />
+        <DatingHeader title="Edit Profile" />
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Edit Dating Profile</h1>
           <p className="text-gray-600">Manage your dating profile, photos, and preferences</p>
         </div>
 
@@ -336,31 +338,64 @@ export default function DatingProfileEditor() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2">
-                    Job
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full h-11 px-3 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="e.g., Software Engineer, Teacher"
-                    maxLength={100}
+                  <DropdownSelector
                     value={formData.job}
-                    onChange={(e) => setFormData({ ...formData, job: e.target.value })}
+                    onChange={(value) => setFormData({ ...formData, job: value })}
+                    options={JOB_OPTIONS}
+                    label="Job"
+                    placeholder="Select job category"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2">
-                    Pets
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full h-11 px-3 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="e.g., 2 dogs, 1 cat"
-                    maxLength={150}
-                    value={formData.pets}
-                    onChange={(e) => setFormData({ ...formData, pets: e.target.value })}
+                  <DropdownSelector
+                    value={formData.bodyType}
+                    onChange={(value) => setFormData({ ...formData, bodyType: value })}
+                    options={[{ label: "Select body type (optional)", value: "" }, ...BODY_TYPE_OPTIONS]}
+                    label="Body Type"
+                    placeholder="Select body type (optional)"
                   />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-900 mb-3">
+                    Pets (Select all that apply)
+                  </label>
+                  <div className="border rounded-lg p-4 bg-white">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {PETS_OPTIONS.map((opt) => (
+                        <label
+                          key={opt.value}
+                          className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={formData.pets.includes(opt.value)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData({
+                                  ...formData,
+                                  pets: [...formData.pets, opt.value],
+                                });
+                              } else {
+                                setFormData({
+                                  ...formData,
+                                  pets: formData.pets.filter((p) => p !== opt.value),
+                                });
+                              }
+                            }}
+                            className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                          />
+                          <span className="text-sm text-gray-700">{opt.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  {formData.pets.length > 0 && (
+                    <p className="text-xs text-gray-500 mt-2">
+                      {formData.pets.length} pet option{formData.pets.length !== 1 ? "s" : ""} selected
+                    </p>
+                  )}
                 </div>
                 </div>
 
