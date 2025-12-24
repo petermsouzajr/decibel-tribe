@@ -401,6 +401,22 @@ export async function seedDatingProfiles(
   const swipesToCreate: Array<{ fromUserId: string; toUserId: string; direction: string }> = [];
   const matchesToCreate: Array<{ user1Id: string; user2Id: string }> = [];
 
+  /**
+   * Guardrail to prevent blank user identity data getting into the DB.
+   * (Blank usernames/display names can render as empty rows in "Who to follow".)
+   */
+  const sanitizeUserIdentity = (
+    usernameRaw: string,
+    displayNameRaw: string,
+    fallbackNumber: number,
+  ) => {
+    const username = (usernameRaw || "").trim();
+    const displayName = (displayNameRaw || "").trim();
+    const safeUsername = username.length > 0 ? username : `dating_user_${fallbackNumber}`;
+    const safeDisplayName = displayName.length > 0 ? displayName : safeUsername;
+    return { username: safeUsername, displayName: safeDisplayName };
+  };
+
   let userIndex = 0;
 
   // Create specific test users with predefined relationships for easy testing
@@ -577,7 +593,8 @@ export async function seedDatingProfiles(
   // Create all test users
   for (const { username, config } of allTestUsers) {
     const userId = generateIdFromEntropySize(10);
-    const email = `${username}${testDomain}`;
+    const identity = sanitizeUserIdentity(username, config.displayName, userIndex + 1);
+    const email = `${identity.username}${testDomain}`;
     const heightInches = 66; // 5'6" average
     const locationZip = config.location.zip || "90001"; // Default to LA zip
     const locationCity = config.location.city || "Los Angeles"; // Default to LA
@@ -587,9 +604,9 @@ export async function seedDatingProfiles(
     // Create user
     const userData: Prisma.UserCreateInput = {
       id: userId,
-      username,
+      username: identity.username,
       email,
-      displayName: config.displayName,
+      displayName: identity.displayName,
       passwordHash: hashedPassword,
       isVerified: true,
       isDatingActive: true,
@@ -747,8 +764,13 @@ export async function seedDatingProfiles(
 
     for (let j = 0; j < usersForThisCity; j++) {
       const userId = generateIdFromEntropySize(10);
-      const username = `dating_user_${userIndex + 1}`;
-      const email = `dating_user_${userIndex + 1}${testDomain}`;
+      const identity = sanitizeUserIdentity(
+        `dating_user_${userIndex + 1}`,
+        faker.person.fullName(),
+        userIndex + 1,
+      );
+      const username = identity.username;
+      const email = `${identity.username}${testDomain}`;
       userIndex++;
 
       // Generate user data
@@ -771,7 +793,7 @@ export async function seedDatingProfiles(
         id: userId,
         username,
         email,
-        displayName: faker.person.fullName(),
+        displayName: identity.displayName,
         passwordHash: hashedPassword,
         isVerified: true,
         isDatingActive: true,
@@ -968,8 +990,13 @@ export async function seedDatingProfiles(
   for (let i = 0; i < RANDOM_USERS_COUNT; i++) {
     const userId = generateIdFromEntropySize(10);
     const city = faker.helpers.arrayElement(RANDOM_MAINLAND_CITIES);
-    const username = `dating_user_${userIndex + 1}`;
-    const email = `dating_user_${userIndex + 1}${testDomain}`;
+    const identity = sanitizeUserIdentity(
+      `dating_user_${userIndex + 1}`,
+      faker.person.fullName(),
+      userIndex + 1,
+    );
+    const username = identity.username;
+    const email = `${identity.username}${testDomain}`;
     userIndex++;
 
     // Generate user data
@@ -992,7 +1019,7 @@ export async function seedDatingProfiles(
       id: userId,
       username,
       email,
-      displayName: faker.person.fullName(),
+      displayName: identity.displayName,
       passwordHash: hashedPassword,
       isVerified: true,
       isDatingActive: true, // Enable dating feature
@@ -1432,7 +1459,7 @@ export async function seedDatingProfiles(
       // Create match notifications for all created matches
       if (createdMatches.length > 0) {
         console.log(`Creating ${createdMatches.length * 2} match notifications...`);
-        const notificationsToCreate = [];
+        const notificationsToCreate: Prisma.NotificationCreateManyInput[] = [];
         for (const match of createdMatches) {
           // Create notification for user1
           notificationsToCreate.push({

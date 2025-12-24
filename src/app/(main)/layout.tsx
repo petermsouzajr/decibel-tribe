@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import MenuBar from "./MenuBar";
 import Navbar from "./Navbar";
 import SessionProvider from "./SessionProvider";
+import SessionCookieSync from "@/components/SessionCookieSync";
 
 export default async function Layout({
   children,
@@ -15,6 +16,7 @@ export default async function Layout({
 
   return (
     <SessionProvider value={session}>
+      <SessionCookieSync />
       <div className="flex min-h-screen flex-col">
         <Navbar />
         <div className="mx-auto flex w-full grow gap-5 sm:p-5">

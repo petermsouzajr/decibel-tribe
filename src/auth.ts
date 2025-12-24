@@ -70,52 +70,67 @@ export const validateRequest = cache(
       result = await lucia.validateSession(sessionId);
     } catch (error) {
       console.error("Error validating session:", error);
-      // Clear potentially invalid cookie
-      const sessionCookie = lucia.createBlankSessionCookie();
-      try {
-        (await cookies()).set(
-          sessionCookie.name,
-          sessionCookie.value,
-          sessionCookie.attributes,
-        );
-      } catch (cookieError) {
-        console.error(
-          "Error setting blank cookie after validation error:",
-          cookieError,
-        );
-      }
+      // IMPORTANT (Next.js App Router):
+      // Server Components (layouts/sidebars) cannot mutate cookies.
+      // Cookie clearing/refresh must happen in a Route Handler or Server Action.
       return {
         user: null,
         session: null,
       };
     }
 
-    // Separate try-catch for cookie setting logic (as before)
-    try {
-      if (result.session && result.session.fresh) {
-        const sessionCookie = lucia.createSessionCookie(result.session.id);
-        (await cookies()).set(
-          sessionCookie.name,
-          sessionCookie.value,
-          sessionCookie.attributes,
-        );
-      }
-      if (!result.session) {
-        const sessionCookie = lucia.createBlankSessionCookie();
-        (await cookies()).set(
-          sessionCookie.name,
-          sessionCookie.value,
-          sessionCookie.attributes,
-        );
-      }
-    } catch (error) {
-      console.error("Error setting session cookie in validateRequest:", error);
-      return {
-        user: null,
-        session: null,
-      };
-    }
+    // No cookie mutation here by design.
+    // Use `validateRequestWithCookieMutation()` from Route Handlers / Server Actions
+    // (or call the /api/auth/session endpoint) to refresh/clear cookies.
 
     return result;
   },
 );
+
+/**
+ * Variant for Route Handlers / Server Actions where cookie mutation is allowed.
+ * Use this if you need to refresh/clear the session cookie without dev overlay errors.
+ */
+export async function validateRequestWithCookieMutation(): Promise<
+  { user: User; session: Session } | { user: null; session: null }
+> {
+  const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
+
+  if (!sessionId) {
+    return { user: null, session: null };
+  }
+
+  try {
+    const result = await lucia.validateSession(sessionId);
+
+    if (result.session && result.session.fresh) {
+      const sessionCookie = lucia.createSessionCookie(result.session.id);
+      (await cookies()).set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+    }
+
+    if (!result.session) {
+      const sessionCookie = lucia.createBlankSessionCookie();
+      (await cookies()).set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+    }
+
+    return result;
+  } catch (error) {
+    console.error("Error validating session:", error);
+    // Clear potentially invalid cookie
+    const sessionCookie = lucia.createBlankSessionCookie();
+    (await cookies()).set(
+      sessionCookie.name,
+      sessionCookie.value,
+      sessionCookie.attributes,
+    );
+    return { user: null, session: null };
+  }
+}

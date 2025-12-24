@@ -8,7 +8,6 @@ import Link from "next/link";
 import { Suspense } from "react";
 import FollowButton from "./FollowButton";
 import UserAvatar from "./UserAvatar";
-import UserTooltip from "./UserTooltip";
 
 export default function TrendsSidebar() {
   return (
@@ -26,6 +25,9 @@ async function WhoToFollow() {
 
   if (!loggedInUser) return null;
 
+  // Fetch a few extra and then defensively filter in JS. This prevents rendering
+  // "blank" rows if any user object is missing expected fields due to bad data
+  // or unexpected serialization issues.
   const usersToFollowResult = await prisma.user.findMany({
     where: {
       NOT: {
@@ -39,21 +41,21 @@ async function WhoToFollow() {
       deletedAt: null, // Filter out deleted users
     },
     select: getUserDataSelect(loggedInUser.id),
-    take: 5,
+    take: 25,
   });
 
-  const usersToFollow = usersToFollowResult as unknown as UserWithFollowerStatus[];
+  const usersToFollow = (usersToFollowResult as unknown as UserWithFollowerStatus[])
+    .filter((u) => !!u?.id && !!u?.username?.trim() && !!u?.displayName?.trim())
+    .slice(0, 5);
 
   return (
     <div className="space-y-5 rounded-2xl bg-card p-5 shadow-sm">
       <div className="text-xl font-bold">Who to follow</div>
       {usersToFollow.map((user) => (
         <div key={user.id} className="flex items-center justify-between gap-3">
-          <UserTooltip user={user}>
-            <Link
-              href={`/users/${user.username}`}
-              className="flex items-center gap-3"
-            >
+          {/* Stable “tooltip”: CSS-only hover card (server-rendered, no hydration risk). */}
+          <div className="group relative flex items-center gap-3">
+            <Link href={`/users/${user.username}`} className="flex items-center gap-3">
               <UserAvatar avatarUrl={user.avatarUrl} className="flex-none" />
               <div>
                 <p className="line-clamp-1 break-all font-semibold hover:underline">
@@ -64,7 +66,26 @@ async function WhoToFollow() {
                 </p>
               </div>
             </Link>
-          </UserTooltip>
+
+            {/* Hover card */}
+            <div className="pointer-events-none absolute left-0 top-full z-50 hidden w-72 translate-y-2 rounded-md border bg-popover p-3 text-popover-foreground shadow-md group-hover:block">
+              <div className="flex items-start gap-3">
+                <UserAvatar avatarUrl={user.avatarUrl} size={48} className="flex-none" />
+                <div className="min-w-0">
+                  <div className="truncate font-semibold">{user.displayName}</div>
+                  <div className="truncate text-sm text-muted-foreground">@{user.username}</div>
+                </div>
+              </div>
+              {user.bio ? (
+                <p className="mt-2 line-clamp-3 whitespace-pre-line text-sm text-muted-foreground">
+                  {user.bio}
+                </p>
+              ) : null}
+              <p className="mt-2 text-xs text-muted-foreground">
+                Followers: {user._count.followers}
+              </p>
+            </div>
+          </div>
           <FollowButton
             userId={user.id}
             initialState={{

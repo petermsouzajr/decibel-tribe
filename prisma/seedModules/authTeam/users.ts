@@ -72,8 +72,9 @@ export async function seedUsers(
   const usernamesToCreate: string[] = []; // Keep track of usernames we attempt to create
 
   for (const key of userTypeKeys) {
-    const username = cypressEnv[key as keyof typeof cypressEnv]; // Get username directly
-    if (!username) continue; // Skip if username is somehow missing
+    const usernameRaw = cypressEnv[key as keyof typeof cypressEnv]; // Get username directly
+    const username = (usernameRaw || "").trim();
+    if (!username) continue; // Skip if username is somehow missing/blank
     usernamesToCreate.push(username);
 
     const userId = generateIdFromEntropySize(10);
@@ -103,7 +104,7 @@ export async function seedUsers(
       id: userId,
       username,
       email,
-      displayName: username,
+      displayName: username, // Ensure displayName is never blank
       passwordHash: userPasswordHash,
       isVerified,
       avatarUrl,
