@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#050B1A"/>
+      <stop offset="1" stop-color="#4c1d95"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)"/>
+  <rect x="70" y="70" width="1060" height="660" rx="28" fill="#ffffff" opacity="0.08"/>
+  <text x="120" y="210" font-family="ui-sans-serif, system-ui, -apple-system" font-size="64" font-weight="900" fill="#ffffff">
+    Ready to Join the Tribe?
+  </text>
+  <text x="120" y="285" font-family="ui-sans-serif, system-ui, -apple-system" font-size="28" fill="#e5e7eb">
+    Create your profile and start connecting today.
+  </text>
+  <rect x="120" y="360" width="420" height="74" rx="20" fill="#ec4899"/>
+  <text x="155" y="410" font-family="ui-sans-serif, system-ui, -apple-system" font-size="28" font-weight="800" fill="#ffffff">
+    Get started
+  </text>
+  <text x="120" y="520" font-family="ui-sans-serif, system-ui, -apple-system" font-size="24" fill="#e5e7eb" opacity="0.95">
+    (Replace this slide with your best wow screenshot + CTA)
+  </text>
+</svg>
+

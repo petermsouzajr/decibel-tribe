@@ -38,7 +38,8 @@ export const BODY_TYPE_OPTIONS: SelectOption[] = [
   { label: "Average", value: "average" },
   { label: "Curvy", value: "curvy" },
   { label: "Dad bod", value: "dad_bod" },
-  { label: "Mom bod", value: "mom_bod" },  { label: "Muscular", value: "muscular" },
+  { label: "Mom bod", value: "mom_bod" },
+  { label: "Muscular", value: "muscular" },
   { label: "Plus-size", value: "plus_size" },
   { label: "Other", value: "other" },
 ];

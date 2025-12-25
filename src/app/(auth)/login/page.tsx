@@ -2,6 +2,7 @@ import loginImage from "@/assets/login-image.jpg";
 import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import WhatsInsideTour from "@/components/home/WhatsInsideTour";
 import GoogleSignInButton from "./google/GoogleSignInButton";
 import LoginForm from "./LoginForm";
 
@@ -22,6 +23,9 @@ export default function Page() {
             Login with Google or Username/Email
           </h1>
           <div className="space-y-5">
+            <div className="flex justify-center">
+              <WhatsInsideTour buttonLabel="what&apos;s inside?" />
+            </div>
             <GoogleSignInButton />
             <div className="flex items-center gap-3">
               <div className="h-px flex-1 bg-muted" />
