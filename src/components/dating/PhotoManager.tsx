@@ -7,6 +7,7 @@ import { Loader2, X, Star, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface DatingPhoto {
   id: string;
@@ -16,7 +17,6 @@ interface DatingPhoto {
 }
 
 const MAX_PHOTOS = 5;
-const MIN_PHOTOS = 1;
 
 export default function PhotoManager() {
   const { toast } = useToast();
@@ -24,14 +24,23 @@ export default function PhotoManager() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [settingPrimary, setSettingPrimary] = useState<string | null>(null);
+  const [showReverifyModal, setShowReverifyModal] = useState(false);
 
   const { startUpload, isUploading } = useUploadThing("datingPhoto", {
     onClientUploadComplete: async (res) => {
       if (res && res[0]?.serverData) {
+        const serverData = res[0].serverData as {
+          reactivated?: boolean;
+          needsReverification?: boolean;
+        };
         await fetchPhotos();
         toast({
           description: "Photo uploaded successfully",
         });
+
+        if (serverData?.reactivated && serverData?.needsReverification) {
+          setShowReverifyModal(true);
+        }
       }
     },
     onUploadError: (error) => {
@@ -114,26 +123,45 @@ export default function PhotoManager() {
   };
 
   const handleDelete = async (photoId: string) => {
-    if (photos.length <= MIN_PHOTOS) {
-      toast({
-        variant: "destructive",
-        description: `Minimum ${MIN_PHOTOS} photo required for dating`,
-      });
-      return;
-    }
+    const isLastPhoto = photos.length === 1;
+    const ok = confirm(
+      isLastPhoto
+        ? "Are you sure you want to delete your last dating photo?\n\nIf you delete your last photo:\n- You won't show up in the Dating deck anymore\n- You won't be able to match or be visible to anyone\n- Your dating identity verification will be removed\n\nYou can re-enable dating by uploading a new photo and re-verifying."
+        : "Are you sure you want to delete this photo?",
+    );
 
-    if (!confirm("Are you sure you want to delete this photo?")) {
+    if (!ok) {
       return;
     }
 
     try {
       setDeleting(photoId);
-      await kyInstance.delete(`/api/dating/photos?photoId=${photoId}`);
+      const res = await kyInstance
+        .delete(`/api/dating/photos?photoId=${photoId}`)
+        .json<{
+          success: boolean;
+          remainingPhotos?: number;
+          datingDeactivated?: boolean;
+          verificationCleared?: boolean;
+        }>();
 
       await fetchPhotos();
       toast({
         description: "Photo deleted",
       });
+
+      if (res?.datingDeactivated) {
+        toast({
+          variant: "destructive",
+          description:
+            "Dating has been turned off because you have no photos. Upload a photo to rejoin the Dating deck.",
+        });
+      } else if (res?.verificationCleared) {
+        toast({
+          description:
+            "Your dating identity verification was removed because none of your remaining photos are from your last verification.",
+        });
+      }
     } catch (error: any) {
       console.error("Error deleting photo:", error);
       const errorData = await error.response?.json().catch(() => ({}));
@@ -156,16 +184,29 @@ export default function PhotoManager() {
 
   return (
     <div className="space-y-4">
+      <Dialog open={showReverifyModal} onOpenChange={setShowReverifyModal}>
+        <DialogContent className="max-w-md">
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-gray-900">
+              You're back — one more step
+            </h3>
+            <p className="text-sm text-gray-600">
+              Add your photo to get back in the deck — verify to appear in matches!
+            </p>
+            <div className="pt-2">
+              <Button onClick={() => setShowReverifyModal(false)} className="w-full">
+                Got it
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Dating Photos</h3>
           <p className="text-sm text-gray-600">
             {photos.length}/{MAX_PHOTOS} photos
-            {photos.length < MIN_PHOTOS && (
-              <span className="text-red-500 ml-2">
-                (Minimum {MIN_PHOTOS} required)
-              </span>
-            )}
           </p>
         </div>
         <Button
@@ -232,20 +273,18 @@ export default function PhotoManager() {
                     )}
                   </Button>
                 )}
-                {photos.length > MIN_PHOTOS && (
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => handleDelete(photo.id)}
-                    disabled={deleting === photo.id}
-                  >
-                    {deleting === photo.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="w-4 h-4" />
-                    )}
-                  </Button>
-                )}
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => handleDelete(photo.id)}
+                  disabled={deleting === photo.id}
+                >
+                  {deleting === photo.id ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
+                </Button>
               </div>
             </div>
           ))}

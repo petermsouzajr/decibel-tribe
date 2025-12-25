@@ -546,12 +546,13 @@ model UserDatingPreferences {
 }
 
 model UserDatingPhoto {
-  id        String   @id
+  id        String    @id
   userId    String
   url       String
-  isPrimary Boolean  @default(false)
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isPrimary Boolean   @default(false)
+  /// "Uploaded at" timestamp (historically used for uploads)
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([userId, isPrimary])

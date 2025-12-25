@@ -1,5 +1,7 @@
 // prisma/seedUtils.ts
 import { PrismaClient, GroupRole, NotificationType } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 import { faker } from "@faker-js/faker";
 import { StreamChat } from "stream-chat";
 import * as dotenv from "dotenv";
@@ -15,7 +17,15 @@ dotenv.config({ path: envPath });
 var cypressEnvPath = path.resolve(__dirname, "../cypress.env.json");
 console.log(`Attempting to load cypress.env.json from: ${cypressEnvPath}`);
 var cypressEnv = JSON.parse(fs.readFileSync(cypressEnvPath, "utf-8"));
-var prisma = new PrismaClient();
+var connectionString = process.env.POSTGRES_PRISMA_URL ?? process.env.POSTGRES_URL_NON_POOLING;
+if (!connectionString) {
+  throw new Error(
+    "Missing DB connection env. Set POSTGRES_PRISMA_URL (pooled) or POSTGRES_URL_NON_POOLING (direct)."
+  );
+}
+var pool = new Pool({ connectionString });
+var adapter = new PrismaPg(pool);
+var prisma = new PrismaClient({ adapter });
 var streamKey = process.env.NEXT_PUBLIC_STREAM_KEY;
 var streamSecret = process.env.STREAM_SECRET;
 var streamChatClientInstance = null;

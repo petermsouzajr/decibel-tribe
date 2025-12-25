@@ -1,159 +1,126 @@
 import {
-  cypressEnv,
-} from "./seedUtils.js"; // Add .js extension
+  cypressEnv
+} from "./chunk-TRJORDRN.js";
 
-// --- DB Deletion ---
-// Function now accepts prisma client as an argument
-export async function deleteTestUsers(prismaClient: any): Promise<string[]> {
+// prisma/seedDeletion.ts
+async function deleteTestUsers(prismaClient) {
   if (!prismaClient) {
     console.error("Prisma client is not available for deleteTestUsers.");
     return [];
   }
   console.log("Deleting testUsers and data from Database...");
-
-  // Get the unique test domain
   const testDomain = cypressEnv.testUserEmailDomain;
   if (!testDomain) {
     console.error(
-      "testUserEmailDomain not found in cypress.env.json. Cannot delete by domain.",
+      "testUserEmailDomain not found in cypress.env.json. Cannot delete by domain."
     );
     return [];
   }
-
-  let userIds: string[] = [];
+  let userIds = [];
   try {
-    // Find users whose email ends with the test domain
     const usersToDelete = await prismaClient.user.findMany({
       where: {
         email: {
-          endsWith: testDomain,
-        },
+          endsWith: testDomain
+        }
       },
       select: {
-        id: true,
-      },
+        id: true
+      }
     });
-
-    userIds = usersToDelete.map((user: { id: string }) => user.id);
-
+    userIds = usersToDelete.map((user) => user.id);
     if (userIds.length === 0) {
       console.log(
-        `...No matching test users found in DB with domain ${testDomain} to delete.`,
+        `...No matching test users found in DB with domain ${testDomain} to delete.`
       );
       return [];
     }
-
-    // Delete related data first using the passed prismaClient
-    // Get post IDs before deleting posts so we can delete associated media
     const postsToDelete = await prismaClient.post.findMany({
       where: { userId: { in: userIds } },
-      select: { id: true },
+      select: { id: true }
     });
-    const postIds = postsToDelete.map((p: { id: string }) => p.id);
-
+    const postIds = postsToDelete.map((p) => p.id);
     await prismaClient.event.deleteMany({
-      where: { createdById: { in: userIds } },
+      where: { createdById: { in: userIds } }
     });
-    
-    // Delete media associated with posts before deleting posts
-    // Note: This is redundant since cascade delete handles it, but ensures cleanup
     if (postIds.length > 0) {
       await prismaClient.media.deleteMany({
-        where: { postId: { in: postIds } },
+        where: { postId: { in: postIds } }
       });
     }
-    
     await prismaClient.post.deleteMany({
-      where: { userId: { in: userIds } },
+      where: { userId: { in: userIds } }
     });
-    
-    // Clean up orphaned media (media with postId: null) that are older than 1 hour
-    // This handles cases where media was uploaded but never attached to a post
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1e3);
     const orphanedMediaCount = await prismaClient.media.deleteMany({
       where: {
         postId: null,
         createdAt: {
-          lte: oneHourAgo,
-        },
-      },
+          lte: oneHourAgo
+        }
+      }
     });
     if (orphanedMediaCount.count > 0) {
       console.log(`...Deleted ${orphanedMediaCount.count} orphaned media records (postId: null).`);
     }
     await prismaClient.comment.deleteMany({
-      where: { userId: { in: userIds } },
+      where: { userId: { in: userIds } }
     });
     await prismaClient.like.deleteMany({ where: { userId: { in: userIds } } });
     await prismaClient.dislike.deleteMany({
-      where: { userId: { in: userIds } },
+      where: { userId: { in: userIds } }
     });
     await prismaClient.bookmark.deleteMany({
-      where: { userId: { in: userIds } },
+      where: { userId: { in: userIds } }
     });
     await prismaClient.groupMember.deleteMany({
-      where: { userId: { in: userIds } },
+      where: { userId: { in: userIds } }
     });
     await prismaClient.eventAttendee.deleteMany({
-      where: { userId: { in: userIds } },
+      where: { userId: { in: userIds } }
     });
     await prismaClient.notification.deleteMany({
       where: {
-        OR: [{ recipientId: { in: userIds } }, { issuerId: { in: userIds } }],
-      },
+        OR: [{ recipientId: { in: userIds } }, { issuerId: { in: userIds } }]
+      }
     });
     await prismaClient.follow.deleteMany({
       where: {
-        OR: [{ followerId: { in: userIds } }, { followingId: { in: userIds } }],
-      },
+        OR: [{ followerId: { in: userIds } }, { followingId: { in: userIds } }]
+      }
     });
-    // Delete reports where users are reporters, reported users, or admins who resolved
     await prismaClient.report.deleteMany({
       where: {
         OR: [
           { reporterId: { in: userIds } },
           { reportedId: { in: userIds } },
-          { resolvedBy: { in: userIds } },
-        ],
-      },
+          { resolvedBy: { in: userIds } }
+        ]
+      }
     });
-    // Delete the users themselves last
     await prismaClient.user.deleteMany({
       where: {
         id: {
-          in: userIds,
-        },
-      },
+          in: userIds
+        }
+      }
     });
-
     console.log(
-      `...${userIds.length} test users (domain: ${testDomain}) and related data deleted successfully from DB!`,
+      `...${userIds.length} test users (domain: ${testDomain}) and related data deleted successfully from DB!`
     );
   } catch (error) {
     console.error("Error deleting test users from DB by domain:", error);
   } finally {
-    // Disconnect is handled in the main script
   }
   return userIds;
 }
-
-// --- StreamChat Deletion ---
-// Function now accepts stream client as an argument
-export async function deleteTestUsersFromStreamChat(
-  streamClient: any,
-  testUserIds: string[],
-  testEmailDomain?: string,
-) {
-  // Use the passed streamClient
+async function deleteTestUsersFromStreamChat(streamClient, testUserIds, testEmailDomain) {
   if (!streamClient) {
     console.warn(
-      "Stream Chat client is not available. Skipping Stream Chat user deletion.",
+      "Stream Chat client is not available. Skipping Stream Chat user deletion."
     );
     return;
   }
-
-  // Remove local check for keys, assume streamClient is null if keys were missing in seedUtils
-
   console.log("Deleting testUsers from StreamChat...");
   const hasIds = Array.isArray(testUserIds) && testUserIds.length > 0;
   const hasDomain = typeof testEmailDomain === "string" && testEmailDomain.length > 0;
@@ -161,52 +128,39 @@ export async function deleteTestUsersFromStreamChat(
     console.log("...No test user IDs (or email domain) provided for StreamChat deletion.");
     return;
   }
-
   try {
-    let streamUsers: any = { users: [] };
-
+    let streamUsers = { users: [] };
     if (hasIds) {
       streamUsers = await streamClient.queryUsers({
-        id: { $in: testUserIds },
+        id: { $in: testUserIds }
       });
     } else {
-      // Fallback: DB might already be cleaned, but StreamChat can still contain orphaned test users.
-      // Query users in pages and filter client-side by email domain.
-      const matches: any[] = [];
+      const matches = [];
       const pageSize = 100;
       let offset = 0;
-      // StreamChat enforces offset <= 1000 for queryUsers pagination.
-      // If your app ever exceeds this, we should switch to a server-side filter strategy.
-      while (offset <= 1000) {
+      while (offset <= 1e3) {
         const page = await streamClient.queryUsers({}, { id: 1 }, { limit: pageSize, offset });
         const users = Array.isArray(page?.users) ? page.users : [];
         if (users.length === 0) break;
-
         for (const u of users) {
-          const email = (u as any)?.email;
-          if (typeof email === "string" && hasDomain && email.toLowerCase().endsWith(testEmailDomain!.toLowerCase())) {
+          const email = u?.email;
+          if (typeof email === "string" && hasDomain && email.toLowerCase().endsWith(testEmailDomain.toLowerCase())) {
             matches.push(u);
           }
         }
-
         offset += users.length;
         if (users.length < pageSize) break;
       }
-
       streamUsers = { users: matches };
     }
-
     if (streamUsers.users.length === 0) {
       console.log("...No matching test users found in StreamChat to delete.");
       return;
     }
-
     console.log(
-      `...Found ${streamUsers.users.length} test users in StreamChat to delete.`,
+      `...Found ${streamUsers.users.length} test users in StreamChat to delete.`
     );
-
-    // Delete test users from StreamChat using the passed streamClient
-    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     let deletedCount = 0;
     let failedCount = 0;
     for (const user of streamUsers.users) {
@@ -221,43 +175,60 @@ export async function deleteTestUsersFromStreamChat(
             console.log(`--- Deleted ${deletedCount}/${streamUsers.users.length} test users from StreamChat...`);
           }
           deleted = true;
-          // gentle pacing to avoid rate limits
           await sleep(200);
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
-          const isRateLimit =
-            message.includes("Too many requests") ||
-            message.includes("error code 9") ||
-            message.toLowerCase().includes("rate");
-
+          const isRateLimit = message.includes("Too many requests") || message.includes("error code 9") || message.toLowerCase().includes("rate");
           if (isRateLimit && attempt < 5) {
-            const backoffMs = Math.min(1000 * attempt * attempt, 10000);
+            const backoffMs = Math.min(1e3 * attempt * attempt, 1e4);
             console.warn(
-              `--- Rate-limited deleting ${user.id}. Backing off ${backoffMs}ms (attempt ${attempt}/5)`,
+              `--- Rate-limited deleting ${user.id}. Backing off ${backoffMs}ms (attempt ${attempt}/5)`
             );
             await sleep(backoffMs);
             continue;
           }
-
           failedCount++;
           console.error(`--- Failed to delete StreamChat user ${user.id}:`, message);
-          // short pause so we don't hammer on repeated failures
           await sleep(250);
           break;
         }
       }
     }
     console.log(
-      `...Finished deleting ${deletedCount} test users from StreamChat. Failed: ${failedCount}.`,
+      `...Finished deleting ${deletedCount} test users from StreamChat. Failed: ${failedCount}.`
     );
   } catch (error) {
     if (error instanceof Error) {
       console.error(
         "Error during StreamChat test user deletion query:",
-        error.message,
+        error.message
       );
     } else {
       console.error("Error during StreamChat test user deletion query:", error);
     }
   }
 }
+
+// prisma/purgeTestUsers.ts
+var { prisma, streamChatClient, cypressEnv: cypressEnv2 } = await import("./seedUtils-3VTZJKVD.js");
+async function main() {
+  const testDomain = cypressEnv2?.testUserEmailDomain;
+  if (!testDomain || typeof testDomain !== "string") {
+    throw new Error(
+      "Missing cypressEnv.testUserEmailDomain. Set it in cypress.env.json to safely target test users."
+    );
+  }
+  console.log(`Purging test users from DB/StreamChat (domain: ${testDomain})...`);
+  const deletedUserIds = await deleteTestUsers(prisma);
+  await deleteTestUsersFromStreamChat(streamChatClient, deletedUserIds, testDomain);
+  console.log(
+    `Done. Deleted ${deletedUserIds.length} test users (domain: ${testDomain}).`
+  );
+}
+main().catch((e) => {
+  console.error("Purge script failed:", e);
+  process.exit(1);
+}).finally(async () => {
+  await prisma.$disconnect();
+  console.log("Prisma client disconnected.");
+});

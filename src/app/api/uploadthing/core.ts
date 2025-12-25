@@ -123,7 +123,7 @@ export const fileRouter = {
         throw new UploadThingError("Maximum 5 photos allowed");
       }
 
-      return { user };
+      return { user, priorPhotoCount: photoCount };
     })
     .onUploadComplete(async ({ metadata, file }) => {
       const isDev = process.env.NODE_ENV === "development";
@@ -142,21 +142,53 @@ export const fileRouter = {
       );
 
       // Check if this is the first photo (make it primary)
-      const photoCount = await prisma.userDatingPhoto.count({
-        where: { userId: metadata.user.id },
+      const priorPhotoCount = typeof metadata.priorPhotoCount === "number" ? metadata.priorPhotoCount : 0;
+      const wasReactivated = priorPhotoCount === 0;
+
+      const { photo, needsReverification } = await prisma.$transaction(async (tx) => {
+        const createdPhoto = await tx.userDatingPhoto.create({
+          data: {
+            id: crypto.randomUUID(),
+            userId: metadata.user.id,
+            url: photoUrl,
+            isPrimary: priorPhotoCount === 0,
+            createdAt: new Date(),
+          },
+        });
+
+        // If user was effectively removed from dating due to having 0 photos, re-activate on first upload.
+        if (wasReactivated) {
+          await tx.user.update({
+            where: { id: metadata.user.id },
+            data: { isDatingActive: true },
+          });
+        }
+
+        // Prompt re-verification if there's no current dating identity verification,
+        // or if none of the user's remaining photos qualify as "verified-era" (createdAt <= verifiedAt).
+        const identity = await tx.userDatingIdentityVerification.findUnique({
+          where: { userId: metadata.user.id },
+          select: { isIDVerified: true, verifiedAt: true },
+        });
+
+        const verifiedAt = identity?.isIDVerified ? identity.verifiedAt : null;
+        let requiresReverification = !verifiedAt;
+        if (verifiedAt) {
+          const verifiedEraCount = await tx.userDatingPhoto.count({
+            where: { userId: metadata.user.id, createdAt: { lte: verifiedAt } },
+          });
+          requiresReverification = verifiedEraCount === 0;
+        }
+
+        return { photo: createdPhoto, needsReverification: requiresReverification };
       });
 
-      const photo = await prisma.userDatingPhoto.create({
-        data: {
-          id: crypto.randomUUID(),
-          userId: metadata.user.id,
-          url: photoUrl,
-          isPrimary: photoCount === 0,
-          createdAt: new Date(),
-        },
-      });
-
-      return { photoId: photo.id, photoUrl };
+      return {
+        photoId: photo.id,
+        photoUrl,
+        reactivated: wasReactivated,
+        needsReverification,
+      };
     }),
 } satisfies FileRouter;
 

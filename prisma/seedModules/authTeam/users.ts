@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import type { Prisma } from "@prisma/client"; // Import specific types
 import {
   faker,
@@ -39,8 +39,6 @@ export interface SeededUser {
 }
 
 const userQuantity = 1; // Define locally for this module
-
-const prisma = new PrismaClient();
 
 // Exported function to seed users
 export async function seedUsers(

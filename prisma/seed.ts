@@ -219,7 +219,7 @@ async function main() {
         }
       },
       {
-        timeout: 120000, // Increase timeout to 120 seconds (120000 ms) for large seed operations
+        timeout: 900000, // 15 minutes (seed can be very large on prod-like DBs)
       },
     ); // End of prisma.$transaction
 

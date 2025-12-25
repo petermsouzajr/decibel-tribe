@@ -405,6 +405,8 @@ export async function GET(request: NextRequest) {
         deletedAt: null,
         isVerified: true, // Only show verified users in decks (non-verified users can browse but won't appear)
         isDatingActive: true,
+        // Only show users who currently have at least one dating photo
+        userDatingPhotos: { some: {} },
         userDatingProfile: {
           // Match gender preference - check if their gender matches any of our preferred genders
           // Skip this filter if gender is in variabilityFilters (allow any gender)
@@ -561,7 +563,7 @@ export async function GET(request: NextRequest) {
         userDatingPreferences: true,
         userDatingPhotos: {
           // Include all photos to check count requirement (at least 1 required)
-          take: 5, // Max photos is 5
+          take: 5, // Max active photos is 5
         },
         userInstruments: {
           include: { instrument: true },
@@ -953,7 +955,9 @@ export async function GET(request: NextRequest) {
     const formattedMatches = await Promise.all(
       variabilityFilteredMatches.map(async (match) => {
         // Find primary photo (or use first photo if no primary set)
-        const primaryPhoto = match.userDatingPhotos.find((p: { isPrimary: boolean }) => p.isPrimary) || match.userDatingPhotos[0];
+        const primaryPhoto =
+          match.userDatingPhotos.find((p: { isPrimary: boolean }) => p.isPrimary) ||
+          match.userDatingPhotos[0];
         const instruments = match.userInstruments.map((ui) => ui.instrument.name);
         const skills = match.userSkills.map((us) => us.skill.name);
 
