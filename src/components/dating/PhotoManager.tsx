@@ -188,7 +188,7 @@ export default function PhotoManager() {
         <DialogContent className="max-w-md">
           <div className="space-y-3">
             <h3 className="text-lg font-semibold text-gray-900">
-              You're back — one more step
+              You&apos;re back — one more step
             </h3>
             <p className="text-sm text-gray-600">
               Add your photo to get back in the deck — verify to appear in matches!
