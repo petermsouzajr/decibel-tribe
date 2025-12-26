@@ -57,6 +57,9 @@ const mockEventData: EventData = {
   title: "Test Event Title",
   description: "This is a description.".repeat(20),
   location: "Test Location",
+  zipCode: null,
+  latitude: null,
+  longitude: null,
   when: new Date("2024-08-15T10:00:00Z"),
   startTime: "19:00",
   endTime: "22:00",
@@ -70,6 +73,7 @@ const mockEventData: EventData = {
   createdById: mockCreator.id,
   createdBy: mockCreator as any, // Cast to any to bypass type mismatch for the test
   attendees: [],
+  helpWantedSkills: [],
   _count: {
     attendees: 5,
   },

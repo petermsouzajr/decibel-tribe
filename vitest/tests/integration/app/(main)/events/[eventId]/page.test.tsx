@@ -50,6 +50,9 @@ const mockEventData = {
   startTime: "10:00",
   endTime: "12:00",
   location: "Mock Location",
+  zipCode: null,
+  latitude: null,
+  longitude: null,
   coverImage: null,
   url: null,
   performers: [],
@@ -61,6 +64,7 @@ const mockEventData = {
   updatedAt: new Date(),
   user: { id: "user-1", username: "mockuser" },
   attendees: [],
+  helpWantedSkills: [],
   group: null,
   _count: { attendees: 0 },
 };

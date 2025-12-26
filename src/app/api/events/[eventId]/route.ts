@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { getEventDataInclude } from "@/lib/types";
 import { updateEventSchema } from "@/lib/validation";
+import { geocodeZipCode } from "@/lib/server/geocodeZipCode";
 
 export async function GET(req: NextRequest, props: { params: Promise<{ eventId: string }> }) {
   const params = await props.params;
@@ -41,7 +42,12 @@ export async function GET(req: NextRequest, props: { params: Promise<{ eventId: 
       where: {
         id: eventId,
       },
-      include: getEventDataInclude(loggedInUser?.id ?? ""),
+      include: {
+        ...getEventDataInclude(loggedInUser?.id ?? ""),
+        helpWantedSkills: {
+          select: { skill: { select: { name: true } } },
+        },
+      } as any,
     });
 
     if (!event) {
@@ -52,7 +58,23 @@ export async function GET(req: NextRequest, props: { params: Promise<{ eventId: 
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    return NextResponse.json(event, { status: 200 });
+    const helpWanted = Array.isArray((event as any).helpWantedSkills)
+      ? (event as any).helpWantedSkills.map((h: any) => h?.skill?.name).filter(Boolean)
+      : [];
+
+    const isOwner = event.createdById === loggedInUser.id;
+    const safeEvent: any = {
+      ...event,
+      helpWantedSkills: helpWanted,
+      // Only the event owner (editing) receives zip data; it is never displayed publicly.
+      eventZipCode: isOwner ? (event as any).zipCode ?? "" : undefined,
+    };
+    // Never expose raw zip/coords on the event payload (only pass eventZipCode to owner editor)
+    delete safeEvent.zipCode;
+    delete safeEvent.latitude;
+    delete safeEvent.longitude;
+
+    return NextResponse.json(safeEvent, { status: 200 });
   } catch (error) {
     console.error("Error fetching event:", error);
     return NextResponse.json(
@@ -286,6 +308,8 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ eventId: 
       startTime,
       endTime,
       performers,
+      helpWantedSkills,
+      eventZipCode,
       status,
       visibility,
       isCancelled,
@@ -294,21 +318,57 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ eventId: 
     const wasCancelled = event.isCancelled;
     const isNowCancelled = isCancelled;
 
-    const updatedEvent = await prisma.event.update({
-      where: { id: eventId },
-      data: {
-        title,
-        location,
-        description,
-        url,
-        when,
-        startTime,
-        endTime,
-        performers,
-        status,
-        visibility,
-        isCancelled,
-      },
+    const wantsHelp =
+      Array.isArray(helpWantedSkills) && helpWantedSkills.length > 0;
+    const normalizedZip = typeof eventZipCode === "string" ? eventZipCode.trim() : "";
+    if (wantsHelp && !normalizedZip) {
+      return NextResponse.json(
+        { error: "Event zip code is required when you add Help Wanted skills" },
+        { status: 400 },
+      );
+    }
+
+    const geo = normalizedZip ? await geocodeZipCode(normalizedZip) : null;
+
+    const updatedEvent = await prisma.$transaction(async (tx) => {
+      const skillIds = await Promise.all(
+        (Array.isArray(helpWantedSkills) ? helpWantedSkills : []).map(
+          async (skillName: string) => {
+            const skill = await tx.skill.upsert({
+              where: { name: skillName },
+              update: {},
+              create: { name: skillName },
+            });
+            return skill.id;
+          },
+        ),
+      );
+
+      const updated = await tx.event.update({
+        where: { id: eventId },
+        data: {
+          title,
+          location,
+          description,
+          url,
+          when,
+          startTime,
+          endTime,
+          performers,
+          zipCode: normalizedZip || null,
+          latitude: geo?.lat ?? null,
+          longitude: geo?.lon ?? null,
+          status,
+          visibility,
+          isCancelled,
+          helpWantedSkills: {
+            deleteMany: {},
+            create: skillIds.map((skillId) => ({ skillId })),
+          },
+        },
+      });
+
+      return updated;
     });
 
     if (!wasCancelled && isNowCancelled) {
@@ -340,7 +400,15 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ eventId: 
       await prisma.$transaction(notifications);
     }
 
-    return NextResponse.json(updatedEvent, { status: 200 });
+    return NextResponse.json(
+      {
+        ...updatedEvent,
+        zipCode: null,
+        latitude: null,
+        longitude: null,
+      },
+      { status: 200 },
+    );
   } catch (error) {
     console.error("Error updating event:", error);
     return NextResponse.json(

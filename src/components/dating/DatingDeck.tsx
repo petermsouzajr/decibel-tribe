@@ -767,7 +767,7 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
           fetchMatches();
         }}
         asModal={true}
-      />
+          />
     </>
   );
 }

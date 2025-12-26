@@ -9,6 +9,7 @@ import {
   updateUserProfileSchema,
   UpdateUserProfileValues,
 } from "@/lib/validation";
+import { geocodeZipCode } from "@/lib/server/geocodeZipCode";
 import bcrypt from "bcryptjs";
 
 export async function updateUserProfile(values: UpdateUserProfileValues) {
@@ -19,6 +20,12 @@ export async function updateUserProfile(values: UpdateUserProfileValues) {
   if (!user) throw new Error("Unauthorized");
 
   const updatedUser = await prisma.$transaction(async (tx) => {
+    const normalizedZip =
+      typeof validatedValues.zipCode === "string"
+        ? validatedValues.zipCode.trim()
+        : "";
+    const geo = normalizedZip ? await geocodeZipCode(normalizedZip) : null;
+
     const instrumentIds = await Promise.all(
       (validatedValues.instruments ?? []).map(async (instrumentName) => {
         const instrument = await tx.instrument.upsert({
@@ -48,8 +55,18 @@ export async function updateUserProfile(values: UpdateUserProfileValues) {
         bio: validatedValues.bio,
         userPreferences: {
           upsert: {
-            create: { calendar: validatedValues.visibility },
-            update: { calendar: validatedValues.visibility },
+            create: {
+              calendar: validatedValues.visibility,
+              zipCode: normalizedZip || null,
+              latitude: geo?.lat ?? null,
+              longitude: geo?.lon ?? null,
+            },
+            update: {
+              calendar: validatedValues.visibility,
+              zipCode: normalizedZip || null,
+              latitude: geo?.lat ?? null,
+              longitude: geo?.lon ?? null,
+            },
           },
         },
         userInstruments: {

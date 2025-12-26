@@ -59,6 +59,11 @@ export const updateUserProfileSchema = z.object({
     .array(z.string())
     .max(15, "You can select up to 15 skills")
     .optional(),
+  zipCode: z
+    .string()
+    .max(20, "Must be less than 20 characters")
+    .optional()
+    .or(z.literal("")),
   visibility: z.enum(["PUBLIC", "PRIVATE"]),
 });
 
@@ -121,36 +126,60 @@ const baseEventObject = z.object({
   startTime: z.string().min(1, { message: "Start time is required" }),
   endTime: z.string().min(1, { message: "End time is required" }),
   performers: z.array(z.string()).optional(),
+  helpWantedSkills: z
+    .array(z.string())
+    .max(15, "You can select up to 15 skills")
+    .optional(),
+  eventZipCode: z
+    .string()
+    .max(20, { message: "Zip code cannot exceed 20 characters" })
+    .optional()
+    .or(z.literal("")),
   status: z.enum(["DRAFT", "PUBLISHED"]),
   visibility: z.enum(["PUBLIC", "PRIVATE"]),
   isCancelled: z.boolean(),
 });
 
-// Now create the final createEventSchema by adding the refinement
-export const createEventSchema = baseEventObject.refine(
-  (data) => {
-    if (data.startTime && data.endTime) {
-      const isEndTimeAfterStart = data.endTime > data.startTime;
-      if (process.env.NODE_ENV === "development") {
-        console.log(
-          `DEBUG TIME COMPARE: Start=${data.startTime}, End=${data.endTime}, IsAfter=${isEndTimeAfterStart}`,
-        );
+// createEventSchema: end-time check + help-wanted ⇒ zip requirement
+export const createEventSchema = baseEventObject
+  .refine(
+    (data) => {
+      if (data.startTime && data.endTime) {
+        const isEndTimeAfterStart = data.endTime > data.startTime;
+        if (process.env.NODE_ENV === "development") {
+          console.log(
+            `DEBUG TIME COMPARE: Start=${data.startTime}, End=${data.endTime}, IsAfter=${isEndTimeAfterStart}`,
+          );
+        }
+        return isEndTimeAfterStart;
       }
-      return isEndTimeAfterStart;
-    }
-    return true;
-  },
-  {
-    message: "End time must be after start time",
-    path: ["endTime"],
-  },
-);
+      return true;
+    },
+    {
+      message: "End time must be after start time",
+      path: ["endTime"],
+    },
+  )
+  .refine(
+    (data) => {
+      if (Array.isArray(data.helpWantedSkills) && data.helpWantedSkills.length > 0) {
+        return !!data.eventZipCode && data.eventZipCode.trim().length > 0;
+      }
+      return true;
+    },
+    {
+      message: "Event zip code is required when you add Help Wanted skills",
+      path: ["eventZipCode"],
+    },
+  );
 
 export type CreateEventValues = z.infer<typeof createEventSchema>;
 
 // Schema for updating an event (PATCH)
 // Apply .partial() to the base object *before* the refinement
+// Note: helpWantedSkills/eventZipCode are handled via the Event editor (PUT) so we keep PATCH limited to scalar fields.
 export const updateEventSchema = baseEventObject
+  .omit({ helpWantedSkills: true, eventZipCode: true })
   .partial()
   // Add refinement: if title exists, it must not be empty
   .refine(

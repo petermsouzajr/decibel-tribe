@@ -310,6 +310,23 @@ export default function EventDetails({ event }: EventDetailsProps) {
               </li>
             ))}
           </ul>
+
+          {Array.isArray((event as any).helpWantedSkills) &&
+            (event as any).helpWantedSkills.length > 0 && (
+              <>
+                <p className="mt-4">
+                  <span className="text-lg underline">Help Wanted:</span>
+                </p>
+                <ul className="ml-4 list-disc">
+                  {(event as any).helpWantedSkills
+                    .map((h: any) => h?.skill?.name)
+                    .filter(Boolean)
+                    .map((skillName: string) => (
+                      <li key={skillName}>{skillName}</li>
+                    ))}
+                </ul>
+              </>
+            )}
         </div>
       </div>
       <ReportModal

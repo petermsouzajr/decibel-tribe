@@ -231,12 +231,16 @@ describe("[Core][Utils] getEvent", () => {
     startTime: "10:00",
     endTime: "12:00",
     performers: ["Performer 1"],
+    zipCode: null,
+    latitude: null,
+    longitude: null,
     createdById: mockUserData.id!,
     isCancelled: false,
     visibility: "PUBLIC",
     status: "ACTIVE",
     createdBy: mockUserData as UserData,
     attendees: [],
+    helpWantedSkills: [],
     _count: { attendees: 0 },
   };
 

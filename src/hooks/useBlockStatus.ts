@@ -10,6 +10,14 @@ export function useBlockStatus(targetUserId: string) {
 
   const viewerId = user?.id;
 
+  const normalize = (val: unknown): BlockedUser[] => {
+    if (Array.isArray(val)) return val as BlockedUser[];
+    if (val && typeof val === "object" && Array.isArray((val as any).items)) {
+      return (val as any).items as BlockedUser[];
+    }
+    return [];
+  };
+
   const { data } = useQuery({
     queryKey: ["blocked-users", viewerId],
     enabled: !!viewerId,
@@ -20,31 +28,26 @@ export function useBlockStatus(targetUserId: string) {
         .then((res) => res.items),
   });
 
-  const isBlocked = !!data?.some((u) => u.id === targetUserId);
+  const blockedUsers = normalize(data);
+  const isBlocked = blockedUsers.some((u) => u.id === targetUserId);
 
   const addToCache = (u: BlockedUser) => {
-    queryClient.setQueryData<BlockedUser[] | { items: BlockedUser[] } | undefined>(
+    queryClient.setQueryData<BlockedUser[] | undefined>(
       ["blocked-users", viewerId],
       (prev) => {
-        if (!prev) return [u] as unknown as any;
-        if (Array.isArray(prev)) {
-          if (prev.some((x) => x.id === u.id)) return prev;
-          return [...prev, u];
-        }
-        const items = prev.items ?? [];
-        if (items.some((x) => x.id === u.id)) return prev;
-        return { items: [...items, u] } as any;
+        const list = normalize(prev);
+        if (list.some((x) => x.id === u.id)) return list;
+        return [...list, u];
       },
     );
   };
 
   const removeFromCache = (id: string) => {
-    queryClient.setQueryData<BlockedUser[] | { items: BlockedUser[] } | undefined>(
+    queryClient.setQueryData<BlockedUser[] | undefined>(
       ["blocked-users", viewerId],
       (prev) => {
-        if (!prev) return prev;
-        if (Array.isArray(prev)) return prev.filter((x) => x.id !== id) as any;
-        return { items: (prev.items ?? []).filter((x) => x.id !== id) } as any;
+        const list = normalize(prev);
+        return list.filter((x) => x.id !== id);
       },
     );
   };

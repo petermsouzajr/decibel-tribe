@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { UserData, FollowerInfo } from "@/lib/types";
 import ChangePasswordDialog from "./UpdatePasswordDialog";
 import { formatDate } from "date-fns";
@@ -38,6 +38,26 @@ export default function UserProfilePage({
 
   const instruments = user.userInstruments.map((ui) => ui.instrument.name);
   const skills = user.userSkills.map((us) => us.skill.name);
+
+  const [privateZipCode, setPrivateZipCode] = useState<string>("");
+
+  useEffect(() => {
+    if (user.id !== loggedInUserId) return;
+    const load = async () => {
+      try {
+        const res = await fetch("/api/users/preferences", {
+          method: "GET",
+          credentials: "include",
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (typeof data?.zipCode === "string") setPrivateZipCode(data.zipCode);
+      } catch {
+        // ignore
+      }
+    };
+    load();
+  }, [user.id, loggedInUserId]);
 
   // Check if user is deleted
   const isDeleted = user.deletedAt !== null;
@@ -182,6 +202,11 @@ export default function UserProfilePage({
                         </li>
                       ))}
                     </ul>
+                    {user.id === loggedInUserId && privateZipCode && (
+                      <div className="mt-3 text-sm text-muted-foreground">
+                        Your zip code (private): {privateZipCode}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

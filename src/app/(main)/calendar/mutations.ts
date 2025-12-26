@@ -17,6 +17,8 @@ export function useAddEventMutation() {
       startTime,
       endTime,
       performers,
+      helpWantedSkills,
+      eventZipCode,
       status,
       visibility,
       isCancelled,
@@ -29,6 +31,8 @@ export function useAddEventMutation() {
       startTime: string;
       endTime: string;
       performers: string[];
+      helpWantedSkills?: string[];
+      eventZipCode?: string;
       status: "DRAFT" | "PUBLISHED";
       visibility: "PUBLIC" | "PRIVATE";
       isCancelled?: boolean;
@@ -58,6 +62,8 @@ export function useAddEventMutation() {
           startTime: startTime || "",
           endTime: endTime || "",
           performers: sanitizedPerformers,
+          helpWantedSkills: Array.isArray(helpWantedSkills) ? helpWantedSkills : [],
+          eventZipCode: eventZipCode || "",
           status: status || "DRAFT",
           visibility: visibility || "PUBLIC",
           isCancelled: isCancelled || false,
@@ -65,7 +71,8 @@ export function useAddEventMutation() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create event");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData?.error || "Failed to create event");
       }
 
       const newEvent = await response.json();
@@ -106,6 +113,8 @@ export function useEditEventMutation() {
       startTime,
       endTime,
       performers,
+      helpWantedSkills,
+      eventZipCode,
       status,
       visibility,
       isCancelled,
@@ -119,11 +128,13 @@ export function useEditEventMutation() {
       startTime: string;
       endTime: string;
       performers: string[];
+      helpWantedSkills?: string[];
+      eventZipCode?: string;
       status: "DRAFT" | "PUBLISHED";
       visibility: "PUBLIC" | "PRIVATE";
       isCancelled: boolean;
     }) => {
-      return fetch(`/api/events/${eventId}`, {
+      const response = await fetch(`/api/events/${eventId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -137,11 +148,20 @@ export function useEditEventMutation() {
           startTime,
           endTime,
           performers,
+          helpWantedSkills: Array.isArray(helpWantedSkills) ? helpWantedSkills : [],
+          eventZipCode: eventZipCode || "",
           status,
           visibility,
           isCancelled,
         }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData?.error || "Failed to update event");
+      }
+
+      return await response.json();
     },
     onSuccess: () => {
       toast({

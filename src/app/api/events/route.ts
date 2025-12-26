@@ -3,7 +3,8 @@ import { cookies } from "next/headers";
 import { lucia } from "@/auth";
 import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
-import { updateEventSchema } from "@/lib/validation";
+import { createEventSchema, updateEventSchema } from "@/lib/validation";
+import { geocodeZipCode } from "@/lib/server/geocodeZipCode";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -130,7 +131,13 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    return NextResponse.json(events, { status: 200 });
+    const safeEvents = events.map((e: any) => ({
+      ...e,
+      zipCode: null,
+      latitude: null,
+      longitude: null,
+    }));
+    return NextResponse.json(safeEvents, { status: 200 });
   } catch (error) {
     console.error("Error fetching events:", error);
     return NextResponse.json(
@@ -170,6 +177,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const body = await req.json();
+    const parsed = createEventSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid data", details: parsed.error.errors },
+        { status: 400 },
+      );
+    }
+
     const {
       title,
       location,
@@ -179,36 +195,82 @@ export async function POST(req: NextRequest) {
       startTime,
       endTime,
       performers,
+      helpWantedSkills,
+      eventZipCode,
       status,
       visibility,
       isCancelled,
-    } = await req.json();
+    } = parsed.data;
 
-    const newEvent = await prisma.event.create({
-      data: {
-        title,
-        location,
-        description,
-        url,
-        when,
-        startTime,
-        endTime,
-        performers,
-        status,
-        visibility,
-        isCancelled,
-        createdBy: {
-          connect: { id: loggedInUser!.id },
-        },
-        attendees: {
-          create: {
-            userId: loggedInUser!.id,
+    const wantsHelp =
+      Array.isArray(helpWantedSkills) && helpWantedSkills.length > 0;
+
+    const normalizedZip = (eventZipCode || "").trim();
+    if (wantsHelp && !normalizedZip) {
+      return NextResponse.json(
+        { error: "Event zip code is required when you add Help Wanted skills" },
+        { status: 400 },
+      );
+    }
+
+    const geo = normalizedZip ? await geocodeZipCode(normalizedZip) : null;
+
+    const newEvent = await prisma.$transaction(async (tx) => {
+      const skillIds = await Promise.all(
+        (Array.isArray(helpWantedSkills) ? helpWantedSkills : []).map(
+          async (skillName) => {
+            const skill = await tx.skill.upsert({
+              where: { name: skillName },
+              update: {},
+              create: { name: skillName },
+            });
+            return skill.id;
+          },
+        ),
+      );
+
+      const created = await tx.event.create({
+        data: {
+          title: title ?? "",
+          location,
+          description,
+          url,
+          when,
+          startTime,
+          endTime,
+          performers,
+          zipCode: normalizedZip || null,
+          latitude: geo?.lat ?? null,
+          longitude: geo?.lon ?? null,
+          status,
+          visibility,
+          isCancelled,
+          createdBy: {
+            connect: { id: loggedInUser!.id },
+          },
+          attendees: {
+            create: {
+              userId: loggedInUser!.id,
+            },
+          },
+          helpWantedSkills: {
+            create: skillIds.map((skillId) => ({ skillId })),
           },
         },
-      },
+      });
+
+      return created;
     });
 
-    return NextResponse.json(newEvent, { status: 201 });
+    return NextResponse.json(
+      {
+        ...newEvent,
+        zipCode: null,
+        latitude: null,
+        longitude: null,
+      },
+      { status: 201 },
+    );
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       console.error("Prisma error code:", error.code);

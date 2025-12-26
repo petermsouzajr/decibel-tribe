@@ -103,22 +103,22 @@ export async function validateRequestWithCookieMutation(): Promise<
   try {
     const result = await lucia.validateSession(sessionId);
 
-    if (result.session && result.session.fresh) {
-      const sessionCookie = lucia.createSessionCookie(result.session.id);
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-    }
+      if (result.session && result.session.fresh) {
+        const sessionCookie = lucia.createSessionCookie(result.session.id);
+        (await cookies()).set(
+          sessionCookie.name,
+          sessionCookie.value,
+          sessionCookie.attributes,
+        );
+      }
 
-    if (!result.session) {
-      const sessionCookie = lucia.createBlankSessionCookie();
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
+      if (!result.session) {
+        const sessionCookie = lucia.createBlankSessionCookie();
+        (await cookies()).set(
+          sessionCookie.name,
+          sessionCookie.value,
+          sessionCookie.attributes,
+        );
     }
 
     return result;
@@ -130,7 +130,7 @@ export async function validateRequestWithCookieMutation(): Promise<
       sessionCookie.name,
       sessionCookie.value,
       sessionCookie.attributes,
-    );
+);
     return { user: null, session: null };
   }
 }

@@ -23,6 +23,70 @@ import {
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import PostsLoadingSkeleton from "@/components/posts/PostsLoadingSkeleton";
+import skillsList from "../../../../data/skillsList.json";
+import Select, { CSSObjectWithLabel } from "react-select";
+import makeAnimated from "react-select/animated";
+import { useTheme } from "next-themes";
+import { Controller } from "react-hook-form";
+
+const animatedComponents = makeAnimated();
+const skillOptions = (skillsList as string[]).map((skill) => ({
+  value: skill,
+  label: skill,
+}));
+
+const getCustomStyles = (theme: string | undefined) => ({
+  control: (provided: CSSObjectWithLabel) => ({
+    ...provided,
+    fontSize: "16px",
+    color: "hsl(var(--foreground))",
+    backgroundColor: "hsl(var(--background))",
+    borderColor: "hsl(var(--border))",
+    "&:hover": { borderColor: "hsl(var(--ring))" },
+  }),
+  menu: (provided: CSSObjectWithLabel) => ({
+    ...provided,
+    backgroundColor: "hsl(var(--background))",
+    color: "hsl(var(--foreground))",
+  }),
+  option: (
+    provided: CSSObjectWithLabel,
+    state: { isSelected: boolean; isFocused: boolean },
+  ) => ({
+    ...provided,
+    fontSize: "16px",
+    color: state.isSelected
+      ? "hsl(var(--primary-foreground))"
+      : "hsl(var(--foreground))",
+    backgroundColor: state.isSelected
+      ? "hsl(var(--primary))"
+      : state.isFocused
+        ? "hsl(var(--muted))"
+        : "hsl(var(--background))",
+    "&:hover": { backgroundColor: "hsl(var(--muted))" },
+  }),
+  multiValue: (provided: CSSObjectWithLabel) => ({
+    ...provided,
+    backgroundColor: "hsl(var(--primary))",
+    color: "hsl(var(--primary-foreground))",
+  }),
+  multiValueLabel: (provided: CSSObjectWithLabel) => ({
+    ...provided,
+    color: "hsl(var(--primary-foreground))",
+  }),
+  multiValueRemove: (provided: CSSObjectWithLabel) => ({
+    ...provided,
+    color: "hsl(var(--primary-foreground))",
+    "&:hover": {
+      backgroundColor: "hsl(var(--primary))",
+      color: "hsl(var(--primary-foreground))",
+    },
+  }),
+  input: (provided: CSSObjectWithLabel) => ({
+    ...provided,
+    color: "hsl(var(--foreground))",
+  }),
+});
 
 export default function EventFormPage() {
   const [status, setStatus] = useState<"DRAFT" | "PUBLISHED">("DRAFT");
@@ -40,6 +104,7 @@ export default function EventFormPage() {
   const [defaultVisibility, setDefaultVisibility] = useState<
     "PUBLIC" | "PRIVATE"
   >("PRIVATE");
+  const { theme } = useTheme();
 
   const isEditing = Boolean(eventId);
   const editMutation = useEditEventMutation();
@@ -58,6 +123,8 @@ export default function EventFormPage() {
       startTime: "",
       endTime: "",
       performers: [""],
+      helpWantedSkills: [],
+      eventZipCode: "",
       status: status,
       visibility: defaultVisibility,
       isCancelled: false,
@@ -99,14 +166,13 @@ export default function EventFormPage() {
       },
       onError: (error: any) => {
         console.error(
-          setIsSubmitting(false),
           isEditing ? "Failed to update event" : "Failed to create event",
           error,
         );
         setError(
           isEditing
-            ? "Failed to update event. Please try again."
-            : "Failed to create event. Please try again.",
+            ? error?.message || "Failed to update event. Please try again."
+            : error?.message || "Failed to create event. Please try again.",
         );
       },
       onSettled: () => {
@@ -162,6 +228,8 @@ export default function EventFormPage() {
             startTime: data.startTime || "",
             endTime: data.endTime || "",
             performers: data.performers.length > 0 ? data.performers : [""],
+            helpWantedSkills: data.helpWantedSkills || [],
+            eventZipCode: data.eventZipCode || "",
             status: data.status || "DRAFT",
             visibility: data.visibility || defaultVisibility,
             isCancelled: data.isCancelled || false,
@@ -351,6 +419,51 @@ export default function EventFormPage() {
               ? "Maximum number of performers is 15"
               : "+ Add Another Performer"}
           </Button>
+
+          {/* Help Wanted (optional) - mirror of skill multi-select */}
+          <div className="space-y-2 pt-2">
+            <FormLabel>Help Wanted (optional)</FormLabel>
+            <Controller
+              control={form.control}
+              name="helpWantedSkills"
+              render={({ field }) => (
+                <Select
+                  isMulti
+                  components={animatedComponents}
+                  options={skillOptions}
+                  value={skillOptions.filter((opt) =>
+                    Array.isArray(field.value) ? field.value.includes(opt.value) : false,
+                  )}
+                  onChange={(selected) => {
+                    const values = Array.isArray(selected)
+                      ? selected.map((s) => (s as any).value as string)
+                      : [];
+                    field.onChange(values);
+                  }}
+                  styles={getCustomStyles(theme)}
+                  placeholder="Select skills you need for this event"
+                />
+              )}
+            />
+            <p className="text-xs text-muted-foreground">
+              If you add Help Wanted skills, you must also add an event zip code.
+            </p>
+          </div>
+
+          {/* Event Zip Code (optional, required if help wanted is set) */}
+          <FormField
+            control={form.control}
+            name="eventZipCode"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Event Zip Code (optional)</FormLabel>
+                <FormControl>
+                  <Input placeholder="Zip code (used for proximity)" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="isCancelled"

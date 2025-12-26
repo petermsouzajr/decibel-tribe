@@ -137,6 +137,7 @@ export default function EditProfileDialog({
       visibility: user.visibility || defaultVisibility,
       skills: user.userSkills.map((us) => us.skill.name) || [],
       instruments: user.userInstruments.map((ui) => ui.instrument.name) || [],
+      zipCode: "",
     },
   });
 
@@ -160,6 +161,9 @@ export default function EditProfileDialog({
           form.setValue("visibility", data.calendarPreference);
         } else {
           setDefaultVisibility("PRIVATE");
+        }
+        if (typeof data?.zipCode === "string") {
+          form.setValue("zipCode", data.zipCode);
         }
       } catch (error) {
         console.error("Error fetching user calendar preference:", error);
@@ -338,6 +342,20 @@ export default function EditProfileDialog({
                         />
                       )}
                     />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="zipCode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Zip code (private, optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Zip code (used for event proximity)" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

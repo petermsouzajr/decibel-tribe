@@ -12,6 +12,12 @@ export const getEvent = cache(async (eventId: string, loggedInUserId: string) =>
   });
 
   if (!event) notFound();
-  return event;
+  // Never expose event zip/coords to clients (used only for proximity search)
+  return {
+    ...event,
+    zipCode: null,
+    latitude: null,
+    longitude: null,
+  } as typeof event;
 });
 

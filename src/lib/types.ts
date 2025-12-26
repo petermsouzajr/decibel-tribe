@@ -116,6 +116,16 @@ export function getEventDataInclude(loggedInUserId: string) {
         },
       },
     },
+    helpWantedSkills: {
+      select: {
+        skill: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    },
     _count: {
       select: {
         attendees: true,

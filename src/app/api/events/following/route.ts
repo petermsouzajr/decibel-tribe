@@ -64,7 +64,12 @@ export async function GET(req: NextRequest) {
     const nextCursor = events.length > pageSize ? events[pageSize].id : null;
 
     const data: EventsPage = {
-      events: events.slice(0, pageSize),
+      events: events.slice(0, pageSize).map((e: any) => ({
+        ...e,
+        zipCode: null,
+        latitude: null,
+        longitude: null,
+      })),
       nextCursor,
     };
 

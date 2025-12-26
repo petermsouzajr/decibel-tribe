@@ -123,6 +123,16 @@ export async function seedUsers(
     createdCount = createResult.count;
     console.log(`...${createdCount} users created/skipped in DB.`);
 
+    // Ensure seeded users have a preferences row (so test data is consistent in Prisma Studio)
+    // Use skipDuplicates because seed runs may re-run.
+    await tx.userPreferences.createMany({
+      data: usersToCreate.map((u) => ({
+        userId: u.id!,
+        calendar: "PRIVATE",
+      })),
+      skipDuplicates: true,
+    });
+
     if (usersToCreate.length > 0 && createdCount === 0) {
       console.warn(
         "Warning: User createMany reported 0 created users, duplicates might exist or DB issue.",

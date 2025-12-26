@@ -514,7 +514,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                         key={opt.value}
                         className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
                       >
-                        <input
+                <input
                           type="checkbox"
                           checked={formData.pets.includes(opt.value)}
                           onChange={(e) => {
@@ -713,7 +713,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <AgeSelector
                     value={formData.preferredMinAge}
@@ -755,7 +755,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                       <p className="text-red-500 text-xs mt-1">
                         Maximum age must be greater than minimum age
                       </p>
-                    )}
+               )}
                 </div>
               </div>
               
@@ -774,7 +774,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                       required
                       error={showErrors && formData.preferredMinHeight < 36}
                     />
-                  </div>
+                      </div>
                   <div>
                     <HeightSelector
                       value={formData.preferredMaxHeight}
@@ -789,16 +789,16 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                           formData.preferredMaxHeight <= formData.preferredMinHeight)
                       }
                     />
-                  </div>
-                </div>
+                      </div>
+                    </div>
                 {showErrors &&
                   formData.preferredMaxHeight >= 36 &&
                   formData.preferredMinHeight >= 36 &&
                   formData.preferredMaxHeight <= formData.preferredMinHeight && (
                     <p className="text-red-500 text-xs mt-2">
                       Maximum height must be greater than minimum height
-                    </p>
-                  )}
+                  </p>
+                )}
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -881,7 +881,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                   ))}
                 </div>
               </div>
-                   
+
             </div>
           </div>
         );

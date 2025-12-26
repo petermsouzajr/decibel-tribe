@@ -120,6 +120,12 @@ model EmailVerification {
 model UserPreferences {
   id       String @id @default(cuid())
   calendar String @default("PUBLIC")
+  /// Private profile zip code (only visible to account owner)
+  zipCode   String?
+  /// Private cached geocode latitude for zipCode
+  latitude  Float?
+  /// Private cached geocode longitude for zipCode
+  longitude Float?
   userId   String @unique
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -148,6 +154,7 @@ model Skill {
   id    String      @id @default(cuid())
   name  String      @unique
   users UserSkill[]
+  eventHelpWanted EventHelpWantedSkill[]
 }
 
 model Instrument {
@@ -372,6 +379,12 @@ model Event {
   startTime           String
   endTime             String
   performers          String[]
+  /// Optional: if set, used for proximity search (not displayed publicly)
+  zipCode             String?
+  /// Cached geocode latitude (not displayed publicly)
+  latitude            Float?
+  /// Cached geocode longitude (not displayed publicly)
+  longitude           Float?
   createdById         String
   isCancelled         Boolean         @default(false)
   status              String          @default("DRAFT")
@@ -382,11 +395,27 @@ model Event {
   attendees           EventAttendee[]
   createdBy           User            @relation("CreatedEvents", fields: [createdById], references: [id])
   linkedNotifications Notification[]
+  helpWantedSkills    EventHelpWantedSkill[]
 
   // Reports
   reports Report[]
 
+  @@index([zipCode])
+  @@index([latitude, longitude])
   @@map("events")
+}
+
+/// Join table: which skills an event is recruiting for (help wanted)
+model EventHelpWantedSkill {
+  eventId String
+  skillId String
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, skillId])
+  @@index([skillId])
+  @@map("event_help_wanted_skills")
 }
 
 model EventAttendee {
