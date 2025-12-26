@@ -2,7 +2,6 @@ import signupImage from "@/assets/signup-image.jpg";
 import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import WhatsInsideTour from "@/components/home/WhatsInsideTour";
 import SignUpForm from "./SignUpForm";
 import GoogleSignInButton from "../login/google/GoogleSignInButton";
 
@@ -20,12 +19,18 @@ export default function Page() {
       </div>
       <div className="flex h-full max-h-[40rem] w-full max-w-[64rem] overflow-hidden rounded-2xl bg-card shadow-2xl">
         <div className="w-full space-y-10 overflow-y-auto p-10 md:w-1/2">
+          
           <div className="space-y-1 text-center">
-            <h1 className="text-3xl font-bold">Sign up</h1>
+          <p className="max-w-ms font-bold text-center text-md ">
+          Connect with musicians. Find gigs, new music, live events, and love!
+                          Sign up to get started today.
+              </p>
           </div>
           <div className="space-y-5">
             <div className="flex justify-center">
-              <WhatsInsideTour buttonLabel="what&apos;s inside?" />
+            <h1 className="text-center text-xl font-bold">
+            Sign up</h1>
+
             </div>
             <GoogleSignInButton />
             <div className="flex items-center gap-3">
