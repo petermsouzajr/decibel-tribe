@@ -2,6 +2,13 @@ import { z } from "zod";
 
 const requiredString = z.string().trim().min(1, "Required");
 
+const honeypotSchemaMerge = z.object({
+  website: z.string().optional(),
+  url: z.string().optional(),
+  phone: z.string().optional(),
+  formLoadedAt: z.number().optional(), // We'll manage this state in the form
+});
+
 export const signUpSchema = z.object({
   email: requiredString
     .email("Invalid email address")
@@ -12,13 +19,13 @@ export const signUpSchema = z.object({
   password: requiredString
     .min(8, "Must be at least 8 characters")
     .max(50, "Must be less than 50 characters"),
-});
+}).merge(honeypotSchemaMerge);
 
 export type SignUpValues = z.infer<typeof signUpSchema>;
 
 export const resetPasswordSchema = z.object({
   credential: z.string().max(50, "Must be less than 50 characters").optional(),
-});
+}).merge(honeypotSchemaMerge);
 
 export type resetPasswordValues = z.infer<typeof resetPasswordSchema>;
 
@@ -33,7 +40,7 @@ export const loginSchema = z.object({
     .string()
     .max(50, "Must be less than 50 characters")
     .min(1, "Required"),
-});
+}).merge(honeypotSchemaMerge);
 
 export type LoginValues = z.infer<typeof loginSchema>;
 

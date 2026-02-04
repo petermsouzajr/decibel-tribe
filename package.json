@@ -32,6 +32,8 @@
     "cy:types": "tsc -p cypress/tsconfig.json --noEmit",
     "cy:open": "cypress open",
     "cy:run": "cypress run",
+    "cy:open:local": "CYPRESS_BASE_URL=http://localhost:3000 cypress open",
+    "cy:run:local": "CYPRESS_BASE_URL=http://localhost:3000 cypress run",
     "cy:nightly:report": "npm run cy:prerun && cypress run --headless --reporter mochawesome --reporter-options reportDir=cypress/results,overwrite=false,html=false,json=true --quiet || true",
     "cy:prerun": "rm -rf cypress/results",
     "postcy:nightly:report": "npm run cy:report:merge",

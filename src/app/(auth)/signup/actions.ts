@@ -5,11 +5,17 @@ import { signUpSchema, SignUpValues } from "@/lib/validation";
 import bcrypt from "bcryptjs"; // Import bcryptjs
 import { generateIdFromEntropySize } from "lucia";
 import { generateAndSendVerification } from "../sendVerification";
+import { validateHoneypot } from "@/lib/honeypot";
 
 export async function signUp(
   credentials: SignUpValues,
 ): Promise<{ error?: string; success?: boolean }> {
   try {
+    const honeypotError = validateHoneypot(credentials);
+    if (honeypotError) {
+      return { error: honeypotError.error };
+    }
+
     const { username, email, password } = signUpSchema.parse(credentials);
 
     // Use bcryptjs hashing

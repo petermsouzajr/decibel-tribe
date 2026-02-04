@@ -17,6 +17,7 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { login } from "./actions";
 import DeletedAccountRecoveryDialog from "@/components/DeletedAccountRecoveryDialog";
+import HoneypotInputs from "@/components/HoneypotInputs";
 
 export default function LoginForm() {
   const [error, setError] = useState<string>();
@@ -42,16 +43,21 @@ export default function LoginForm() {
   async function onSubmit(values: LoginValues) {
     setError(undefined);
     setDeletedAccountInfo(null);
-    
+
     startTransition(async () => {
       try {
         // Create FormData for the login action
         const formData = new FormData();
         formData.append("username", values.username || "");
         formData.append("password", values.password);
-        
+        // Append honeypot fields
+        if (values.website) formData.append("website", values.website);
+        if (values.url) formData.append("url", values.url);
+        if (values.phone) formData.append("phone", values.phone);
+        if (values.formLoadedAt) formData.append("formLoadedAt", values.formLoadedAt.toString());
+
         const result = await login(formData);
-        
+
         if (result?.error) {
           if (result.error === "ACCOUNT_DELETED_WITHIN_GRACE_PERIOD") {
             setDeletedAccountInfo({
@@ -117,11 +123,12 @@ export default function LoginForm() {
             </FormItem>
           )}
         />
+        <HoneypotInputs register={form.register} setValue={form.setValue} />
         <LoadingButton loading={isPending} type="submit" className="w-full">
           Log in
         </LoadingButton>
       </form>
-      
+
       {deletedAccountInfo && (
         <DeletedAccountRecoveryDialog
           open={!!deletedAccountInfo}

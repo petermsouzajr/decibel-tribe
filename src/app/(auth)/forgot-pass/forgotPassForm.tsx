@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { resetPasswordSchema, resetPasswordValues } from "@/lib/validation";
 import LoadingButton from "@/components/LoadingButton";
 import { resendVerification } from "./actions";
+import HoneypotInputs from "@/components/HoneypotInputs";
 
 export default function ForgotPassForm() {
   const [error, setError] = useState<string>();
@@ -34,7 +35,7 @@ export default function ForgotPassForm() {
 
     startTransition(async () => {
       const { credential } = values;
-      const result = await resendVerification({ credential });
+      const result = await resendVerification(values);
 
       if (result?.error) {
         setError(result.error);
@@ -66,6 +67,7 @@ export default function ForgotPassForm() {
           )}
         />
 
+        <HoneypotInputs register={form.register} setValue={form.setValue} />
         <LoadingButton loading={isPending} type="submit" className="w-full">
           Send Verification Email
         </LoadingButton>

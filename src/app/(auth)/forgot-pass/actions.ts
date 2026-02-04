@@ -4,11 +4,22 @@ import prisma from "@/lib/prisma";
 import { resendVerificationEmail } from "../sendVerification";
 import { resetPasswordSchema, resetPasswordValues } from "@/lib/validation";
 
+import { validateHoneypot } from "@/lib/honeypot";
+
 export async function resendVerification(
   credentials: resetPasswordValues,
 ): Promise<{ error: string }> {
   try {
+    const honeypotError = validateHoneypot(credentials);
+    if (honeypotError) {
+      return { error: honeypotError.error };
+    }
+
     const { credential } = resetPasswordSchema.parse(credentials);
+
+    if (!credential) {
+      return { error: "Email or username is required" };
+    }
 
     const existingUser = await prisma.user.findFirst({
       where: {

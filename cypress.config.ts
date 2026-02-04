@@ -1,5 +1,5 @@
 import { defineConfig } from "cypress";
-import codeCoverageTask from "@cypress/code-coverage/task";
+import codeCoverageTask from "@cypress/code-coverage/task.js";
 
 export default defineConfig({
   e2e: {
@@ -8,7 +8,7 @@ export default defineConfig({
       return config;
     },
     supportFile: "cypress/support/e2e.ts",
-    baseUrl: "https://www.decibeltribe.com/",
+    baseUrl: process.env.CYPRESS_BASE_URL || "https://www.decibeltribe.com/",
     defaultCommandTimeout: 10000,
     pageLoadTimeout: 60000,
   },

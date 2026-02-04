@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import HoneypotInputs from "@/components/HoneypotInputs";
 
 export default function SignUpForm() {
   const [error, setError] = useState<string>();
@@ -109,6 +110,7 @@ export default function SignUpForm() {
               </FormItem>
             )}
           />
+          <HoneypotInputs register={form.register} setValue={form.setValue} />
           <LoadingButton loading={isPending} type="submit" className="w-full">
             Create account
           </LoadingButton>

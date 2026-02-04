@@ -7,7 +7,20 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 
+import { validateHoneypot } from "@/lib/honeypot";
+
 export async function login(formData: FormData) {
+  const honeypotData = {
+    website: formData.get("website"),
+    url: formData.get("url"),
+    phone: formData.get("phone"),
+    formLoadedAt: formData.get("formLoadedAt"),
+  };
+  const honeypotError = validateHoneypot(honeypotData);
+  if (honeypotError) {
+    return { error: honeypotError.error };
+  }
+
   const username = formData.get("username") as string;
   const password = formData.get("password") as string;
 
@@ -35,10 +48,10 @@ export async function login(formData: FormData) {
       // Check if within grace period (90 days)
       const gracePeriod = 90 * 24 * 60 * 60 * 1000; // 90 days in milliseconds
       const timeSinceDeletion = Date.now() - user.deletedAt.getTime();
-      
+
       if (timeSinceDeletion <= gracePeriod) {
         // User is within grace period - offer reactivation
-        return { 
+        return {
           error: "ACCOUNT_DELETED_WITHIN_GRACE_PERIOD",
           deletedAt: user.deletedAt?.toISOString(),
           daysRemaining: Math.ceil((gracePeriod - timeSinceDeletion) / (24 * 60 * 60 * 1000)),
@@ -46,7 +59,7 @@ export async function login(formData: FormData) {
         };
       } else {
         // Grace period expired - offer fresh start
-        return { 
+        return {
           error: "ACCOUNT_DELETED_EXPIRED",
           deletedAt: user.deletedAt?.toISOString(),
           userId: user.id
