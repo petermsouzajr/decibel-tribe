@@ -45,6 +45,12 @@ export default function Page() {
             >
               Forgot Password?
             </Link>
+            <Link
+              href="/privacy"
+              className="block text-center text-xs text-muted-foreground hover:underline"
+            >
+              Privacy Policy
+            </Link>
           </div>
         </div>
         <Image

@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import ReportButton from "@/components/reports/ReportButton";
 import BlockedUsersList from "./BlockedUsersList";
+import Link from "next/link";
 
 interface UserProfilePageProps {
   user: UserData;
@@ -152,6 +153,14 @@ export default function UserProfilePage({
                     </div>
                     <div className="w-full">
                       <DatingToggleButton user={user} />
+                    </div>
+                    <div className="w-full border-t pt-3">
+                      <Link 
+                        href="/privacy"
+                        className="block text-sm text-muted-foreground hover:text-primary hover:underline"
+                      >
+                        Privacy Policy
+                      </Link>
                     </div>
                   </div>
                 </div>

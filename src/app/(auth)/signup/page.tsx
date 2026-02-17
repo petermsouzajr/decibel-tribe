@@ -42,6 +42,12 @@ export default function Page() {
             <Link href="/login" className="block text-center hover:underline">
               Already have an account? Log in
             </Link>
+            <p className="text-center text-xs text-muted-foreground">
+              By signing up, you agree to our{" "}
+              <Link href="/privacy" className="text-primary hover:underline">
+                Privacy Policy
+              </Link>
+            </p>
           </div>
         </div>
         <Image
