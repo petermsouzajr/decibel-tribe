@@ -1,10 +1,8 @@
-// import { validateRequest } from "@/auth";
-import { lucia } from "@/auth"; // Import lucia directly
-import { cookies } from "next/headers"; // Import cookies
-import streamServerClient from "@/lib/stream";
+import { lucia } from "@/auth";
+import { cookies } from "next/headers";
+import { getUnreadCountSafe } from "@/lib/stream";
 import { MessageCountInfo } from "@/lib/types";
-import { NextResponse } from "next/server"; // Import NextResponse
-import { StreamChat } from "stream-chat";
+import { NextResponse } from "next/server";
 import { NextRequest } from "next/server";
 
 // Opt out of static generation
@@ -47,28 +45,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Original route logic
-    try {
-      const { total_unread_count } = await streamServerClient.getUnreadCount(
-        user.id,
-      );
-
-      const data: MessageCountInfo = {
-        unreadCount: total_unread_count,
-      };
-
-      return NextResponse.json(data); // Use NextResponse
-    } catch (streamError: any) {
-      // Handle StreamChat errors (e.g., user deleted in StreamChat)
-      console.error("StreamChat error in unread count:", streamError);
-      
-      // Return zero unread count if StreamChat fails
-      const data: MessageCountInfo = {
-        unreadCount: 0,
-      };
-
-      return NextResponse.json(data);
-    }
+    const unreadCount = await getUnreadCountSafe(user);
+    const data: MessageCountInfo = { unreadCount };
+    return NextResponse.json(data);
   } catch (error) {
     console.error("Error in GET /api/messages/unread-count:", error);
     // Ensure catch block returns NextResponse

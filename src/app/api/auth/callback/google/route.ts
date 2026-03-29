@@ -119,7 +119,7 @@ export async function GET(req: NextRequest) {
           displayName: googleUser.name,
           googleId: googleUser.id,
           email: googleUser.email,
-          isVerified: true,
+          isEmailVerified: true,
         },
       });
       await streamServerClient.upsertUser({

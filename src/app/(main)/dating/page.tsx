@@ -1,6 +1,5 @@
 import { validateRequest } from "@/auth";
 import { redirect } from "next/navigation";
-import prisma from "@/lib/prisma";
 import DatingIntroButtons from "@/components/dating/DatingIntroButtons";
 import DatingDeck from "@/components/dating/DatingDeck";
 
@@ -11,14 +10,8 @@ export default async function DatingPage() {
     redirect("/login");
   }
 
-  // Check user status (non-verified users can access but with restrictions)
-  const currentUser = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: { isVerified: true, isDatingActive: true },
-  });
-
-  const isDatingActive = currentUser?.isDatingActive ?? false;
-  const isVerified = currentUser?.isVerified ?? false;
+  // session existence = email verified (login enforces this).
+  const isDatingActive = user.isDatingActive;
 
   // If dating is not active, show intro page with buttons
   if (!isDatingActive) {
@@ -65,8 +58,8 @@ export default async function DatingPage() {
     );
   }
 
-  // If dating is active, show the dating deck
+  // If dating is active, show the dating deck (user is guaranteed email-verified)
   if (isDatingActive) {
-    return <DatingDeck isVerified={isVerified} />;
+    return <DatingDeck />;
   }
 }

@@ -233,7 +233,7 @@ describe("[Auth] resendVerificationEmail action", () => {
       email: userEmail, // Primary email exists
       pendingEmail: null,
       passwordHash: "hashedpassword",
-      isVerified: false, // User is NOT verified
+      isEmailVerified: false, // User is NOT verified
       googleId: null,
     };
     const expectedToken = expect.any(String); // We don't need to mock UUID generation
@@ -321,7 +321,7 @@ describe("[Auth] resendVerificationEmail action", () => {
       email: null, // No primary email
       pendingEmail: null, // No pending email
       passwordHash: null, // No password hash
-      isVerified: true, // Doesn't matter for this check
+      isEmailVerified: true, // Doesn't matter for this check
       googleId: "google12345", // User signed up with Google
     };
     mockPrismaUserFindFirst.mockResolvedValue(mockUser);
@@ -360,7 +360,7 @@ describe("[Auth] resendVerificationEmail action", () => {
       email: userEmail,
       pendingEmail: null,
       passwordHash: "hashedpassword",
-      isVerified: false,
+      isEmailVerified: false,
       googleId: null,
     };
     mockPrismaUserFindFirst.mockResolvedValue(mockUser);
@@ -393,7 +393,7 @@ describe("[Auth] resendVerificationEmail action", () => {
       email: userEmail,
       pendingEmail: null,
       passwordHash: "hashedpassword",
-      isVerified: false,
+      isEmailVerified: false,
       googleId: null,
     };
     mockPrismaUserFindFirst.mockResolvedValue(mockUser);
@@ -425,7 +425,7 @@ describe("[Auth] resendVerificationEmail action", () => {
       email: userEmail,
       pendingEmail: null,
       passwordHash: "hashedpassword",
-      isVerified: false,
+      isEmailVerified: false,
       googleId: null,
     };
     mockPrismaUserFindFirst.mockResolvedValue(mockUser);

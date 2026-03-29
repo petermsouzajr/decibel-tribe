@@ -126,7 +126,7 @@ export default function PhotoManager() {
     const isLastPhoto = photos.length === 1;
     const ok = confirm(
       isLastPhoto
-        ? "Are you sure you want to delete your last dating photo?\n\nIf you delete your last photo:\n- You won't show up in the Dating deck anymore\n- You won't be able to match or be visible to anyone\n- Your dating identity verification will be removed\n\nYou can re-enable dating by uploading a new photo and re-verifying."
+        ? "Are you sure you want to delete your last dating photo?\n\nIf you delete your last photo:\n- You won't appear in any Dating decks\n- You won't be able to receive new likes\n\nYour like history and matches are preserved. Upload a new photo any time to rejoin the deck."
         : "Are you sure you want to delete this photo?",
     );
 
@@ -154,12 +154,12 @@ export default function PhotoManager() {
         toast({
           variant: "destructive",
           description:
-            "Dating has been turned off because you have no photos. Upload a photo to rejoin the Dating deck.",
+            "Dating has been paused — you have no photos. Upload a photo to rejoin the deck.",
         });
       } else if (res?.verificationCleared) {
         toast({
           description:
-            "Your dating identity verification was removed because none of your remaining photos are from your last verification.",
+            "Your ID verification record was cleared because none of your remaining photos match your last verification.",
         });
       }
     } catch (error: any) {
@@ -188,10 +188,11 @@ export default function PhotoManager() {
         <DialogContent className="max-w-md">
           <div className="space-y-3">
             <h3 className="text-lg font-semibold text-gray-900">
-              You&apos;re back — one more step
+              You&apos;re back!
             </h3>
             <p className="text-sm text-gray-600">
-              Add your photo to get back in the deck — verify to appear in matches!
+              Your photo has been uploaded. You&apos;re now visible in other users&apos; decks — subject to their ID verification filter settings.
+              Want to add a trust badge? Complete ID verification from your dating profile settings.
             </p>
             <div className="pt-2">
               <Button onClick={() => setShowReverifyModal(false)} className="w-full">

@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
     // Check if user has dating active (non-verified users can browse but won't appear in decks)
     const currentUser = await prisma.user.findUnique({
       where: { id: user.id },
-      select: { isVerified: true, isDatingActive: true },
+      select: { isEmailVerified: true, isDatingActive: true },
     });
 
     if (!currentUser?.isDatingActive) {
@@ -393,6 +393,22 @@ export async function GET(request: NextRequest) {
     // Build query conditions - exclude blocked users and users who blocked you
     const excludeIds = [user.id, ...swipedIds, ...matchedIds, ...blockedIds, ...blockedByIds];
 
+    // ID verification filter — maps to userDatingIdentityVerification relation
+    const idVerificationFilter = (preferences as any).idVerificationFilter || "show_all";
+    let idVerificationWhere: object = {};
+    if (idVerificationFilter === "show_id_verified_only") {
+      idVerificationWhere = { userDatingIdentityVerification: { isIDVerified: true } };
+    } else if (idVerificationFilter === "show_unverified_only") {
+      // Unverified = no record OR record with isIDVerified: false
+      idVerificationWhere = {
+        OR: [
+          { userDatingIdentityVerification: null },
+          { userDatingIdentityVerification: { isIDVerified: false } },
+        ],
+      };
+    }
+    // "show_all" — no extra filter
+
     // Find potential matches
     // Note: This is a simplified version. In production, you'd want:
     // - Proper geocoding for location
@@ -403,10 +419,11 @@ export async function GET(request: NextRequest) {
       where: {
         id: { notIn: excludeIds },
         deletedAt: null,
-        isVerified: true, // Only show verified users in decks (non-verified users can browse but won't appear)
+        isEmailVerified: true, // Only email-verified users appear in decks
         isDatingActive: true,
         // Only show users who currently have at least one dating photo
         userDatingPhotos: { some: {} },
+        ...idVerificationWhere,
         userDatingProfile: {
           // Match gender preference - check if their gender matches any of our preferred genders
           // Skip this filter if gender is in variabilityFilters (allow any gender)
@@ -561,6 +578,9 @@ export async function GET(request: NextRequest) {
       include: {
         userDatingProfile: true,
         userDatingPreferences: true,
+        userDatingIdentityVerification: {
+          select: { isIDVerified: true },
+        },
         userDatingPhotos: {
           // Include all photos to check count requirement (at least 1 required)
           take: 5, // Max active photos is 5
@@ -605,7 +625,7 @@ export async function GET(request: NextRequest) {
       if (!match.userDatingPreferences) return false;
       
       // REQUIREMENT: Users must be verified AND have at least 1 dating photo
-      // Note: isVerified is already filtered in DB query, but we check photos here as a safety measure
+      // Note: isEmailVerified is already filtered in DB query, but we check photos here as a safety measure
       // (in case a verified user deletes all photos, or if verification doesn't strictly enforce photos)
       if (!match.userDatingPhotos || match.userDatingPhotos.length === 0) {
         if (isDev) {
@@ -1044,6 +1064,7 @@ export async function GET(request: NextRequest) {
           primaryPhotoUrl: primaryPhoto?.url || match.avatarUrl,
           distance: distance,
           location: cityName || match.userDatingProfile?.zipCode || null,
+          isIDVerified: match.userDatingIdentityVerification?.isIDVerified ?? false,
           musicInfo: {
             instruments,
             skills,

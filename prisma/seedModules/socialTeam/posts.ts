@@ -12,7 +12,7 @@ import {
 interface UserInput {
   id: string;
   username: string; // Needed for specific user checks (e.g., UserManyPosts)
-  isVerified: boolean;
+  isEmailVerified: boolean;
   createdAt: Date;
 }
 
@@ -43,7 +43,7 @@ export async function seedPublicPosts(
 
   // Filter users: Eligible users are verified and not the 'noPosts' type
   const eligibleUsers = createdUsers.filter(
-    (user) => user.isVerified && !user.username.includes("noPosts"),
+    (user) => user.isEmailVerified && !user.username.includes("noPosts"),
   );
 
   if (eligibleUsers.length === 0) {

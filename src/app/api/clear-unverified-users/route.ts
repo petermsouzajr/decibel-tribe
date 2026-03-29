@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
     const unverifiedUsers = await prisma.user.findMany({
       where: {
-        isVerified: false,
+        isEmailVerified: false,
         googleId: null,
         createdAt: {
           lte: new Date(currentDate.getTime() - 1000 * 60 * 60 * 24 * 14),

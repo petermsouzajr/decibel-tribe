@@ -11,8 +11,10 @@ export default async function DatingOnboardingPage() {
     redirect("/login");
   }
 
-  // Non-verified users can complete onboarding but will have restrictions
-  // (can't like users, won't appear in decks until verified)
+  // All users who reach this page are email-verified — that gate is enforced at the
+  // page level (redirect to /login if !isEmailVerified).
+  // ID verification (via Stripe) is a separate, optional step that adds a green
+  // trust badge to the user's profile card. It does not affect platform access.
 
   // Fetch complete user data with dating profile and preferences
   const completeUser = await prisma.user.findFirst({

@@ -62,7 +62,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
   // Load existing data from the new table structure
   const existingProfile = (user as any).userDatingProfile;
   const existingPreferences = (user as any).userDatingPreferences;
-  const isVerified = (user as any).isVerified ?? false;
+  const isEmailVerified = (user as any).isEmailVerified ?? false;
   
   // Parse existing preferences - support both old format (single gender) and new format (multiple)
   const parseExistingPreferences = (): GenderPreference[] => {
@@ -993,7 +993,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                 <Check className="w-8 h-8 text-green-600" />
               </div>
               <h2 className="text-2xl text-gray-900 font-bold mb-4">Setup Complete!</h2>
-              {isVerified ? (
+              {isEmailVerified ? (
                 <p className="text-gray-600 font-bold mb-8">
                   Your dating profile is ready and you can start finding matches!
                 </p>
@@ -1018,7 +1018,7 @@ const DatingOnboardingFlow = ({ user }: DatingOnboardingFlowProps) => {
                     onClick={() => router.push("/dating")}
                     className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold py-6 text-lg"
                   >
-                    {isVerified ? "Start Finding Matches" : "Browse Profiles"}
+                    {isEmailVerified ? "Start Finding Matches" : "Browse Profiles"}
                   </Button>
                   <Button
                     onClick={() => router.push(`/users/${user.username}`)}

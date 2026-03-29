@@ -35,10 +35,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check user status
+    // Check user status — email verification is enforced at the page level (redirect to /login).
+    // Here we only check isDatingActive.
     const currentUser = await prisma.user.findUnique({
       where: { id: user.id },
-      select: { isVerified: true, isDatingActive: true },
+      select: { isDatingActive: true },
     });
 
     if (!currentUser?.isDatingActive) {
@@ -64,13 +65,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Block non-verified users from liking
-    if (decision === "LIKE" && !currentUser.isVerified) {
-      return NextResponse.json(
-        { error: "Account verification required to like users. Please verify your email address." },
-        { status: 403 }
-      );
-    }
+    // No email-verification guard here — page-level redirect handles that.
+    // All users who reach this API are email-verified by definition.
 
     if (targetUserId === user.id) {
       return NextResponse.json(

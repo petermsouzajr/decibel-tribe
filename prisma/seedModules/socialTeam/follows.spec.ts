@@ -8,7 +8,7 @@ interface UserInput {
   id: string;
   username: string;
   createdAt: Date;
-  isVerified: boolean;
+  isEmailVerified: boolean;
   // add other fields if necessary for the test context
 }
 
@@ -48,25 +48,25 @@ describe("SocialTeam - seedFollows Module", () => {
       id: "user1",
       username: "UserOne",
       createdAt: new Date("2023-01-01"),
-      isVerified: true,
+      isEmailVerified: true,
     },
     {
       id: "user2",
       username: "UserTwo",
       createdAt: new Date("2023-01-02"),
-      isVerified: true,
+      isEmailVerified: true,
     },
     {
       id: "user3",
       username: "UserThree",
       createdAt: new Date("2023-01-03"),
-      isVerified: false,
+      isEmailVerified: false,
     },
     {
       id: "userNF",
       username: "noFollowers",
       createdAt: new Date("2023-01-04"),
-      isVerified: true,
+      isEmailVerified: true,
     },
   ];
 

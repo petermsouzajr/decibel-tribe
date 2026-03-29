@@ -397,7 +397,7 @@ describe("API Route: GET /api/auth/callback/google", () => {
         displayName: googleUser.name,
         googleId: googleUser.id,
         email: googleUser.email,
-        isVerified: true,
+        isEmailVerified: true,
       },
     });
     expect(mockStreamUpsertUser).toHaveBeenCalledWith({

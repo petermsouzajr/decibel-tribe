@@ -1,6 +1,5 @@
 import { validateRequest } from "@/auth";
 import { redirect } from "next/navigation";
-import prisma from "@/lib/prisma";
 import LikesYouList from "@/components/dating/LikesYouList";
 
 export default async function LikesYouPage() {
@@ -10,13 +9,8 @@ export default async function LikesYouPage() {
     redirect("/login");
   }
 
-  // Check if dating is active
-  const currentUser = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: { isVerified: true, isDatingActive: true },
-  });
-
-  if (!currentUser?.isDatingActive) {
+  // session existence = email verified (login enforces this).
+  if (!user.isDatingActive) {
     redirect("/dating");
   }
 

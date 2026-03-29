@@ -75,7 +75,7 @@ describe("API Route: GET /api/verify-email", () => {
     // Mock the first user update for the simple verification case
     mockUserUpdate.mockResolvedValue({
       id: userId,
-      isVerified: true,
+      isEmailVerified: true,
       email: userEmail,
       pendingEmail: null,
     });
@@ -162,7 +162,7 @@ describe("API Route: GET /api/verify-email", () => {
     expect(mockUserUpdate).toHaveBeenCalledTimes(1); // Only verify
     expect(mockUserUpdate).toHaveBeenCalledWith({
       where: { id: userId },
-      data: { isVerified: true },
+      data: { isEmailVerified: true },
     });
     expect(mockEmailVerificationDelete).toHaveBeenCalledTimes(1);
     expect(mockEmailVerificationDelete).toHaveBeenCalledWith({
@@ -203,7 +203,7 @@ describe("API Route: GET /api/verify-email", () => {
       // 1. Verify user -> returns user *with* pendingEmail
       .mockResolvedValueOnce({
         id: userId,
-        isVerified: true,
+        isEmailVerified: true,
         email: userEmail,
         pendingEmail: pendingEmail,
       })
@@ -222,7 +222,7 @@ describe("API Route: GET /api/verify-email", () => {
     expect(mockUserUpdate).toHaveBeenCalledTimes(3); // Verify, Set Email, Clear Pending
     expect(mockUserUpdate).toHaveBeenNthCalledWith(1, {
       where: { id: userId },
-      data: { isVerified: true }, // First call: Verify
+      data: { isEmailVerified: true }, // First call: Verify
     });
     expect(mockUserUpdate).toHaveBeenNthCalledWith(2, {
       where: { id: userId },

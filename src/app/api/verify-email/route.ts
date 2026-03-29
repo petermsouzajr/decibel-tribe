@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
 
     const user = await prisma.user.update({
       where: { id: verificationRecord.userId },
-      data: { isVerified: true },
+      data: { isEmailVerified: true },
     });
 
     if (user.pendingEmail) {

@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ match
     // Check if dating is active
     const currentUser = await prisma.user.findUnique({
       where: { id: user.id },
-      select: { isVerified: true, isDatingActive: true },
+      select: { isEmailVerified: true, isDatingActive: true },
     });
 
     if (!currentUser?.isDatingActive) {
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ matc
     // Check if dating is active
     const currentUser = await prisma.user.findUnique({
       where: { id: user.id },
-      select: { isVerified: true, isDatingActive: true },
+      select: { isEmailVerified: true, isDatingActive: true },
     });
 
     if (!currentUser?.isDatingActive) {

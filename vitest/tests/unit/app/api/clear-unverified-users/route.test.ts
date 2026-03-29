@@ -122,7 +122,7 @@ describe("API Route: GET /api/clear-unverified-users", () => {
     expect(_mockUserFindMany).toHaveBeenCalledTimes(1);
     expect(_mockUserFindMany).toHaveBeenCalledWith({
       where: {
-        isVerified: false,
+        isEmailVerified: false,
         googleId: null,
         createdAt: {
           lte: expect.any(Date), // Check that it uses a Date object

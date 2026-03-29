@@ -89,7 +89,7 @@ describe("[API][Auth] login action", () => {
       username: "testuser",
       email: "test@example.com",
       passwordHash: "hashedpassword",
-      isVerified: true,
+      isEmailVerified: true,
     };
     const mockSession = {
       id: "session123",
@@ -176,7 +176,7 @@ describe("[API][Auth] login action", () => {
       username: "testuser",
       email: "test@example.com",
       passwordHash: "hashedpassword",
-      isVerified: true,
+      isEmailVerified: true,
     };
     mockPrismaFindFirst.mockResolvedValue(mockUser);
     mockBcryptCompare.mockResolvedValue(false);
@@ -216,7 +216,7 @@ describe("[API][Auth] login action", () => {
       username: "unverifiedUser",
       email: "unverified@example.com",
       passwordHash: "hashedpassword",
-      isVerified: false, // User exists but is NOT verified
+      isEmailVerified: false, // User exists but is NOT verified
     };
     mockPrismaFindFirst.mockResolvedValue(mockUser);
     mockResendVerification.mockResolvedValue(undefined); // Mock the resend action
@@ -253,7 +253,7 @@ describe("[API][Auth] login action", () => {
       username: "testuser",
       email: "test@example.com",
       passwordHash: "hashedpassword",
-      isVerified: true,
+      isEmailVerified: true,
     };
     mockPrismaFindFirst.mockResolvedValue(mockUser);
     mockBcryptCompare.mockResolvedValue(true); // Password is correct

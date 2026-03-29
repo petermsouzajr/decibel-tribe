@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     // Check if dating is active (non-verified users can access but won't have matches)
     const currentUser = await prisma.user.findUnique({
       where: { id: user.id },
-      select: { isVerified: true, isDatingActive: true },
+      select: { isEmailVerified: true, isDatingActive: true },
     });
 
     if (!currentUser?.isDatingActive) {

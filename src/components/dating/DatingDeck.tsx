@@ -35,17 +35,16 @@ interface MatchProfile {
   primaryPhotoUrl: string | null;
   distance: number | null;
   location: string | null;
+  isIDVerified: boolean;
   musicInfo: {
     instruments: string[];
     skills: string[];
   };
 }
 
-interface DatingDeckProps {
-  isVerified: boolean;
-}
+interface DatingDeckProps {}
 
-export default function DatingDeck({ isVerified }: DatingDeckProps) {
+export default function DatingDeck({}: DatingDeckProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [matches, setMatches] = useState<MatchProfile[]>([]);
@@ -214,16 +213,8 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
   }, [currentIndex]); // Refresh when we swipe
 
   const handleLikeClick = () => {
-    if (!isVerified) {
-      toast({
-        variant: "destructive",
-        description: "Please verify your email address to like users.",
-      });
-      return;
-    }
-    // Directly like without showing modal
-    // TODO: When implementing photo-specific likes/comments (like Hinge/Bumble),
-    // restore the modal functionality here to allow users to comment on specific photos
+    // All users who reach the deck are email-verified (page-level gate ensures this).
+    // Proceed directly to like.
     handleDecision("LIKE");
   };
 
@@ -294,7 +285,7 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
           error.response.json().then((errorData: any) => {
             toast({
               variant: "destructive",
-              description: errorData.error || "Verification required to like users",
+              description: errorData.error || "Action not allowed.",
             });
           }).catch(() => {});
         } else if (error.response?.status === 429) {
@@ -419,25 +410,38 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
     }
 
     // Gender
+    const capitalize = (s: string) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+    let parsedGenders: any[] = [];
     if (prefs.preferredGender) {
       try {
-        const genders = JSON.parse(prefs.preferredGender);
-        if (Array.isArray(genders) && genders.length > 0) {
-          const genderNames = genders.map((g: any) => g.gender).join(", ");
+        const parsed = JSON.parse(prefs.preferredGender);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          parsedGenders = parsed;
+          const genderNames = parsed.map((g: any) => capitalize(g.gender || g)).join(", ");
           filters.push(`Gender: ${genderNames}`);
         } else {
-          filters.push(`Gender: ${prefs.preferredGender}`);
+          filters.push(`Gender: ${capitalize(prefs.preferredGender)}`);
         }
       } catch {
-        filters.push(`Gender: ${prefs.preferredGender}`);
+        filters.push(`Gender: ${capitalize(prefs.preferredGender)}`);
       }
     } else {
       filters.push("Gender: Not specified");
     }
 
-    // Sexual Orientation
+    // Sexual Orientation – prefer the legacy standalone field; fall back to
+    // extracting orientations from the new JSON gender array format.
     if (prefs.preferredSexualOrientation) {
-      filters.push(`Sexual Orientation: ${prefs.preferredSexualOrientation}`);
+      filters.push(`Sexual Orientation: ${capitalize(prefs.preferredSexualOrientation)}`);
+    } else if (parsedGenders.length > 0) {
+      const orientations = parsedGenders
+        .flatMap((g: any) => Array.isArray(g.sexualOrientation) ? g.sexualOrientation : [])
+        .filter(Boolean);
+      if (orientations.length > 0) {
+        filters.push(`Sexual Orientation: ${orientations.map(capitalize).join(", ")}`);
+      } else {
+        filters.push("Sexual Orientation: Not specified");
+      }
     } else {
       filters.push("Sexual Orientation: Not specified");
     }
@@ -487,14 +491,6 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
       filters.push("Religion: Not specified");
     }
 
-    // Music filters
-    if (prefs.preferredInstruments && Array.isArray(prefs.preferredInstruments) && prefs.preferredInstruments.length > 0) {
-      filters.push(`Instruments: ${prefs.preferredInstruments.join(", ")}`);
-    }
-    if (prefs.preferredSkills && Array.isArray(prefs.preferredSkills) && prefs.preferredSkills.length > 0) {
-      filters.push(`Skills: ${prefs.preferredSkills.join(", ")}`);
-    }
-
     // Additional preferences
     if (prefs.preferredHasKids) {
       filters.push(`Has Kids: ${prefs.preferredHasKids}`);
@@ -514,31 +510,14 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
       filters.push("Drinks: Not specified");
     }
     
-    if (prefs.preferredActivity) {
+    if (Array.isArray(prefs.preferredActivity) && prefs.preferredActivity.length > 0) {
+      filters.push(`Activity Level: ${prefs.preferredActivity.join(", ")}`);
+    } else if (prefs.preferredActivity && !Array.isArray(prefs.preferredActivity)) {
       filters.push(`Activity Level: ${prefs.preferredActivity}`);
     } else {
       filters.push("Activity Level: Not specified");
     }
 
-    // Music filters - show "Not specified" if empty
-    if (prefs.preferredInstruments && Array.isArray(prefs.preferredInstruments) && prefs.preferredInstruments.length > 0) {
-      filters.push(`Instruments: ${prefs.preferredInstruments.join(", ")}`);
-    } else {
-      filters.push("Instruments: Not specified");
-    }
-    
-    if (prefs.preferredSkills && Array.isArray(prefs.preferredSkills) && prefs.preferredSkills.length > 0) {
-      filters.push(`Skills: ${prefs.preferredSkills.join(", ")}`);
-    } else {
-      filters.push("Skills: Not specified");
-    }
-
-    // Match Music Tastes
-    if (prefs.matchMusicTastes !== undefined && prefs.matchMusicTastes !== null) {
-      filters.push(`Prioritize instrument and skill match: ${prefs.matchMusicTastes ? "Yes" : "No"}`);
-    } else {
-      filters.push("Prioritize instrument and skill match: Not specified");
-    }
 
     return filters;
   };
@@ -547,26 +526,8 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
     <>
       <div className="w-full min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 pb-32">
         <div className="w-full px-2 sm:px-4 lg:max-w-2xl lg:mx-auto">
-          {/* Verification Banner */}
-          {!isVerified && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0">
-                  <svg className="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-sm font-semibold text-yellow-800 mb-1">
-                    Verify Your Photo to Like Users
-                  </h3>
-                  <p className="text-sm text-yellow-700">
-                    You can browse and dislike profiles, but you need to verify your identity by uploading a photo to like users and appear in others&apos; decks.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* No email-verification banner needed: page-level gate in dating/page.tsx
+              ensures only email-verified users ever reach this component. */}
 
           <DatingHeader
             title="Dating Tribe"
@@ -712,14 +673,9 @@ export default function DatingDeck({ isVerified }: DatingDeckProps) {
                   {currentMatch && (
                     <Button
                       size="icon"
-                      className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full transition-all active:scale-95 ${
-                        isVerified
-                          ? "bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
-                          : "bg-gray-400 cursor-not-allowed"
-                      }`}
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 transition-all active:scale-95"
                       onClick={handleLikeClick}
-                      disabled={processing || !isVerified}
-                      title={!isVerified ? "Verify your email to like users" : ""}
+                      disabled={processing}
                       aria-label="Like"
                     >
                       <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />

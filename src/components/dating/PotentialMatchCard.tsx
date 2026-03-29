@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Music, MapPin, User, ExternalLink, RotateCcw, Flag, Shield } from "lucide-react";
+import { Music, MapPin, User, ExternalLink, RotateCcw, Flag, Shield, ShieldCheck, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import ReportModal from "@/components/reports/ReportModal";
@@ -33,6 +33,7 @@ interface MatchProfile {
   primaryPhotoUrl: string | null;
   distance: number | null;
   location: string | null;
+  isIDVerified: boolean;
   musicInfo: {
     instruments: string[];
     skills: string[];
@@ -116,7 +117,7 @@ export default function PotentialMatchCard({
       {/* Info */}
       <div className="p-4 sm:p-6">
         {/* Name, Age and Profile Button */}
-        <div className="flex items-center justify-between gap-3 mb-4">
+        <div className="flex items-center justify-between gap-3 mb-3">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
             {match.displayName}{match.age ? `, ${match.age}` : ""}
             </h2>
@@ -131,6 +132,21 @@ export default function PotentialMatchCard({
                 <span className="sm:hidden">Profile</span>
               </Button>
             </Link>
+        </div>
+
+        {/* ID Verification Badge */}
+        <div className="mb-4">
+          {match.isIDVerified ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800 border border-green-300">
+              <ShieldCheck className="w-4 h-4 text-green-600" />
+              ID Verified
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+              <AlertTriangle className="w-4 h-4 text-amber-600" />
+              ID Unverified
+            </span>
+          )}
         </div>
 
         {/* Matches Preferences Section */}

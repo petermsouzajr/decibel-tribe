@@ -12,7 +12,7 @@ model User {
   displayName                    String
   email                          String?                         @unique
   passwordHash                   String?
-  isVerified                     Boolean                         @default(false)
+  isEmailVerified                Boolean                         @default(false)
   /// Soft ban flag for quick enforcement (source of truth is ModerationBan)
   isBanned                       Boolean                         @default(false) @map("is_banned")
   bannedAt                       DateTime?                       @map("banned_at")
@@ -74,7 +74,7 @@ model User {
   blocksMade     Block[] @relation("BlocksByUser")
   blocksReceived Block[] @relation("BlocksOfUser")
 
-  @@index([isVerified, isDatingActive, deletedAt])
+  @@index([isEmailVerified, isDatingActive, deletedAt])
   @@index([isDatingActive, deletedAt])
   @@map("users")
 }
@@ -569,6 +569,7 @@ model UserDatingPreferences {
   // Mix It Up controls
   variabilityLevel               Int      @default(0) // 0-100% variability slider
   variabilityFilters             String[] // Array of filter names to include in variability (e.g., ["gender", "age", "distance", "height", "hasKids", "wantsKids", "smokes", "drinks", "vaccination", "relationshipType", "activity", "diet", "politicalViews", "education", "religion"])
+  idVerificationFilter           String   @default("show_id_verified_only") // "show_id_verified_only" | "show_all" | "show_unverified_only"
   user                           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_dating_preferences")

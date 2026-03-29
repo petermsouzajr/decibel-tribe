@@ -16,7 +16,7 @@ import { normalizeBodyTypeValue, normalizePetsArray } from "@/lib/dating/profile
 async function geocodeZipCode(zipCode: string): Promise<{ lat: number; lon: number; city?: string } | null> {
   try {
     const cleanZip = zipCode.trim().replace(/\s+/g, "");
-    
+
     if (/^\d{5}(-\d{4})?$/.test(cleanZip)) {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?postalcode=${encodeURIComponent(cleanZip)}&countrycodes=us&format=json&limit=1`,
@@ -26,12 +26,12 @@ async function geocodeZipCode(zipCode: string): Promise<{ lat: number; lon: numb
           }
         }
       );
-      
+
       if (!response.ok) {
         console.error(`Geocoding API error: ${response.status}`);
         return null;
       }
-      
+
       const data = await response.json();
       if (data && data.length > 0) {
         return {
@@ -158,6 +158,7 @@ export async function POST(request: NextRequest) {
       preferredPets,
       variabilityLevel,
       variabilityFilters,
+      idVerificationFilter,
     } = await request.json();
 
     const normalizedPets = pets === undefined ? undefined : normalizePetsArray(pets);
@@ -202,7 +203,7 @@ export async function POST(request: NextRequest) {
     let city: string | null = null;
     let latitude: number | null = null;
     let longitude: number | null = null;
-    
+
     if (zipCode !== undefined && zipCode) {
       const geocoded = await geocodeZipCode(zipCode);
       if (geocoded) {
@@ -328,36 +329,37 @@ export async function POST(request: NextRequest) {
         ...(preferredWantsKids !== undefined && { preferredWantsKids }),
         ...(preferredSmokes !== undefined && { preferredSmokes }),
         ...(preferredDrinks !== undefined && { preferredDrinks }),
-        ...(preferredActivity !== undefined && { 
-          preferredActivity: Array.isArray(preferredActivity) 
-            ? normalizeValueArrayToDB(preferredActivity) 
-            : (preferredActivity ? normalizeValueArrayToDB([preferredActivity]) : []) 
+        ...(preferredActivity !== undefined && {
+          preferredActivity: Array.isArray(preferredActivity)
+            ? normalizeValueArrayToDB(preferredActivity)
+            : (preferredActivity ? normalizeValueArrayToDB([preferredActivity]) : [])
         }),
-        ...(preferredEducation !== undefined && { 
-          preferredEducation: Array.isArray(preferredEducation) 
-            ? normalizeEducationArrayToDB(preferredEducation) 
-            : [] 
+        ...(preferredEducation !== undefined && {
+          preferredEducation: Array.isArray(preferredEducation)
+            ? normalizeEducationArrayToDB(preferredEducation)
+            : []
         }),
-        ...(preferredPoliticalViews !== undefined && { 
-          preferredPoliticalViews: Array.isArray(preferredPoliticalViews) 
-            ? normalizeValueArrayToDB(preferredPoliticalViews) 
-            : [] 
+        ...(preferredPoliticalViews !== undefined && {
+          preferredPoliticalViews: Array.isArray(preferredPoliticalViews)
+            ? normalizeValueArrayToDB(preferredPoliticalViews)
+            : []
         }),
-        ...(preferredDiet !== undefined && { 
-          preferredDiet: Array.isArray(preferredDiet) 
-            ? normalizeValueArrayToDB(preferredDiet) 
-            : [] 
+        ...(preferredDiet !== undefined && {
+          preferredDiet: Array.isArray(preferredDiet)
+            ? normalizeValueArrayToDB(preferredDiet)
+            : []
         }),
-        ...(preferredRelationshipType !== undefined && { 
-          preferredRelationshipType: Array.isArray(preferredRelationshipType) 
-            ? normalizeRelationshipTypeArrayToDB(preferredRelationshipType) 
-            : [] 
+        ...(preferredRelationshipType !== undefined && {
+          preferredRelationshipType: Array.isArray(preferredRelationshipType)
+            ? normalizeRelationshipTypeArrayToDB(preferredRelationshipType)
+            : []
         }),
         ...(preferredPets !== undefined && {
           preferredPets: Array.isArray(preferredPets) ? preferredPets : [],
         }),
         ...(variabilityLevel !== undefined && { variabilityLevel }),
         ...(variabilityFilters !== undefined && { variabilityFilters }),
+        ...(idVerificationFilter !== undefined && { idVerificationFilter }),
         updatedAt: new Date(),
       },
       create: {
@@ -367,8 +369,8 @@ export async function POST(request: NextRequest) {
         preferredSexualOrientation: preferredSexualOrientation || null,
         preferredMinAge: preferredMinAge || 18,
         preferredMaxAge: preferredMaxAge || 130,
-          preferredMinHeight: preferredMinHeight ? Math.round(preferredMinHeight) : null,
-          preferredMaxHeight: preferredMaxHeight ? Math.round(preferredMaxHeight) : null,
+        preferredMinHeight: preferredMinHeight ? Math.round(preferredMinHeight) : null,
+        preferredMaxHeight: preferredMaxHeight ? Math.round(preferredMaxHeight) : null,
         preferredMaxDistanceKm: maxDistanceKm || 50,
         preferredCoronavirusVaccinated: normalizeYesNo(preferredCoronavirusVaccinated) || null,
         preferredReligions: preferredReligions || [],
@@ -383,24 +385,25 @@ export async function POST(request: NextRequest) {
         preferredWantsKids: preferredWantsKids || null,
         preferredSmokes: preferredSmokes || null,
         preferredDrinks: preferredDrinks || null,
-        preferredActivity: Array.isArray(preferredActivity) 
-          ? normalizeValueArrayToDB(preferredActivity) 
+        preferredActivity: Array.isArray(preferredActivity)
+          ? normalizeValueArrayToDB(preferredActivity)
           : (preferredActivity ? normalizeValueArrayToDB([preferredActivity]) : []),
-        preferredEducation: Array.isArray(preferredEducation) 
-          ? normalizeEducationArrayToDB(preferredEducation) 
+        preferredEducation: Array.isArray(preferredEducation)
+          ? normalizeEducationArrayToDB(preferredEducation)
           : [],
-        preferredPoliticalViews: Array.isArray(preferredPoliticalViews) 
-          ? normalizeValueArrayToDB(preferredPoliticalViews) 
+        preferredPoliticalViews: Array.isArray(preferredPoliticalViews)
+          ? normalizeValueArrayToDB(preferredPoliticalViews)
           : [],
-        preferredDiet: Array.isArray(preferredDiet) 
-          ? normalizeValueArrayToDB(preferredDiet) 
+        preferredDiet: Array.isArray(preferredDiet)
+          ? normalizeValueArrayToDB(preferredDiet)
           : [],
-        preferredRelationshipType: Array.isArray(preferredRelationshipType) 
-          ? normalizeRelationshipTypeArrayToDB(preferredRelationshipType) 
+        preferredRelationshipType: Array.isArray(preferredRelationshipType)
+          ? normalizeRelationshipTypeArrayToDB(preferredRelationshipType)
           : [],
         preferredPets: Array.isArray(preferredPets) ? preferredPets : [],
         variabilityLevel: variabilityLevel !== undefined ? variabilityLevel : 0,
         variabilityFilters: variabilityFilters || [],
+        idVerificationFilter: idVerificationFilter || "show_id_verified_only",
         updatedAt: new Date(),
       },
     });

@@ -95,8 +95,8 @@ export async function resendVerificationEmail(credential: string) {
       return { error: "User not found." };
     }
 
-    let { id: userId, email: userEmail, isVerified, googleId } = existingUser;
-    userEmail = isVerified ? existingUser.pendingEmail : existingUser.email;
+    let { id: userId, email: userEmail, isEmailVerified, googleId } = existingUser;
+    userEmail = isEmailVerified ? existingUser.pendingEmail : existingUser.email;
 
     if (!userEmail && googleId)
       return { error: "You didn't sign up with email and password." };

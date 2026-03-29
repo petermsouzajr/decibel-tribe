@@ -46,7 +46,7 @@ describe("login with deleted accounts", () => {
     bannedAt: null,
     pendingEmail: null,
     passwordHash: "hashedpassword",
-    isVerified: true,
+    isEmailVerified: true,
     googleId: null,
     avatarUrl: null,
     bio: null,

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import kyInstance from "@/lib/ky";
-import { Loader2, Heart, Check, X } from "lucide-react";
+import { Loader2, Heart, Check, X, ShieldCheck, AlertTriangle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import { formatRelativeDate } from "@/lib/utils";
 import PotentialMatchCard from "./PotentialMatchCard";
 import MatchCelebration from "./MatchCelebration";
 import DatingHeader from "./DatingHeader";
+
+type IdVerificationFilter = "show_id_verified_only" | "show_all" | "show_unverified_only";
 
 interface LikeUser {
   id: string;
@@ -24,53 +26,104 @@ interface LikeUser {
   location: string | null;
   likedAt: Date;
   message: string | null;
+  isIDVerified: boolean;
 }
+
+const FILTER_OPTIONS: {
+  value: IdVerificationFilter;
+  label: string;
+  icon: React.ReactNode;
+  emptyMessage: string;
+}[] = [
+  {
+    value: "show_id_verified_only",
+    label: "ID Verified",
+    icon: <ShieldCheck className="w-3.5 h-3.5" />,
+    emptyMessage: "No ID-verified users have liked you yet.",
+  },
+  {
+    value: "show_all",
+    label: "Show All",
+    icon: <Heart className="w-3.5 h-3.5" />,
+    emptyMessage: "No one has liked you yet — keep swiping!",
+  },
+  {
+    value: "show_unverified_only",
+    label: "Unverified",
+    icon: <AlertTriangle className="w-3.5 h-3.5" />,
+    emptyMessage: "No unverified users have liked you yet.",
+  },
+];
 
 export default function LikesYouList() {
   const router = useRouter();
   const { toast } = useToast();
   const [likes, setLikes] = useState<LikeUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filterLoading, setFilterLoading] = useState(false);
   const [processing, setProcessing] = useState<string | null>(null);
   const [showMatchCelebration, setShowMatchCelebration] = useState(false);
   const [matchedUser, setMatchedUser] = useState<LikeUser | null>(null);
   const [selectedUser, setSelectedUser] = useState<LikeUser | null>(null);
+  const [activeFilter, setActiveFilter] = useState<IdVerificationFilter>("show_id_verified_only");
+
+  const fetchLikes = useCallback(
+    async (filter?: IdVerificationFilter, isFilterSwitch = false) => {
+      try {
+        if (isFilterSwitch) {
+          setFilterLoading(true);
+        } else {
+          setLoading(true);
+        }
+
+        const params = filter ? `?filter=${filter}` : "";
+        const response = await kyInstance
+          .get(`/api/dating/likes-you${params}`)
+          .json<{
+            users: LikeUser[];
+            activeFilter: IdVerificationFilter;
+            savedFilter: IdVerificationFilter;
+          }>();
+
+        // Convert date strings to Date objects
+        const processedLikes = response.users.map((user) => ({
+          ...user,
+          likedAt: new Date(user.likedAt),
+        }));
+
+        setLikes(processedLikes);
+        // Sync UI to the filter the API actually used (handles first load from saved prefs)
+        setActiveFilter(response.activeFilter);
+      } catch (error: any) {
+        console.error("Error fetching likes:", error);
+        if (error.response?.status === 403) {
+          toast({
+            variant: "destructive",
+            description: "Access denied",
+          });
+          router.push("/dating");
+        } else {
+          toast({
+            variant: "destructive",
+            description: "Failed to load likes",
+          });
+        }
+      } finally {
+        setLoading(false);
+        setFilterLoading(false);
+      }
+    },
+    [router, toast]
+  );
 
   useEffect(() => {
     fetchLikes();
-  }, []);
+  }, [fetchLikes]);
 
-  const fetchLikes = async () => {
-    try {
-      setLoading(true);
-      const response = await kyInstance
-        .get("/api/dating/likes-you")
-        .json<{ users: LikeUser[] }>();
-
-      // Convert date strings to Date objects
-      const processedLikes = response.users.map((user) => ({
-        ...user,
-        likedAt: new Date(user.likedAt),
-      }));
-
-      setLikes(processedLikes);
-    } catch (error: any) {
-      console.error("Error fetching likes:", error);
-      if (error.response?.status === 403) {
-        toast({
-          variant: "destructive",
-          description: "Access denied",
-        });
-        router.push("/dating");
-      } else {
-        toast({
-          variant: "destructive",
-          description: "Failed to load likes",
-        });
-      }
-    } finally {
-      setLoading(false);
-    }
+  const handleFilterChange = (filter: IdVerificationFilter) => {
+    if (filter === activeFilter) return;
+    setActiveFilter(filter);
+    fetchLikes(filter, true);
   };
 
   const handleDecision = async (userId: string, decision: "LIKE" | "DISLIKE") => {
@@ -80,10 +133,7 @@ export default function LikesYouList() {
       setProcessing(userId);
       const response = await kyInstance
         .post("/api/dating/decision", {
-          json: {
-            targetUserId: userId,
-            decision,
-          },
+          json: { targetUserId: userId, decision },
         })
         .json<{ success: boolean; isMatch: boolean; matchId?: string }>();
 
@@ -93,19 +143,12 @@ export default function LikesYouList() {
           setMatchedUser(matched);
           setShowMatchCelebration(true);
         }
-        toast({
-          description: `It's a match! 🎉`,
-        });
-        // Remove from likes list
+        toast({ description: `It's a match! 🎉` });
         setLikes((prev) => prev.filter((u) => u.id !== userId));
       } else if (decision === "LIKE") {
-        toast({
-          description: "Liked back! They'll be notified if it's a match.",
-        });
-        // Remove from likes list
+        toast({ description: "Liked back! They'll be notified if it's a match." });
         setLikes((prev) => prev.filter((u) => u.id !== userId));
       } else {
-        // Disliked - remove from list
         setLikes((prev) => prev.filter((u) => u.id !== userId));
       }
     } catch (error: any) {
@@ -113,7 +156,7 @@ export default function LikesYouList() {
       if (error.response?.status === 403) {
         toast({
           variant: "destructive",
-          description: "Verification required to like users",
+          description: "Email verification required to like users.",
         });
       } else {
         toast({
@@ -126,6 +169,39 @@ export default function LikesYouList() {
     }
   };
 
+  const activeFilterConfig = FILTER_OPTIONS.find((o) => o.value === activeFilter)!;
+
+  // ─── Filter Toggle Bar ────────────────────────────────────────────────────
+  const FilterBar = () => (
+    <div className="flex items-center gap-2 mb-5 flex-wrap">
+      <span className="text-sm font-medium text-gray-600 mr-1">Show:</span>
+      {FILTER_OPTIONS.map((opt) => {
+        const isActive = activeFilter === opt.value;
+        return (
+          <button
+            key={opt.value}
+            onClick={() => handleFilterChange(opt.value)}
+            disabled={filterLoading}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
+              isActive
+                ? opt.value === "show_id_verified_only"
+                  ? "bg-green-100 border-green-400 text-green-800 shadow-sm"
+                  : opt.value === "show_unverified_only"
+                  ? "bg-amber-100 border-amber-400 text-amber-800 shadow-sm"
+                  : "bg-purple-100 border-purple-400 text-purple-800 shadow-sm"
+                : "bg-white border-gray-300 text-gray-600 hover:border-gray-400"
+            }`}
+          >
+            {opt.icon}
+            {opt.label}
+          </button>
+        );
+      })}
+      {filterLoading && <Loader2 className="w-4 h-4 animate-spin text-gray-400 ml-1" />}
+    </div>
+  );
+
+  // ─── Loading ─────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="w-full min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
@@ -142,21 +218,35 @@ export default function LikesYouList() {
     );
   }
 
+  // ─── Empty State ──────────────────────────────────────────────────────────
   if (likes.length === 0) {
     return (
       <div className="w-full min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
         <div className="w-full px-2 sm:px-4 lg:max-w-4xl lg:mx-auto">
           <DatingHeader title="Likes You" />
+          <FilterBar />
           <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-            <div className="w-64 h-96 bg-gray-100 rounded-xl mx-auto mb-6 flex items-center justify-center">
+            <div className="w-64 h-64 bg-gray-100 rounded-xl mx-auto mb-6 flex items-center justify-center">
               <div className="text-center">
                 <Heart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600 font-semibold">No likes yet</p>
                 <p className="text-sm text-gray-500 mt-2">
-                  Keep swiping to get more likes!
+                  {activeFilterConfig.emptyMessage}
                 </p>
               </div>
             </div>
+            {activeFilter !== "show_all" && (
+              <p className="text-sm text-gray-500 mb-4">
+                Try switching to{" "}
+                <button
+                  className="text-purple-600 font-medium underline underline-offset-2"
+                  onClick={() => handleFilterChange("show_all")}
+                >
+                  Show All
+                </button>{" "}
+                to see everyone who liked you.
+              </p>
+            )}
             <Button
               onClick={() => router.push("/dating")}
               className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
@@ -169,19 +259,28 @@ export default function LikesYouList() {
     );
   }
 
+  // ─── Main List ────────────────────────────────────────────────────────────
   return (
     <>
       <div className="w-full min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
         <div className="w-full px-2 sm:px-4 lg:max-w-4xl lg:mx-auto">
           <DatingHeader title="Likes You" />
-          <div className="mb-6">
-            <p className="text-gray-600">
+
+          {/* Filter bar + count */}
+          <div className="mb-2">
+            <FilterBar />
+            <p className="text-sm text-gray-500">
               {likes.length} {likes.length === 1 ? "person likes" : "people like"} you
+              {activeFilter !== "show_all" && (
+                <span className="ml-1 text-gray-400">
+                  ({activeFilterConfig.label} filter active)
+                </span>
+              )}
             </p>
           </div>
 
           {/* Grid View */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 mt-4">
             {likes.map((user) => {
               const photoUrl =
                 user.primaryPhotoUrl || user.avatarUrl || "/assets/avatar-placeholder.png";
@@ -201,12 +300,28 @@ export default function LikesYouList() {
                       className="object-cover"
                       loading="lazy"
                     />
+                    {/* Age badge */}
                     {user.age && (
                       <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-semibold text-gray-900">
                         {user.age}
                       </div>
                     )}
+                    {/* ID verification badge overlay on photo */}
+                    <div className="absolute bottom-2 left-2">
+                      {user.isIDVerified ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100/95 text-green-800 border border-green-300 backdrop-blur-sm">
+                          <ShieldCheck className="w-3 h-3 text-green-600" />
+                          ID Verified
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100/95 text-amber-800 border border-amber-300 backdrop-blur-sm">
+                          <AlertTriangle className="w-3 h-3 text-amber-600" />
+                          ID Unverified
+                        </span>
+                      )}
+                    </div>
                   </div>
+
                   <div className="p-4">
                     <h3 className="font-semibold text-gray-900 truncate mb-1">
                       {user.displayName}
@@ -297,6 +412,7 @@ export default function LikesYouList() {
                 primaryPhotoUrl: selectedUser.primaryPhotoUrl,
                 distance: null,
                 location: selectedUser.location,
+                isIDVerified: selectedUser.isIDVerified,
                 musicInfo: { instruments: [], skills: [] },
               }}
               onLike={() => {
@@ -373,4 +489,3 @@ export default function LikesYouList() {
     </>
   );
 }
-

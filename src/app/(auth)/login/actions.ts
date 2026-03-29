@@ -77,6 +77,12 @@ export async function login(formData: FormData) {
       return { error: "Invalid username or password" };
     }
 
+    // Email verification is required to access the platform.
+    // Unverified users must click the link in their signup email first.
+    if (!user.isEmailVerified) {
+      return { error: "Please verify your email address before logging in. Check your inbox for a verification link." };
+    }
+
     // Create session
     const session = await lucia.createSession(user.id, {});
     const sessionCookie = lucia.createSessionCookie(session.id);

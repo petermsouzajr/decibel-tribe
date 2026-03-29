@@ -88,7 +88,7 @@ describe("AuthTeam - seedUsers Module", () => {
           id: `mockId_10_${username}`, // Simulate generated ID
           username: username,
           createdAt: new Date("2023-01-01T12:00:00.000Z"), // Use consistent date
-          isVerified: !username.toLowerCase().includes("unverified"), // Simple check
+          isEmailVerified: !username.toLowerCase().includes("unverified"), // Simple check
         }));
       },
     );
@@ -113,7 +113,7 @@ describe("AuthTeam - seedUsers Module", () => {
       (u) => u.username === mockCypressEnv.verifiedUser,
     );
     expect(verifiedUser?.passwordHash).toBe("mockHashedPassword");
-    expect(verifiedUser?.isVerified).toBe(true); // Key does not contain 'unverified'
+    expect(verifiedUser?.isEmailVerified).toBe(true); // Key does not contain 'unverified'
     expect(verifiedUser?.googleId).toBeNull(); // Key is not 'googleLoginUser'
     expect(verifiedUser?.email).toBe(
       `${mockCypressEnv.verifiedUser.toLowerCase()}${mockCypressEnv.testUserEmailDomain}`,
@@ -131,7 +131,7 @@ describe("AuthTeam - seedUsers Module", () => {
       (u) => u.username === mockCypressEnv.googleLoginUser,
     );
     expect(googleUser?.passwordHash).toBeNull(); // Key is 'googleLoginUser'
-    expect(googleUser?.isVerified).toBe(true); // Key does not contain 'unverified'
+    expect(googleUser?.isEmailVerified).toBe(true); // Key does not contain 'unverified'
     expect(googleUser?.googleId).toBe("1234567890abcdefghij"); // Key is 'googleLoginUser'
     expect(googleUser?.email).toBe(
       `${mockCypressEnv.googleLoginUser.toLowerCase()}${mockCypressEnv.testUserEmailDomain}`,
@@ -203,7 +203,7 @@ describe("AuthTeam - seedUsers Module", () => {
     expect(verifiedResultUser).toEqual({
       id: expect.any(String),
       username: mockCypressEnv.verifiedUser,
-      isVerified: true,
+      isEmailVerified: true,
       createdAt: expect.any(Date),
     });
   });

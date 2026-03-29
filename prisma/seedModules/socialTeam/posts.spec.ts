@@ -35,25 +35,25 @@ describe("SocialTeam - seedPublicPosts Module", () => {
     {
       id: "userV1",
       username: "VerifiedUser",
-      isVerified: true,
+      isEmailVerified: true,
       createdAt: new Date("2023-01-01"),
     },
     {
       id: "userV2",
       username: "VerifiedUserManyPosts",
-      isVerified: true,
+      isEmailVerified: true,
       createdAt: new Date("2023-01-05"),
     },
     {
       id: "userNP",
       username: "noPostsUser",
-      isVerified: true,
+      isEmailVerified: true,
       createdAt: new Date("2023-01-10"),
     },
     {
       id: "userNV",
       username: "NotVerifiedUser",
-      isVerified: false,
+      isEmailVerified: false,
       createdAt: new Date("2023-01-15"),
     },
   ];

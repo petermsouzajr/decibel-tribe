@@ -1,6 +1,6 @@
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
-import streamServerClient from "@/lib/stream";
+import { getUnreadCountSafe } from "@/lib/stream";
 import MenuBarContent from "./MenuBarContent";
 import { UserData } from "@/lib/types";
 
@@ -21,14 +21,7 @@ export default async function MenuBar({ className }: MenuBarProps) {
         read: false,
       },
     }),
-    (async () => {
-      try {
-        return (await streamServerClient.getUnreadCount(user.id)).total_unread_count;
-      } catch (error) {
-        console.error("StreamChat error in MenuBar:", error);
-        return 0; // Return 0 if StreamChat fails
-      }
-    })(),
+    getUnreadCountSafe(user),
   ]);
 
   return (

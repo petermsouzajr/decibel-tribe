@@ -19,7 +19,7 @@ interface UserInputForCreate {
   id: string;
   username: string;
   email: string | null;
-  isVerified: boolean;
+  isEmailVerified: boolean;
   createdAt: Date;
   displayName: string;
   avatarUrl: string | null;
@@ -35,7 +35,7 @@ export interface SeededUser {
   id: string;
   username: string;
   createdAt: Date;
-  isVerified: boolean;
+  isEmailVerified: boolean;
 }
 
 const userQuantity = 1; // Define locally for this module
@@ -80,7 +80,7 @@ export async function seedUsers(
 
     // Determine user characteristics based on the KEY, not the username content
     const isGoogleLoginUser = key === "googleLoginUser";
-    const isVerified = !key.toLowerCase().includes("unverified");
+    const isEmailVerified = !key.toLowerCase().includes("unverified");
     const hasAvatar = !key.toLowerCase().includes("noavatar");
     const isNoBioUser = key.toLowerCase().includes("nobio");
 
@@ -104,7 +104,7 @@ export async function seedUsers(
       email,
       displayName: username, // Ensure displayName is never blank
       passwordHash: userPasswordHash,
-      isVerified,
+      isEmailVerified,
       avatarUrl,
       googleId,
       bio,
@@ -149,7 +149,7 @@ export async function seedUsers(
         id: true,
         username: true,
         createdAt: true,
-        isVerified: true,
+        isEmailVerified: true,
         // Select other fields ONLY if strictly needed by downstream modules
       },
     });

@@ -590,6 +590,74 @@ export async function seedDatingProfiles(
     });
   }
 
+  // ID Verification test users — 2 will get isIDVerified=true records, 2 will get isIDVerified=false
+  // (the explicit records are created in identityVerification.ts by username lookup)
+  const idVerificationTestUsers: Array<{ username: string; config: typeof testUserConfigs[0] }> = [
+    {
+      username: "testUserDatingIDVerified1",
+      config: {
+        username: "testUserDatingIDVerified1",
+        displayName: "ID Verified User 1",
+        age: 26,
+        gender: "Female",
+        sexualOrientation: "Straight",
+        location: GUARANTEED_TEST_CITIES[0], // Los Angeles — same as testUserDatingPendingMatches
+        preferredGender: JSON.stringify([{ gender: "Male", sexualOrientation: ["Straight"] }]),
+        preferredSexualOrientation: "Straight",
+        preferredMinAge: 22,
+        preferredMaxAge: 34,
+      },
+    },
+    {
+      username: "testUserDatingIDVerified2",
+      config: {
+        username: "testUserDatingIDVerified2",
+        displayName: "ID Verified User 2",
+        age: 29,
+        gender: "Male",
+        sexualOrientation: "Straight",
+        location: GUARANTEED_TEST_CITIES[0], // Los Angeles
+        preferredGender: JSON.stringify([{ gender: "Female", sexualOrientation: ["Straight"] }]),
+        preferredSexualOrientation: "Straight",
+        preferredMinAge: 23,
+        preferredMaxAge: 36,
+      },
+    },
+    {
+      username: "testUserDatingIDUnverified1",
+      config: {
+        username: "testUserDatingIDUnverified1",
+        displayName: "ID Unverified User 1",
+        age: 24,
+        gender: "Female",
+        sexualOrientation: "Straight",
+        location: GUARANTEED_TEST_CITIES[0], // Los Angeles
+        preferredGender: JSON.stringify([{ gender: "Male", sexualOrientation: ["Straight"] }]),
+        preferredSexualOrientation: "Straight",
+        preferredMinAge: 21,
+        preferredMaxAge: 32,
+      },
+    },
+    {
+      username: "testUserDatingIDUnverified2",
+      config: {
+        username: "testUserDatingIDUnverified2",
+        displayName: "ID Unverified User 2",
+        age: 31,
+        gender: "Male",
+        sexualOrientation: "Bisexual",
+        location: GUARANTEED_TEST_CITIES[0], // Los Angeles
+        preferredGender: JSON.stringify([
+          { gender: "Female", sexualOrientation: ["Straight", "Bisexual"] },
+          { gender: "Male", sexualOrientation: ["Gay", "Bisexual"] },
+        ]),
+        preferredSexualOrientation: null,
+        preferredMinAge: 24,
+        preferredMaxAge: 38,
+      },
+    },
+  ];
+
   // Combine all test users
   const allTestUsers = [
     ...testUserConfigs.map(c => ({ username: c.username, config: c })),
@@ -597,6 +665,7 @@ export async function seedDatingProfiles(
     ...usersWhoLikedPending,
     ...mutualMatchUsers,
     ...usersLikedByLikedBack,
+    ...idVerificationTestUsers,
   ];
 
   // Create all test users
@@ -617,7 +686,7 @@ export async function seedDatingProfiles(
       email,
       displayName: identity.displayName,
       passwordHash: hashedPassword,
-      isVerified: true,
+      isEmailVerified: true,
       isDatingActive: true,
       avatarUrl: `https://i.pravatar.cc/150?img=${faker.number.int({ min: 1, max: 70 })}`,
       bio: `Test user: ${config.displayName}`,
@@ -676,6 +745,7 @@ export async function seedDatingProfiles(
       matchMusicTastes: false,
       variabilityLevel: 0,
       variabilityFilters: [],
+      idVerificationFilter: "show_id_verified_only",
     };
     preferencesToCreate.push(preferencesData);
 
@@ -707,6 +777,19 @@ export async function seedDatingProfiles(
     for (let i = 0; i < 5; i++) {
       const likerUsername = `testUserDatingLikedPending${i + 1}`;
       const likerId = testUsers[likerUsername]?.id;
+      if (likerId) {
+        swipesToCreate.push({
+          fromUserId: likerId,
+          toUserId: pendingMatchesUserId,
+          direction: "LIKE",
+        });
+      }
+    }
+
+    // ID Verification test users also like testUserDatingPendingMatches
+    // so that tester can toggle the filter and see verified vs unverified likers
+    for (const idTestUser of idVerificationTestUsers) {
+      const likerId = testUsers[idTestUser.username]?.id;
       if (likerId) {
         swipesToCreate.push({
           fromUserId: likerId,
@@ -807,7 +890,7 @@ export async function seedDatingProfiles(
         email,
         displayName: identity.displayName,
         passwordHash: hashedPassword,
-        isVerified: true,
+        isEmailVerified: true,
         isDatingActive: true,
         avatarUrl: `https://i.pravatar.cc/150?img=${faker.number.int({
           min: 1,
@@ -978,6 +1061,8 @@ export async function seedDatingProfiles(
               "pets",
             ], { min: 1, max: 5 })
           : [],
+        // Default to safest setting — users can change in the app
+        idVerificationFilter: "show_id_verified_only",
       };
       preferencesToCreate.push(preferencesData);
 
@@ -1041,7 +1126,7 @@ export async function seedDatingProfiles(
       email,
       displayName: identity.displayName,
       passwordHash: hashedPassword,
-      isVerified: true,
+      isEmailVerified: true,
       isDatingActive: true, // Enable dating feature
       avatarUrl: `https://i.pravatar.cc/150?img=${faker.number.int({
         min: 1,
@@ -1212,6 +1297,8 @@ export async function seedDatingProfiles(
               "pets",
             ], { min: 1, max: 5 })
           : [],
+        // Default to safest setting — users can change in the app
+        idVerificationFilter: "show_id_verified_only",
     };
     preferencesToCreate.push(preferencesData);
 
@@ -1269,6 +1356,26 @@ export async function seedDatingProfiles(
     
     const createdUserIds = new Set(actualCreatedUsers.map((u: UserWithIdAndUsername) => u.id));
     console.log(`...Fetched ${actualCreatedUsers.length} actual users from DB.`);
+
+    // Sync all dating users to StreamChat so messaging works for these accounts.
+    // (The regular seed does this in users.ts; this module must mirror that behaviour.)
+    if (streamClient && actualCreatedUsers.length > 0) {
+      try {
+        const streamChatUsers = usersToCreate
+          .filter((u) => createdUserIds.has(userIdMap.get(u.id!) ?? ""))
+          .map((u) => ({
+            id: userIdMap.get(u.id!) ?? u.id!,
+            name: (u.displayName as string) || (u.username as string),
+            image: u.avatarUrl ?? undefined,
+          }));
+        await streamClient.upsertUsers(streamChatUsers);
+        console.log(`...${streamChatUsers.length} dating users upserted to StreamChat.`);
+      } catch (error) {
+        console.error("Failed to upsert dating users to StreamChat:", (error as Error).message);
+      }
+    } else if (!streamClient) {
+      console.warn("Stream Chat client not available. Skipping StreamChat upsert for dating users.");
+    }
 
     // Filter profiles, preferences, and photos to only include users that were actually created
     // and map their user IDs to the actual IDs from the database
@@ -1376,6 +1483,7 @@ export async function seedDatingProfiles(
         matchMusicTastes: p.matchMusicTastes,
         variabilityLevel: p.variabilityLevel ?? 0,
         variabilityFilters: p.variabilityFilters || [],
+        idVerificationFilter: (p as any).idVerificationFilter || "show_id_verified_only",
       };
     });
     
@@ -1530,10 +1638,16 @@ export async function seedDatingProfiles(
     );
     console.log("\nTest Users Created:");
     console.log("  - testUserDatingDeckReady: Has 5 compatible users ready in deck");
-    console.log("  - testUserDatingPendingMatches: Has 5 users who liked them (pending matches)");
+    console.log("  - testUserDatingPendingMatches: Has 5 users who liked them (pending matches) + 4 ID verification test likers");
     console.log("  - testUserDatingMutualMatches: Has 3 mutual matches");
     console.log("  - testUserDatingNoMatches: Fresh user with no activity");
     console.log("  - testUserDatingLikedBack: Liked 5 users, waiting for responses");
+    console.log("\nID Verification Test Users (explicit records set in identityVerification.ts):");
+    console.log("  - testUserDatingIDVerified1: Female, LA, isIDVerified=TRUE — will appear in 'ID Verified' filter");
+    console.log("  - testUserDatingIDVerified2: Male, LA, isIDVerified=TRUE — will appear in 'ID Verified' filter");
+    console.log("  - testUserDatingIDUnverified1: Female, LA, isIDVerified=FALSE — only appears in 'Show All' or 'Unverified' filter");
+    console.log("  - testUserDatingIDUnverified2: Male, LA, isIDVerified=FALSE — only appears in 'Show All' or 'Unverified' filter");
+    console.log("  All 4 have liked testUserDatingPendingMatches — use that account to test the 'Who Likes You' filter.");
 
     return createdDatingUsers;
   } catch (error) {

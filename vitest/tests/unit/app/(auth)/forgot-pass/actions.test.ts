@@ -32,7 +32,7 @@ describe("Password Reset Actions", () => {
     vi.mocked(prisma.user.findFirst).mockResolvedValue({
       id: "1",
       email: "test@example.com",
-      isVerified: false,
+      isEmailVerified: false,
       googleId: null,
       username: "testuser",
       displayName: "Test User",

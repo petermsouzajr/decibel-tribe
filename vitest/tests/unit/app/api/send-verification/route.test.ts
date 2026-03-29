@@ -76,7 +76,7 @@ describe("API Route: GET /api/send-verification", () => {
       token: validToken,
       expiresAt: new Date(Date.now() + 1000 * 60 * 60),
     });
-    mockUserUpdate.mockResolvedValue({ id: userId, isVerified: true });
+    mockUserUpdate.mockResolvedValue({ id: userId, isEmailVerified: true });
     mockEmailVerificationDelete.mockResolvedValue({});
     mockLuciaCreateSession.mockResolvedValue({ id: sessionId });
     mockLuciaCreateSessionCookie.mockReturnValue(sessionCookie);
@@ -146,7 +146,7 @@ describe("API Route: GET /api/send-verification", () => {
     expect(mockUserUpdate).toHaveBeenCalledTimes(1);
     expect(mockUserUpdate).toHaveBeenCalledWith({
       where: { id: userId },
-      data: { isVerified: true },
+      data: { isEmailVerified: true },
     });
     expect(mockEmailVerificationDelete).toHaveBeenCalledTimes(1);
     expect(mockEmailVerificationDelete).toHaveBeenCalledWith({

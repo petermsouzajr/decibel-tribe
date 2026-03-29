@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 
     const user = await prisma.user.update({
       where: { id: verificationRecord.userId },
-      data: { isVerified: true },
+      data: { isEmailVerified: true },
     });
 
     await prisma.emailVerification.delete({

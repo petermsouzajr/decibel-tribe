@@ -29,7 +29,7 @@ interface SeededUser {
   id: string;
   username: string;
   createdAt: Date;
-  isVerified?: boolean;
+  isEmailVerified?: boolean;
 }
 
 // Interface for the data returned by this module

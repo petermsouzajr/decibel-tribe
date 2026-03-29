@@ -12,7 +12,7 @@ import {
 interface UserInput {
   id: string;
   username: string; // For 'noFollowers' check
-  isVerified: boolean; // Assuming only verified users can be followed initially
+  isEmailVerified: boolean; // Assuming only verified users can be followed initially
 }
 
 // Interface for the data returned by this module
@@ -43,7 +43,7 @@ export async function seedFollows(
 
   // Filter users who can be followed (e.g., verified and not 'noFollowers')
   const followableUsers = createdUsers.filter(
-    (user) => user.isVerified && !user.username.includes("noFollowers"),
+    (user) => user.isEmailVerified && !user.username.includes("noFollowers"),
   );
 
   if (followableUsers.length === 0) {

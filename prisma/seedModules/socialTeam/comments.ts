@@ -14,7 +14,7 @@ type PostInput = Pick<Post, "id" | "userId" | "createdAt" | "groupId">;
 interface UserInput {
   id: string;
   username: string;
-  isVerified?: boolean; // Make optional if not directly used here
+  isEmailVerified?: boolean; // Make optional if not directly used here
   createdAt?: Date; // Make optional if not directly used here
 }
 
