@@ -428,7 +428,13 @@ export async function GET(request: NextRequest) {
           // Match gender preference - check if their gender matches any of our preferred genders
           // Skip this filter if gender is in variabilityFilters (allow any gender)
           ...(preferredGenders.length > 0 && preferredGenders.some(p => p.gender) && (!hasVariability || !variabilityFilters.includes("gender")) ? {
-            gender: { in: preferredGenders.map(p => p.gender).filter(Boolean) }
+            gender: { 
+              in: preferredGenders.map(p => p.gender).filter(Boolean).flatMap(g => [
+                g, 
+                g.toLowerCase(), 
+                g.charAt(0).toUpperCase() + g.slice(1).toLowerCase()
+              ]) 
+            }
           } : {}),
           // Match age range (only if both min and max are set)
           // Apply variability if age is in variabilityFilters

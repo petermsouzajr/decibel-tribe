@@ -75,13 +75,13 @@ export default function PotentialMatchCard({
   const getMatchingPreferences = () => {
     if (!userPreferences) return [];
     const matches: string[] = [];
-    
+
     if (match.age && userPreferences.preferredMinAge && userPreferences.preferredMaxAge) {
       if (match.age >= userPreferences.preferredMinAge && match.age <= userPreferences.preferredMaxAge) {
         matches.push("Age");
       }
     }
-    
+
     if (match.height && userPreferences.preferredMinHeight && userPreferences.preferredMaxHeight) {
       const heightInCm = match.height;
       const minHeight = userPreferences.preferredMinHeight;
@@ -90,10 +90,10 @@ export default function PotentialMatchCard({
         matches.push("Height");
       }
     }
-    
+
     // Note: Parental status matching would require preferredHasKids field in preferences
     // For now, we'll just show age and height matches
-    
+
     return matches;
   };
 
@@ -120,33 +120,31 @@ export default function PotentialMatchCard({
         <div className="flex items-center justify-between gap-3 mb-3">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
             {match.displayName}{match.age ? `, ${match.age}` : ""}
-            </h2>
-            <Link href={`/users/${match.username}`} target="_blank">
-              <Button
-                variant="outline"
-                size="sm"
-              className="flex items-center gap-2 text-md sm:text-md bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
-              >
-                <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline">View Profile</span>
-                <span className="sm:hidden">Profile</span>
-              </Button>
-            </Link>
-        </div>
 
-        {/* ID Verification Badge */}
-        <div className="mb-4">
-          {match.isIDVerified ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800 border border-green-300">
-              <ShieldCheck className="w-4 h-4 text-green-600" />
-              ID Verified
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold bg-amber-100 text-amber-800 border border-amber-300">
-              <AlertTriangle className="w-4 h-4 text-amber-600" />
-              ID Unverified
-            </span>
-          )}
+            {/* ID Verification Badge */}
+            {match.isIDVerified ? (
+              <span className="ml-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800 border border-green-300">
+                <ShieldCheck className="w-4 h-4 text-green-600" />
+                ID Verified
+              </span>
+            ) : (
+              <span className="ml-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+                <AlertTriangle className="w-4 h-4 text-amber-600" />
+                ID Unverified
+              </span>
+            )}
+          </h2>
+          <Link href={`/users/${match.username}`} target="_blank">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 text-md sm:text-md bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
+            >
+              <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">View Profile</span>
+              <span className="sm:hidden">Profile</span>
+            </Button>
+          </Link>
         </div>
 
         {/* Matches Preferences Section */}
@@ -329,54 +327,54 @@ export default function PotentialMatchCard({
         {/* Music Info */}
         {(match.musicInfo.instruments.length > 0 ||
           match.musicInfo.skills.length > 0) && (
-          <div className="border-t pt-4 mt-4">
-            <div className="flex items-start gap-2 mb-3">
-              <Music className="w-5 h-5 text-purple-500 mt-0.5" />
-              <div className="flex-1">
-                {match.musicInfo.instruments.length > 0 && (
-                  <div className="mb-2">
-                    <p className="text-xs text-gray-500 mb-1">Instruments</p>
-                    <div className="flex flex-wrap gap-2">
-                      {match.musicInfo.instruments.slice(0, 3).map((instrument, idx) => (
-                        <span
-                          key={idx}
-                          className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full"
-                        >
-                          {instrument}
-                        </span>
-                      ))}
-                      {match.musicInfo.instruments.length > 3 && (
-                        <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                          +{match.musicInfo.instruments.length - 3}
-                        </span>
-                      )}
+            <div className="border-t pt-4 mt-4">
+              <div className="flex items-start gap-2 mb-3">
+                <Music className="w-5 h-5 text-purple-500 mt-0.5" />
+                <div className="flex-1">
+                  {match.musicInfo.instruments.length > 0 && (
+                    <div className="mb-2">
+                      <p className="text-xs text-gray-500 mb-1">Instruments</p>
+                      <div className="flex flex-wrap gap-2">
+                        {match.musicInfo.instruments.slice(0, 3).map((instrument, idx) => (
+                          <span
+                            key={idx}
+                            className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full"
+                          >
+                            {instrument}
+                          </span>
+                        ))}
+                        {match.musicInfo.instruments.length > 3 && (
+                          <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                            +{match.musicInfo.instruments.length - 3}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
-                {match.musicInfo.skills.length > 0 && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">Skills</p>
-                    <div className="flex flex-wrap gap-2">
-                      {match.musicInfo.skills.slice(0, 3).map((skill, idx) => (
-                        <span
-                          key={idx}
-                          className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full"
-                        >
-                          {skill}
-                        </span>
-                      ))}
-                      {match.musicInfo.skills.length > 3 && (
-                        <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                          +{match.musicInfo.skills.length - 3}
-                        </span>
-                      )}
+                  )}
+                  {match.musicInfo.skills.length > 0 && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Skills</p>
+                      <div className="flex flex-wrap gap-2">
+                        {match.musicInfo.skills.slice(0, 3).map((skill, idx) => (
+                          <span
+                            key={idx}
+                            className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                        {match.musicInfo.skills.length > 3 && (
+                          <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                            +{match.musicInfo.skills.length - 3}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
         {processing && (
           <div className="mt-4 text-center text-sm text-gray-500">

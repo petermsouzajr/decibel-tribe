@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if swipe already exists
-    const existingSwipe = await prisma.swipe.findUnique({
+    let existingSwipe = await prisma.swipe.findUnique({
       where: {
         fromUserId_toUserId: {
           fromUserId: user.id,
@@ -93,24 +93,51 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    let swipe;
     if (existingSwipe) {
-      return NextResponse.json(
-        { error: "Already swiped on this user" },
-        { status: 400 }
-      );
-    }
+      if (existingSwipe.direction === decision) {
+        // Decision hasn't changed, silently return success
+        return NextResponse.json({
+          success: true,
+          isMatch: false,
+          matchId: null,
+          swipeId: existingSwipe.id,
+        });
+      }
 
-    // Create swipe record
-    const swipe = await prisma.swipe.create({
-      data: {
-        id: crypto.randomUUID(),
-        fromUserId: user.id,
-        toUserId: targetUserId,
-        direction: decision,
-        message: message || null, // Store message if provided with like
-        createdAt: new Date(),
-      },
-    });
+      // Update swipe decision
+      swipe = await prisma.swipe.update({
+        where: { id: existingSwipe.id },
+        data: {
+          direction: decision,
+          message: message || existingSwipe.message,
+        },
+      });
+
+      // If breaking a LIKE (changing to DISLIKE), explicitly remove any established matches
+      if (decision === "DISLIKE") {
+        await prisma.match.deleteMany({
+          where: {
+            OR: [
+              { user1Id: user.id, user2Id: targetUserId },
+              { user1Id: targetUserId, user2Id: user.id }
+            ]
+          }
+        });
+      }
+    } else {
+      // Create new swipe record
+      swipe = await prisma.swipe.create({
+        data: {
+          id: crypto.randomUUID(),
+          fromUserId: user.id,
+          toUserId: targetUserId,
+          direction: decision,
+          message: message || null, // Store message if provided with like
+          createdAt: new Date(),
+        },
+      });
+    }
 
     let isMatch = false;
     let matchId: string | null = null;
@@ -127,19 +154,26 @@ export async function POST(request: NextRequest) {
       });
 
       if (reciprocalSwipe && reciprocalSwipe.direction === "LIKE") {
-        // Mutual like! Create match
+        // Mutual like! Check if Match already exists to prevent duplication
         const user1Id = user.id < targetUserId ? user.id : targetUserId;
         const user2Id = user.id < targetUserId ? targetUserId : user.id;
-        const match = await prisma.match.create({
-          data: {
-            id: crypto.randomUUID(),
-            user1Id,
-            user2Id,
-            createdAt: new Date(),
-          },
+
+        const existingMatch = await prisma.match.findFirst({
+          where: { user1Id, user2Id }
         });
-        isMatch = true;
-        matchId = match.id;
+
+        if (!existingMatch) {
+          const match = await prisma.match.create({
+            data: {
+              id: crypto.randomUUID(),
+              user1Id,
+              user2Id,
+              createdAt: new Date(),
+            },
+          });
+          isMatch = true;
+          matchId = match.id;
+
 
         // ASYNC: Handle Stream Chat and notifications in background (don't block response)
         // This improves perceived performance - match response returns immediately
@@ -206,6 +240,11 @@ export async function POST(request: NextRequest) {
           // Log but don't block response
           console.error("Error in async match setup:", error);
         });
+        } else {
+          // Match already existed
+          isMatch = true;
+          matchId = existingMatch.id;
+        }
       }
     }
 

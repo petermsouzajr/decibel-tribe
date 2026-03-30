@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import kyInstance from "@/lib/ky";
-import { Loader2, Heart, X, Trash2 } from "lucide-react";
+import { Loader2, Heart, X, Trash2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";

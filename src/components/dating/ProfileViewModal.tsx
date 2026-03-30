@@ -140,13 +140,13 @@ export default function ProfileViewModal({
   const getMatchingPreferences = () => {
     if (!userPreferences || !profile) return [];
     const matches: string[] = [];
-    
+
     if (profile.age && userPreferences.preferredMinAge && userPreferences.preferredMaxAge) {
       if (profile.age >= userPreferences.preferredMinAge && profile.age <= userPreferences.preferredMaxAge) {
         matches.push("Age");
       }
     }
-    
+
     if (profile.height && userPreferences.preferredMinHeight && userPreferences.preferredMaxHeight) {
       const heightInCm = profile.height;
       const minHeight = userPreferences.preferredMinHeight;
@@ -155,7 +155,7 @@ export default function ProfileViewModal({
         matches.push("Height");
       }
     }
-    
+
     return matches;
   };
 
@@ -207,19 +207,19 @@ export default function ProfileViewModal({
             {/* Context Text - Centered below close button */}
             {profile.currentSwipe?.direction && (
               <div className="absolute top-12 right-2 left-2 text-center">
-                <p className="text-xs text-gray-500 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full inline-block">
-  You previously{" "}
-  {profile.currentSwipe.direction === "LIKE" ? (
-    <span className="font-bold bg-green-500 text-white px-2 py-0.5 rounded">
-      liked
-    </span>
-  ) : (
-    <span className="font-bold bg-red-500 text-white px-2 py-0.5 rounded">
-      disliked
-    </span>
-  )}{" "}
-  this person – change your mind?
-</p>
+                <p className="text-md text-gray-500 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full inline-block">
+                  You previously{" "}
+                  {profile.currentSwipe.direction === "LIKE" ? (
+                    <span className="font-bold bg-green-500 text-white px-2 py-0.5 rounded">
+                      liked
+                    </span>
+                  ) : (
+                    <span className="font-bold bg-red-500 text-white px-2 py-0.5 rounded">
+                      disliked
+                    </span>
+                  )}{" "}
+                  this person – change your mind?
+                </p>
               </div>
             )}
           </div>
@@ -423,54 +423,54 @@ export default function ProfileViewModal({
             {/* Music Info */}
             {(profile.musicInfo.instruments.length > 0 ||
               profile.musicInfo.skills.length > 0) && (
-              <div className="border-t pt-4 mt-4">
-                <div className="flex items-start gap-2 mb-3">
-                  <Music className="w-5 h-5 text-purple-500 mt-0.5" />
-                  <div className="flex-1">
-                    {profile.musicInfo.instruments.length > 0 && (
-                      <div className="mb-2">
-                        <p className="text-xs text-gray-500 mb-1">Instruments</p>
-                        <div className="flex flex-wrap gap-2">
-                          {profile.musicInfo.instruments.slice(0, 3).map((instrument, idx) => (
-                            <span
-                              key={idx}
-                              className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full"
-                            >
-                              {instrument}
-                            </span>
-                          ))}
-                          {profile.musicInfo.instruments.length > 3 && (
-                            <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                              +{profile.musicInfo.instruments.length - 3}
-                            </span>
-                          )}
+                <div className="border-t pt-4 mt-4">
+                  <div className="flex items-start gap-2 mb-3">
+                    <Music className="w-5 h-5 text-purple-500 mt-0.5" />
+                    <div className="flex-1">
+                      {profile.musicInfo.instruments.length > 0 && (
+                        <div className="mb-2">
+                          <p className="text-xs text-gray-500 mb-1">Instruments</p>
+                          <div className="flex flex-wrap gap-2">
+                            {profile.musicInfo.instruments.slice(0, 3).map((instrument, idx) => (
+                              <span
+                                key={idx}
+                                className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full"
+                              >
+                                {instrument}
+                              </span>
+                            ))}
+                            {profile.musicInfo.instruments.length > 3 && (
+                              <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                                +{profile.musicInfo.instruments.length - 3}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                    {profile.musicInfo.skills.length > 0 && (
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">Skills</p>
-                        <div className="flex flex-wrap gap-2">
-                          {profile.musicInfo.skills.slice(0, 3).map((skill, idx) => (
-                            <span
-                              key={idx}
-                              className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full"
-                            >
-                              {skill}
-                            </span>
-                          ))}
-                          {profile.musicInfo.skills.length > 3 && (
-                            <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                              +{profile.musicInfo.skills.length - 3}
-                            </span>
-                          )}
+                      )}
+                      {profile.musicInfo.skills.length > 0 && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Skills</p>
+                          <div className="flex flex-wrap gap-2">
+                            {profile.musicInfo.skills.slice(0, 3).map((skill, idx) => (
+                              <span
+                                key={idx}
+                                className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full"
+                              >
+                                {skill}
+                              </span>
+                            ))}
+                            {profile.musicInfo.skills.length > 3 && (
+                              <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                                +{profile.musicInfo.skills.length - 3}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
           </div>
         </div>
 
@@ -482,13 +482,12 @@ export default function ProfileViewModal({
               <Button
                 size="icon"
                 variant="outline"
-                className={`rounded-full border-2 transition-all active:scale-95 bg-white ${
-                  profile.currentSwipe?.direction === "DISLIKE"
+                className={`rounded-full border-2 transition-all active:scale-95 bg-white ${profile.currentSwipe?.direction === "DISLIKE"
                     ? "w-14 h-14 sm:w-16 sm:h-16 border-red-300 hover:bg-red-50 opacity-60 cursor-not-allowed"
                     : profile.currentSwipe?.direction === "LIKE" && profile.currentSwipe?.canUnlike
-                    ? "w-20 h-20 sm:w-24 sm:h-24 border-red-500 hover:bg-red-50 shadow-lg"
-                    : "w-16 h-16 sm:w-20 sm:h-20 border-red-500 hover:bg-red-50"
-                }`}
+                      ? "w-20 h-20 sm:w-24 sm:h-24 border-red-500 hover:bg-red-50 shadow-lg"
+                      : "w-16 h-16 sm:w-20 sm:h-20 border-red-500 hover:bg-red-50"
+                  }`}
                 onClick={handleDislike}
                 disabled={processing || profile.currentSwipe?.direction === "DISLIKE"}
                 aria-label="Dislike"
@@ -497,9 +496,8 @@ export default function ProfileViewModal({
                 {processing ? (
                   <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-red-500" />
                 ) : (
-                  <XIcon className={`w-6 h-6 sm:w-8 sm:h-8 ${
-                    profile.currentSwipe?.direction === "DISLIKE" ? "text-red-300" : "text-red-500"
-                  }`} />
+                  <XIcon className={`w-6 h-6 sm:w-8 sm:h-8 ${profile.currentSwipe?.direction === "DISLIKE" ? "text-red-300" : "text-red-500"
+                    }`} />
                 )}
               </Button>
 
@@ -507,30 +505,27 @@ export default function ProfileViewModal({
               <Button
                 size="icon"
                 variant="outline"
-                className={`rounded-full border-2 transition-all active:scale-95 bg-white ${
-                  profile.currentSwipe?.direction === "LIKE"
+                className={`rounded-full border-2 transition-all active:scale-95 bg-white ${profile.currentSwipe?.direction === "LIKE"
                     ? profile.currentSwipe?.canUnlike
                       ? "w-20 h-20 sm:w-24 sm:h-24 border-yellow-500 hover:bg-yellow-50 shadow-lg"
                       : "w-14 h-14 sm:w-16 sm:h-16 border-green-300 hover:bg-green-50 opacity-60 cursor-not-allowed"
                     : profile.currentSwipe?.direction === "DISLIKE"
-                    ? "w-20 h-20 sm:w-24 sm:h-24 border-green-500 hover:bg-green-50 shadow-lg"
-                    : "w-16 h-16 sm:w-20 sm:h-20 border-green-500 hover:bg-green-50"
-                }`}
+                      ? "w-20 h-20 sm:w-24 sm:h-24 border-green-500 hover:bg-green-50 shadow-lg"
+                      : "w-16 h-16 sm:w-20 sm:h-20 border-green-500 hover:bg-green-50"
+                  }`}
                 onClick={profile.currentSwipe?.direction === "LIKE" && profile.currentSwipe?.canUnlike ? handleUnlike : handleLike}
                 disabled={processing || (profile.currentSwipe?.direction === "LIKE" && !profile.currentSwipe?.canUnlike)}
                 aria-label={profile.currentSwipe?.direction === "LIKE" && profile.currentSwipe?.canUnlike ? "Unlike" : "Like"}
                 title={profile.currentSwipe?.direction === "LIKE" && !profile.currentSwipe?.canUnlike ? "Already liked" : profile.currentSwipe?.direction === "LIKE" && profile.currentSwipe?.canUnlike ? "Unlike" : "Like"}
               >
                 {processing ? (
-                  <Loader2 className={`w-6 h-6 sm:w-8 sm:h-8 animate-spin ${
-                    profile.currentSwipe?.direction === "LIKE" && profile.currentSwipe?.canUnlike ? "text-yellow-600" : "text-green-500"
-                  }`} />
+                  <Loader2 className={`w-6 h-6 sm:w-8 sm:h-8 animate-spin ${profile.currentSwipe?.direction === "LIKE" && profile.currentSwipe?.canUnlike ? "text-yellow-600" : "text-green-500"
+                    }`} />
                 ) : profile.currentSwipe?.direction === "LIKE" && profile.currentSwipe?.canUnlike ? (
                   <RotateCcw className="w-7 h-7 sm:w-9 sm:h-9 text-yellow-600" />
                 ) : (
-                  <Heart className={`w-6 h-6 sm:w-8 sm:h-8 fill-green-500 ${
-                    profile.currentSwipe?.direction === "LIKE" ? "text-green-300" : "text-green-500"
-                  }`} />
+                  <Heart className={`w-6 h-6 sm:w-8 sm:h-8 fill-green-500 ${profile.currentSwipe?.direction === "LIKE" ? "text-green-300" : "text-green-500"
+                    }`} />
                 )}
               </Button>
             </div>

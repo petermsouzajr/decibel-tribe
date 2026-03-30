@@ -173,6 +173,31 @@ export async function POST(request: NextRequest) {
           ? preferredMaxDistanceKm
           : undefined;
 
+    // Validate that if a gender preference is selected, an orientation must map to it
+    if (preferredGender) {
+      try {
+        const parsedGenders = JSON.parse(preferredGender);
+        if (Array.isArray(parsedGenders)) {
+          for (const p of parsedGenders) {
+            if (!p.sexualOrientation || !Array.isArray(p.sexualOrientation) || p.sexualOrientation.length === 0) {
+              return NextResponse.json(
+                { error: `Please select at least one orientation preference for ${p.gender || 'the selected gender'}` },
+                { status: 400 }
+              );
+            }
+          }
+        }
+      } catch (e) {
+        // If it's a legacy string format, ensure preferredSexualOrientation is provided
+        if (!preferredSexualOrientation && typeof preferredGender === 'string') {
+          return NextResponse.json(
+            { error: "Please select an orientation preference for your selected gender" },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
     const normalizeYesNo = (value: unknown): string | null | undefined => {
       if (value === undefined) return undefined;
       if (value === null) return null;

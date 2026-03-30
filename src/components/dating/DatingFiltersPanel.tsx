@@ -283,6 +283,10 @@ export default function DatingFiltersPanel({
     "Undecided",
   ];
 
+  const isValid = formData.preferredGenders.every(
+    (p) => p.sexualOrientation && p.sexualOrientation.length > 0
+  );
+
   const content = (
     <>
       {loading ? (
@@ -372,10 +376,13 @@ export default function DatingFiltersPanel({
 
                       {isSelected && (
                         <div className="ml-7 mt-3">
-                          <label className="block text-xs text-gray-300 font-medium mb-2">
-                            Their orientation preference
+                          <label className={`block text-xs font-medium mb-1 ${(!preference?.sexualOrientation || preference.sexualOrientation.length === 0) ? 'text-red-400' : 'text-gray-300'}`}>
+                            Their orientation preference <span className="text-red-500">*</span>
                           </label>
-                          <div className="grid grid-cols-2 gap-2">
+                          {(!preference?.sexualOrientation || preference.sexualOrientation.length === 0) && (
+                            <p className="text-xs text-red-400 mb-2 font-medium">Please select at least one orientation.</p>
+                          )}
+                          <div className={`grid grid-cols-2 gap-2 p-2 rounded-lg transition-colors ${(!preference?.sexualOrientation || preference.sexualOrientation.length === 0) ? 'border border-red-500/50 bg-red-900/10' : ''}`}>
                             {["straight", "gay", "bisexual", "other"].map((orientation) => {
                               const isChecked = preference?.sexualOrientation?.includes(orientation) || false;
                               return (
@@ -1124,62 +1131,64 @@ export default function DatingFiltersPanel({
           )}
 
           {/* Actions */}
-          <div className="flex justify-between items-center pt-4 border-t border-gray-700">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setFormData({
-                  preferredGenders: [],
-                  preferredMinAge: 18,
-                  preferredMaxAge: 130,
-                  preferredMinHeight: 36,
-                  preferredMaxHeight: 94,
-                  preferredMaxDistance: 50,
-                  preferredCoronavirusVaccinated: "",
-                  preferredReligions: [],
-                  preferredBodyType: "",
-                  preferredHasKids: "",
-                  preferredWantsKids: "",
-                  preferredSmokes: "",
-                  preferredDrinks: "",
-                  preferredActivity: [],
-                  preferredEducation: [],
-                  preferredPoliticalViews: [],
-                  preferredDiet: [],
-                  preferredRelationshipType: [],
-                  preferredPets: [],
-                  preferredInstruments: [],
-                  preferredSkills: [],
-                  matchMusicTastes: true,
-                  anyAge: true,
-                  anyHeight: true,
-                  anyDistance: false,
-                  variabilityLevel: 0,
-                  variabilityFilters: [],
-                  idVerificationFilter: "show_id_verified_only" as const,
-                });
-              }}
-              className="border-gray-700 text-gray-200 hover:bg-gray-800"
-            >
-              Reset Filters
-            </Button>
-            <div className="flex gap-2">
+          {!asModal && (
+            <div className="flex justify-between items-center pt-4 border-t border-gray-700">
               <Button
                 variant="outline"
-                onClick={() => onOpenChange?.(false)}
+                onClick={() => {
+                  setFormData({
+                    preferredGenders: [],
+                    preferredMinAge: 18,
+                    preferredMaxAge: 130,
+                    preferredMinHeight: 36,
+                    preferredMaxHeight: 94,
+                    preferredMaxDistance: 50,
+                    preferredCoronavirusVaccinated: "",
+                    preferredReligions: [],
+                    preferredBodyType: "",
+                    preferredHasKids: "",
+                    preferredWantsKids: "",
+                    preferredSmokes: "",
+                    preferredDrinks: "",
+                    preferredActivity: [],
+                    preferredEducation: [],
+                    preferredPoliticalViews: [],
+                    preferredDiet: [],
+                    preferredRelationshipType: [],
+                    preferredPets: [],
+                    preferredInstruments: [],
+                    preferredSkills: [],
+                    matchMusicTastes: true,
+                    anyAge: true,
+                    anyHeight: true,
+                    anyDistance: false,
+                    variabilityLevel: 0,
+                    variabilityFilters: [],
+                    idVerificationFilter: "show_id_verified_only" as const,
+                  });
+                }}
                 className="border-gray-700 text-gray-200 hover:bg-gray-800"
               >
-                Cancel
+                Reset Filters
               </Button>
-              <Button
-                onClick={handleSave}
-                disabled={saving}
-                className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
-              >
-                {saving ? "Saving..." : "Apply Filters"}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => onOpenChange?.(false)}
+                  className="border-gray-700 text-gray-200 hover:bg-gray-800"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  disabled={saving || !isValid}
+                  className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {saving ? "Saving..." : "Apply Filters"}
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </>
@@ -1188,14 +1197,73 @@ export default function DatingFiltersPanel({
   if (asModal) {
     return (
       <Dialog open={open!} onOpenChange={onOpenChange!}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-gray-950 border-gray-800">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-white">
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 bg-gray-950 border-gray-800">
+          <DialogHeader className="px-6 py-4 flex flex-row items-center justify-between border-b border-gray-800 sticky top-0 z-10 bg-gray-950 shrink-0">
+            <DialogTitle className="flex items-center gap-2 text-white m-0">
               <Filter className="w-5 h-5" />
               Filters
             </DialogTitle>
+            <div className="flex gap-2 items-center mr-8">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setFormData({
+                    preferredGenders: [],
+                    preferredMinAge: 18,
+                    preferredMaxAge: 130,
+                    preferredMinHeight: 36,
+                    preferredMaxHeight: 94,
+                    preferredMaxDistance: 50,
+                    preferredCoronavirusVaccinated: "",
+                    preferredReligions: [],
+                    preferredBodyType: "",
+                    preferredHasKids: "",
+                    preferredWantsKids: "",
+                    preferredSmokes: "",
+                    preferredDrinks: "",
+                    preferredActivity: [],
+                    preferredEducation: [],
+                    preferredPoliticalViews: [],
+                    preferredDiet: [],
+                    preferredRelationshipType: [],
+                    preferredPets: [],
+                    preferredInstruments: [],
+                    preferredSkills: [],
+                    matchMusicTastes: true,
+                    anyAge: true,
+                    anyHeight: true,
+                    anyDistance: false,
+                    variabilityLevel: 0,
+                    variabilityFilters: [],
+                    idVerificationFilter: "show_id_verified_only" as const,
+                  });
+                }}
+                className="border-gray-700 text-gray-200 hover:bg-gray-800 h-8 text-xs px-3"
+              >
+                Reset
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onOpenChange?.(false)}
+                className="border-gray-700 text-gray-200 hover:bg-gray-800 h-8 text-xs px-3"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSave}
+                disabled={saving || !isValid}
+                className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 h-8 text-xs px-3 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {saving ? "Saving..." : "Save"}
+              </Button>
+            </div>
           </DialogHeader>
-          {content}
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            {content}
+          </div>
         </DialogContent>
       </Dialog>
     );

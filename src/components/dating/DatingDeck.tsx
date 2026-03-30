@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import kyInstance from "@/lib/ky";
-import { Check, X, Heart, Loader2, MessageCircle, RotateCcw, Music } from "lucide-react";
+import { Check, X, Heart, Loader2, MessageCircle, RotateCcw, Music, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import Image from "next/image";
 import PotentialMatchCard from "./PotentialMatchCard";
 import MatchCelebration from "./MatchCelebration";
@@ -42,13 +43,23 @@ interface MatchProfile {
   };
 }
 
-interface DatingDeckProps {}
+interface DatingDeckProps { }
 
-export default function DatingDeck({}: DatingDeckProps) {
+export default function DatingDeck({ }: DatingDeckProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [matches, setMatches] = useState<MatchProfile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [maxIndex, setMaxIndex] = useState(0);
+  const [rewinding, setRewinding] = useState(false);
+  const [showHistoryLimitModal, setShowHistoryLimitModal] = useState(false);
+
+  // Keep track of the furthest index we've reached
+  useEffect(() => {
+    if (currentIndex > maxIndex) {
+      setMaxIndex(currentIndex);
+    }
+  }, [currentIndex, maxIndex]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -189,7 +200,7 @@ export default function DatingDeck({}: DatingDeckProps) {
         const response = await kyInstance
           .get("/api/dating/history?type=all&light=true")
           .json<{ swipes: Array<{ id: string; toUserId: string; direction: string; createdAt: string; canUnlike: boolean }> }>();
-        
+
         // Filter to only include swipes that can be undone (LIKE swipes, not matched)
         // Take only the last 10 undoable swipes (most recent)
         const undoableSwipes = response.swipes
@@ -202,13 +213,13 @@ export default function DatingDeck({}: DatingDeckProps) {
             createdAt: new Date(s.createdAt),
             canUnlike: s.canUnlike,
           }));
-        
+
         setRecentSwipes(undoableSwipes);
       } catch (error) {
         console.error("Error fetching recent swipes:", error);
       }
     };
-    
+
     fetchRecentSwipes();
   }, [currentIndex]); // Refresh when we swipe
 
@@ -280,14 +291,14 @@ export default function DatingDeck({}: DatingDeckProps) {
         if (hasMoreInBatch || shouldPrefetchNextBatch) {
           setCurrentIndex(currentIndex);
         }
-        
+
         if (error.response?.status === 403) {
           error.response.json().then((errorData: any) => {
             toast({
               variant: "destructive",
               description: errorData.error || "Action not allowed.",
             });
-          }).catch(() => {});
+          }).catch(() => { });
         } else if (error.response?.status === 429) {
           toast({
             variant: "destructive",
@@ -296,36 +307,12 @@ export default function DatingDeck({}: DatingDeckProps) {
         } else {
           toast({
             variant: "destructive",
+            // We ignore errors caused by re-swiping historical cards
+            // Our backend dynamically handles changes smoothly.
             description: "Failed to record decision",
           });
         }
       });
-
-    // CONDITIONAL/ASYNC History Fetch: Only for likes, and only if undo might be needed
-    // Skip for dislikes entirely (undo not supported)
-    if (decision === "LIKE" && currentIndex < 5) {
-      // Fire-and-forget: Update undo list in background without blocking UI
-      kyInstance
-        .get("/api/dating/history?type=all&light=true")
-        .json<{ swipes: Array<{ id: string; toUserId: string; direction: string; createdAt: string; canUnlike: boolean }> }>()
-        .then((swipeResponse) => {
-          // Filter to only include swipes that can be undone (LIKE swipes, not matched)
-          const undoableSwipes = swipeResponse.swipes
-            .filter(s => s.canUnlike === true)
-            .slice(0, 10)
-            .map(s => ({
-              id: s.id,
-              toUserId: s.toUserId,
-              direction: s.direction,
-              createdAt: new Date(s.createdAt),
-              canUnlike: s.canUnlike,
-            }));
-          setRecentSwipes(undoableSwipes);
-        })
-        .catch(() => {
-          // Silently fail - undo list can be stale
-        });
-    }
 
     // Wait for decision to complete (but UI already moved to next card)
     // This ensures errors are handled even though UI updated optimistically
@@ -336,39 +323,45 @@ export default function DatingDeck({}: DatingDeckProps) {
     }
   };
 
-  const handleUndo = async () => {
-    // Only allow undo if there are undoable swipes
-    if (undoing || recentSwipes.length === 0) return;
+  const handleRewind = async () => {
+    if (rewinding) return;
 
-    const lastSwipe = recentSwipes[0];
-    // Double-check that this swipe can be undone (should always be true due to filtering, but safety check)
-    if (!lastSwipe || !lastSwipe.canUnlike || lastSwipe.direction !== "LIKE") return;
+    // Check if we hit our 5-card rewind allowance limit
+    if (maxIndex - currentIndex >= 5) {
+      setShowHistoryLimitModal(true);
+      return;
+    }
 
-    try {
-      setUndoing(true);
-      await kyInstance.delete(`/api/dating/history?swipeId=${lastSwipe.id}`);
+    if (currentIndex > 0) {
+      // Step securely backwards within locally cached matches array
+      setCurrentIndex((prev) => prev - 1);
+    } else {
+      // We exhausted locally loaded cards, query database to persist
+      try {
+        setRewinding(true);
+        const res = await kyInstance.get("/api/dating/history/profiles?take=5").json<{ profiles: MatchProfile[] }>();
 
-      // Remove the undone swipe from the list
-      setRecentSwipes((prev) => prev.slice(1));
+        // Filter out profiles that are already cleanly sitting in `matches` 
+        // to prevent doubling up if some of these 5 were swiped in the active session
+        const newProfiles = res.profiles.filter(p => !matches.some(m => m.id === p.id));
 
-      // If we're in the middle of the deck, go back one card
-      // If we're at the start or deck is empty, refresh matches to include the undone user
-      if (currentIndex > 0 && currentIndex < matches.length) {
-        setCurrentIndex(currentIndex - 1);
-      } else {
-        // Refresh matches to include the undone user (handles empty deck case)
-        await fetchMatches();
+        if (newProfiles.length === 0) {
+          toast({ description: "You have no more previous decisions to view." });
+          return;
+        }
+
+        const addedCount = newProfiles.length;
+        setMatches(prev => [...newProfiles, ...prev]);
+
+        // Shift our pointers seamlessly forward to match the prepended space
+        setCurrentIndex(addedCount - 1);
+        setMaxIndex(prev => prev + addedCount);
+
+      } catch (error: any) {
+        toast({ variant: "destructive", description: "Failed to load older decisions." });
+      } finally {
+        setRewinding(false);
       }
-      // No toast needed - visual feedback (card returning) is sufficient
-    } catch (error: any) {
-      console.error("Error undoing swipe:", error);
-      const errorData = await error.response?.json().catch(() => ({}));
-      toast({
-        variant: "destructive",
-        description: errorData.error || "Failed to undo swipe",
-      });
-    } finally {
-      setUndoing(false);
     }
   };
 
@@ -467,7 +460,7 @@ export default function DatingDeck({}: DatingDeckProps) {
       const minInches = prefs.preferredMinHeight % 12;
       const maxFeet = Math.floor(prefs.preferredMaxHeight / 12);
       const maxInches = prefs.preferredMaxHeight % 12;
-      
+
       if (prefs.preferredMinHeight === 36 && prefs.preferredMaxHeight === 94) {
         filters.push("Height: Any");
       } else {
@@ -497,19 +490,19 @@ export default function DatingDeck({}: DatingDeckProps) {
     } else {
       filters.push("Has Kids: Not specified");
     }
-    
+
     if (prefs.preferredSmokes) {
       filters.push(`Smokes: ${prefs.preferredSmokes}`);
     } else {
       filters.push("Smokes: Not specified");
     }
-    
+
     if (prefs.preferredDrinks) {
       filters.push(`Drinks: ${prefs.preferredDrinks}`);
     } else {
       filters.push("Drinks: Not specified");
     }
-    
+
     if (Array.isArray(prefs.preferredActivity) && prefs.preferredActivity.length > 0) {
       filters.push(`Activity Level: ${prefs.preferredActivity.join(", ")}`);
     } else if (prefs.preferredActivity && !Array.isArray(prefs.preferredActivity)) {
@@ -518,6 +511,13 @@ export default function DatingDeck({}: DatingDeckProps) {
       filters.push("Activity Level: Not specified");
     }
 
+    if (prefs.idVerificationFilter === "show_id_verified_only") {
+      filters.push("ID Verification: ID Verified only");
+    } else if (prefs.idVerificationFilter === "show_unverified_only") {
+      filters.push("ID Verification: Unverified only");
+    } else {
+      filters.push("ID Verification: Show everyone");
+    }
 
     return filters;
   };
@@ -537,6 +537,20 @@ export default function DatingDeck({}: DatingDeckProps) {
               fetchMatches();
             }}
           />
+
+          {/* Back to Current Button */}
+          {currentIndex < maxIndex && (
+            <div className="fixed top-30 center md:right-8 z-40">
+              <Button
+                onClick={() => setCurrentIndex(maxIndex)}
+                className="bg-purple-600 hover:bg-purple-700 text-white shadow-lg rounded-full px-4 sm:px-5 py-2 flex items-center gap-2 transition-transform hover:scale-105"
+              >
+                <ArrowRight className="w-4 h-4 order-2" />
+                <span className="inline order-1">Back to Current</span>
+              </Button>
+            </div>
+          )}
+
           {/* Safety tips are available from the header menu */}
 
           {currentMatch ? (
@@ -563,7 +577,7 @@ export default function DatingDeck({}: DatingDeckProps) {
               >
                 Update Preferences
               </Button>
-              
+
               {/* Current Filters Display */}
               {userPreferences && (
                 <div className="mt-6 pt-6 border-t border-gray-200">
@@ -650,25 +664,22 @@ export default function DatingDeck({}: DatingDeckProps) {
                     </Button>
                   )}
 
-                  {/* Undo Button - Always show if there are recent swipes, even when deck is empty */}
-                  {recentSwipes.length > 0 && (
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 transition-all active:scale-95 bg-white ${
-                        !undoing
-                          ? "border-yellow-500 bg-yellow-50 hover:bg-yellow-100"
-                          : "border-gray-300 bg-gray-50 cursor-not-allowed opacity-50"
+                  {/* Rewind Button */}
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 transition-all active:scale-95 bg-white ${!rewinding
+                      ? "border-yellow-500 bg-yellow-50 hover:bg-yellow-100"
+                      : "border-gray-300 bg-gray-50 cursor-wait opacity-50"
                       }`}
-                      onClick={handleUndo}
-                      disabled={undoing}
-                      aria-label="Undo last swipe"
-                      title="Undo last swipe"
-                    >
-                      <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" />
-                    </Button>
-                  )}
-                  
+                    onClick={handleRewind}
+                    disabled={rewinding}
+                    aria-label="View previous profile"
+                    title="View previous profile"
+                  >
+                    {rewinding ? <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 text-gray-500 animate-spin" /> : <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" />}
+                  </Button>
+
                   {/* Like Button - Only show when there's a current match */}
                   {currentMatch && (
                     <Button
@@ -723,7 +734,30 @@ export default function DatingDeck({}: DatingDeckProps) {
           fetchMatches();
         }}
         asModal={true}
-          />
+      />
+
+      <Dialog open={showHistoryLimitModal} onOpenChange={setShowHistoryLimitModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>History Limit Reached</DialogTitle>
+            <DialogDescription className="pt-2">
+              You can only rewind up to your last 5 decisions from the deck.
+              For more history, go to your settings and History page to see your full swipe history and easily manage your decisions there.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex gap-2">
+            <Button variant="outline" onClick={() => setShowHistoryLimitModal(false)}>
+              Close
+            </Button>
+            <Button
+              className="bg-purple-600 hover:bg-purple-700"
+              onClick={() => router.push("/dating/history")}
+            >
+              Go to History
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
