@@ -1,18 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
+import { serverError } from "@/lib/api/responses";
 import prisma from "@/lib/prisma";
 import { validateRequest } from "@/auth";
 
-export async function POST(req: NextRequest, props: { params: Promise<{ userId: string }> }) {
+export async function POST(
+  req: NextRequest,
+  props: { params: Promise<{ userId: string }> },
+) {
   const params = await props.params;
 
-  const {
-    userId
-  } = params;
+  const { userId } = params;
 
   try {
     const { user } = await validateRequest();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    if (!userId || userId === user.id) return NextResponse.json({ error: "Invalid target" }, { status: 400 });
+    if (!user)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!userId || userId === user.id)
+      return NextResponse.json({ error: "Invalid target" }, { status: 400 });
 
     await (prisma as any).block.create({
       data: { blockerId: user.id, blockedId: userId },
@@ -24,17 +28,20 @@ export async function POST(req: NextRequest, props: { params: Promise<{ userId: 
   }
 }
 
-export async function DELETE(req: NextRequest, props: { params: Promise<{ userId: string }> }) {
+export async function DELETE(
+  req: NextRequest,
+  props: { params: Promise<{ userId: string }> },
+) {
   const params = await props.params;
 
-  const {
-    userId
-  } = params;
+  const { userId } = params;
 
   try {
     const { user } = await validateRequest();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    if (!userId || userId === user.id) return NextResponse.json({ error: "Invalid target" }, { status: 400 });
+    if (!user)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!userId || userId === user.id)
+      return NextResponse.json({ error: "Invalid target" }, { status: 400 });
 
     await (prisma as any).block.delete({
       where: { blockerId_blockedId: { blockerId: user.id, blockedId: userId } },
@@ -46,26 +53,35 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ userId
   }
 }
 
-export async function GET(req: NextRequest, props: { params: Promise<{ userId: string }> }) {
+export async function GET(
+  req: NextRequest,
+  props: { params: Promise<{ userId: string }> },
+) {
   const params = await props.params;
 
-  const {
-    userId
-  } = params;
+  const { userId } = params;
 
   try {
     const { user } = await validateRequest();
-    if (!user || user.id !== userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!user || user.id !== userId)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const blocks = await (prisma as any).block.findMany({
       where: { blockerId: user.id },
-      select: { blocked: { select: { id: true, username: true, displayName: true, avatarUrl: true } } },
+      select: {
+        blocked: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+            avatarUrl: true,
+          },
+        },
+      },
       orderBy: { createdAt: "desc" },
       take: 50,
     });
     return NextResponse.json({ items: blocks.map((b: any) => b.blocked) });
   } catch (e) {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return serverError();
   }
 }
-
-

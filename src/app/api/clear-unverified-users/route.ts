@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { serverError } from "@/lib/api/responses";
 
 // Opt out of static generation
 export const dynamic = "force-dynamic";
@@ -71,8 +72,6 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     console.error("Error deleting unverified users:", error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-    });
+    return serverError();
   }
 }

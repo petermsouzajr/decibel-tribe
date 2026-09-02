@@ -138,28 +138,35 @@ Changed to **"Password hashing using bcrypt"** — this drops the false argon2 c
 
 Ordered by payoff. All of this is in **non-dating** code, so none of it is at risk from the Expo migration.
 
-### C1. API route boilerplate — the big one
+### C1. API route boilerplate — **[x] done**
 
-**48 of 71 routes** re-implement the same auth guard. **98 places** return a 500. **67 route files** repeat `try/catch { console.error }`.
+**The wrapper already existed and nobody used it.** `src/auth.ts` exports `validateRequestWithCookieMutation`, written specifically for Route Handlers, with a JSDoc explaining that it — unlike the cached `validateRequest` — is safe to mutate cookies from. Adoption before this pass: **1 route**. Meanwhile **34 routes hand-inlined its exact body**, all 34 containing their own copy of the `createBlankSessionCookie` dance.
 
-Current state in `src/app/api/posts/for-you/route.ts` — this is representative and it's the "random stuff" you mentioned:
+`posts/for-you` was the clearest symptom — it opened with `// import { validateRequest } from "@/auth";` commented out, then reimplemented 24 lines of session handling underneath.
 
-```ts
-// import { validateRequest } from "@/auth";      ← commented out
-import { lucia } from "@/auth";                   // ← hand-rolled instead
-...
-// 25 lines of inline session validation, cookie refresh, and blank-cookie
-// handling copy-pasted into the route
-```
+Clustering the 34 inlined blocks showed they were near-identical: 19 in one shape, 11 in another differing only by the destructured variable name (`user` vs `loggedInUser`), and 4 stragglers. That uniformity is what made a mechanical migration safe.
 
-The project **has** a `validateRequest` helper. This route comments it out and inlines the whole thing. Some routes use the helper, some inline it — so session-refresh behaviour is not uniform across the API.
+**Done:**
+- [x] Replaced **55 inlined auth blocks** across 33 routes with `validateRequestWithCookieMutation()` — 24 lines each becomes 4
+- [x] Migrated the 4 stragglers by hand. Three (`users/username/[username]`, `posts/[postId]`, `posts/[postId]/comments`) are **optional-auth** — they fall back to an anonymous view rather than 401, which is why they didn't match the common shape. The helper covers that case too: `const loggedInUserId = loggedInUser?.id`
+- [x] Added `src/lib/api/responses.ts` (`unauthorized`, `forbidden`, `notFound`, `serverError`) — now 55 and 77 call sites
+- [x] **Zero** inlined `lucia.validateSession` blocks remain outside `/api/dating/*`
 
-- [ ] Inventory which of the 48 routes use `validateRequest` vs. inline `lucia.validateSession`
-- [ ] Build one wrapper, e.g. `withAuth(handler)` in `src/lib/api/` that does session validation + cookie refresh + the 401 + the try/catch + error logging once
-- [ ] Migrate routes to it (do this in batches by feature, ticking Phase E below as you go)
-- [ ] Normalise the 2 stragglers using `"Internal Server Error"` to match the 96 using `"Internal server error"` — or better, have the wrapper own the string so it cannot drift
+**Behaviour change, deliberate:** the inlined copies had no `try`/`catch` around `validateSession`, so a thrown session error fell through to the route's outer catch and returned **500**. The shared helper catches it, clears the cookie and returns **401**, which is the correct answer for a bad session.
 
-**Estimated reduction:** ~25-30 lines × 48 routes ≈ **1,200+ LOC**, and it makes the pagination bugs in Phase D structurally impossible to repeat.
+**Error-body drift found and fixed:** the 500 body existed in *four* spellings — `"Internal server error"` (96), `"Internal Server Error"` (2), `"Internal server error."` with a trailing period (3), and variants built with `Response.json` / `new Response(JSON.stringify(...))` instead of `NextResponse`. All now route through `serverError()`. Four were left alone on purpose: two carry deliberately specific Google-OAuth messages, one attaches a `details` field in dev, one is a differently-shaped stream response.
+
+**Net: 49 files, +743 / −1,946 → ~1,200 LOC removed.**
+
+- [ ] Optional follow-up: a `withAuth(handler)` wrapper would also absorb the repeated `try`/`catch` + `console.error`. Deliberately not done here — it changes every route's exported signature, which is a much riskier diff than swapping a body, and the tests that would catch a mistake are deferred to the test audit.
+
+### C1a. `prettier.config.js` was broken repo-wide — **[x] fixed**
+
+Found while formatting: the config used CommonJS `module.exports` while `package.json` declares `"type": "module"`, so Node parsed it as ESM and **every** `npx prettier` invocation failed with *"module is not defined in ES module scope"* — not just on changed files, on the whole repo.
+
+Renamed to `prettier.config.cjs`. Formatting now works; `prettier-plugin-tailwindcss` loads as intended.
+
+> Worth knowing: this means the repo has effectively been unformatted for as long as `"type": "module"` has been set. Running Prettier across everything will produce a large, noisy diff — best done as its own isolated commit, not folded into feature work.
 
 ### C2. Cursor pagination — **[x] done**
 
@@ -178,7 +185,7 @@ Created **`src/lib/api/pagination.ts`** with two functions that are two halves o
 - [x] Verified no manual cursor arithmetic remains outside `/api/dating/*`
 - [ ] Unit-test the helper's page-boundary behaviour — deferred to the test audit, but this is the single highest-value unit test in the codebase
 
-> `src/app/api/search/route.ts` also slices by `pageSize`, but it returns a fixed first page with no cursor at all. Not part of this family; deliberately left alone.
+> Two routes are deliberately outside this family. `search/route.ts` returns a fixed first page with no cursor at all. `posts/[postId]/comments/route.ts` pages **backwards** (`take: -pageSize - 1`, `previousCursor`) so comments load oldest-last — a different, self-consistent convention that the helper does not model.
 
 ### C3. `getPostDataInclude` + `as unknown as PostData[]`
 
@@ -394,7 +401,7 @@ Net result: `vitest` (fast, integrated) + `playwright` (critical path, integrate
 |-------|-------|--------|
 | A — Dead code | non-dating | **done** — 5 files + 7 empty dirs + 4 orphan types removed; 1 item needs your call |
 | B — Dependencies | non-dating | **done** — 4 packages removed, privacy policy corrected; `jest` deferred |
-| C — DRY | C2 pagination | **done** — helper built, 12 routes migrated. C1/C3/C4 outstanding |
+| C — DRY | C1 auth + C2 pagination | **done** — ~2,400 LOC removed across both. C3/C4 outstanding |
 | D — Bugs | pagination | **done** — 7 broken routes fixed. D4 (crons) needs your call |
 | E — Per-feature | 13 non-dating features | not started |
 | F — Testing | — | deferred to its own audit |
@@ -418,8 +425,7 @@ Net result: `vitest` (fast, integrated) + `playwright` (critical path, integrate
 
 ### Next up (in order)
 
-- **C1** — the `withAuth` wrapper: 48 routes duplicate the auth guard, 98 duplicate the 500 handler. Biggest remaining win, ~1,200 LOC.
-- **C3** — kill the `as unknown as PostData[]` double assertions by fixing `getPostDataInclude`'s inferred type.
+- **C3** — kill the `as unknown as PostData[]` double assertions by fixing `getPostDataInclude`'s inferred type. Now the most valuable remaining item: those casts hide real drift between the Prisma result and `PostData`.
 - **E** — per-feature sweep across the 13 non-dating features.
 
-**This pass:** 400 LOC of dead code deleted · 7 pagination bugs fixed · 4 dependencies removed · 1 false security claim corrected · ~90 lines of hand-rolled pagination replaced by a 55-line helper · all verified with `tsc`, `eslint`, and a clean-`HEAD` `next build` (exit 0)
+**Passes 1–2:** ~2,750 LOC removed net · 400 LOC of dead code deleted · 7 pagination bugs fixed · 4 dependencies removed · 1 false security claim corrected · ~90 lines of hand-rolled pagination replaced by a 55-line helper · all verified with `tsc`, `eslint`, and a clean-`HEAD` `next build` (exit 0)

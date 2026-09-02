@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { serverError } from "@/lib/api/responses";
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
 
-export async function POST(request: NextRequest, props: { params: Promise<{ commentId: string }> }) {
+export async function POST(
+  request: NextRequest,
+  props: { params: Promise<{ commentId: string }> },
+) {
   const params = await props.params;
   try {
     const { user } = await validateRequest();
@@ -24,7 +28,10 @@ export async function POST(request: NextRequest, props: { params: Promise<{ comm
     }
 
     if (comment.isDeleted) {
-      return NextResponse.json({ error: "Comment is deleted" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Comment is deleted" },
+        { status: 404 },
+      );
     }
 
     // Check if user already liked/disliked this comment
@@ -64,14 +71,14 @@ export async function POST(request: NextRequest, props: { params: Promise<{ comm
     }
   } catch (error) {
     console.error("Error in comment like API:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError();
   }
 }
 
-export async function DELETE(request: NextRequest, props: { params: Promise<{ commentId: string }> }) {
+export async function DELETE(
+  request: NextRequest,
+  props: { params: Promise<{ commentId: string }> },
+) {
   const params = await props.params;
   try {
     const { user } = await validateRequest();
@@ -92,9 +99,6 @@ export async function DELETE(request: NextRequest, props: { params: Promise<{ co
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error in comment unlike API:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError();
   }
-} 
+}

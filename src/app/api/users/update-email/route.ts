@@ -1,5 +1,6 @@
 import { updateUserEmail } from "@/app/(main)/users/[username]/actions";
 import { NextRequest, NextResponse } from "next/server";
+import { serverError } from "@/lib/api/responses";
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,9 +13,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error updating email:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 },
-    );
+    return serverError();
   }
 }

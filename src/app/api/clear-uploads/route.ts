@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { serverError } from "@/lib/api/responses";
 import prisma from "@/lib/prisma";
 import { UTApi } from "uploadthing/server";
 
@@ -65,6 +66,6 @@ export async function GET(request: NextRequest) {
     return new Response();
   } catch (error) {
     console.error(error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+    return serverError();
   }
 }

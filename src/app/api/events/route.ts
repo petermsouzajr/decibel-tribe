@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { lucia } from "@/auth";
+import { unauthorized, serverError } from "@/lib/api/responses";
+import { validateRequestWithCookieMutation } from "@/auth";
 import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { createEventSchema, updateEventSchema } from "@/lib/validation";
@@ -11,28 +11,9 @@ export async function GET(req: NextRequest) {
   const username = searchParams.get("user") ?? undefined;
 
   try {
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-    if (!sessionId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const { user: loggedInUser, session } =
-      await lucia.validateSession(sessionId);
-    if (!session) {
-      const sessionCookie = lucia.createBlankSessionCookie();
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (session && session.fresh) {
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
+    const { user: loggedInUser } = await validateRequestWithCookieMutation();
+    if (!loggedInUser) {
+      return unauthorized();
     }
 
     let eventConditions: Prisma.EventWhereInput = {};
@@ -140,41 +121,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(safeEvents, { status: 200 });
   } catch (error) {
     console.error("Error fetching events:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return serverError();
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-    if (!sessionId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const { user: loggedInUser, session } =
-      await lucia.validateSession(sessionId);
-    if (!session) {
-      const sessionCookie = lucia.createBlankSessionCookie();
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (session && session.fresh) {
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-    }
-
+    const { user: loggedInUser } = await validateRequestWithCookieMutation();
     if (!loggedInUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorized();
     }
 
     const body = await req.json();
@@ -280,41 +235,15 @@ export async function POST(req: NextRequest) {
       console.error("Unknown error:", error);
       console.error("Error stack:", (error as Error).stack);
     }
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return serverError();
   }
 }
 
 export async function DELETE(req: NextRequest) {
   try {
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-    if (!sessionId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const { user: loggedInUser, session } =
-      await lucia.validateSession(sessionId);
-    if (!session) {
-      const sessionCookie = lucia.createBlankSessionCookie();
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (session && session.fresh) {
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-    }
-
+    const { user: loggedInUser } = await validateRequestWithCookieMutation();
     if (!loggedInUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorized();
     }
 
     const eventId = req.nextUrl.searchParams.get("eventId");
@@ -353,40 +282,15 @@ export async function DELETE(req: NextRequest) {
     return new Response(null, { status: 204 });
   } catch (error) {
     console.error(error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return serverError();
   }
 }
 
 export async function PATCH(req: NextRequest) {
   try {
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-    if (!sessionId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const { user: loggedInUser, session } =
-      await lucia.validateSession(sessionId);
-    if (!session) {
-      const sessionCookie = lucia.createBlankSessionCookie();
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (session && session.fresh) {
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-    }
+    const { user: loggedInUser } = await validateRequestWithCookieMutation();
     if (!loggedInUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorized();
     }
 
     const { searchParams } = new URL(req.url);
@@ -435,41 +339,15 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json(updatedEvent);
   } catch (error: any) {
     console.error("Error updating event:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return serverError();
   }
 }
 
 export async function PUT(req: NextRequest) {
   try {
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-    if (!sessionId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const { user: loggedInUser, session } =
-      await lucia.validateSession(sessionId);
-    if (!session) {
-      const sessionCookie = lucia.createBlankSessionCookie();
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (session && session.fresh) {
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-    }
-
+    const { user: loggedInUser } = await validateRequestWithCookieMutation();
     if (!loggedInUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorized();
     }
 
     const {
@@ -519,9 +397,6 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json(updatedEvent);
   } catch (error) {
     console.error(error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return serverError();
   }
 }

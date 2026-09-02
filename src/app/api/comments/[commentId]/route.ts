@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { serverError } from "@/lib/api/responses";
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { createCommentSchema } from "@/lib/validation";
 
-export async function PUT(request: NextRequest, props: { params: Promise<{ commentId: string }> }) {
+export async function PUT(
+  request: NextRequest,
+  props: { params: Promise<{ commentId: string }> },
+) {
   const params = await props.params;
   try {
     const { user } = await validateRequest();
@@ -16,14 +20,16 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ comme
     const { commentId } = params;
 
     // Validate content
-    const { content: validatedContent } = createCommentSchema.parse({ content });
+    const { content: validatedContent } = createCommentSchema.parse({
+      content,
+    });
 
     // Check if comment exists and belongs to user
     const comment = await prisma.comment.findUnique({
       where: { id: commentId },
-      select: { 
-        id: true, 
-        userId: true, 
+      select: {
+        id: true,
+        userId: true,
         postId: true,
         isDeleted: true,
         createdAt: true,
@@ -35,7 +41,10 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ comme
     }
 
     if (comment.isDeleted) {
-      return NextResponse.json({ error: "Comment is deleted" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Comment is deleted" },
+        { status: 404 },
+      );
     }
 
     if (comment.userId !== user.id) {
@@ -45,11 +54,11 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ comme
     // Check if comment is within edit window (5 minutes)
     const editWindow = 5 * 60 * 1000; // 5 minutes in milliseconds
     const timeSinceCreation = Date.now() - comment.createdAt.getTime();
-    
+
     if (timeSinceCreation > editWindow) {
       return NextResponse.json(
         { error: "Comment can only be edited within 5 minutes of creation" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -79,9 +88,6 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ comme
     return NextResponse.json({ success: true, comment: updatedComment });
   } catch (error) {
     console.error("Error in comment edit API:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError();
   }
-} 
+}

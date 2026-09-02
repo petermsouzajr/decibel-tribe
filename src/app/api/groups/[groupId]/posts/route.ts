@@ -1,44 +1,22 @@
-import { lucia } from "@/auth";
-import { cookies } from "next/headers";
+import { validateRequestWithCookieMutation } from "@/auth";
 import prisma from "@/lib/prisma";
 import { getPostDataInclude, PostsPage, PostData } from "@/lib/types";
 import { cursorArgs, paginate } from "@/lib/api/pagination";
 import { NextRequest, NextResponse } from "next/server";
+import { unauthorized, serverError } from "@/lib/api/responses";
 
-export async function GET(req: NextRequest, props: { params: Promise<{ groupId: string }> }) {
+export async function GET(
+  req: NextRequest,
+  props: { params: Promise<{ groupId: string }> },
+) {
   const params = await props.params;
   try {
     const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
     const pageSize = 10;
 
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-    if (!sessionId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { user, session } = await lucia.validateSession(sessionId);
-
-    if (!session) {
-      const sessionCookie = lucia.createBlankSessionCookie();
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (session && session.fresh) {
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-    }
-
+    const { user } = await validateRequestWithCookieMutation();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorized();
     }
 
     const groupId = params.groupId;
@@ -75,9 +53,6 @@ export async function GET(req: NextRequest, props: { params: Promise<{ groupId: 
     return NextResponse.json(data);
   } catch (error) {
     console.error("Error in GET /api/groups/[groupId]/posts:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return serverError();
   }
 }

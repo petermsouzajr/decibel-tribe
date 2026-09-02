@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { lucia } from "@/auth";
-import { cookies } from "next/headers";
+import { unauthorized, serverError } from "@/lib/api/responses";
+import { validateRequestWithCookieMutation } from "@/auth";
 import prisma from "@/lib/prisma";
 import { getUserDataSelect } from "@/lib/types";
 import { cursorArgs, paginate } from "@/lib/api/pagination";
@@ -10,31 +10,9 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-    if (!sessionId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const { user: loggedInUser, session } =
-      await lucia.validateSession(sessionId);
-    if (!session) {
-      const sessionCookie = lucia.createBlankSessionCookie();
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (session && session.fresh) {
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-    }
+    const { user: loggedInUser } = await validateRequestWithCookieMutation();
     if (!loggedInUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorized();
     }
 
     const pageSize = 10;
@@ -95,9 +73,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ users, nextCursor });
   } catch (error) {
     console.error("Error fetching following users:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return serverError();
   }
 }

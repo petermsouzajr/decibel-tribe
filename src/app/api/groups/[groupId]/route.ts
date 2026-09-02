@@ -1,39 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { lucia } from "@/auth";
-import { cookies } from "next/headers";
+import { unauthorized, serverError } from "@/lib/api/responses";
+import { validateRequestWithCookieMutation } from "@/auth";
 import prisma from "@/lib/prisma";
 
-export async function GET(req: NextRequest, props: { params: Promise<{ groupId: string }> }) {
+export async function GET(
+  req: NextRequest,
+  props: { params: Promise<{ groupId: string }> },
+) {
   const params = await props.params;
   try {
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-    if (!sessionId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { user, session } = await lucia.validateSession(sessionId);
-
-    if (!session) {
-      const sessionCookie = lucia.createBlankSessionCookie();
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (session && session.fresh) {
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-    }
-
+    const { user } = await validateRequestWithCookieMutation();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorized();
     }
 
     const group = await prisma.group.findUnique({
@@ -69,42 +47,22 @@ export async function GET(req: NextRequest, props: { params: Promise<{ groupId: 
     return NextResponse.json(group);
   } catch (error) {
     console.error("Error fetching group details:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return serverError();
   }
 }
 
-export async function DELETE(req: NextRequest, props: { params: Promise<{ groupId: string }> }) {
+export async function DELETE(
+  req: NextRequest,
+  props: { params: Promise<{ groupId: string }> },
+) {
   const params = await props.params;
   try {
     // Direct session validation
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-    if (!sessionId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { user } = await validateRequestWithCookieMutation();
+    if (!user) {
+      return unauthorized();
     }
 
-    const { user, session } = await lucia.validateSession(sessionId);
-
-    if (!session) {
-      const sessionCookie = lucia.createBlankSessionCookie();
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (session && session.fresh) {
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-    }
     // --- End direct session validation
 
     if (!user) {
@@ -138,42 +96,22 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ groupI
     return NextResponse.json({ message: "Group deleted successfully" });
   } catch (error) {
     console.error("Error deleting group:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return serverError();
   }
 }
 
-export async function PUT(req: NextRequest, props: { params: Promise<{ groupId: string }> }) {
+export async function PUT(
+  req: NextRequest,
+  props: { params: Promise<{ groupId: string }> },
+) {
   const params = await props.params;
   try {
     // Direct session validation
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-    if (!sessionId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { user } = await validateRequestWithCookieMutation();
+    if (!user) {
+      return unauthorized();
     }
 
-    const { user, session } = await lucia.validateSession(sessionId);
-
-    if (!session) {
-      const sessionCookie = lucia.createBlankSessionCookie();
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (session && session.fresh) {
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-    }
     // --- End direct session validation
 
     if (!user) {
@@ -216,9 +154,6 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ groupId: 
     return NextResponse.json(group);
   } catch (error) {
     console.error("Error fetching group details:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return serverError();
   }
 }

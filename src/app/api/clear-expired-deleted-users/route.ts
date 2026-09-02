@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { serverError } from "@/lib/api/responses";
 import prisma from "@/lib/prisma";
 import streamServerClient from "@/lib/stream";
 
@@ -23,7 +24,9 @@ export async function POST() {
 
     const isDev = process.env.NODE_ENV === "development";
     if (isDev) {
-      console.log(`Found ${expiredDeletedUsers.length} users to permanently delete`);
+      console.log(
+        `Found ${expiredDeletedUsers.length} users to permanently delete`,
+      );
     }
 
     let deletedCount = 0;
@@ -41,7 +44,10 @@ export async function POST() {
             console.log(`Deleted user ${user.username} from StreamChat`);
           }
         } catch (streamError) {
-          console.error(`Failed to delete user ${user.username} from StreamChat:`, streamError);
+          console.error(
+            `Failed to delete user ${user.username} from StreamChat:`,
+            streamError,
+          );
         }
 
         // Permanently delete from database
@@ -50,9 +56,10 @@ export async function POST() {
         });
         deletedCount++;
         if (isDev) {
-          console.log(`Permanently deleted user ${user.username} from database`);
+          console.log(
+            `Permanently deleted user ${user.username} from database`,
+          );
         }
-
       } catch (error) {
         console.error(`Error deleting user ${user.username}:`, error);
       }
@@ -64,12 +71,8 @@ export async function POST() {
       deletedCount,
       streamChatDeletedCount,
     });
-
   } catch (error) {
     console.error("Error in clear-expired-deleted-users:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError();
   }
-} 
+}

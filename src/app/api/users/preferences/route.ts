@@ -1,36 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-// import { validateRequest } from "@/auth"; // Remove this line
-import { lucia } from "@/auth";
-import { cookies } from "next/headers";
+import { unauthorized, serverError } from "@/lib/api/responses";
+//  // Remove this line
+import { validateRequestWithCookieMutation } from "@/auth";
 import prisma from "@/lib/prisma";
 import { geocodeZipCode } from "@/lib/server/geocodeZipCode";
 
 export async function GET() {
   try {
     // Direct session validation (required)
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-    if (!sessionId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { user: loggedInUser } = await validateRequestWithCookieMutation();
+    if (!loggedInUser) {
+      return unauthorized();
     }
-    const { user: loggedInUser, session } =
-      await lucia.validateSession(sessionId);
-    if (!session) {
-      const sessionCookie = lucia.createBlankSessionCookie();
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (session && session.fresh) {
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-    }
+
     // --- End direct session validation
     if (!loggedInUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -53,39 +35,18 @@ export async function GET() {
     });
   } catch (error) {
     console.error("Error fetching user calendar preference:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return serverError();
   }
 }
 
 export async function PATCH(req: NextRequest) {
   try {
     // Direct session validation (required)
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-    if (!sessionId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { user: loggedInUser } = await validateRequestWithCookieMutation();
+    if (!loggedInUser) {
+      return unauthorized();
     }
-    const { user: loggedInUser, session } =
-      await lucia.validateSession(sessionId);
-    if (!session) {
-      const sessionCookie = lucia.createBlankSessionCookie();
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (session && session.fresh) {
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-    }
+
     // --- End direct session validation
     if (!loggedInUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -106,7 +67,8 @@ export async function PATCH(req: NextRequest) {
       create: {
         userId: loggedInUser.id,
         calendar: typeof calendar === "string" ? calendar : "PRIVATE",
-        zipCode: normalizedZip && normalizedZip.length > 0 ? normalizedZip : null,
+        zipCode:
+          normalizedZip && normalizedZip.length > 0 ? normalizedZip : null,
         latitude: geo?.lat ?? null,
         longitude: geo?.lon ?? null,
       },
@@ -114,7 +76,10 @@ export async function PATCH(req: NextRequest) {
         ...(typeof calendar === "string" ? { calendar } : {}),
         ...(zipCode !== undefined
           ? {
-              zipCode: normalizedZip && normalizedZip.length > 0 ? normalizedZip : null,
+              zipCode:
+                normalizedZip && normalizedZip.length > 0
+                  ? normalizedZip
+                  : null,
               latitude: geo?.lat ?? null,
               longitude: geo?.lon ?? null,
             }
@@ -125,9 +90,6 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ message: "Preferences updated" });
   } catch (error) {
     console.error("Error updating preferences:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return serverError();
   }
 }

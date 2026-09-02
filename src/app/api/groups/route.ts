@@ -1,38 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-// import { validateRequest } from "@/auth";
-import { lucia } from "@/auth"; // Import lucia
-import { cookies } from "next/headers"; // Import cookies
+import { unauthorized, serverError } from "@/lib/api/responses";
+import { validateRequestWithCookieMutation } from "@/auth";
 import prisma from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
     // Direct session validation
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-    if (!sessionId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { user: loggedInUser } = await validateRequestWithCookieMutation();
+    if (!loggedInUser) {
+      return unauthorized();
     }
 
-    const { user: loggedInUser, session } =
-      await lucia.validateSession(sessionId);
-
-    if (!session) {
-      const sessionCookie = lucia.createBlankSessionCookie();
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (session && session.fresh) {
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-    }
     // --- End direct session validation
 
     if (!loggedInUser) {
@@ -66,9 +44,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(newGroup, { status: 201 });
   } catch (error) {
     console.error("Error creating group:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return serverError();
   }
 }

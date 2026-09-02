@@ -1,36 +1,24 @@
-// import { validateRequest } from "@/auth";
-import { lucia } from "@/auth"; // Import lucia
-import { cookies } from "next/headers"; // Import cookies
+import { validateRequestWithCookieMutation } from "@/auth";
+import { unauthorized, serverError } from "@/lib/api/responses";
 import prisma from "@/lib/prisma";
 // ... other imports ...
 import { NextRequest, NextResponse } from "next/server"; // Import NextResponse
 import { getPostDataInclude } from "@/lib/types"; // Ensure getPostDataInclude is imported
 
 // GET Handler
-export async function GET(req: NextRequest, props: { params: Promise<{ postId: string }> }) {
+export async function GET(
+  req: NextRequest,
+  props: { params: Promise<{ postId: string }> },
+) {
   const params = await props.params;
 
-  const {
-    postId
-  } = params;
+  const { postId } = params;
 
   try {
-    // Direct session validation (allowing anonymous access)
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-    let loggedInUserId: string | undefined;
-    if (sessionId) {
-      const { user, session } = await lucia.validateSession(sessionId);
-      if (session && session.fresh) {
-        const sessionCookie = lucia.createSessionCookie(session.id);
-        (await cookies()).set(
-          sessionCookie.name,
-          sessionCookie.value,
-          sessionCookie.attributes,
-        );
-      }
-      loggedInUserId = user?.id; // Set if session is valid
-    }
-    // --- End direct session validation
+    // Optional auth: anonymous readers are allowed, they just get the
+    // public shape of the payload.
+    const { user: loggedInUser } = await validateRequestWithCookieMutation();
+    const loggedInUserId = loggedInUser?.id;
 
     // Original GET logic using potentially undefined loggedInUserId
     const post = await prisma.post.findUnique({
@@ -45,45 +33,26 @@ export async function GET(req: NextRequest, props: { params: Promise<{ postId: s
     return NextResponse.json(post);
   } catch (error) {
     console.error("Error fetching post:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return serverError();
   }
 }
 
 // PATCH Handler
-export async function PATCH(req: NextRequest, props: { params: Promise<{ postId: string }> }) {
+export async function PATCH(
+  req: NextRequest,
+  props: { params: Promise<{ postId: string }> },
+) {
   const params = await props.params;
 
-  const {
-    postId
-  } = params;
+  const { postId } = params;
 
   try {
     // Direct session validation (required)
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-    if (!sessionId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { user } = await validateRequestWithCookieMutation();
+    if (!user) {
+      return unauthorized();
     }
-    const { user, session } = await lucia.validateSession(sessionId);
-    if (!session) {
-      const sessionCookie = lucia.createBlankSessionCookie();
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (session && session.fresh) {
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-    }
+
     // --- End direct session validation
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -111,45 +80,26 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ postId:
     return NextResponse.json(updatedPost);
   } catch (error) {
     console.error("Error updating post:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return serverError();
   }
 }
 
 // DELETE Handler
-export async function DELETE(req: NextRequest, props: { params: Promise<{ postId: string }> }) {
+export async function DELETE(
+  req: NextRequest,
+  props: { params: Promise<{ postId: string }> },
+) {
   const params = await props.params;
 
-  const {
-    postId
-  } = params;
+  const { postId } = params;
 
   try {
     // Direct session validation (required)
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-    if (!sessionId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { user } = await validateRequestWithCookieMutation();
+    if (!user) {
+      return unauthorized();
     }
-    const { user, session } = await lucia.validateSession(sessionId);
-    if (!session) {
-      const sessionCookie = lucia.createBlankSessionCookie();
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (session && session.fresh) {
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-    }
+
     // --- End direct session validation
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -172,9 +122,6 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ postId
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error("Error deleting post:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return serverError();
   }
 }

@@ -1,43 +1,21 @@
-// import { validateRequest } from "@/auth";
-import { lucia } from "@/auth";
-import { cookies } from "next/headers";
+import { validateRequestWithCookieMutation } from "@/auth";
 import prisma from "@/lib/prisma";
 import { FollowerInfo, getUserDataSelect } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
+import { unauthorized, serverError } from "@/lib/api/responses";
 
-export async function GET(req: NextRequest, props: { params: Promise<{ userId: string }> }) {
+export async function GET(
+  req: NextRequest,
+  props: { params: Promise<{ userId: string }> },
+) {
   const params = await props.params;
 
-  const {
-    userId
-  } = params;
+  const { userId } = params;
 
   try {
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-    if (!sessionId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const { user: loggedInUser, session } =
-      await lucia.validateSession(sessionId);
-    if (!session) {
-      const sessionCookie = lucia.createBlankSessionCookie();
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (session && session.fresh) {
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-    }
+    const { user: loggedInUser } = await validateRequestWithCookieMutation();
     if (!loggedInUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorized();
     }
 
     const user = await prisma.user.findUnique({
@@ -71,46 +49,22 @@ export async function GET(req: NextRequest, props: { params: Promise<{ userId: s
     return NextResponse.json(data);
   } catch (error) {
     console.error("Error fetching follower info:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return serverError();
   }
 }
 
-export async function POST(req: NextRequest, props: { params: Promise<{ userId: string }> }) {
+export async function POST(
+  req: NextRequest,
+  props: { params: Promise<{ userId: string }> },
+) {
   const params = await props.params;
 
-  const {
-    userId
-  } = params;
+  const { userId } = params;
 
   try {
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-    if (!sessionId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const { user: loggedInUser, session } =
-      await lucia.validateSession(sessionId);
-    if (!session) {
-      const sessionCookie = lucia.createBlankSessionCookie();
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (session && session.fresh) {
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-    }
+    const { user: loggedInUser } = await validateRequestWithCookieMutation();
     if (!loggedInUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorized();
     }
 
     if (userId === loggedInUser.id) {
@@ -146,46 +100,22 @@ export async function POST(req: NextRequest, props: { params: Promise<{ userId: 
     return NextResponse.json({ message: "Follow successful" }, { status: 201 });
   } catch (error) {
     console.error("Error following user:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return serverError();
   }
 }
 
-export async function DELETE(req: NextRequest, props: { params: Promise<{ userId: string }> }) {
+export async function DELETE(
+  req: NextRequest,
+  props: { params: Promise<{ userId: string }> },
+) {
   const params = await props.params;
 
-  const {
-    userId
-  } = params;
+  const { userId } = params;
 
   try {
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-    if (!sessionId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const { user: loggedInUser, session } =
-      await lucia.validateSession(sessionId);
-    if (!session) {
-      const sessionCookie = lucia.createBlankSessionCookie();
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (session && session.fresh) {
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-    }
+    const { user: loggedInUser } = await validateRequestWithCookieMutation();
     if (!loggedInUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorized();
     }
 
     await prisma.$transaction([
@@ -207,9 +137,6 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ userId
     return NextResponse.json({ message: "Unfollow successful" });
   } catch (error) {
     console.error("Error unfollowing user:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return serverError();
   }
 }

@@ -3,9 +3,13 @@ import prisma from "@/lib/prisma";
 import { getPostDataInclude, PostsPage, PostData } from "@/lib/types";
 import { cursorArgs, paginate } from "@/lib/api/pagination";
 import { NextRequest, NextResponse } from "next/server";
+import { serverError } from "@/lib/api/responses";
 import { validateRequest } from "@/auth";
 
-export async function GET(req: NextRequest, props: { params: Promise<{ userId: string }> }) {
+export async function GET(
+  req: NextRequest,
+  props: { params: Promise<{ userId: string }> },
+) {
   const params = await props.params;
   try {
     const { user: loggedInUser, session } = await validateRequest();
@@ -41,9 +45,6 @@ export async function GET(req: NextRequest, props: { params: Promise<{ userId: s
     return NextResponse.json(data);
   } catch (error) {
     console.error("Error fetching user posts:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return serverError();
   }
 }

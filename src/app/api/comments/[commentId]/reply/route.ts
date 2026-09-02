@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { serverError } from "@/lib/api/responses";
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { createCommentSchema } from "@/lib/validation";
 import { getCommentDataInclude } from "@/lib/types";
 
-export async function POST(request: NextRequest, props: { params: Promise<{ commentId: string }> }) {
+export async function POST(
+  request: NextRequest,
+  props: { params: Promise<{ commentId: string }> },
+) {
   const params = await props.params;
   try {
     const { user } = await validateRequest();
@@ -17,14 +21,16 @@ export async function POST(request: NextRequest, props: { params: Promise<{ comm
     const { commentId } = params;
 
     // Validate content
-    const { content: validatedContent } = createCommentSchema.parse({ content });
+    const { content: validatedContent } = createCommentSchema.parse({
+      content,
+    });
 
     // Check if parent comment exists and is not deleted
     const parentComment = await prisma.comment.findUnique({
       where: { id: commentId },
-      select: { 
-        id: true, 
-        isDeleted: true, 
+      select: {
+        id: true,
+        isDeleted: true,
         postId: true,
         userId: true,
         parentId: true, // Ensure we're not replying to a reply (max 1 level deep)
@@ -36,7 +42,10 @@ export async function POST(request: NextRequest, props: { params: Promise<{ comm
     }
 
     if (parentComment.isDeleted) {
-      return NextResponse.json({ error: "Comment is deleted" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Comment is deleted" },
+        { status: 404 },
+      );
     }
 
     // Allow replies to replies (industry standard)
@@ -74,17 +83,14 @@ export async function POST(request: NextRequest, props: { params: Promise<{ comm
       console.log("Reply API - Created reply:", reply);
       console.log("Reply API - Parent comment:", parentComment);
     }
-    
-    return NextResponse.json({ 
-      success: true, 
+
+    return NextResponse.json({
+      success: true,
       reply,
-      postId: parentComment.postId // Include postId for the mutation
+      postId: parentComment.postId, // Include postId for the mutation
     });
   } catch (error) {
     console.error("Error in comment reply API:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError();
   }
-} 
+}

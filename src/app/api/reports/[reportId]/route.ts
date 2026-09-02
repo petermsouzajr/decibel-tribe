@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { serverError } from "@/lib/api/responses";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin";
 
-export async function PATCH(req: NextRequest, props: { params: Promise<{ reportId: string }> }) {
+export async function PATCH(
+  req: NextRequest,
+  props: { params: Promise<{ reportId: string }> },
+) {
   const params = await props.params;
   try {
     await requireAdmin();
@@ -27,7 +31,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ reportI
     return NextResponse.json(updated);
   } catch (error) {
     console.error("Error updating report:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return serverError();
   }
 }
 

@@ -1,39 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { lucia } from "@/auth";
-import { cookies } from "next/headers";
+import { unauthorized, serverError } from "@/lib/api/responses";
+import { validateRequestWithCookieMutation } from "@/auth";
 import prisma from "@/lib/prisma";
 import { getEventDataInclude } from "@/lib/types";
 import { updateEventSchema } from "@/lib/validation";
 import { geocodeZipCode } from "@/lib/server/geocodeZipCode";
 
-export async function GET(req: NextRequest, props: { params: Promise<{ eventId: string }> }) {
+export async function GET(
+  req: NextRequest,
+  props: { params: Promise<{ eventId: string }> },
+) {
   const params = await props.params;
   try {
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-    if (!sessionId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const { user: loggedInUser, session } =
-      await lucia.validateSession(sessionId);
-    if (!session) {
-      const sessionCookie = lucia.createBlankSessionCookie();
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (session && session.fresh) {
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-    }
+    const { user: loggedInUser } = await validateRequestWithCookieMutation();
     if (!loggedInUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorized();
     }
 
     const eventId = params.eventId;
@@ -59,7 +40,9 @@ export async function GET(req: NextRequest, props: { params: Promise<{ eventId: 
     }
 
     const helpWanted = Array.isArray((event as any).helpWantedSkills)
-      ? (event as any).helpWantedSkills.map((h: any) => h?.skill?.name).filter(Boolean)
+      ? (event as any).helpWantedSkills
+          .map((h: any) => h?.skill?.name)
+          .filter(Boolean)
       : [];
 
     const isOwner = event.createdById === loggedInUser.id;
@@ -67,7 +50,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ eventId: 
       ...event,
       helpWantedSkills: helpWanted,
       // Only the event owner (editing) receives zip data; it is never displayed publicly.
-      eventZipCode: isOwner ? (event as any).zipCode ?? "" : undefined,
+      eventZipCode: isOwner ? ((event as any).zipCode ?? "") : undefined,
     };
     // Never expose raw zip/coords on the event payload (only pass eventZipCode to owner editor)
     delete safeEvent.zipCode;
@@ -77,42 +60,20 @@ export async function GET(req: NextRequest, props: { params: Promise<{ eventId: 
     return NextResponse.json(safeEvent, { status: 200 });
   } catch (error) {
     console.error("Error fetching event:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return serverError();
   }
 }
 
-export async function PATCH(req: NextRequest, props: { params: Promise<{ eventId: string }> }) {
+export async function PATCH(
+  req: NextRequest,
+  props: { params: Promise<{ eventId: string }> },
+) {
   const params = await props.params;
   try {
     // Direct session validation (required)
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-    if (!sessionId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const { user: loggedInUser, session } =
-      await lucia.validateSession(sessionId);
-    if (!session) {
-      const sessionCookie = lucia.createBlankSessionCookie();
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (session && session.fresh) {
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-    }
+    const { user: loggedInUser } = await validateRequestWithCookieMutation();
     if (!loggedInUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorized();
     }
 
     // Get eventId from route parameters
@@ -161,10 +122,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ eventId
         return NextResponse.json({ message: "Success" });
       } catch (txError) {
         console.error("Attend transaction failed:", txError);
-        return NextResponse.json(
-          { error: "Internal server error" },
-          { status: 500 },
-        );
+        return serverError();
       }
     } else if (action === "unattend") {
       try {
@@ -189,10 +147,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ eventId
           return NextResponse.json({ message: "Success" });
         }
         console.error("Unattend failed:", delError);
-        return NextResponse.json(
-          { error: "Internal server error" },
-          { status: 500 },
-        );
+        return serverError();
       }
     } else if (action) {
       // Invalid action provided
@@ -238,49 +193,24 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ eventId
       } catch (updateError) {
         console.error("Event update failed:", updateError);
         // Handle potential Prisma validation errors if Zod validation isn't added/sufficient
-        return NextResponse.json(
-          { error: "Internal server error" },
-          { status: 500 },
-        );
+        return serverError();
       }
     }
   } catch (error) {
     console.error(error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return serverError();
   }
 }
 
-export async function PUT(req: NextRequest, props: { params: Promise<{ eventId: string }> }) {
+export async function PUT(
+  req: NextRequest,
+  props: { params: Promise<{ eventId: string }> },
+) {
   const params = await props.params;
   try {
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-    if (!sessionId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const { user: loggedInUser, session } =
-      await lucia.validateSession(sessionId);
-    if (!session) {
-      const sessionCookie = lucia.createBlankSessionCookie();
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (session && session.fresh) {
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-    }
+    const { user: loggedInUser } = await validateRequestWithCookieMutation();
     if (!loggedInUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorized();
     }
 
     const eventId = params.eventId;
@@ -320,7 +250,8 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ eventId: 
 
     const wantsHelp =
       Array.isArray(helpWantedSkills) && helpWantedSkills.length > 0;
-    const normalizedZip = typeof eventZipCode === "string" ? eventZipCode.trim() : "";
+    const normalizedZip =
+      typeof eventZipCode === "string" ? eventZipCode.trim() : "";
     if (wantsHelp && !normalizedZip) {
       return NextResponse.json(
         { error: "Event zip code is required when you add Help Wanted skills" },
@@ -411,41 +342,19 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ eventId: 
     );
   } catch (error) {
     console.error("Error updating event:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return serverError();
   }
 }
 
-export async function DELETE(req: NextRequest, props: { params: Promise<{ eventId: string }> }) {
+export async function DELETE(
+  req: NextRequest,
+  props: { params: Promise<{ eventId: string }> },
+) {
   const params = await props.params;
   try {
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-    if (!sessionId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const { user: loggedInUser, session } =
-      await lucia.validateSession(sessionId);
-    if (!session) {
-      const sessionCookie = lucia.createBlankSessionCookie();
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (session && session.fresh) {
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes,
-      );
-    }
+    const { user: loggedInUser } = await validateRequestWithCookieMutation();
     if (!loggedInUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorized();
     }
 
     const eventId = params.eventId;
@@ -473,9 +382,6 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ eventI
     return NextResponse.json({ message: "Event deleted successfully" });
   } catch (error) {
     console.error("Error deleting event:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return serverError();
   }
 }

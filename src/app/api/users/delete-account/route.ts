@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { deleteUserAccount, DeleteAccountFormData } from "@/app/(auth)/deleteAccount";
+import { serverError } from "@/lib/api/responses";
+import {
+  deleteUserAccount,
+  DeleteAccountFormData,
+} from "@/app/(auth)/deleteAccount";
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,28 +13,19 @@ export async function POST(request: NextRequest) {
     if (!password || !confirmDeletion) {
       return NextResponse.json(
         { error: "Password and confirmation are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const result = await deleteUserAccount({ password, confirmDeletion });
 
     if (result.success) {
-      return NextResponse.json(
-        { message: result.message },
-        { status: 200 }
-      );
+      return NextResponse.json({ message: result.message }, { status: 200 });
     } else {
-      return NextResponse.json(
-        { error: result.error },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: result.error }, { status: 400 });
     }
   } catch (error) {
     console.error("Error in delete account API:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return serverError();
   }
-} 
+}
