@@ -1,9 +1,8 @@
-// import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
 import { getPostDataInclude, PostsPage, PostData } from "@/lib/types";
 import { cursorArgs, paginate } from "@/lib/api/pagination";
 import { NextRequest, NextResponse } from "next/server";
-import { serverError } from "@/lib/api/responses";
+import { serverError, unauthorized } from "@/lib/api/responses";
 import { validateRequest } from "@/auth";
 
 export async function GET(
@@ -12,10 +11,10 @@ export async function GET(
 ) {
   const params = await props.params;
   try {
-    const { user: loggedInUser, session } = await validateRequest();
+    const { user: loggedInUser } = await validateRequest();
 
     if (!loggedInUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorized();
     }
 
     const cursor = req.nextUrl.searchParams.get("cursor") || undefined;

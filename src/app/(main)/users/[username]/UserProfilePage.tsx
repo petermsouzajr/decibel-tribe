@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import ReportButton from "@/components/reports/ReportButton";
 import BlockedUsersList from "./BlockedUsersList";
+import UserPosts from "./UserPosts";
 import Link from "next/link";
 
 interface UserProfilePageProps {
@@ -74,7 +75,9 @@ export default function UserProfilePage({
       )}
       <div className="h-fit w-full space-y-5 rounded-2xl bg-card p-5 shadow-sm">
         <UserAvatar
-          avatarUrl={isDeleted ? "/assets/avatar-placeholder.png" : user.avatarUrl}
+          avatarUrl={
+            isDeleted ? "/assets/avatar-placeholder.png" : user.avatarUrl
+          }
           size={250}
           className="mx-auto size-full max-h-60 max-w-60 rounded-full"
         />
@@ -92,14 +95,16 @@ export default function UserProfilePage({
               <div>
                 Member since {formatDate(user.createdAt, "MMM d, yyyy")}
               </div>
-              {user.id === loggedInUserId && user.userPreferences && !isDeleted && (
-                <div className="flex items-center gap-3">
-                  Your Calendar Visibility:{" "}
-                  {user.userPreferences.calendar === "PUBLIC"
-                    ? "Public"
-                    : "Private"}
-                </div>
-              )}
+              {user.id === loggedInUserId &&
+                user.userPreferences &&
+                !isDeleted && (
+                  <div className="flex items-center gap-3">
+                    Your Calendar Visibility:{" "}
+                    {user.userPreferences.calendar === "PUBLIC"
+                      ? "Public"
+                      : "Private"}
+                  </div>
+                )}
               {user.id === loggedInUserId && !isDeleted && (
                 <div className="flex items-center gap-3">
                   Email on file: {user.email}
@@ -140,9 +145,11 @@ export default function UserProfilePage({
             {user.id === loggedInUserId && !isDeleted && (
               <div className="space-y-4">
                 <div className="rounded-lg border bg-card p-4">
-                  <h3 className="mb-3 text-lg font-semibold">Account Settings</h3>
+                  <h3 className="mb-3 text-lg font-semibold">
+                    Account Settings
+                  </h3>
                   <div className="space-y-3">
-                    <div className="w-full ">
+                    <div className="w-full">
                       <EditProfileButton user={user} />
                     </div>
                     <div className="w-full">
@@ -155,7 +162,7 @@ export default function UserProfilePage({
                       <DatingToggleButton user={user} />
                     </div>
                     <div className="w-full border-t pt-3">
-                      <Link 
+                      <Link
                         href="/privacy"
                         className="block text-sm text-muted-foreground hover:text-primary hover:underline"
                       >
@@ -164,16 +171,19 @@ export default function UserProfilePage({
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="rounded-lg border bg-card p-4">
                   <h3 className="mb-3 text-lg font-semibold">Blocked Users</h3>
                   <BlockedUsersList userId={loggedInUserId} />
                 </div>
 
                 <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4">
-                  <h3 className="mb-3 text-lg font-semibold text-destructive">Danger Zone</h3>
+                  <h3 className="mb-3 text-lg font-semibold text-destructive">
+                    Danger Zone
+                  </h3>
                   <p className="mb-3 text-sm text-muted-foreground">
-                    Once you delete your account, there is no going back. Please be certain.
+                    Once you delete your account, there is no going back. Please
+                    be certain.
                   </p>
                   <Button
                     onClick={() => setIsDeleteDialogOpen(true)}
@@ -223,7 +233,16 @@ export default function UserProfilePage({
           </>
         )}
       </div>
-      
+
+      {!isDeleted && (
+        <div className="h-fit w-full space-y-5 rounded-2xl bg-card p-5 shadow-sm">
+          <h2 className="text-center text-2xl font-bold">
+            {user.displayName}&apos;s posts
+          </h2>
+          <UserPosts userId={user.id} />
+        </div>
+      )}
+
       <DeleteAccountDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}

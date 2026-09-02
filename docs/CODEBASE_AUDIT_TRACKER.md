@@ -75,17 +75,31 @@ The plan explicitly says, today, right now:
 | 13 | `src/components/dating/BackToDatingButton.tsx` | 23 | | [~] dating |
 | 14 | `src/app/(main)/calendar/EventDetailsModal.tsx` | 0 | Empty file; orphan `EventDetailsModalProps` in `lib/types.ts` removed with it | **[x] deleted** |
 
-### A2a. ⚠️ `UserPosts.tsx` — a lost feature, deliberately NOT deleted
+### A2a. `UserPosts.tsx` — lost feature **restored** — **[x] done**
 
-`UserPosts.tsx` is a complete, working infinite-scroll component that fetches `/api/users/${userId}/posts`. Three facts together say this was dropped by accident, not retired:
+`UserPosts.tsx` was a complete, working infinite-scroll component that nothing rendered. Three facts said it was dropped by accident rather than retired:
 
-1. It is the **only** caller of `/api/users/[userId]/posts` — and that route is live, maintained, and was just migrated to the pagination helper.
-2. `UserProfilePage.tsx` renders **no posts section at all** — grepping it for `Post` returns nothing.
-3. There is no successor. `UserPostsFeed` does not exist anywhere in the repo; it survives only in a commented-out mock in `UserProfilePage.test.tsx`.
+1. It was the **only** caller of `/api/users/[userId]/posts` — a live, maintained route.
+2. `UserProfilePage.tsx` rendered **no** posts section at all.
+3. There was no successor. `UserPostsFeed` exists nowhere; it survives only in a commented-out mock in `UserProfilePage.test.tsx`.
 
-So "view a user's posts on their profile" is a feature whose component and API route orphaned together. Deleting the component would also make the API route dead.
+**Resolution: restored rather than deleted.** A social profile that cannot show the user's posts is the broken state; deleting would have made the API route dead too. Added to `UserProfilePage.tsx` as its own card after the profile details:
 
-- [ ] **Decide:** restore it (render `<UserPosts userId={...} />` in `UserProfilePage.tsx`) or delete the component *and* `/api/users/[userId]/posts` together
+```tsx
+{!isDeleted && (
+  <div className="h-fit w-full space-y-5 rounded-2xl bg-card p-5 shadow-sm">
+    <h2 className="text-center text-2xl font-bold">
+      {user.displayName}&apos;s posts
+    </h2>
+    <UserPosts userId={user.id} />
+  </div>
+)}
+```
+
+Purely additive — nothing that previously rendered was changed or moved:
+- Guarded by `!isDeleted`, matching how the bio, instruments and skills sections already behave, so deleted accounts are unaffected.
+- The route returns 401 to anonymous callers, but `(main)/layout.tsx` redirects unauthenticated visitors to `/login`, so a logged-out viewer can never reach a profile page. No new error path.
+- Tidied the route while there: removed a stale commented-out import, dropped an unused `session` binding, switched its hand-written 401 to `unauthorized()`.
 
 ### A3. Empty directories
 
@@ -257,22 +271,18 @@ The other five (`group-activity`, `users/[userId]/posts`, `events/for-you`, `eve
 
 > Worth knowing: because cursors are opaque and regenerated per request, this changes nothing for clients beyond correctness. A user mid-scroll during deploy may see one row repeat once.
 
-### D4. Two cleanup cron routes exist, are tested, and are **never scheduled** — **VERIFIED**
+### D4. [~] Two cleanup cron routes are never scheduled — **accepted constraint, do not change**
 
-`vercel.json` schedules only two crons:
+`vercel.json` schedules only `clear-uploads` and `clear-unverified-users`. `clear-expired-deleted-users` and `clear-expired-tokens` exist and are never invoked.
 
-```json
-{ "path": "/api/clear-uploads",           "schedule": "0 2 * * *" }
-{ "path": "/api/clear-unverified-users",  "schedule": "0 1 * * *" }
-```
+**This is deliberate: the Vercel free plan caps the number of cron jobs.** Not a bug — a hosting limit. Leave `vercel.json` alone.
 
-But four `clear-*` routes exist. **`/api/clear-expired-deleted-users` and `/api/clear-expired-tokens` are never invoked by anything.**
+Recorded because two consequences outlive the decision:
 
-This is worse than dead code, because `clear-expired-deleted-users` even has a passing unit test (`vitest/tests/unit/api/clear-expired-deleted-users.test.ts`) — so the suite is green and the job has never run in production. Per `docs/USER_DELETION_IMPLEMENTATION_SUMMARY.md` this is the job that purges soft-deleted accounts after their retention window. If so, deleted user data is being retained indefinitely, which is a data-retention commitment you may be making in the privacy policy.
+- `clear-expired-deleted-users` is the job that purges soft-deleted accounts after their retention window. While unscheduled, deleted-user data is retained indefinitely. Worth checking that against what `src/app/privacy/page.tsx` promises, since that is a commitment to users regardless of plan tier.
+- `clear-expired-deleted-users` has a passing unit test, so the suite stays green for a job that has never run. Anyone reading coverage will assume it works in production.
 
-- [ ] Confirm intent for `clear-expired-deleted-users` — schedule it, or delete the route + test
-- [ ] Confirm intent for `clear-expired-tokens` — same
-- [ ] Check whether the privacy policy promises a deletion window that isn't being honoured
+**If you want the behaviour back without more cron slots:** one scheduled route can call all four cleanups in sequence — e.g. a single `/api/cron/cleanup` that awaits each task — which stays inside the free-plan limit. Not implemented here; flagged only.
 
 ### D5. [~] CI runs Playwright against `playwright.dev` on every push — **VERIFIED, deferred**
 
@@ -399,29 +409,45 @@ Net result: `vitest` (fast, integrated) + `playwright` (critical path, integrate
 
 | Phase | Scope | Status |
 |-------|-------|--------|
-| A — Dead code | non-dating | **done** — 5 files + 7 empty dirs + 4 orphan types removed; 1 item needs your call |
-| B — Dependencies | non-dating | **done** — 4 packages removed, privacy policy corrected; `jest` deferred |
+| A — Dead code | non-dating | **done** — 5 files + 7 empty dirs + 4 orphan types removed; `UserPosts` restored |
+| B — Dependencies | non-dating | **done** — 4 packages removed **and committed**, privacy policy corrected; `jest` deferred |
 | C — DRY | C1 auth + C2 pagination | **done** — ~2,400 LOC removed across both. C3/C4 outstanding |
 | D — Bugs | pagination | **done** — 7 broken routes fixed. D4 (crons) needs your call |
 | E — Per-feature | 13 non-dating features | not started |
 | F — Testing | — | deferred to its own audit |
 
-### ⚠️ Dependency removals are in the working tree but **not committed**
+### Build fixed and dependency removals committed — **[x] done**
 
-`package.json` is entangled: it holds both this pass's four removals *and* your uncommitted `"dating-shared": "file:../dating-shared"` line. They cannot be separated cleanly, because `package-lock.json` would then disagree with `package.json` and `npm ci` fails on mismatch.
+**The broken build is fixed.** `dating-shared/src/context.tsx` called `createContext` with no `"use client"` directive, and the package barrel (`src/index.ts`) re-exports it, so *any* import from `"dating-shared"` — including the four API routes that only want pure `normalize*` / `calculate*` functions — pulled React client code into a server build and failed compilation.
 
-`file:../dating-shared` is a **local path** dependency. Committing it means `npm ci` on Vercel tries to resolve a directory that does not exist in the deploy environment, and the install fails before the build even starts. So committing `package.json` as it stands would break deploys for a reason unrelated to this audit.
+Added `"use client"` to the three genuinely client-side modules: `src/context.tsx`, `src/hooks/queries.ts`, `src/hooks/mutations.ts`. The other five (`compatibility`, `valueNormalization`, `profileOptions`, `types`, `api-interface`) import no React and were left untouched. Public API unchanged, so the `datingtribe` Expo repo is unaffected.
 
-**Left uncommitted deliberately.** `bcrypt`, `@types/bcrypt`, `argon2` and `faker` are already uninstalled from `node_modules` and removed from your working `package.json` — the work is done and verified, just not in the commit.
+`npx next build` in the working tree now exits **0**, with your dating WIP in place.
 
-- [ ] Once the `dating-shared` question is settled, commit the dependency removals separately (`npm install` first so the lockfile matches)
+> ⚠️ **`dating-shared` is not a git repository** — those edits have no version history. A backup of the original `src/` was taken before editing. Putting it under git is worth doing, especially as it is now shared by two products.
+
+**Dependency removals are committed.** `package.json` was entangled with your uncommitted `"dating-shared": "file:../dating-shared"` line, so the two were separated: `dating-shared` was temporarily removed, `npm install --package-lock-only` regenerated the lockfile without touching `node_modules`, and the resulting pair was staged. Your working copies — dating-shared line and symlink intact — were then restored. The commit carries only the four removals (−362 lock lines); your WIP stays uncommitted and your dev environment is untouched.
+
+### ⚠️ Still unresolved: `file:` dependency will break Vercel
+
+`"dating-shared": "file:../dating-shared"` is a **local path**. Whenever you do commit it, `npm ci` on Vercel will try to resolve a directory that does not exist in the deploy environment and fail before the build starts. Deliberately kept out of this commit; it needs a real answer:
+
+| Option | Trade-off |
+|--------|-----------|
+| Publish to a private npm registry | Cleanest; needs registry auth in Vercel |
+| Git dependency (`github:petermsouzajr/dating-shared`) | Easy, but `dating-shared` is not yet a git repo |
+| Vendor the pure modules into `decibel-tribe` | Works today; duplicates code `datingtribe` also uses |
+| Monorepo with workspaces | Correct long-term; the migration plan calls it "not required" for now |
+
+Given `DATING_EXPO_MIGRATION_PLAN.md` has decibel-tribe keeping **API only**, and the four routes import nothing but pure functions, vendoring just those is the smallest thing that works — but it is a real architecture call, not a cleanup.
+
+- [ ] Decide how `dating-shared` ships before committing the `file:` dependency
 
 ### Still open, needing a decision from you
 
-1. **`UserPosts.tsx` (A2a)** — restore the profile posts feed, or delete it *and* its API route together?
-2. **Unscheduled crons (D4)** — `clear-expired-deleted-users` and `clear-expired-tokens` have never run in production. The first one purges soft-deleted accounts, so deleted-user data is being retained indefinitely. Schedule them, or delete them?
-3. **Uncommitted dating edits** — `BasicFiltersPanel.tsx` and `DatingPreferencesForm.tsx` still hold uncommitted changes to files nothing imports.
-4. **Broken build** — 11 uncommitted `dating-shared` imports break `next build` (`createContext` without `"use client"`). Unrelated to this pass, but it blocks deploys today.
+1. **How `dating-shared` ships** (see table above) — blocks committing the `file:` dependency, and blocks deploys once it is committed.
+2. **Privacy policy vs. data retention** — with `clear-expired-deleted-users` unscheduled by design, confirm the policy does not promise a deletion window you are not meeting.
+3. **`@million/lint`** — `next.config.mjs` gates it behind `MILLION_LINT=1` with a comment saying it "breaks runtime in this app (React 19 / Next 15)". It is a dependency you never enable; removable if you have no plans to revisit it.
 
 ### Next up (in order)
 
