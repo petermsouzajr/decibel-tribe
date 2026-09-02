@@ -41,22 +41,30 @@ type MockPrismaGroupMember = {
 };
 
 // --- Mock Implementations ---
-vi.mock("@/auth", () => ({
-  lucia: {
-    validateSession: vi.fn(),
-    sessionCookieName: "auth_session",
-    createBlankSessionCookie: vi.fn(() => ({
-      name: "auth_session",
-      value: "",
-      attributes: {},
-    })),
-    createSessionCookie: vi.fn((sessionId: string) => ({
-      name: "auth_session",
-      value: sessionId,
-      attributes: {},
-    })),
-  },
-}));
+vi.mock("@/auth", () => {
+  // Hoisted so the helper below and lucia.validateSession share one mock.
+  const validateSessionMock = vi.fn();
+  return {
+    // Routes call this helper (src/auth.ts) instead of lucia directly.
+    validateRequestWithCookieMutation: vi.fn(
+      async () => (await validateSessionMock()) ?? { user: null, session: null },
+    ),
+    lucia: {
+      validateSession: validateSessionMock,
+      sessionCookieName: "auth_session",
+      createBlankSessionCookie: vi.fn(() => ({
+        name: "auth_session",
+        value: "",
+        attributes: {},
+      })),
+      createSessionCookie: vi.fn((sessionId: string) => ({
+        name: "auth_session",
+        value: sessionId,
+        attributes: {},
+      })),
+    },
+  };
+});
 vi.mock("next/headers", () => ({ cookies: vi.fn() }));
 vi.mock("@/lib/prisma", () => ({
   default: {

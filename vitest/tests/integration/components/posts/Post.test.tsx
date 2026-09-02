@@ -133,7 +133,6 @@ const mockPostData: PostData = {
   id: "post-1",
   content: "This is a test post content.",
   createdAt: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
-  updatedAt: new Date(Date.now() - 1000 * 60 * 5), // Add updatedAt, same as createdAt
   userId: mockPostUser.id,
   groupId: null,
   sharedFromId: null,
@@ -370,16 +369,20 @@ describe("[Social][Component] Post", () => {
     expect(screen.getByText("LikeButton Mock")).toBeInTheDocument();
   });
 
-  // Test for Edited status
-  it("should display (Edited) if updatedAt is different from createdAt", async () => {
+  // Skipped: the Post model has no `updatedAt` column, so this behaviour cannot
+  // occur in production. The test passed only because the mock supplied a field
+  // the database never returns, and PostData (hand-written at the time) claimed
+  // it existed. Restore this test if `updatedAt` is added to model Post — see
+  // CODEBASE_AUDIT_TRACKER.md C3.
+  it.skip("should display (Edited) if updatedAt is different from createdAt", async () => {
     // Arrange: Create post data with a different updatedAt
     const createdAt = new Date(Date.now() - 1000 * 60 * 15); // 15 mins ago
     const updatedAt = new Date(createdAt.getTime() + 1000 * 60 * 10); // 10 mins after creation (5 mins ago)
-    const mockPostEdited: PostData = {
+    const mockPostEdited = {
       ...mockPostData,
       createdAt: createdAt,
-      updatedAt: updatedAt, // Ensure updatedAt is passed
-    };
+      updatedAt: updatedAt,
+    } as unknown as PostData;
 
     // Import the actual utility function for this specific test
     // This overrides the global mock setup in beforeEach for this test only

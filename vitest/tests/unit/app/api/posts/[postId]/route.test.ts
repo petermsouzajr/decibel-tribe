@@ -60,6 +60,12 @@ vi.mock("@/auth", () => {
     /* ... new session cookie ... */
   }));
   return {
+    // Routes call this helper (see src/auth.ts) rather than lucia directly.
+    // Delegates to the same validateSession mock each test already configures.
+    validateRequestWithCookieMutation: vi.fn(async () => {
+      const result = await internalMockValidateSession();
+      return result ?? { user: null, session: null };
+    }),
     lucia: {
       validateSession: internalMockValidateSession,
       createBlankSessionCookie: internalMockCreateBlank,
@@ -104,7 +110,6 @@ describe("API Route: /api/posts/[postId]", () => {
     content: "Test post content",
     userId: authorUserId,
     createdAt: new Date(),
-    updatedAt: new Date(),
     groupId: null,
     sharedFromId: null,
     sharedCount: 0,
@@ -118,6 +123,7 @@ describe("API Route: /api/posts/[postId]", () => {
       email: "author@test.com",
       passwordHash: null,
       deletedAt: null,
+      userDatingProfile: null,
       userPreferences: null,
       userInstruments: [],
       userSkills: [],

@@ -115,6 +115,7 @@ const mockPostUser = {
   isFollowing: false,
   _count: { posts: 1, followers: 0, following: 0 }, // Placeholder counts
   // Add missing relation fields
+  userDatingProfile: null,
   userPreferences: null,
   userInstruments: [],
   userSkills: [],
@@ -135,7 +136,6 @@ const mockPost1: PostData = {
   id: "post-1",
   content: "This is the first post in the group.",
   createdAt: new Date(Date.now() - 1000 * 60 * 10), // 10 mins ago
-  updatedAt: new Date(Date.now() - 1000 * 60 * 10), // Add updatedAt, same as createdAt
   user: mockPostUser, // Author
   Group: { id: mockGroupId, name: mockGroupDetails.name }, // Capitalize Group
   likes: [],

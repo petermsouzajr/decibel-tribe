@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
 
     const { items, nextCursor } = paginate(posts, pageSize);
 
-    const typedPosts = items as unknown as PostData[];
+    const typedPosts = items;
 
     const data: PostsPage = {
       posts: typedPosts,

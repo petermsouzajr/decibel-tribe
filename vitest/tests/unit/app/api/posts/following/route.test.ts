@@ -30,14 +30,22 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-vi.mock("@/auth", () => ({
-  lucia: {
-    sessionCookieName: "auth_session",
-    validateSession: vi.fn(), // Return vi.fn() directly
-    createBlankSessionCookie: vi.fn(), // Return vi.fn() directly
-    createSessionCookie: vi.fn(), // Return vi.fn() directly
-  },
-}));
+vi.mock("@/auth", () => {
+  // Hoisted so the helper below and lucia.validateSession share one mock.
+  const validateSessionMock = vi.fn();
+  return {
+    // Routes call this helper (src/auth.ts) instead of lucia directly.
+    validateRequestWithCookieMutation: vi.fn(
+      async () => (await validateSessionMock()) ?? { user: null, session: null },
+    ),
+    lucia: {
+      sessionCookieName: "auth_session",
+      validateSession: validateSessionMock,
+      createBlankSessionCookie: vi.fn(), // Return vi.fn() directly
+      createSessionCookie: vi.fn(), // Return vi.fn() directly
+    },
+  };
+});
 
 // Mock only specific parts of @/lib/types
 vi.mock("@/lib/types", async (importOriginal) => {
@@ -85,7 +93,6 @@ describe("API Route: GET /api/posts/following", () => {
     sharedFromId: null,
     sharedCount: 0,
     createdAt: new Date(Date.now() - i * 3600 * 1000), // More spread out dates
-    updatedAt: new Date(Date.now() - i * 3600 * 1000), // Add updatedAt, same as createdAt
     user: {
       id: mockFollowingIds[i % mockFollowingIds.length],
       username: `followed_user_${(i % 2) + 1}`,
@@ -96,6 +103,7 @@ describe("API Route: GET /api/posts/following", () => {
       email: `user${(i % 2) + 1}@test.com`,
       passwordHash: null,
       deletedAt: null,
+      userDatingProfile: null,
       userPreferences: null,
       userInstruments: [],
       userSkills: [],

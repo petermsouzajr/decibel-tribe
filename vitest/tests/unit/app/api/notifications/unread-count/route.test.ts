@@ -29,14 +29,22 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-vi.mock("@/auth", () => ({
-  lucia: {
-    sessionCookieName: "auth_session",
-    validateSession: vi.fn(), // Return vi.fn() directly
-    createBlankSessionCookie: vi.fn(), // Return vi.fn() directly
-    createSessionCookie: vi.fn(), // Return vi.fn() directly
-  },
-}));
+vi.mock("@/auth", () => {
+  // Hoisted so the helper below and lucia.validateSession share one mock.
+  const validateSessionMock = vi.fn();
+  return {
+    // Routes call this helper (src/auth.ts) instead of lucia directly.
+    validateRequestWithCookieMutation: vi.fn(
+      async () => (await validateSessionMock()) ?? { user: null, session: null },
+    ),
+    lucia: {
+      sessionCookieName: "auth_session",
+      validateSession: validateSessionMock,
+      createBlankSessionCookie: vi.fn(), // Return vi.fn() directly
+      createSessionCookie: vi.fn(), // Return vi.fn() directly
+    },
+  };
+});
 
 // --- Import Mocked Modules to Access Mock Functions ---
 import prisma from "@/lib/prisma";

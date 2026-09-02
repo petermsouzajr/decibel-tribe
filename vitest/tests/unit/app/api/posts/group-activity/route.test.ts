@@ -62,6 +62,7 @@ describe("API Route: GET /api/posts/group-activity", () => {
       email: `user${i}@test.com`,
       passwordHash: null,
       deletedAt: null,
+      userDatingProfile: null,
       userPreferences: null,
       userInstruments: [],
       userSkills: [],
@@ -128,6 +129,10 @@ describe("API Route: GET /api/posts/group-activity", () => {
     }));
 
     vi.doMock("@/auth", () => ({
+      // Routes call this helper (src/auth.ts) instead of lucia directly.
+      validateRequestWithCookieMutation: vi.fn(
+        async () => (await mockLuciaValidateSession()) ?? { user: null, session: null },
+      ),
       lucia: {
         sessionCookieName: "auth_session",
         validateSession: mockLuciaValidateSession,
@@ -324,7 +329,6 @@ describe("API Route: GET /api/posts/group-activity", () => {
         sharedFromId: null,
         sharedCount: 0,
         createdAt: new Date(Date.now() - i * 1000 * 60 * 60), // Hours ago
-        updatedAt: new Date(Date.now() - i * 1000 * 60 * 60), // Add updatedAt, same as createdAt
         user: {
           id: `user-${i % 3}`,
           username: `username${i % 3}`,
@@ -335,6 +339,7 @@ describe("API Route: GET /api/posts/group-activity", () => {
           email: `user${i}@test.com`,
           passwordHash: null,
           deletedAt: null,
+          userDatingProfile: null,
           userPreferences: null,
           userInstruments: [],
           userSkills: [],

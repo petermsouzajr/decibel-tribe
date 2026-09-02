@@ -91,11 +91,12 @@ export default function Post({ post }: PostProps) {
               suppressHydrationWarning
             >
               {formatRelativeDate(post.createdAt)}
-              {post.updatedAt &&
-                post.updatedAt.getTime() >
-                  post.createdAt.getTime() + 1000 * 60 && (
-                  <span className="pl-1 text-xs">(Edited)</span>
-                )}
+              {/* The "(Edited)" indicator was removed here: the Post model has
+                  no `updatedAt` column, so `post.updatedAt` was always
+                  undefined and this never rendered. PostData only claimed the
+                  field because it was hand-written. To bring the feature back,
+                  add `updatedAt DateTime @updatedAt` to model Post, migrate,
+                  and restore this block — see CODEBASE_AUDIT_TRACKER.md C3. */}
             </Link>
           </div>
           <div className="flex items-center gap-2">
@@ -157,11 +158,9 @@ export default function Post({ post }: PostProps) {
         </div>
       )}
 
-     
-
       {post.sharedFrom && (
         <div className="rounded-lg border-2 border-muted-foreground bg-card p-3">
-          <div className="flex gap-2 mb-2">
+          <div className="mb-2 flex gap-2">
             <UserTooltip user={post.sharedFrom.user}>
               <Link href={`/users/${post.sharedFrom.user.username}`}>
                 <UserAvatar avatarUrl={post.sharedFrom.user.avatarUrl} />
@@ -169,7 +168,10 @@ export default function Post({ post }: PostProps) {
             </UserTooltip>
             <div className="min-w-0 flex-1">
               <UserTooltip user={post.sharedFrom.user}>
-                <Link href={`/users/${post.sharedFrom.user.username}`} className="block font-medium hover:underline">
+                <Link
+                  href={`/users/${post.sharedFrom.user.username}`}
+                  className="block font-medium hover:underline"
+                >
                   <div className="flex w-full flex-wrap items-center">
                     <span className="max-w-[75%] flex-shrink truncate">
                       {post.sharedFrom.user.displayName}
@@ -190,25 +192,34 @@ export default function Post({ post }: PostProps) {
             </div>
           </div>
           <Linkify>
-            <div className="whitespace-pre-wrap break-words">{post.sharedFrom.content}</div>
+            <div className="whitespace-pre-wrap break-words">
+              {post.sharedFrom.content}
+            </div>
           </Linkify>
           {!!post.sharedFrom.attachments.length && (
             <div className="pt-3">
-              <MediaPreviews attachments={post.sharedFrom.attachments as unknown as Media[]} />
+              <MediaPreviews attachments={post.sharedFrom.attachments} />
             </div>
           )}
           {/* If the embedded post is itself a share, render a compact nested share */}
           {post.sharedFrom.sharedFrom && (
             <div className="mt-3 rounded-lg border border-muted-foreground bg-muted/5 p-3">
-              <div className="flex gap-2 mb-2">
+              <div className="mb-2 flex gap-2">
                 <UserTooltip user={post.sharedFrom.sharedFrom.user}>
-                  <Link href={`/users/${post.sharedFrom.sharedFrom.user.username}`}>
-                    <UserAvatar avatarUrl={post.sharedFrom.sharedFrom.user.avatarUrl} />
+                  <Link
+                    href={`/users/${post.sharedFrom.sharedFrom.user.username}`}
+                  >
+                    <UserAvatar
+                      avatarUrl={post.sharedFrom.sharedFrom.user.avatarUrl}
+                    />
                   </Link>
                 </UserTooltip>
                 <div className="min-w-0 flex-1">
                   <UserTooltip user={post.sharedFrom.sharedFrom.user}>
-                    <Link href={`/users/${post.sharedFrom.sharedFrom.user.username}`} className="block font-medium hover:underline">
+                    <Link
+                      href={`/users/${post.sharedFrom.sharedFrom.user.username}`}
+                      className="block font-medium hover:underline"
+                    >
                       <div className="flex w-full flex-wrap items-center">
                         <span className="max-w-[75%] flex-shrink truncate">
                           {post.sharedFrom.sharedFrom.user.displayName}
@@ -219,17 +230,25 @@ export default function Post({ post }: PostProps) {
                       </div>
                     </Link>
                   </UserTooltip>
-                  <Link href={`/posts/${post.sharedFrom.sharedFrom.id}`} className="block text-sm text-muted-foreground hover:underline" suppressHydrationWarning>
+                  <Link
+                    href={`/posts/${post.sharedFrom.sharedFrom.id}`}
+                    className="block text-sm text-muted-foreground hover:underline"
+                    suppressHydrationWarning
+                  >
                     {formatRelativeDate(post.sharedFrom.sharedFrom.createdAt)}
                   </Link>
                 </div>
               </div>
               <Linkify>
-                <div className="whitespace-pre-wrap break-words">{post.sharedFrom.sharedFrom.content}</div>
+                <div className="whitespace-pre-wrap break-words">
+                  {post.sharedFrom.sharedFrom.content}
+                </div>
               </Linkify>
               {!!post.sharedFrom.sharedFrom.attachments.length && (
                 <div className="pt-3">
-                  <MediaPreviews attachments={post.sharedFrom.sharedFrom.attachments as unknown as Media[]} />
+                  <MediaPreviews
+                    attachments={post.sharedFrom.sharedFrom.attachments}
+                  />
                 </div>
               )}
               <div className="flex justify-between">
@@ -238,7 +257,9 @@ export default function Post({ post }: PostProps) {
                     postId={post.sharedFrom.sharedFrom.id}
                     initialState={{
                       likes: post.sharedFrom.sharedFrom._count.likes,
-                      isLikedByUser: (post.sharedFrom.sharedFrom.likes ?? []).some((l) => l.userId === user.id),
+                      isLikedByUser: (
+                        post.sharedFrom.sharedFrom.likes ?? []
+                      ).some((l) => l.userId === user.id),
                     }}
                   />
                   <CommentButton
@@ -249,16 +270,22 @@ export default function Post({ post }: PostProps) {
                     postId={post.sharedFrom.sharedFrom.id}
                     initialState={{
                       dislikes: post.sharedFrom.sharedFrom._count.dislikes,
-                      isDislikedByUser: (post.sharedFrom.sharedFrom.dislikes ?? []).some((d) => d.userId === user.id),
+                      isDislikedByUser: (
+                        post.sharedFrom.sharedFrom.dislikes ?? []
+                      ).some((d) => d.userId === user.id),
                     }}
                   />
                   <button
                     className="flex items-center gap-2 text-foreground"
-                    onClick={() => setRepostTarget(post.sharedFrom!.sharedFrom as PostData)}
+                    onClick={() =>
+                      setRepostTarget(post.sharedFrom!.sharedFrom as PostData)
+                    }
                     aria-label="Repost"
                   >
                     <Repeat className="h-5 w-5" />
-                    <span className="text-xs font-medium tabular-nums">{post.sharedFrom.sharedFrom.sharedCount ?? 0}</span>
+                    <span className="text-xs font-medium tabular-nums">
+                      {post.sharedFrom.sharedFrom.sharedCount ?? 0}
+                    </span>
                   </button>
                 </div>
                 <div className="flex items-center gap-3">
@@ -271,40 +298,46 @@ export default function Post({ post }: PostProps) {
             </div>
           )}
           <div className="flex justify-between">
-          <div className="mt-3 flex items-center gap-5">
-            <LikeButton
-              postId={post.sharedFrom.id}
+            <div className="mt-3 flex items-center gap-5">
+              <LikeButton
+                postId={post.sharedFrom.id}
                 initialState={{
                   likes: post.sharedFrom._count.likes,
-                  isLikedByUser: (post.sharedFrom.likes ?? []).some((l) => l.userId === user.id),
+                  isLikedByUser: (post.sharedFrom.likes ?? []).some(
+                    (l) => l.userId === user.id,
+                  ),
                 }}
-            />
-            <CommentButton
-              post={post.sharedFrom as PostData}
+              />
+              <CommentButton
+                post={post.sharedFrom as PostData}
                 onClick={() => setShowEmbeddedComments((v) => !v)}
-            />
-            <DislikeButton
-              postId={post.sharedFrom.id}
+              />
+              <DislikeButton
+                postId={post.sharedFrom.id}
                 initialState={{
                   dislikes: post.sharedFrom._count.dislikes,
-                  isDislikedByUser: (post.sharedFrom.dislikes ?? []).some((d) => d.userId === user.id),
+                  isDislikedByUser: (post.sharedFrom.dislikes ?? []).some(
+                    (d) => d.userId === user.id,
+                  ),
                 }}
-            />
-            {/* Repost for the embedded post (post.sharedFrom). This remains enabled. */}
-            <button
-              className="flex items-center gap-2 text-foreground"
-              onClick={() => setRepostTarget(post.sharedFrom as PostData)}
-              aria-label="Repost"
-            >
-              <Repeat className="h-5 w-5" />
-              <span className="text-xs font-medium tabular-nums">{post.sharedFrom.sharedCount ?? 0}</span>
-            </button>
+              />
+              {/* Repost for the embedded post (post.sharedFrom). This remains enabled. */}
+              <button
+                className="flex items-center gap-2 text-foreground"
+                onClick={() => setRepostTarget(post.sharedFrom as PostData)}
+                aria-label="Repost"
+              >
+                <Repeat className="h-5 w-5" />
+                <span className="text-xs font-medium tabular-nums">
+                  {post.sharedFrom.sharedCount ?? 0}
+                </span>
+              </button>
             </div>
             <div className="flex items-center gap-3">
-            <BookmarkButton
-              postId={post.sharedFrom.id}
+              <BookmarkButton
+                postId={post.sharedFrom.id}
                 initialState={{ isBookmarkedByUser: false }}
-            />
+              />
             </div>
           </div>
           {showEmbeddedComments && (
@@ -315,7 +348,7 @@ export default function Post({ post }: PostProps) {
         </div>
       )}
 
-<hr className="text-muted-foreground" />
+      <hr className="text-muted-foreground" />
       <div className="flex justify-between">
         <div className="size -2 flex items-center gap-5">
           <LikeButton
@@ -329,7 +362,7 @@ export default function Post({ post }: PostProps) {
             post={post}
             onClick={() => setShowComments(!showComments)}
           />
-            <DislikeButton
+          <DislikeButton
             postId={post.id}
             initialState={{
               dislikes: post._count.dislikes,
@@ -338,16 +371,18 @@ export default function Post({ post }: PostProps) {
               ),
             }}
           />
-            {/* Disable resharing if this post is itself a share of a share (level C). */}
-            <button
-              className="flex items-center gap-2 text-foreground disabled:opacity-50"
-              onClick={() => setRepostTarget(post)}
-              aria-label="Repost"
-              disabled={!!(post.sharedFrom && post.sharedFrom.sharedFrom)}
-            >
-              <Repeat className="h-5 w-5" />
-              <span className="text-xs font-medium tabular-nums">{post.sharedCount ?? 0}</span>
-            </button>
+          {/* Disable resharing if this post is itself a share of a share (level C). */}
+          <button
+            className="flex items-center gap-2 text-foreground disabled:opacity-50"
+            onClick={() => setRepostTarget(post)}
+            aria-label="Repost"
+            disabled={!!(post.sharedFrom && post.sharedFrom.sharedFrom)}
+          >
+            <Repeat className="h-5 w-5" />
+            <span className="text-xs font-medium tabular-nums">
+              {post.sharedCount ?? 0}
+            </span>
+          </button>
         </div>
         <div className="flex items-center gap-3">
           {/* Kept report action in dots menu; optional inline flag here if desired */}

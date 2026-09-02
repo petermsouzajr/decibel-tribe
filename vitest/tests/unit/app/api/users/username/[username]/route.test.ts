@@ -78,6 +78,11 @@ vi.mock("@/lib/types", async (importOriginal) => {
 
 // Mock @/auth
 vi.mock("@/auth", () => ({
+  // Routes call this helper (src/auth.ts) instead of lucia directly;
+  // delegate to the validateSession mock this file already configures.
+  validateRequestWithCookieMutation: vi.fn(
+    async () => (await mockLuciaValidateSession()) ?? { user: null, session: null },
+  ),
   lucia: {
     sessionCookieName: "auth_session",
     validateSession: mockLuciaValidateSession,

@@ -59,6 +59,12 @@ vi.mock("@/auth", () => {
   }));
 
   return {
+    // Routes call this helper (see src/auth.ts) rather than lucia directly.
+    // Delegates to the same validateSession mock each test already configures.
+    validateRequestWithCookieMutation: vi.fn(async () => {
+      const result = await internalMockValidateSession();
+      return result ?? { user: null, session: null };
+    }),
     lucia: {
       // Assuming lucia is an object export
       validateSession: internalMockValidateSession,

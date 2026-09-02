@@ -73,6 +73,10 @@ describe("GET /api/events/for-you", () => {
     }));
 
     vi.doMock("@/auth", () => ({
+      // Routes call this helper (src/auth.ts) instead of lucia directly.
+      validateRequestWithCookieMutation: vi.fn(
+        async () => (await mockLuciaValidateSession()) ?? { user: null, session: null },
+      ),
       lucia: {
         sessionCookieName: "auth_session",
         validateSession: mockLuciaValidateSession,

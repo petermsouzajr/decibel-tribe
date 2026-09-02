@@ -32,16 +32,14 @@ const getPost = cache(
 
     if (!post) notFound();
 
-    return post as unknown as PostData;
+    return post;
   },
 );
 
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const params = await props.params;
 
-  const {
-    postId
-  } = params;
+  const { postId } = params;
 
   const { user } = await validateRequest();
 
@@ -57,9 +55,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
 export default async function Page(props: PageProps) {
   const params = await props.params;
 
-  const {
-    postId
-  } = params;
+  const { postId } = params;
 
   const { user: loggedInUser } = await validateRequest();
 

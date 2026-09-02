@@ -33,13 +33,22 @@ export async function submitPost(input: {
   // If this is a share chain, increment sharedCount up the chain
   if (input.sharedFromId) {
     // increment direct parent
-    await prisma.post.update({ where: { id: input.sharedFromId }, data: { sharedCount: { increment: 1 } } });
+    await prisma.post.update({
+      where: { id: input.sharedFromId },
+      data: { sharedCount: { increment: 1 } },
+    });
     // increment root if exists
-    const parent = await prisma.post.findUnique({ where: { id: input.sharedFromId }, select: { sharedFromId: true } });
+    const parent = await prisma.post.findUnique({
+      where: { id: input.sharedFromId },
+      select: { sharedFromId: true },
+    });
     if (parent?.sharedFromId) {
-      await prisma.post.update({ where: { id: parent.sharedFromId }, data: { sharedCount: { increment: 1 } } });
+      await prisma.post.update({
+        where: { id: parent.sharedFromId },
+        data: { sharedCount: { increment: 1 } },
+      });
     }
   }
 
-  return newPost as unknown as PostData;
+  return newPost;
 }

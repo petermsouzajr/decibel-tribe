@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
 
     const { items, nextCursor } = paginate(notifications, pageSize);
 
-    const typedNotifications = items as unknown as NotificationData[];
+    const typedNotifications = items;
 
     const data: NotificationsPage = {
       notifications: typedNotifications, // Use the asserted array

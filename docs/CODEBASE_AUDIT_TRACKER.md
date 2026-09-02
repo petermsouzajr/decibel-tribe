@@ -201,12 +201,47 @@ Created **`src/lib/api/pagination.ts`** with two functions that are two halves o
 
 > Two routes are deliberately outside this family. `search/route.ts` returns a fixed first page with no cursor at all. `posts/[postId]/comments/route.ts` pages **backwards** (`take: -pageSize - 1`, `previousCursor`) so comments load oldest-last — a different, self-consistent convention that the helper does not model.
 
-### C3. `getPostDataInclude` + `as unknown as PostData[]`
+### C3. The double assertions were hiding four real defects — **[x] done**
 
-Several routes end with `posts.slice(0, pageSize) as unknown as PostData[]`. A double assertion through `unknown` means the Prisma result and `PostData` have genuinely diverged — the cast is silencing a real type mismatch rather than describing one.
+`as unknown as PostData[]` appeared in 8 places. A double assertion through `unknown` means TypeScript refused the direct cast, so each one was silencing a genuine mismatch. Removing them required fixing what they hid.
 
-- [ ] Find out whether `getPostDataInclude`'s inferred type actually matches `PostData`
-- [ ] Fix the type so the assertion can be deleted (use Prisma's `GetPayload` generics rather than a hand-written interface)
+**Root cause.** `getPostDataInclude` built its nested `sharedFrom` select with a recursive helper typed `(depth: number): any`. That `any` destroyed Prisma's payload inference, so `PostData` had to be hand-written — ~50 lines mirroring the include by eye. The codebase already knew the right pattern: `UserData` and `EventData` are both derived with `Prisma.…GetPayload`. `PostData` was the one that couldn't be, and it drifted.
+
+**What the casts were hiding:**
+
+1. **`post.updatedAt` does not exist.** `PostData` declared `updatedAt: Date` as required. **The `Post` model has no `updatedAt` column** — never had one, no migration ever added it, while 10 other models do have it. `Post.tsx` used it to render an "(Edited)" badge, so **that badge has never once appeared in production.** Worse, `Post.test.tsx` had a passing test — *"should display (Edited) if updatedAt is different from createdAt"* — that only passed because the mock supplied a field the database never returns.
+2. **Viewer relations vanished for anonymous readers.** `likes`/`dislikes`/`bookmarks` were attached only when `loggedInUserId` was set, yet `PostData` declared them required and `Post.tsx` calls `post.likes.some(...)`, `post.dislikes.some(...)`, `post.bookmarks.some(...)` with **no guard**. The nested `sharedFrom` copies of the same reads *do* guard with `?? []`, so the inconsistency was already half-known.
+3. **`user.followers` vanished the same way**, and `Post.tsx` reads `post.user.followers` directly.
+4. **`UserWithFollowerStatus` was a third hand-written mirror** of `getUserDataSelect`, and it had drifted: it declared `preferredGender` and `preferredSexualOrientation` as `string` where the schema makes them nullable.
+
+**Fixes:**
+- [x] Rewrote `getPostDataInclude` with no `any` — the depth-2 `sharedFrom` nesting is written out rather than generated, so Prisma can infer it
+- [x] Viewer relations and `followers` are now **always selected**, filtered by `{ in: [] }` for anonymous viewers. Same data, but the shape no longer changes with auth state — which also collapses the return type from a union to one object
+- [x] `PostData` is now `Prisma.PostGetPayload<{ include: ReturnType<typeof getPostDataInclude> }>`, matching `UserData` and `EventData`
+- [x] `UserWithFollowerStatus` is now an alias of `UserData` (−47 lines)
+- [x] Removed **all 8** `as unknown as` casts, plus 2 redundant `as unknown as Media[]` casts
+- [x] Removed the dead "(Edited)" markup, with an inline comment on how to restore it
+- [x] `tsc`, `eslint`, `next build` (exit 0) all clean
+
+- [ ] **Decision for you:** add `updatedAt DateTime @updatedAt` to `model Post` + migration to make "(Edited)" work, or leave it out permanently. A schema change is yours to make — I did not touch `schema.prisma`.
+
+### C3a. ⚠️ This refactor broke test assertions — read before the test audit
+
+The unit suite **was already red before any of this work**: baseline at `fcc0f52` was **101 failed / 652 passed**. It is now **216 failed / 536 passed** — I added ~115 failures, and none of them indicate a production defect (`tsc`, `eslint` and `next build` are all clean).
+
+Two mechanical causes, both now repaired:
+- Routes call `validateRequestWithCookieMutation`, which the `vi.mock("@/auth")` factories did not export — vitest threw, the route's catch turned it into a 500, and ~370 assertions failed on it. Added the export to 30 mock factories across both the `vi.mock` and `vi.doMock` styles. **0 such errors remain.**
+- `PostData` mocks carried the phantom `updatedAt` and lacked `followers` / `userDatingProfile`.
+
+What is left is **not plumbing** — it is ~173 `toHaveBeenCalledWith` assertions that pin the *exact* Prisma arguments, plus cookie-spy assertions. They encode the old implementation, including the bugs:
+
+- Tests assert `findMany` args with **no `skip: 1`** — i.e. they assert the off-by-one that dropped a row per page.
+- Tests assert the old include shape, where viewer relations were absent for anonymous readers.
+- Tests assert `createSessionCookie` / `createBlankSessionCookie` fire inside the route; cookie mutation now happens once inside the shared helper.
+
+**These need judgement per test, not a script** — each has to be re-pointed at intended behaviour rather than at the old implementation, so I stopped rather than guess at ~115 expectations. That is the first task for the test audit.
+
+> The deeper lesson for that audit: these tests assert *how* a route calls Prisma rather than *what* it returns. That is why correcting seven real pagination bugs turned the suite redder. Assertions on response bodies would have caught the bugs instead of protecting them.
 
 ### C4. `compatibility.ts` vs. inline scoring
 
@@ -411,7 +446,7 @@ Net result: `vitest` (fast, integrated) + `playwright` (critical path, integrate
 |-------|-------|--------|
 | A — Dead code | non-dating | **done** — 5 files + 7 empty dirs + 4 orphan types removed; `UserPosts` restored |
 | B — Dependencies | non-dating | **done** — 4 packages removed **and committed**, privacy policy corrected; `jest` deferred |
-| C — DRY | C1 auth + C2 pagination | **done** — ~2,400 LOC removed across both. C3/C4 outstanding |
+| C — DRY | C1 auth + C2 pagination + C3 types | **done** — ~2,500 LOC removed. C4 outstanding |
 | D — Bugs | pagination | **done** — 7 broken routes fixed. D4 (crons) needs your call |
 | E — Per-feature | 13 non-dating features | not started |
 | F — Testing | — | deferred to its own audit |
@@ -451,7 +486,8 @@ Given `DATING_EXPO_MIGRATION_PLAN.md` has decibel-tribe keeping **API only**, an
 
 ### Next up (in order)
 
-- **C3** — kill the `as unknown as PostData[]` double assertions by fixing `getPostDataInclude`'s inferred type. Now the most valuable remaining item: those casts hide real drift between the Prisma result and `PostData`.
+- **C4** — reconcile `lib/dating/compatibility.ts` against the insights route (dating-adjacent; the route is keep-forever backend).
 - **E** — per-feature sweep across the 13 non-dating features.
+- **Test audit** — start with C3a above.
 
-**Passes 1–2:** ~2,750 LOC removed net · 400 LOC of dead code deleted · 7 pagination bugs fixed · 4 dependencies removed · 1 false security claim corrected · ~90 lines of hand-rolled pagination replaced by a 55-line helper · all verified with `tsc`, `eslint`, and a clean-`HEAD` `next build` (exit 0)
+**Passes 1–4:** ~2,900 LOC removed net · 400 LOC of dead code deleted · 7 pagination bugs fixed · 4 dependencies removed · 1 false security claim corrected · ~90 lines of hand-rolled pagination replaced by a 55-line helper · all verified with `tsc`, `eslint`, and a clean-`HEAD` `next build` (exit 0)

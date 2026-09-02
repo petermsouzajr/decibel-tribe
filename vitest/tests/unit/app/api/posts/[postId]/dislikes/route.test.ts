@@ -115,6 +115,10 @@ describe("API Route: /api/posts/[postId]/dislikes", () => {
     }));
 
     vi.doMock("@/auth", () => ({
+      // Routes call this helper (src/auth.ts) instead of lucia directly.
+      validateRequestWithCookieMutation: vi.fn(
+        async () => (await mockValidateSession()) ?? { user: null, session: null },
+      ),
       lucia: {
         sessionCookieName: "auth_session",
         validateSession: mockValidateSession,

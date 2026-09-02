@@ -137,6 +137,7 @@ describe("API Route: /api/posts/[postId]/comments", () => {
       isDatingActive: false,
       userDatingProfile: null as any,
       userDatingPreferences: null,
+      followers: [],
       _count: { followers: 0, following: 0, posts: 0 },
     },
     parent: null,
@@ -182,6 +183,10 @@ describe("API Route: /api/posts/[postId]/comments", () => {
     }));
 
     vi.doMock("@/auth", () => ({
+      // Routes call this helper (src/auth.ts) instead of lucia directly.
+      validateRequestWithCookieMutation: vi.fn(
+        async () => (await mockValidateSession()) ?? { user: null, session: null },
+      ),
       lucia: {
         sessionCookieName: "auth_session",
         validateSession: mockValidateSession,
