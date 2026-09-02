@@ -3,7 +3,7 @@ import { unauthorized, serverError } from "@/lib/api/responses";
 import { validateRequestWithCookieMutation } from "@/auth";
 import prisma from "@/lib/prisma";
 import { getPostDataInclude, PostsPage, PostData } from "@/lib/types";
-import { cursorArgs, paginate } from "@/lib/api/pagination";
+import { DEFAULT_PAGE_SIZE, cursorArgs, paginate } from "@/lib/api/pagination";
 
 // Opt out of static generation
 export const dynamic = "force-dynamic";
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     }
 
     const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
-    const pageSize = 10;
+    const pageSize = DEFAULT_PAGE_SIZE;
 
     const userGroups = await prisma.groupMember.findMany({
       where: { userId: user.id, acceptedInvite: true },

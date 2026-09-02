@@ -1,5 +1,5 @@
 import { validateRequestWithCookieMutation } from "@/auth";
-import { serverError, unauthorized } from "@/lib/api/responses";
+import { forbidden, serverError, unauthorized } from "@/lib/api/responses";
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server"; // Import NextResponse
 
@@ -43,7 +43,7 @@ export async function POST(
     }
 
     if (group.ownerId !== user.id) {
-      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+      return forbidden();
     }
 
     const existingMember = await prisma.groupMember.findUnique({

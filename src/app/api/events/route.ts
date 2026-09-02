@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { unauthorized, serverError } from "@/lib/api/responses";
+import { forbidden, serverError, unauthorized } from "@/lib/api/responses";
 import { validateRequestWithCookieMutation } from "@/auth";
 import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
@@ -312,7 +312,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     if (event.createdById !== loggedInUser.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return forbidden();
     }
 
     let rawData;
@@ -374,7 +374,7 @@ export async function PUT(req: NextRequest) {
     }
 
     if (event.createdById !== loggedInUser.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return forbidden();
     }
 
     const updatedEvent = await prisma.event.update({

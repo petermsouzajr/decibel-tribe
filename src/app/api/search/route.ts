@@ -1,3 +1,4 @@
+import { DEFAULT_PAGE_SIZE } from "@/lib/api/pagination";
 import { validateRequestWithCookieMutation } from "@/auth";
 import { unauthorized, serverError } from "@/lib/api/responses";
 import prisma from "@/lib/prisma";
@@ -180,7 +181,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const pageSize = 10;
+    const pageSize = DEFAULT_PAGE_SIZE;
     const searchQuery = query.trim();
 
     const posts = await prisma.post.findMany({

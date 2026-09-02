@@ -1,7 +1,7 @@
 import { validateRequestWithCookieMutation } from "@/auth";
 import { unauthorized, serverError } from "@/lib/api/responses";
 import prisma from "@/lib/prisma";
-import { cursorArgs, paginate } from "@/lib/api/pagination";
+import { DEFAULT_PAGE_SIZE, cursorArgs, paginate } from "@/lib/api/pagination";
 import { NotificationsPage, NotificationData } from "@/lib/types"; // Import NotificationData
 import { NextRequest, NextResponse } from "next/server"; // Import NextResponse
 import { getUserDataSelect } from "@/lib/types"; // Corrected import path
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   try {
     const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
-    const pageSize = 10;
+    const pageSize = DEFAULT_PAGE_SIZE;
 
     // Direct session validation
     const { user } = await validateRequestWithCookieMutation();

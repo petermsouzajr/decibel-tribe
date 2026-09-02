@@ -14,15 +14,15 @@ export async function isAdmin(): Promise<boolean> {
  */
 export async function requireAdmin() {
   const { user } = await validateRequest();
-  
+
   if (!user) {
     redirect("/login");
   }
-  
+
   if (!user.isAdmin) {
     redirect("/");
   }
-  
+
   return user;
 }
 
@@ -32,11 +32,4 @@ export async function requireAdmin() {
 export async function getAdminUser() {
   const { user } = await validateRequest();
   return user?.isAdmin ? user : null;
-}
-
-/**
- * Check if user can perform admin actions
- */
-export function canPerformAdminAction(user: any): boolean {
-  return user?.isAdmin ?? false;
 }

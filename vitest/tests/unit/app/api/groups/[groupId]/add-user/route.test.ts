@@ -167,7 +167,7 @@ describe("[Groups][API] /api/groups/[groupId]/add-user", () => {
       const req = createMockRequest({ userId: mockTargetUser.id });
       const response = await POST(req, { params: Promise.resolve({ groupId: mockGroupId }) });
       expect(response.status).toBe(403);
-      expect(await response.json()).toEqual({ error: "Forbidden." });
+      expect(await response.json()).toEqual({ error: "Forbidden" });
       expect(mockGroupMemberCreate).not.toHaveBeenCalled();
     });
 

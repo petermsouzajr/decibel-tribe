@@ -1,5 +1,5 @@
 import { validateRequestWithCookieMutation } from "@/auth";
-import { unauthorized, serverError } from "@/lib/api/responses";
+import { forbidden, serverError, unauthorized } from "@/lib/api/responses";
 import prisma from "@/lib/prisma";
 // ... other imports ...
 import { NextRequest, NextResponse } from "next/server"; // Import NextResponse
@@ -68,7 +68,7 @@ export async function PATCH(
     }
 
     if (post.userId !== user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return forbidden();
     }
 
     const updatedPost = await prisma.post.update({
@@ -113,7 +113,7 @@ export async function DELETE(
     }
 
     if (post.userId !== user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return forbidden();
     }
 
     await prisma.post.delete({ where: { id: postId } });

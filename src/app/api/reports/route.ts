@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     // Rate limit: max 5 reports/day per user
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const dailyCount = await (prisma as any).report.count({
+    const dailyCount = await prisma.report.count({
       where: { reporterId: user.id, createdAt: { gte: today } },
     });
     if (dailyCount >= 5) {
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
 
     // Cooldown: 1 minute between any two reports from the same user
     const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
-    const lastRecentReport = await (prisma as any).report.findFirst({
+    const lastRecentReport = await prisma.report.findFirst({
       where: { reporterId: user.id, createdAt: { gte: oneMinuteAgo } },
       orderBy: { createdAt: "desc" },
       select: { createdAt: true },
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
     try {
       switch (type) {
         case "post": {
-          const exists = await (prisma as any).post.findUnique({
+          const exists = await prisma.post.findUnique({
             where: { id: targetId },
             select: { id: true },
           });
@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
           break;
         }
         case "comment": {
-          const exists = await (prisma as any).comment.findUnique({
+          const exists = await prisma.comment.findUnique({
             where: { id: targetId },
             select: { id: true },
           });
@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
           break;
         }
         case "profile": {
-          const exists = await (prisma as any).user.findUnique({
+          const exists = await prisma.user.findUnique({
             where: { id: targetId },
             select: { id: true },
           });
@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
           break;
         }
         case "group": {
-          const exists = await (prisma as any).group.findUnique({
+          const exists = await prisma.group.findUnique({
             where: { id: targetId },
             select: { id: true },
           });
@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
           break;
         }
         case "event": {
-          const exists = await (prisma as any).event.findUnique({
+          const exists = await prisma.event.findUnique({
             where: { id: targetId },
             select: { id: true },
           });
@@ -174,7 +174,7 @@ export async function POST(req: NextRequest) {
         in: [ReportStatus.PENDING, ReportStatus.INVESTIGATING],
       } as any;
       try {
-        const existing = await (prisma as any).report.findFirst({
+        const existing = await prisma.report.findFirst({
           where: duplicateWhere,
           select: { id: true, createdAt: true },
         });
@@ -204,7 +204,7 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-      const created = await (prisma as any).report.create({ data });
+      const created = await prisma.report.create({ data });
       return NextResponse.json(created, { status: 201 });
     } catch (e: any) {
       const msg = String(e?.message || e);
@@ -222,7 +222,7 @@ export async function POST(req: NextRequest) {
             (fallbackData.adminNotes ? fallbackData.adminNotes + " | " : "") +
             "fallback: original commentId stored in messageId";
         }
-        const created = await (prisma as any).report.create({
+        const created = await prisma.report.create({
           data: fallbackData,
         });
         return NextResponse.json(created, { status: 201 });
@@ -255,7 +255,7 @@ export async function GET(req: NextRequest) {
     if (status) where.status = status as any;
 
     const [items, total] = await Promise.all([
-      (prisma as any).report.findMany({
+      prisma.report.findMany({
         where,
         orderBy: { createdAt: "desc" },
         skip,
@@ -268,7 +268,7 @@ export async function GET(req: NextRequest) {
           event: { select: { id: true, title: true } },
         },
       }),
-      (prisma as any).report.count({ where }),
+      prisma.report.count({ where }),
     ]);
 
     return NextResponse.json({

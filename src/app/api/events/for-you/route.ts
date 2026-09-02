@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import { EventsPage, getEventDataInclude } from "@/lib/types";
-import { cursorArgs, paginate } from "@/lib/api/pagination";
+import { DEFAULT_PAGE_SIZE, cursorArgs, paginate } from "@/lib/api/pagination";
 import { NextRequest, NextResponse } from "next/server";
 import { serverError, unauthorized } from "@/lib/api/responses";
 import { validateRequestWithCookieMutation } from "@/auth";
@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   try {
     const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
 
-    const pageSize = 10;
+    const pageSize = DEFAULT_PAGE_SIZE;
 
     // Direct session validation
     const { user } = await validateRequestWithCookieMutation();

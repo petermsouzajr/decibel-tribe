@@ -23,7 +23,7 @@ export async function PATCH(
       data.resolvedAt = new Date();
     }
 
-    const updated = await (prisma as any).report.update({
+    const updated = await prisma.report.update({
       where: { id: params.reportId },
       data,
     });

@@ -3,7 +3,7 @@ import { unauthorized, serverError } from "@/lib/api/responses";
 import { validateRequestWithCookieMutation } from "@/auth";
 import prisma from "@/lib/prisma";
 import { getUserDataSelect } from "@/lib/types";
-import { cursorArgs, paginate } from "@/lib/api/pagination";
+import { DEFAULT_PAGE_SIZE, cursorArgs, paginate } from "@/lib/api/pagination";
 
 // Opt out of static generation
 export const dynamic = "force-dynamic";
@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
       return unauthorized();
     }
 
-    const pageSize = 10;
+    const pageSize = DEFAULT_PAGE_SIZE;
     const cursor = req.nextUrl.searchParams.get("cursor");
     const usernameParam = req.nextUrl.searchParams.get("user");
 

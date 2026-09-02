@@ -2,7 +2,7 @@ import { validateRequestWithCookieMutation } from "@/auth";
 import { unauthorized, serverError } from "@/lib/api/responses";
 import prisma from "@/lib/prisma";
 import { EventsPage, getEventDataInclude } from "@/lib/types";
-import { cursorArgs, paginate } from "@/lib/api/pagination";
+import { DEFAULT_PAGE_SIZE, cursorArgs, paginate } from "@/lib/api/pagination";
 import { NextRequest, NextResponse } from "next/server"; // Import NextResponse
 
 // Opt out of static generation
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
 
     const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
 
-    const pageSize = 10;
+    const pageSize = DEFAULT_PAGE_SIZE;
 
     const events = await prisma.event.findMany({
       where: {

@@ -243,11 +243,9 @@ What is left is **not plumbing** — it is ~173 `toHaveBeenCalledWith` assertion
 
 > The deeper lesson for that audit: these tests assert *how* a route calls Prisma rather than *what* it returns. That is why correcting seven real pagination bugs turned the suite redder. Assertions on response bodies would have caught the bugs instead of protecting them.
 
-### C4. `compatibility.ts` vs. inline scoring
+### C4. [~] `compatibility.ts` vs. inline scoring — **deferred (dating)**
 
-`src/lib/dating/compatibility.ts` (207 LOC) is unreferenced, while `src/app/api/dating/matches/[matchId]/insights/route.ts:74` has a `// Calculate compatibility scores` comment.
-
-- [ ] Determine whether the route re-implements the helper. If yes: the **route** is keep-forever backend, the helper is dead — so port the good version *into* the route (or into a `lib/server/` helper the route imports) and delete the orphan. Don't just delete blindly here; the helper may be the better implementation.
+Both sides are dating code, so this is out of scope for these passes. Recorded for the deprecation: `src/lib/dating/compatibility.ts` is unreferenced while `/api/dating/matches/[matchId]/insights/route.ts` appears to reimplement it. The route is keep-forever backend; the orphan helper may hold the better implementation, so read both before deleting either.
 
 ---
 
@@ -357,9 +355,40 @@ The fallback is the live site, and the suite includes `cypress/e2e/ui/settings/d
 
 ## Phase E — Feature-by-feature audit grid
 
-Phase A/B/C/D above came out of a codebase-wide sweep. This grid is the remaining per-feature detail work. For each feature: confirm no dead code beyond Phase A, apply the C1 wrapper, check the "better way" column, confirm test coverage.
+> **Pass 5 (2026-09-02): cross-cutting sweep done.** Rather than walking features one at a time, this pass ran three codebase-wide scans that cut across all of them. Per-feature review of business logic is still open.
 
-Legend: **Dead** = feature-local dead code swept · **DRY** = migrated to C1/C2 helpers · **Impl** = implementation reviewed · **Test** = coverage confirmed
+### E1. Unused *exports* (not just whole files) — **[x] done**
+
+The Phase A sweep found dead files. This one found dead exports inside live files. 11 candidates, of which **5 were real** — the other 6 were used within their own module and my first scan, which excluded same-file hits, called them dead wrongly. Each was re-checked by hand before deletion.
+
+| Export | Verdict |
+|--------|---------|
+| `createEvent` (`(main)/calendar/actions.ts`) | **Deleted — file removed.** Dead *and* broken: it POSTed to the literal path `/api/events/eventId`, not a template. It could never have worked |
+| `AdminReportListItem` (`src/lib/reports.ts`) | **Deleted — file removed**, this was its only content |
+| `canPerformAdminAction` (`src/lib/admin.ts`) | **Deleted.** Redundant with `isAdmin()` / `getAdminUser()` |
+| `UpdateEventValues`, `CreateCommentValues` (`validation.ts`) | **Deleted** |
+| `ensureStreamUser`, `getGroupMemberSelect`, `reducer`, `TextareaProps`, `DEFAULT_PAGE_SIZE` | **Kept** — all used inside their own module (e.g. `getGroupMemberSelect` feeds `GroupMembershipData`, which the group page uses) |
+
+**Checked and cleared while here:** every admin surface — `api/admin/settings`, both `api/reports` routes, and all five `admin/*` pages — does gate on `isAdmin` / `requireAdmin`. The dead helper was redundancy, not a missing guard.
+
+### E2. `(prisma as any)` — type checking was switched off across two features — **[x] done**
+
+20 casts across 6 files wrote `(prisma as any).report`, `(prisma as any).post`, `(prisma as any).user` and so on. Casting the client itself to `any` disables type checking for **every** query written through it, so the whole reports feature and the block-list routes were unchecked.
+
+`model Report` exists in the schema and always has. **All 20 casts were removed with zero type errors** — they were never needed.
+
+- [x] `src/app/api/reports/route.ts` (12), `reports/[reportId]` (1), `users/[userId]/blocks` (3), `admin/page.tsx` (1), `admin/reports/page.tsx` (2), `admin/reports/[reportId]/page.tsx` (1)
+- [ ] 74 narrower `any` uses remain (callback parameters, dynamically-built `where` clauses). Lower value and more entangled — worth a dedicated pass, not a sweep
+
+### E3. Remaining response-shape drift — **[x] done**
+
+- [x] 6 hand-written 403s now use `forbidden()` — including one that had drifted to `"Forbidden."` with a trailing period, the same failure mode as the 500s in C1
+- [x] 13 routes hardcoding `const pageSize = 10` now use `DEFAULT_PAGE_SIZE`
+- [ ] **Left alone deliberately:** 4 routes return `{ error: "Unauthorized" }` with a **403** status. 401 means unauthenticated, 403 means authenticated but not permitted, so the body contradicts the status — but changing it alters the wire response and a client may match on that string. Your call
+
+### E4. Per-feature business-logic review — still open
+
+The grid below is unchanged. E1–E3 covered dead code and shape consistency across every feature; what remains per-feature is reading the actual logic.
 
 | # | Feature | Files | Dead | DRY | Impl | Test | Notes |
 |---|---------|-------|:----:|:---:|:----:|:----:|-------|
@@ -446,9 +475,9 @@ Net result: `vitest` (fast, integrated) + `playwright` (critical path, integrate
 |-------|-------|--------|
 | A — Dead code | non-dating | **done** — 5 files + 7 empty dirs + 4 orphan types removed; `UserPosts` restored |
 | B — Dependencies | non-dating | **done** — 4 packages removed **and committed**, privacy policy corrected; `jest` deferred |
-| C — DRY | C1 auth + C2 pagination + C3 types | **done** — ~2,500 LOC removed. C4 outstanding |
+| C — DRY | C1 auth + C2 pagination + C3 types | **done** — ~2,500 LOC removed. C4 deferred (dating) |
 | D — Bugs | pagination | **done** — 7 broken routes fixed. D4 (crons) needs your call |
-| E — Per-feature | 13 non-dating features | not started |
+| E — Per-feature | 13 non-dating features | **cross-cutting sweeps done** (E1–E3); per-feature logic review open (E4) |
 | F — Testing | — | deferred to its own audit |
 
 ### Build fixed and dependency removals committed — **[x] done**
@@ -486,8 +515,8 @@ Given `DATING_EXPO_MIGRATION_PLAN.md` has decibel-tribe keeping **API only**, an
 
 ### Next up (in order)
 
-- **C4** — reconcile `lib/dating/compatibility.ts` against the insights route (dating-adjacent; the route is keep-forever backend).
-- **E** — per-feature sweep across the 13 non-dating features.
+- **E4** — per-feature business-logic review across the 13 non-dating features.
+- **74 remaining `any` uses** — a dedicated typing pass.
 - **Test audit** — start with C3a above.
 
-**Passes 1–4:** ~2,900 LOC removed net · 400 LOC of dead code deleted · 7 pagination bugs fixed · 4 dependencies removed · 1 false security claim corrected · ~90 lines of hand-rolled pagination replaced by a 55-line helper · all verified with `tsc`, `eslint`, and a clean-`HEAD` `next build` (exit 0)
+**Passes 1–5:** ~2,950 LOC removed net · 20 `(prisma as any)` casts removed, restoring type checking to the reports and blocks features · 400 LOC of dead code deleted · 7 pagination bugs fixed · 4 dependencies removed · 1 false security claim corrected · ~90 lines of hand-rolled pagination replaced by a 55-line helper · all verified with `tsc`, `eslint`, and a clean-`HEAD` `next build` (exit 0)

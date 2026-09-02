@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { unauthorized, serverError } from "@/lib/api/responses";
+import { forbidden, serverError, unauthorized } from "@/lib/api/responses";
 import { validateRequestWithCookieMutation } from "@/auth";
 import prisma from "@/lib/prisma";
 import { getEventDataInclude } from "@/lib/types";
@@ -167,7 +167,7 @@ export async function PATCH(
 
       // Ownership check - ONLY for updates
       if (event.createdById !== loggedInUser.id) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        return forbidden();
       }
 
       // Validate incoming data

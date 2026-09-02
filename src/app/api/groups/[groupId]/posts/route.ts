@@ -1,7 +1,7 @@
 import { validateRequestWithCookieMutation } from "@/auth";
 import prisma from "@/lib/prisma";
 import { getPostDataInclude, PostsPage, PostData } from "@/lib/types";
-import { cursorArgs, paginate } from "@/lib/api/pagination";
+import { DEFAULT_PAGE_SIZE, cursorArgs, paginate } from "@/lib/api/pagination";
 import { NextRequest, NextResponse } from "next/server";
 import { unauthorized, serverError } from "@/lib/api/responses";
 
@@ -12,7 +12,7 @@ export async function GET(
   const params = await props.params;
   try {
     const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
-    const pageSize = 10;
+    const pageSize = DEFAULT_PAGE_SIZE;
 
     const { user } = await validateRequestWithCookieMutation();
     if (!user) {

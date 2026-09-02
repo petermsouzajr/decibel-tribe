@@ -9,38 +9,47 @@ const honeypotSchemaMerge = z.object({
   formLoadedAt: z.number().optional(), // We'll manage this state in the form
 });
 
-export const signUpSchema = z.object({
-  email: requiredString
-    .email("Invalid email address")
-    .max(50, "Must be less than 50 characters"),
-  username: requiredString
-    .regex(/^[a-zA-Z0-9_-]+$/, "Only letters, numbers, - and _ allowed")
-    .max(50, "Must be less than 50 characters"),
-  password: requiredString
-    .min(8, "Must be at least 8 characters")
-    .max(50, "Must be less than 50 characters"),
-}).merge(honeypotSchemaMerge);
+export const signUpSchema = z
+  .object({
+    email: requiredString
+      .email("Invalid email address")
+      .max(50, "Must be less than 50 characters"),
+    username: requiredString
+      .regex(/^[a-zA-Z0-9_-]+$/, "Only letters, numbers, - and _ allowed")
+      .max(50, "Must be less than 50 characters"),
+    password: requiredString
+      .min(8, "Must be at least 8 characters")
+      .max(50, "Must be less than 50 characters"),
+  })
+  .merge(honeypotSchemaMerge);
 
 export type SignUpValues = z.infer<typeof signUpSchema>;
 
-export const resetPasswordSchema = z.object({
-  credential: z.string().max(50, "Must be less than 50 characters").optional(),
-}).merge(honeypotSchemaMerge);
+export const resetPasswordSchema = z
+  .object({
+    credential: z
+      .string()
+      .max(50, "Must be less than 50 characters")
+      .optional(),
+  })
+  .merge(honeypotSchemaMerge);
 
 export type resetPasswordValues = z.infer<typeof resetPasswordSchema>;
 
-export const loginSchema = z.object({
-  username: z.string().max(50, "Must be less than 50 characters").optional(),
-  email: z
-    .string()
-    .email("Invalid email")
-    .max(50, "Must be less than 50 characters")
-    .optional(),
-  password: z
-    .string()
-    .max(50, "Must be less than 50 characters")
-    .min(1, "Required"),
-}).merge(honeypotSchemaMerge);
+export const loginSchema = z
+  .object({
+    username: z.string().max(50, "Must be less than 50 characters").optional(),
+    email: z
+      .string()
+      .email("Invalid email")
+      .max(50, "Must be less than 50 characters")
+      .optional(),
+    password: z
+      .string()
+      .max(50, "Must be less than 50 characters")
+      .min(1, "Required"),
+  })
+  .merge(honeypotSchemaMerge);
 
 export type LoginValues = z.infer<typeof loginSchema>;
 
@@ -169,7 +178,10 @@ export const createEventSchema = baseEventObject
   )
   .refine(
     (data) => {
-      if (Array.isArray(data.helpWantedSkills) && data.helpWantedSkills.length > 0) {
+      if (
+        Array.isArray(data.helpWantedSkills) &&
+        data.helpWantedSkills.length > 0
+      ) {
         return !!data.eventZipCode && data.eventZipCode.trim().length > 0;
       }
       return true;
@@ -200,12 +212,8 @@ export const updateEventSchema = baseEventObject
     },
   );
 
-export type UpdateEventValues = z.infer<typeof updateEventSchema>;
-
 // --- Comment Schema ---
 
 export const createCommentSchema = z.object({
   content: requiredString,
 });
-
-export type CreateCommentValues = z.infer<typeof createCommentSchema>;

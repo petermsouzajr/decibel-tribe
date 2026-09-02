@@ -18,7 +18,7 @@ export async function POST(
     if (!userId || userId === user.id)
       return NextResponse.json({ error: "Invalid target" }, { status: 400 });
 
-    await (prisma as any).block.create({
+    await prisma.block.create({
       data: { blockerId: user.id, blockedId: userId },
     });
     return NextResponse.json({ success: true });
@@ -43,7 +43,7 @@ export async function DELETE(
     if (!userId || userId === user.id)
       return NextResponse.json({ error: "Invalid target" }, { status: 400 });
 
-    await (prisma as any).block.delete({
+    await prisma.block.delete({
       where: { blockerId_blockedId: { blockerId: user.id, blockedId: userId } },
     });
     return NextResponse.json({ success: true });
@@ -65,7 +65,7 @@ export async function GET(
     const { user } = await validateRequest();
     if (!user || user.id !== userId)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    const blocks = await (prisma as any).block.findMany({
+    const blocks = await prisma.block.findMany({
       where: { blockerId: user.id },
       select: {
         blocked: {

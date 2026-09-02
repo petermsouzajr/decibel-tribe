@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import { getPostDataInclude, PostsPage, PostData } from "@/lib/types";
-import { cursorArgs, paginate } from "@/lib/api/pagination";
+import { DEFAULT_PAGE_SIZE, cursorArgs, paginate } from "@/lib/api/pagination";
 import { NextRequest, NextResponse } from "next/server";
 import { serverError, unauthorized } from "@/lib/api/responses";
 import { validateRequest } from "@/auth";
@@ -18,7 +18,7 @@ export async function GET(
     }
 
     const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
-    const pageSize = 10;
+    const pageSize = DEFAULT_PAGE_SIZE;
 
     const posts = await prisma.post.findMany({
       where: {
