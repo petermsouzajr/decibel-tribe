@@ -3,6 +3,7 @@ import { lucia } from "@/auth";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { getUserDataSelect } from "@/lib/types";
+import { cursorArgs, paginate } from "@/lib/api/pagination";
 
 // Opt out of static generation
 export const dynamic = "force-dynamic";
@@ -67,47 +68,29 @@ export async function GET(req: NextRequest) {
           select: getUserDataSelect(loggedInUser.id),
         },
       },
-      take: pageSize + 1,
-      ...(cursor && {
-        cursor: {
-          followerId_followingId: {
-            followerId: userIdToFetch,
-            followingId: cursor,
-          },
-        },
-      }),
+      ...cursorArgs(
+        cursor
+          ? {
+              followerId_followingId: {
+                followerId: userIdToFetch,
+                followingId: cursor,
+              },
+            }
+          : undefined,
+        pageSize,
+      ),
       orderBy: {
         createdAt: "desc",
       },
     });
 
-    // Determine pagination based on the *original* fetch count FIRST
-    const hasNextPage = following.length > pageSize;
-    // Calculate nextCursor based on the *last* item fetched (pageSize-th index) IF there was a next page
-    const nextCursor = hasNextPage ? following[pageSize].following.id : null;
+    const { items, nextCursor } = paginate(
+      following,
+      pageSize,
+      (f) => f.following.id,
+    );
 
-    // Determine the list to return. Start with the original list.
-    let itemsToReturn = following;
-
-    // Handle manual cursor skip. Check if the first item matches the cursor.
-    const skippedCursorItem =
-      cursor &&
-      itemsToReturn.length > 0 &&
-      itemsToReturn[0].following.id === cursor;
-    if (skippedCursorItem) {
-      // If we skipped, the list now starts from the second item.
-      itemsToReturn = itemsToReturn.slice(1);
-    }
-
-    // Ensure the final list has at most `pageSize` items.
-    // If we originally had a next page, but didn't skip the cursor item,
-    // the list still has N+1 items, so remove the last one.
-    if (hasNextPage && !skippedCursorItem) {
-      itemsToReturn.pop(); // Remove the extra item only if we didn't skip
-    }
-
-    // Map the final list
-    const users = itemsToReturn.map((f) => f.following);
+    const users = items.map((f) => f.following);
 
     return NextResponse.json({ users, nextCursor });
   } catch (error) {

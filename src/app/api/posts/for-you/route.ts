@@ -3,6 +3,7 @@ import { lucia } from "@/auth"; // Import lucia
 import { cookies } from "next/headers"; // Import cookies
 import prisma from "@/lib/prisma";
 import { getPostDataInclude, PostsPage, PostData } from "@/lib/types";
+import { cursorArgs, paginate } from "@/lib/api/pagination";
 import { NextRequest, NextResponse } from "next/server"; // Import NextResponse
 
 // Opt out of static generation
@@ -56,25 +57,12 @@ export async function GET(req: NextRequest) {
       },
       include: getPostDataInclude(user.id),
       orderBy: { createdAt: "desc" },
-      take: pageSize + 1,
-      cursor: cursor ? { id: cursor } : undefined,
-      skip: cursor ? 1 : undefined,
+      ...cursorArgs(cursor ? { id: cursor } : undefined, pageSize),
     });
 
-    // Adjust nextCursor calculation based on whether skip was used
-    let nextCursor: string | null = null;
-    if (posts.length > pageSize) {
-      if (cursor) {
-        // If we skipped the cursor, the extra item is at index pageSize - 1
-        nextCursor = posts[pageSize - 1].id;
-      } else {
-        // If we didn't skip, the extra item is at index pageSize
-        nextCursor = posts[pageSize].id;
-      }
-    }
+    const { items, nextCursor } = paginate(posts, pageSize);
 
-    // Slice always takes the first pageSize items
-    const typedPosts = posts.slice(0, pageSize) as unknown as PostData[];
+    const typedPosts = items as unknown as PostData[];
 
     const data: PostsPage = {
       posts: typedPosts,

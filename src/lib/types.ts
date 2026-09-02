@@ -94,16 +94,6 @@ export type UserData = Prisma.UserGetPayload<{
   select: ReturnType<typeof getUserDataSelect>;
 }>;
 
-export type LoggedInUser = {
-  id: string;
-  username: string;
-  displayName: string;
-  avatarUrl: string | null;
-  bio: string | null;
-  createdAt: Date;
-  googleId?: string;
-};
-
 export function getEventDataInclude(loggedInUserId: string) {
   return {
     createdBy: {
@@ -364,13 +354,6 @@ export interface CalendarGridProps {
   onSelectDay: (day: Date, events: Event[]) => void;
 }
 
-export interface EventDetailsModalProps {
-  isOpen: boolean;
-  events: Event[];
-  onClose: () => void;
-  onDeleteEvent: (event: Event) => void;
-}
-
 export interface ConfirmDeletionModalProps {
   isOpen: boolean;
   onConfirm: () => void;
@@ -542,17 +525,4 @@ export type CommentData = Prisma.CommentGetPayload<{
 export interface CommentsPage {
   comments: CommentData[];
   previousCursor: string | null;
-}
-
-export interface CommentLikeInfo {
-  likes: number;
-  isLikedByUser: boolean;
-}
-
-export interface CommentInteractionData {
-  id: string;
-  commentId: string;
-  userId: string;
-  isLike: boolean;
-  createdAt: Date;
 }

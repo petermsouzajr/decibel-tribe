@@ -4,6 +4,7 @@ import { lucia } from "@/auth";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { getUserDataSelect } from "@/lib/types";
+import { cursorArgs, paginate } from "@/lib/api/pagination";
 
 // Opt out of static generation
 export const dynamic = "force-dynamic";
@@ -69,49 +70,33 @@ export async function GET(req: NextRequest) {
         follower: {
           select: getUserDataSelect(loggedInUser.id),
         },
-        // Select the followerId to compare with cursor
+        // Cursor value for the next page
         followerId: true,
       },
-      take: pageSize + 1,
-      ...(cursor && {
-        cursor: {
-          // Keep compound key cursor - Prisma needs it
-          followerId_followingId: {
-            followerId: cursor,
-            followingId: userIdToFetch,
-          },
-        },
-      }),
+      ...cursorArgs(
+        cursor
+          ? {
+              followerId_followingId: {
+                followerId: cursor,
+                followingId: userIdToFetch,
+              },
+            }
+          : undefined,
+        pageSize,
+      ),
       orderBy: {
         createdAt: "desc",
       },
     });
 
-    // Manual filtering and pagination logic
-    let responseFollowers = followers;
-    if (
-      cursor &&
-      responseFollowers.length > 0 &&
-      responseFollowers[0].followerId === cursor
-    ) {
-      // If the first item matches the cursor, remove it (simulating skip: 1)
-      responseFollowers = responseFollowers.slice(1);
-    }
+    const { items, nextCursor } = paginate(
+      followers,
+      pageSize,
+      (f) => f.followerId,
+    );
 
-    const hasNextPage = responseFollowers.length > pageSize;
-    if (hasNextPage) {
-      responseFollowers = responseFollowers.slice(0, pageSize); // Keep only pageSize items
-    }
+    const users = items.map((f) => f.follower);
 
-    // Get the ID of the *last* follower in the *original* fetch IF there was a next page
-    // This requires looking at the original 'followers' list before any slicing
-    const nextCursor =
-      followers.length > pageSize ? followers[pageSize].followerId : null;
-
-    // Map the final list of followers to users
-    const users = responseFollowers.map((f) => f.follower);
-
-    // Return final users and calculated nextCursor
     return NextResponse.json({ users, nextCursor });
   } catch (error) {
     console.error("Error fetching followers:", error);

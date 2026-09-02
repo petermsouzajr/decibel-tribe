@@ -3,6 +3,7 @@ import { lucia } from "@/auth"; // Import lucia
 import { cookies } from "next/headers"; // Import cookies
 import prisma from "@/lib/prisma";
 import { EventsPage, getEventDataInclude } from "@/lib/types";
+import { cursorArgs, paginate } from "@/lib/api/pagination";
 import { NextRequest, NextResponse } from "next/server"; // Import NextResponse
 
 // Opt out of static generation
@@ -55,16 +56,15 @@ export async function GET(req: NextRequest) {
         visibility: "PUBLIC",
         isCancelled: false,
       },
-      take: pageSize + 1,
-      cursor: cursor ? { id: cursor } : undefined,
+      ...cursorArgs(cursor ? { id: cursor } : undefined, pageSize),
       orderBy: { when: "asc" },
       include: getEventDataInclude(user.id),
     });
 
-    const nextCursor = events.length > pageSize ? events[pageSize].id : null;
+    const { items, nextCursor } = paginate(events, pageSize);
 
     const data: EventsPage = {
-      events: events.slice(0, pageSize).map((e: any) => ({
+      events: items.map((e: any) => ({
         ...e,
         zipCode: null,
         latitude: null,

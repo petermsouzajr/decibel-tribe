@@ -91,7 +91,7 @@ export default function PrivacyPage() {
               We implement industry-standard security measures to protect your information:
             </p>
             <ul className="ml-6 list-disc space-y-2">
-              <li>Password encryption using bcrypt/argon2</li>
+              <li>Password hashing using bcrypt</li>
               <li>Secure HTTPS connections</li>
               <li>Regular security audits</li>
               <li>Limited employee access to personal data</li>

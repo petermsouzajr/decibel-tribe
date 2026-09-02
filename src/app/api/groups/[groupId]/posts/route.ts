@@ -2,6 +2,7 @@ import { lucia } from "@/auth";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { getPostDataInclude, PostsPage, PostData } from "@/lib/types";
+import { cursorArgs, paginate } from "@/lib/api/pagination";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest, props: { params: Promise<{ groupId: string }> }) {
@@ -62,21 +63,12 @@ export async function GET(req: NextRequest, props: { params: Promise<{ groupId: 
       where: { groupId },
       include: getPostDataInclude(user.id),
       orderBy: { createdAt: "desc" },
-      take: pageSize + 1,
-      skip: cursor ? 1 : 0,
-      ...(cursor && {
-        cursor: {
-          id: cursor,
-        },
-      }),
+      ...cursorArgs(cursor ? { id: cursor } : undefined, pageSize),
     });
 
-    const hasNextPage = posts.length > pageSize;
-    const nextCursor = hasNextPage ? posts[posts.length - 1].id : null;
+    const { items, nextCursor } = paginate(posts, pageSize);
 
-    if (hasNextPage) posts.pop();
-
-    const typedPosts = posts as unknown as PostData[];
+    const typedPosts = items as unknown as PostData[];
 
     const data: PostsPage = { posts: typedPosts, nextCursor };
 

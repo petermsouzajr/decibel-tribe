@@ -1,6 +1,7 @@
 // import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
 import { getPostDataInclude, PostsPage, PostData } from "@/lib/types";
+import { cursorArgs, paginate } from "@/lib/api/pagination";
 import { NextRequest, NextResponse } from "next/server";
 import { validateRequest } from "@/auth";
 
@@ -28,13 +29,12 @@ export async function GET(req: NextRequest, props: { params: Promise<{ userId: s
       },
       include: getPostDataInclude(loggedInUser.id),
       orderBy: { createdAt: "desc" },
-      take: pageSize + 1,
-      cursor: cursor ? { id: cursor } : undefined,
+      ...cursorArgs(cursor ? { id: cursor } : undefined, pageSize),
     });
 
-    const nextCursor = posts.length > pageSize ? posts[pageSize].id : null;
+    const { items, nextCursor } = paginate(posts, pageSize);
 
-    const typedPosts = posts.slice(0, pageSize) as unknown as PostData[];
+    const typedPosts = items as unknown as PostData[];
 
     const data: PostsPage = { posts: typedPosts, nextCursor };
 

@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { EventsPage, getEventDataInclude } from "@/lib/types";
+import { cursorArgs, paginate } from "@/lib/api/pagination";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { lucia } from "@/auth";
@@ -48,15 +49,14 @@ export async function GET(req: NextRequest) {
         isCancelled: false,
       },
       orderBy: { when: "asc" },
-      take: pageSize + 1,
-      cursor: cursor ? { id: cursor } : undefined,
+      ...cursorArgs(cursor ? { id: cursor } : undefined, pageSize),
       include: getEventDataInclude(user.id),
     });
 
-    const nextCursor = events.length > pageSize ? events[pageSize].id : null;
+    const { items, nextCursor } = paginate(events, pageSize);
 
     const data: EventsPage = {
-      events: events.slice(0, pageSize).map((e: any) => ({
+      events: items.map((e: any) => ({
         ...e,
         zipCode: null,
         latitude: null,

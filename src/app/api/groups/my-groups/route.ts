@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { lucia } from "@/auth"; // Import lucia
 import { cookies } from "next/headers"; // Import cookies
 import prisma from "@/lib/prisma";
+import { cursorArgs, paginate } from "@/lib/api/pagination";
 
 // Opt out of static generation
 export const dynamic = "force-dynamic";
@@ -55,24 +56,18 @@ export async function GET(req: NextRequest) {
           },
         },
       },
-      take: pageSize + 1,
-      skip: cursor ? 1 : 0,
-      ...(cursor && {
-        cursor: {
-          userId_groupId: {
-            userId: user.id,
-            groupId: cursor,
-          },
-        },
-      }),
+      ...cursorArgs(
+        cursor
+          ? { userId_groupId: { userId: user.id, groupId: cursor } }
+          : undefined,
+        pageSize,
+      ),
     });
 
-    const groups = groupMemberships.map((membership) => membership.group);
-
-    const hasNextPage = groups.length > pageSize;
-    const nextCursor = hasNextPage ? groups[groups.length - 1].id : null;
-
-    if (hasNextPage) groups.pop();
+    const { items: groups, nextCursor } = paginate(
+      groupMemberships.map((membership) => membership.group),
+      pageSize,
+    );
 
     return NextResponse.json({ groups, nextCursor });
   } catch (error) {

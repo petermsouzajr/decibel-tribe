@@ -3,6 +3,7 @@ import { lucia } from "@/auth";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { getPostDataInclude, PostsPage, PostData } from "@/lib/types";
+import { cursorArgs, paginate } from "@/lib/api/pagination";
 
 // Opt out of static generation
 export const dynamic = "force-dynamic";
@@ -51,14 +52,12 @@ export async function GET(req: NextRequest) {
       },
       include: getPostDataInclude(user.id),
       orderBy: { createdAt: "desc" },
-      take: pageSize + 1,
-      cursor: cursor ? { id: cursor } : undefined,
+      ...cursorArgs(cursor ? { id: cursor } : undefined, pageSize),
     });
 
-    const hasNextPage = posts.length > pageSize;
-    const nextCursor = hasNextPage ? posts[pageSize].id : null;
+    const { items, nextCursor } = paginate(posts, pageSize);
 
-    const typedPosts = posts.slice(0, pageSize) as unknown as PostData[];
+    const typedPosts = items as unknown as PostData[];
 
     const data: PostsPage = {
       posts: typedPosts,

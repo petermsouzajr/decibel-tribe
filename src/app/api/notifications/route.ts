@@ -2,6 +2,7 @@
 import { lucia } from "@/auth"; // Import lucia
 import { cookies } from "next/headers"; // Import cookies
 import prisma from "@/lib/prisma";
+import { cursorArgs, paginate } from "@/lib/api/pagination";
 import { NotificationsPage, NotificationData } from "@/lib/types"; // Import NotificationData
 import { NextRequest, NextResponse } from "next/server"; // Import NextResponse
 import { getUserDataSelect } from "@/lib/types"; // Corrected import path
@@ -77,18 +78,12 @@ export async function GET(req: NextRequest) {
         },
       },
       orderBy: { createdAt: "desc" },
-      take: pageSize + 1,
-      cursor: cursor ? { id: cursor } : undefined,
+      ...cursorArgs(cursor ? { id: cursor } : undefined, pageSize),
     });
 
-    const nextCursor =
-      notifications.length > pageSize ? notifications[pageSize].id : null;
+    const { items, nextCursor } = paginate(notifications, pageSize);
 
-    // Explicitly assert the type of the sliced notifications array
-    const typedNotifications = notifications.slice(
-      0,
-      pageSize,
-    ) as unknown as NotificationData[];
+    const typedNotifications = items as unknown as NotificationData[];
 
     const data: NotificationsPage = {
       notifications: typedNotifications, // Use the asserted array
