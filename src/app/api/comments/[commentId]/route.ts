@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { serverError } from "@/lib/api/responses";
+import { forbidden, serverError } from "@/lib/api/responses";
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
@@ -48,7 +48,7 @@ export async function PUT(
     }
 
     if (comment.userId !== user.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+      return forbidden();
     }
 
     // Check if comment is within edit window (5 minutes)

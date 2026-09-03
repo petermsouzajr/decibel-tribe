@@ -19,15 +19,14 @@ export async function GET(req: NextRequest) {
       return unauthorized();
     }
 
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const notifications = await prisma.notification.findMany({
       where: {
         recipientId: user.id,
         issuer: {
           deletedAt: null, // Filter out notifications from deleted users
+          // Blocking someone should stop their activity reaching you. Applied
+          // at read time, so it covers notifications created before the block.
+          blocksReceived: { none: { blockerId: user.id } },
         },
       },
       include: {

@@ -324,6 +324,7 @@ describe("API Route: GET /api/posts/group-activity", () => {
       (_, i) => ({
         id: `post-${i + 1}`,
         content: `Content ${i + 1}`,
+        updatedAt: new Date(),
         userId: `user-${i % 3}`,
         groupId: "group-1",
         sharedFromId: null,

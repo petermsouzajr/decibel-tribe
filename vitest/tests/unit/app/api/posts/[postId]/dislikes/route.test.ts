@@ -104,6 +104,12 @@ describe("API Route: /api/posts/[postId]/dislikes", () => {
 
     vi.doMock("@/lib/prisma", () => ({
       default: {
+    // The like/dislike routes now create and withdraw notifications.
+    notification: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockResolvedValue({}),
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+    },
         post: { findUnique: mockPostFindUnique },
         like: { deleteMany: mockLikeDeleteMany },
         dislike: {

@@ -45,7 +45,14 @@ export async function GET(
     }
 
     const posts = await prisma.post.findMany({
-      where: { groupId },
+      where: {
+        groupId,
+        user: {
+          deletedAt: null,
+          // Match the other feeds: hide posts from users the viewer blocked.
+          blocksReceived: { none: { blockerId: user.id } },
+        },
+      },
       include: getPostDataInclude(user.id),
       orderBy: { createdAt: "desc" },
       ...cursorArgs(cursor ? { id: cursor } : undefined, pageSize),

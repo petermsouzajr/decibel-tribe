@@ -88,6 +88,7 @@ describe("API Route: GET /api/posts/following", () => {
     // Create 11 for pagination check
     id: `post_following_${i}`,
     content: `Following post content ${i}`,
+    updatedAt: new Date(),
     userId: mockFollowingIds[i % mockFollowingIds.length],
     groupId: null,
     sharedFromId: null,

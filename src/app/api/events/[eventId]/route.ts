@@ -35,7 +35,7 @@ export async function GET(
     }
 
     if (event.status === "DRAFT" && event.createdById !== loggedInUser?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+      return forbidden();
     }
 
     const helpWanted = event.helpWantedSkills
@@ -225,7 +225,7 @@ export async function PUT(
     }
 
     if (event.createdById !== loggedInUser?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+      return forbidden();
     }
 
     let rawBody;
@@ -384,7 +384,7 @@ export async function DELETE(
     }
 
     if (event.createdById !== loggedInUser?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+      return forbidden();
     }
 
     const deletedEvent = await prisma.event.delete({

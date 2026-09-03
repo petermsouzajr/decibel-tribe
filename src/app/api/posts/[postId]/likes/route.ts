@@ -98,7 +98,37 @@ export async function POST(
           postId,
         },
       }),
+      // Liking clears a previous dislike, so drop the dislike notification too.
+      prisma.notification.deleteMany({
+        where: { issuerId: loggedInUser.id, postId, type: "DISLIKE" },
+      }),
     ]);
+
+    // Notify the author. Self-likes are skipped and a repeat like does not
+    // create a second notification, matching the COMMENT and EVENT_ATTENDEE
+    // producers.
+    if (post.userId !== loggedInUser.id) {
+      const existing = await prisma.notification.findFirst({
+        where: {
+          recipientId: post.userId,
+          issuerId: loggedInUser.id,
+          postId,
+          type: "LIKE",
+        },
+        select: { id: true },
+      });
+
+      if (!existing) {
+        await prisma.notification.create({
+          data: {
+            issuerId: loggedInUser.id,
+            recipientId: post.userId,
+            postId,
+            type: "LIKE",
+          },
+        });
+      }
+    }
 
     return NextResponse.json({ message: "Post liked" });
   } catch (error) {
@@ -121,12 +151,19 @@ export async function DELETE(
       return unauthorized();
     }
 
-    await prisma.like.deleteMany({
-      where: {
-        userId: loggedInUser.id,
-        postId,
-      },
-    });
+    // Withdraw the notification with the like, so the author is not left with
+    // a notification for something that no longer exists.
+    await prisma.$transaction([
+      prisma.like.deleteMany({
+        where: {
+          userId: loggedInUser.id,
+          postId,
+        },
+      }),
+      prisma.notification.deleteMany({
+        where: { issuerId: loggedInUser.id, postId, type: "LIKE" },
+      }),
+    ]);
 
     return NextResponse.json({ message: "Like removed" });
   } catch (error) {

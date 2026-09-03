@@ -239,6 +239,9 @@ model Post {
   content             String
   userId              String
   createdAt           DateTime       @default(now())
+  // @default(now()) so the column can be added to existing rows; @updatedAt
+  // keeps it current on every write. Matches how Comment and Group declare it.
+  updatedAt           DateTime       @default(now()) @updatedAt
   groupId             String?
   // Sharing
   sharedFromId        String?

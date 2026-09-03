@@ -110,6 +110,7 @@ describe("API Route: /api/posts/[postId]", () => {
     content: "Test post content",
     userId: authorUserId,
     createdAt: new Date(),
+    updatedAt: new Date(),
     groupId: null,
     sharedFromId: null,
     sharedCount: 0,

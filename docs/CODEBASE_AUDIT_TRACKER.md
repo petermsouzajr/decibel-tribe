@@ -223,7 +223,8 @@ Created **`src/lib/api/pagination.ts`** with two functions that are two halves o
 - [x] Removed the dead "(Edited)" markup, with an inline comment on how to restore it
 - [x] `tsc`, `eslint`, `next build` (exit 0) all clean
 
-- [ ] **Decision for you:** add `updatedAt DateTime @updatedAt` to `model Post` + migration to make "(Edited)" work, or leave it out permanently. A schema change is yours to make — I did not touch `schema.prisma`.
+- [x] **Resolved:** `updatedAt DateTime @default(now()) @updatedAt` added to `model Post`, migration `20260903204752_add_post_updated_at` created and applied. `@default(now())` lets the NOT NULL column land on existing rows. The "(Edited)" badge is restored in `Post.tsx`, and both of its tests now pass — the feature works end to end for the first time.
+  - ⚠️ That migration also swept in an unrelated pending change to `user_dating_preferences.idVerificationFilter`'s default, which was drift already sitting between `schema.prisma` and the database. Dating-only and harmless, but worth knowing it rode along.
 
 ### C3a. ⚠️ This refactor broke test assertions — read before the test audit
 
@@ -384,7 +385,7 @@ The Phase A sweep found dead files. This one found dead exports inside live file
 
 - [x] 6 hand-written 403s now use `forbidden()` — including one that had drifted to `"Forbidden."` with a trailing period, the same failure mode as the 500s in C1
 - [x] 13 routes hardcoding `const pageSize = 10` now use `DEFAULT_PAGE_SIZE`
-- [ ] **Left alone deliberately:** 4 routes return `{ error: "Unauthorized" }` with a **403** status. 401 means unauthenticated, 403 means authenticated but not permitted, so the body contradicts the status — but changing it alters the wire response and a client may match on that string. Your call
+- [x] **Resolved:** all 4 now return `forbidden()` — `{ error: "Forbidden" }` with 403 — so the body agrees with the status. One in `comments/[commentId]`, three in `events/[eventId]`.
 
 ### E4. Per-feature business-logic review — **in progress**
 
@@ -449,7 +450,7 @@ They are **not** identical, though: the collection `DELETE` is overloaded — cr
 
 **Left in place deliberately.** Unlike the follow duplicate, `openapi.yaml` documents `/events` with `delete`, `patch` and `put` at the path level, so removing them is an API deprecation affecting any documented consumer, not an internal cleanup.
 
-- [ ] Decide whether to deprecate `DELETE|PATCH|PUT /api/events?eventId=` in favour of the path-param route, and remove them from the spec at the same time
+- [x] **Resolved: deprecated and removed.** The three query-param handlers are gone from `src/app/api/events/route.ts` (−163 lines), their tests removed (−371 lines), and `delete`/`patch`/`put` stripped from `/events` in `openapi.yaml`. `/events` now documents `get` and `post`; `/events/{eventId}` keeps the mutations. Spec still parses.
 
 #### E4.7 `openapi.yaml` did not parse at all — **[x] fixed**
 
@@ -515,7 +516,9 @@ So blocking someone hid them from your feeds but left their posts *and* their pr
 | `groups/[groupId]/posts`, `posts/group-activity` | **no** |
 | `posts/bookmarked` | no — arguably correct, these are your own saved items |
 
-- [ ] Decide whether blocks should apply to notifications and group feeds (and whether retroactively)
+- [x] **Resolved: blocks now apply everywhere they should, retroactively.** Filtering happens at read time, so it covers rows created before the block. Added to `notifications`, `groups/[groupId]/posts` and `posts/group-activity`.
+  - `notifications/unread-count` had to be filtered with the *same* predicate — otherwise the badge counts notifications the list refuses to show, and the count never clears.
+  - `posts/bookmarked` deliberately still ignores blocks: those are your own saved items.
 
 #### E4.12 Notifications: a documented feature was never wired up — **[ ] your call**
 
@@ -528,7 +531,10 @@ So blocking someone hid them from your feeds but left their posts *and* their pr
 
 This is the "in a plan and not yet finished" case, not dead code — the schema, the UI and the docs are all ready and only the producer is missing. **Left untouched**: implementing it means deciding dedupe behaviour and what happens on unlike, and the neighbouring `COMMENT` and `EVENT_ATTENDEE` producers already show the intended pattern (guard against self-notification, check for an existing notification first).
 
-- [ ] Either wire up LIKE/DISLIKE notifications, or drop them from the enum, the UI and `USER_FEATURES.md`
+- [x] **Resolved: wired up.** `posts/[postId]/likes` and `posts/[postId]/dislikes` now create the notification the schema, UI and docs already expected. Follows the existing `COMMENT` producer: self-likes are skipped, and a repeat like does not create a second notification.
+  - Liking withdraws any `DISLIKE` notification (and vice versa), matching the existing behaviour where liking clears a dislike.
+  - Un-liking deletes the notification, so an author is not left with a notification for something that no longer exists.
+  - Both routes' `DELETE` handlers now run their two deletes in one `$transaction`.
 
 #### E4.13 Checked and clean
 
@@ -697,7 +703,15 @@ Added `"use client"` to the three genuinely client-side modules: `src/context.ts
 
 **Dependency removals are committed.** `package.json` was entangled with your uncommitted `"dating-shared": "file:../dating-shared"` line, so the two were separated: `dating-shared` was temporarily removed, `npm install --package-lock-only` regenerated the lockfile without touching `node_modules`, and the resulting pair was staged. Your working copies — dating-shared line and symlink intact — were then restored. The commit carries only the four removals (−362 lock lines); your WIP stays uncommitted and your dev environment is untouched.
 
-### ⚠️ Still unresolved: `file:` dependency will break Vercel
+### `dating-shared` — resolved: leave it uncommitted
+
+**Decision (2026-09-03):** Dating Tribe becomes its own Expo repo and the code is ported there. What sits in this repo is a **backup until the Expo app takes production traffic**, so the `file:../dating-shared` dependency does not need a shipping story — it must simply never reach `main`, because `npm ci` on Vercel cannot resolve a local path.
+
+Current state is already correct: `package.json` in the working tree carries the line, and every audit commit has excluded it. Nothing further to do.
+
+- [x] No action needed — keep `dating-shared` out of committed `package.json` until the Expo repo takes over
+
+### ⚠️ Superseded: `file:` dependency will break Vercel
 
 `"dating-shared": "file:../dating-shared"` is a **local path**. Whenever you do commit it, `npm ci` on Vercel will try to resolve a directory that does not exist in the deploy environment and fail before the build starts. Deliberately kept out of this commit; it needs a real answer:
 
@@ -714,9 +728,7 @@ Given `DATING_EXPO_MIGRATION_PLAN.md` has decibel-tribe keeping **API only**, an
 
 ### Still open, needing a decision from you
 
-1. **How `dating-shared` ships** (see table above) — blocks committing the `file:` dependency, and blocks deploys once it is committed.
-2. **Privacy policy vs. data retention** — with `clear-expired-deleted-users` unscheduled by design, confirm the policy does not promise a deletion window you are not meeting.
-3. **`@million/lint`** — `next.config.mjs` gates it behind `MILLION_LINT=1` with a comment saying it "breaks runtime in this app (React 19 / Next 15)". It is a dependency you never enable; removable if you have no plans to revisit it.
+Nothing blocking. The `dating-shared` question is resolved above (leave uncommitted until the Expo repo takes over), and `qa-nightly.yml` is deliberately untouched — another bot owns it.
 
 ### Next up (in order)
 
@@ -724,4 +736,4 @@ Given `DATING_EXPO_MIGRATION_PLAN.md` has decibel-tribe keeping **API only**, an
 - **74 remaining `any` uses** — a dedicated typing pass.
 - **Test audit** — start with C3a above.
 
-**Passes 1–5:** ~2,950 LOC removed net · 20 `(prisma as any)` casts removed, restoring type checking to the reports and blocks features · 400 LOC of dead code deleted · 7 pagination bugs fixed · 4 dependencies removed · 1 false security claim corrected · ~90 lines of hand-rolled pagination replaced by a 55-line helper · all verified with `tsc`, `eslint`, and a clean-`HEAD` `next build` (exit 0)
+**Passes 1–11:** ~3,500 LOC removed net · 20 defects fixed · type checking restored to the reports and blocks features · all 8 outstanding product decisions resolved · 400 LOC of dead code deleted · 7 pagination bugs fixed · 4 dependencies removed · 1 false security claim corrected · ~90 lines of hand-rolled pagination replaced by a 55-line helper · all verified with `tsc`, `eslint`, and a clean-`HEAD` `next build` (exit 0)

@@ -67,6 +67,15 @@ export async function POST(
       return unauthorized();
     }
 
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { userId: true },
+    });
+
+    if (!post) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
     await prisma.$transaction([
       prisma.dislike.upsert({
         where: {
@@ -87,7 +96,36 @@ export async function POST(
           postId,
         },
       }),
+      // Disliking clears a previous like, so drop the like notification too.
+      prisma.notification.deleteMany({
+        where: { issuerId: loggedInUser.id, postId, type: "LIKE" },
+      }),
     ]);
+
+    // Notify the author. Self-dislikes are skipped and a repeat dislike does
+    // not create a second notification.
+    if (post.userId !== loggedInUser.id) {
+      const existing = await prisma.notification.findFirst({
+        where: {
+          recipientId: post.userId,
+          issuerId: loggedInUser.id,
+          postId,
+          type: "DISLIKE",
+        },
+        select: { id: true },
+      });
+
+      if (!existing) {
+        await prisma.notification.create({
+          data: {
+            issuerId: loggedInUser.id,
+            recipientId: post.userId,
+            postId,
+            type: "DISLIKE",
+          },
+        });
+      }
+    }
 
     return NextResponse.json({ message: "Post disliked" });
   } catch (error) {
@@ -122,12 +160,19 @@ export async function DELETE(
       return unauthorized();
     }
 
-    await prisma.dislike.deleteMany({
-      where: {
-        userId: loggedInUser.id,
-        postId,
-      },
-    });
+    // Withdraw the notification with the dislike, so the author is not left
+    // with a notification for something that no longer exists.
+    await prisma.$transaction([
+      prisma.dislike.deleteMany({
+        where: {
+          userId: loggedInUser.id,
+          postId,
+        },
+      }),
+      prisma.notification.deleteMany({
+        where: { issuerId: loggedInUser.id, postId, type: "DISLIKE" },
+      }),
+    ]);
 
     return NextResponse.json({ message: "Dislike removed" });
   } catch (error) {

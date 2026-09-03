@@ -91,12 +91,10 @@ export default function Post({ post }: PostProps) {
               suppressHydrationWarning
             >
               {formatRelativeDate(post.createdAt)}
-              {/* The "(Edited)" indicator was removed here: the Post model has
-                  no `updatedAt` column, so `post.updatedAt` was always
-                  undefined and this never rendered. PostData only claimed the
-                  field because it was hand-written. To bring the feature back,
-                  add `updatedAt DateTime @updatedAt` to model Post, migrate,
-                  and restore this block — see CODEBASE_AUDIT_TRACKER.md C3. */}
+              {post.updatedAt.getTime() >
+                post.createdAt.getTime() + 1000 * 60 && (
+                <span className="pl-1 text-xs">(Edited)</span>
+              )}
             </Link>
           </div>
           <div className="flex items-center gap-2">

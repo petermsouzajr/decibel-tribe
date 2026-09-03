@@ -22,6 +22,12 @@ export async function GET(req: NextRequest) {
       where: {
         recipientId: user.id,
         read: false,
+        // Must match the filter in /api/notifications, otherwise the badge
+        // counts notifications the list will not show.
+        issuer: {
+          deletedAt: null,
+          blocksReceived: { none: { blockerId: user.id } },
+        },
       },
     });
 
