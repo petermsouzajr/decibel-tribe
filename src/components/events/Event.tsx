@@ -12,7 +12,12 @@ import { Button } from "../ui/button";
 import Linkify from "../Linkify";
 import { useToast } from "@/components/ui/use-toast";
 import ReportModal from "@/components/reports/ReportModal";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Share2 } from "lucide-react";
 import PostDialog from "@/app/(main)/PostDialogue";
 
@@ -58,8 +63,8 @@ export default function EventDetails({ event }: EventDetailsProps) {
           cache: "no-store",
         });
         if (response.ok) {
-          const data = await response.json();
-          setIsAttendee(data.some((att: any) => att.user.id === user?.id));
+          const data: Array<{ user: { id: string } }> = await response.json();
+          setIsAttendee(data.some((att) => att.user.id === user?.id));
         } else {
           console.error("Failed to fetch attendees:", response.status);
           toast({
@@ -311,15 +316,15 @@ export default function EventDetails({ event }: EventDetailsProps) {
             ))}
           </ul>
 
-          {Array.isArray((event as any).helpWantedSkills) &&
-            (event as any).helpWantedSkills.length > 0 && (
+          {Array.isArray(event.helpWantedSkills) &&
+            event.helpWantedSkills.length > 0 && (
               <>
                 <p className="mt-4">
                   <span className="text-lg underline">Help Wanted:</span>
                 </p>
                 <ul className="ml-4 list-disc">
-                  {(event as any).helpWantedSkills
-                    .map((h: any) => h?.skill?.name)
+                  {event.helpWantedSkills
+                    .map((h) => h.skill?.name)
                     .filter(Boolean)
                     .map((skillName: string) => (
                       <li key={skillName}>{skillName}</li>

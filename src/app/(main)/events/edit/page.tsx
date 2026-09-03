@@ -164,7 +164,7 @@ export default function EventFormPage() {
       onSuccess: (newEvent: { id: string }) => {
         router.push(`/events/${isEditing ? eventData.id : newEvent.id}`);
       },
-      onError: (error: any) => {
+      onError: (error: Error) => {
         console.error(
           isEditing ? "Failed to update event" : "Failed to create event",
           error,
@@ -432,7 +432,9 @@ export default function EventFormPage() {
                   components={animatedComponents}
                   options={skillOptions}
                   value={skillOptions.filter((opt) =>
-                    Array.isArray(field.value) ? field.value.includes(opt.value) : false,
+                    Array.isArray(field.value)
+                      ? field.value.includes(opt.value)
+                      : false,
                   )}
                   onChange={(selected) => {
                     const values = Array.isArray(selected)
@@ -446,7 +448,8 @@ export default function EventFormPage() {
               )}
             />
             <p className="text-xs text-muted-foreground">
-              If you add Help Wanted skills, you must also add an event zip code.
+              If you add Help Wanted skills, you must also add an event zip
+              code.
             </p>
           </div>
 
@@ -458,7 +461,10 @@ export default function EventFormPage() {
               <FormItem>
                 <FormLabel>Event Zip Code (optional)</FormLabel>
                 <FormControl>
-                  <Input placeholder="Zip code (used for proximity)" {...field} />
+                  <Input
+                    placeholder="Zip code (used for proximity)"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -105,7 +105,9 @@ async function fetchValidEvents(loggedInUserId: string, username?: string) {
   return events;
 }
 
-function filterEvents(events: any[], q: string) {
+type ValidEvent = Awaited<ReturnType<typeof fetchValidEvents>>[number];
+
+function filterEvents(events: ValidEvent[], q: string) {
   const qLower = q.toLowerCase();
   const dateFormats = [
     "MM/dd/yy",

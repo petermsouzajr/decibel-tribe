@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { serverError } from "@/lib/api/responses";
 import prisma from "@/lib/prisma";
+import { Prisma, ReportStatus } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin";
 
 export async function PATCH(
@@ -17,9 +18,11 @@ export async function PATCH(
       return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
     }
 
-    const data: any = { adminNotes: adminNotes ?? undefined };
+    const data: Prisma.ReportUpdateInput = {
+      adminNotes: adminNotes ?? undefined,
+    };
     if (status) {
-      data.status = status;
+      data.status = status as ReportStatus;
       data.resolvedAt = new Date();
     }
 

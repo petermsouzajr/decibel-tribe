@@ -54,7 +54,8 @@ export default function LoginForm() {
         if (values.website) formData.append("website", values.website);
         if (values.url) formData.append("url", values.url);
         if (values.phone) formData.append("phone", values.phone);
-        if (values.formLoadedAt) formData.append("formLoadedAt", values.formLoadedAt.toString());
+        if (values.formLoadedAt)
+          formData.append("formLoadedAt", values.formLoadedAt.toString());
 
         const result = await login(formData);
 
@@ -81,9 +82,13 @@ export default function LoginForm() {
           }
         }
         // If no error is returned, login was successful and redirect will happen
-      } catch (error: any) {
+      } catch (error) {
         // Check if this is a Next.js redirect error (successful login)
-        if (error?.digest?.includes('NEXT_REDIRECT')) {
+        const digest =
+          typeof error === "object" && error !== null && "digest" in error
+            ? (error as { digest?: unknown }).digest
+            : undefined;
+        if (typeof digest === "string" && digest.includes("NEXT_REDIRECT")) {
           // This is a successful login - the redirect will happen automatically
           return;
         }

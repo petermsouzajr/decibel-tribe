@@ -1,5 +1,6 @@
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -72,7 +73,10 @@ async function WhoToFollow() {
     : [];
   const mutualCountByUserId = new Map<string, number>();
   for (const f of mutualFollows) {
-    mutualCountByUserId.set(f.followingId, (mutualCountByUserId.get(f.followingId) ?? 0) + 1);
+    mutualCountByUserId.set(
+      f.followingId,
+      (mutualCountByUserId.get(f.followingId) ?? 0) + 1,
+    );
   }
   // Cap for the DB IN filter
   const mutualIds = Array.from(mutualCountByUserId.entries())
@@ -102,20 +106,30 @@ async function WhoToFollow() {
     groups: { select: { groupId: true } },
     EventAttendee: { select: { eventId: true } },
     _count: { select: { followers: true } },
-  } as const;
+    // `satisfies` rather than `as const`: as const makes the object deeply
+    // readonly, which Prisma's argument types reject — that is why this and the
+    // where clause were being cast to `any`, which then made `candidates` an
+    // any[] and forced an annotation on every callback below.
+  } satisfies Prisma.UserSelect;
 
   const baseWhere = {
     NOT: { id: loggedInUser.id },
     deletedAt: null,
     followers: { none: { followerId: loggedInUser.id } },
-  } as const;
+  } satisfies Prisma.UserWhereInput;
 
   const candidateWhere = hasSignals
     ? {
         ...baseWhere,
         OR: [
           ...(myInstrumentIds.length > 0
-            ? [{ userInstruments: { some: { instrumentId: { in: myInstrumentIds } } } }]
+            ? [
+                {
+                  userInstruments: {
+                    some: { instrumentId: { in: myInstrumentIds } },
+                  },
+                },
+              ]
             : []),
           ...(mySkillIds.length > 0
             ? [{ userSkills: { some: { skillId: { in: mySkillIds } } } }]
@@ -132,8 +146,8 @@ async function WhoToFollow() {
     : baseWhere;
 
   const candidates = await prisma.user.findMany({
-    where: candidateWhere as any,
-    select: userSelect as any,
+    where: candidateWhere,
+    select: userSelect,
     take: 80,
   });
 
@@ -143,12 +157,20 @@ async function WhoToFollow() {
   const myEventSet = new Set(myEventIds);
 
   const scored = candidates
-    .filter((u: any) => !!u?.id && !!u?.username?.trim() && !!u?.displayName?.trim())
-    .map((u: any) => {
-      const overlapSkills = (u.userSkills ?? []).filter((x: any) => mySkillSet.has(x.skillId)).length;
-      const overlapInstruments = (u.userInstruments ?? []).filter((x: any) => myInstrumentSet.has(x.instrumentId)).length;
-      const overlapGroups = (u.groups ?? []).filter((x: any) => myGroupSet.has(x.groupId)).length;
-      const overlapEvents = (u.EventAttendee ?? []).filter((x: any) => myEventSet.has(x.eventId)).length;
+    .filter((u) => !!u?.id && !!u?.username?.trim() && !!u?.displayName?.trim())
+    .map((u) => {
+      const overlapSkills = (u.userSkills ?? []).filter((x) =>
+        mySkillSet.has(x.skillId),
+      ).length;
+      const overlapInstruments = (u.userInstruments ?? []).filter((x) =>
+        myInstrumentSet.has(x.instrumentId),
+      ).length;
+      const overlapGroups = (u.groups ?? []).filter((x) =>
+        myGroupSet.has(x.groupId),
+      ).length;
+      const overlapEvents = (u.EventAttendee ?? []).filter((x) =>
+        myEventSet.has(x.eventId),
+      ).length;
       const mutual = mutualCountByUserId.get(u.id) ?? 0;
 
       // Weighted score (shared instruments/skills strongest, then events/groups, then mutuals)
@@ -163,13 +185,26 @@ async function WhoToFollow() {
     })
     .sort((a, b) => b.score - a.score);
 
-  let usersToFollow = scored.slice(0, 5).map((x) => x.user);
+  // The signal-based query selects more relations than the fallback does, but
+  // only these fields are rendered. Naming the shape lets both queries flow in
+  // without the `as any[]` that previously hid the mismatch.
+  type SuggestedUser = {
+    id: string;
+    username: string;
+    displayName: string;
+    avatarUrl: string | null;
+    bio: string | null;
+    followers: { followerId: string }[];
+    _count: { followers: number };
+  };
+
+  let usersToFollow: SuggestedUser[] = scored.slice(0, 5).map((x) => x.user);
 
   // Fallback: if the user has no profile signals yet (or query yields 0),
   // show a small "popular/recent" list so the module isn't empty.
   if (usersToFollow.length === 0) {
     const fallback = await prisma.user.findMany({
-      where: baseWhere as any,
+      where: baseWhere,
       select: {
         id: true,
         username: true,
@@ -186,8 +221,10 @@ async function WhoToFollow() {
       take: 25,
     });
 
-    usersToFollow = (fallback as any[])
-      .filter((u) => !!u?.id && !!u?.username?.trim() && !!u?.displayName?.trim())
+    usersToFollow = fallback
+      .filter(
+        (u) => !!u?.id && !!u?.username?.trim() && !!u?.displayName?.trim(),
+      )
       .slice(0, 5);
   }
 
@@ -198,7 +235,10 @@ async function WhoToFollow() {
         <div key={user.id} className="flex items-center justify-between gap-3">
           {/* Stable “tooltip”: CSS-only hover card (server-rendered, no hydration risk). */}
           <div className="group relative flex items-center gap-3">
-            <Link href={`/users/${user.username}`} className="flex items-center gap-3">
+            <Link
+              href={`/users/${user.username}`}
+              className="flex items-center gap-3"
+            >
               <UserAvatar avatarUrl={user.avatarUrl} className="flex-none" />
               <div>
                 <p className="line-clamp-1 break-all font-semibold hover:underline">
@@ -213,10 +253,18 @@ async function WhoToFollow() {
             {/* Hover card */}
             <div className="pointer-events-none absolute left-0 top-full z-50 hidden w-72 translate-y-2 rounded-md border bg-popover p-3 text-popover-foreground shadow-md group-hover:block">
               <div className="flex items-start gap-3">
-                <UserAvatar avatarUrl={user.avatarUrl} size={48} className="flex-none" />
+                <UserAvatar
+                  avatarUrl={user.avatarUrl}
+                  size={48}
+                  className="flex-none"
+                />
                 <div className="min-w-0">
-                  <div className="truncate font-semibold">{user.displayName}</div>
-                  <div className="truncate text-sm text-muted-foreground">@{user.username}</div>
+                  <div className="truncate font-semibold">
+                    {user.displayName}
+                  </div>
+                  <div className="truncate text-sm text-muted-foreground">
+                    @{user.username}
+                  </div>
                 </div>
               </div>
               {user.bio ? (
@@ -282,7 +330,8 @@ async function HelpWanted() {
   if (!prefs?.zipCode || userSkills.length === 0) return null;
 
   const viewerLat = typeof prefs.latitude === "number" ? prefs.latitude : null;
-  const viewerLon = typeof prefs.longitude === "number" ? prefs.longitude : null;
+  const viewerLon =
+    typeof prefs.longitude === "number" ? prefs.longitude : null;
   if (viewerLat === null || viewerLon === null) return null;
 
   const skillIds = userSkills.map((s) => s.skillId);
@@ -308,15 +357,16 @@ async function HelpWanted() {
     },
   });
 
-  const withDistance = events
-    .map((e: any) => {
-      const lat = e.latitude as number | null;
-      const lon = e.longitude as number | null;
-      if (lat == null || lon == null) return null;
-      const distanceKm = haversineKm(viewerLat, viewerLon, lat, lon);
-      return { event: e, distanceKm };
-    })
-    .filter(Boolean) as Array<{ event: any; distanceKm: number }>;
+  // flatMap rather than map+filter(Boolean): TypeScript cannot narrow away the
+  // nulls that filter(Boolean) removes, which is why this needed a cast to an
+  // array of `{ event: any }` and lost the event type entirely.
+  const withDistance = events.flatMap((e) => {
+    const { latitude: lat, longitude: lon } = e;
+    if (lat == null || lon == null) return [];
+    return [
+      { event: e, distanceKm: haversineKm(viewerLat, viewerLon, lat, lon) },
+    ];
+  });
 
   // Prioritize proximity ONLY (closest first), regardless of how many skills match
   withDistance.sort((a, b) => a.distanceKm - b.distanceKm);
@@ -335,9 +385,7 @@ async function HelpWanted() {
       <div className="space-y-4">
         {top.map(({ event, distanceKm }) => {
           const skills = Array.isArray(event.helpWantedSkills)
-            ? event.helpWantedSkills
-                .map((h: any) => h?.skill?.name)
-                .filter(Boolean)
+            ? event.helpWantedSkills.map((h) => h.skill?.name).filter(Boolean)
             : [];
 
           const miles = distanceKm * 0.621371;
@@ -355,7 +403,7 @@ async function HelpWanted() {
 
           return (
             <Link key={event.id} href={`/events/${event.id}`} className="block">
-              <div className="rounded-xl border bg-background p-3 hover:bg-muted/50 transition-colors text-md">
+              <div className="text-md rounded-xl border bg-background p-3 transition-colors hover:bg-muted/50">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="line-clamp-1 font-semibold hover:underline">
@@ -368,8 +416,8 @@ async function HelpWanted() {
                   <div className="flex-shrink-0 text-xs font-semibold text-muted-foreground">
                     {miles.toFixed(1)} mi
                   </div>
-                </div>People they need:
-
+                </div>
+                People they need:
                 {skills.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {skills.slice(0, 6).map((s: string) => (

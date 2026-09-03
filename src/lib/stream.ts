@@ -32,10 +32,17 @@ export async function getUnreadCountSafe(user: {
   displayName: string;
 }): Promise<number> {
   try {
-    const { total_unread_count } = await streamServerClient.getUnreadCount(user.id);
+    const { total_unread_count } = await streamServerClient.getUnreadCount(
+      user.id,
+    );
     return total_unread_count;
-  } catch (error: any) {
-    if (error?.code === 16) {
+  } catch (error) {
+    // StreamChat error 16 is "user does not exist".
+    const code =
+      typeof error === "object" && error !== null && "code" in error
+        ? (error as { code?: unknown }).code
+        : undefined;
+    if (code === 16) {
       // User doesn't exist in StreamChat – sync them now so subsequent calls work.
       try {
         await ensureStreamUser(user);

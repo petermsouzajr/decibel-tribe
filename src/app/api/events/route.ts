@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    const safeEvents = events.map((e: any) => ({
+    const safeEvents = events.map((e) => ({
       ...e,
       zipCode: null,
       latitude: null,

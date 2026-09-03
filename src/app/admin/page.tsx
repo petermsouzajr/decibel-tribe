@@ -1,3 +1,4 @@
+import { ReportStatus } from "@prisma/client";
 import { getAdminUser } from "@/lib/admin";
 import { Shield, Users, Flag, TrendingUp, AlertTriangle } from "lucide-react";
 import prisma from "@/lib/prisma";
@@ -34,7 +35,7 @@ async function getAdminStats() {
       }),
 
       // Pending reports
-      prisma.report.count({ where: { status: "PENDING" as any } }),
+      prisma.report.count({ where: { status: ReportStatus.PENDING } }),
 
       // Suspended users (will be 0 until we add suspension field)
       0,
