@@ -386,9 +386,57 @@ The Phase A sweep found dead files. This one found dead exports inside live file
 - [x] 13 routes hardcoding `const pageSize = 10` now use `DEFAULT_PAGE_SIZE`
 - [ ] **Left alone deliberately:** 4 routes return `{ error: "Unauthorized" }` with a **403** status. 401 means unauthenticated, 403 means authenticated but not permitted, so the body contradicts the status — but changing it alters the wire response and a client may match on that string. Your call
 
-### E4. Per-feature business-logic review — still open
+### E4. Per-feature business-logic review — **in progress**
 
-The grid below is unchanged. E1–E3 covered dead code and shape consistency across every feature; what remains per-feature is reading the actual logic.
+Started with the checks that pay off across features rather than reading each in isolation.
+
+#### E4.1 Authorization on every write route — **[x] checked, no gaps**
+
+Audited all 31 non-dating routes exporting POST/PUT/PATCH/DELETE for ownership verification. **No authorization holes found.**
+
+- Routes taking a `userId` path parameter (`follow`, `followers`, `blocks`) correctly derive the actor from the session (`followerId: loggedInUser.id`) and use the path parameter only as the target. None let you act as another user.
+- `notifications/mark-as-read` scopes its `updateMany` to `recipientId: user.id`.
+- `reports/[reportId]` calls `requireAdmin()`; all admin surfaces are gated.
+
+#### E4.2 A duplicate follow endpoint, and the worse one was live — **[x] deleted**
+
+`/api/users/[userId]/follow` and `/api/users/[userId]/followers` both implemented follow/unfollow. The app only ever calls `/followers` — `FollowButton`, `CommentMoreButton` and `useFollowerInfo` all use it. `/follow` (85 LOC) was unreachable from the UI, and it was the strictly worse implementation:
+
+| | `/followers` (live) | `/follow` (deleted) |
+|---|---|---|
+| Self-follow | rejected with 400 | **allowed** |
+| Repeat follow | `upsert`, idempotent | `create` → unique-constraint violation → **500** |
+| Notification | created | none |
+| Atomicity | `$transaction` | none |
+
+A Cypress spec had even left the comment *"The endpoint POST /api/users/{userId}/follow may not exist or support POST"*, and an idempotency test was written against the endpoint that is **not** idempotent.
+
+- [x] Deleted the route and its unit test
+- [ ] Two Cypress specs still reference it (`ui/profile/follow_user.cy.ts`, `api/profile/follow_idempotency.cy.ts`) — repoint them at `/followers` during the QA repo migration
+
+#### E4.3 A wasted query on the Following feed — **[x] fixed**
+
+`/api/posts/following` opened with:
+
+```ts
+const followingUserIds = await prisma.follow.findMany({
+  where: { followerId: user.id },
+  select: { followingId: true },
+}).then((res) => res.map((f) => f.followingId));
+```
+
+`followingUserIds` was **never used** — the posts query filters relationally with `followers: { some: { followerId: user.id } }`. So every request to the main Following feed ran an extra query fetching every account you follow and discarded the result. Removed.
+
+#### E4.4 Unbounded retry loop in the OAuth sign-up path — **[x] fixed**
+
+`generateUniqueUsername` in the Google callback ran `while (!isUnique)` with a DB round-trip per iteration and **no exit condition** other than finding a free name. Suffixes are drawn from `randomInt(1000, 9999)`, so a common enough base username could spin indefinitely and hold the request open. It also typed its client parameter as `prisma: any`.
+
+Now bounded to 10 attempts with a wider-random fallback that is still verified, so exhaustion surfaces as an error rather than a hang. Parameter typed as `typeof prisma`.
+
+#### Still open under E4
+
+- [ ] Read the per-feature business logic for the 13 features in the grid below — comments, groups, events, notifications, search, reports, admin, messages
+- [ ] `events/[eventId]` (12 awaits), `events/route.ts` (11), `reports/route.ts` (10) have the most sequential queries; check which are independent and could be `$transaction` / `Promise.all`
 
 | # | Feature | Files | Dead | DRY | Impl | Test | Notes |
 |---|---------|-------|:----:|:---:|:----:|:----:|-------|

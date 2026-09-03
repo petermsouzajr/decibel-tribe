@@ -19,13 +19,6 @@ export async function GET(req: NextRequest) {
       return unauthorized();
     }
 
-    const followingUserIds = await prisma.follow
-      .findMany({
-        where: { followerId: user.id },
-        select: { followingId: true },
-      })
-      .then((res) => res.map((follow) => follow.followingId));
-
     const posts = await prisma.post.findMany({
       where: {
         user: {
@@ -42,10 +35,8 @@ export async function GET(req: NextRequest) {
 
     const { items, nextCursor } = paginate(posts, pageSize);
 
-    const typedPosts = items;
-
     const data: PostsPage = {
-      posts: typedPosts,
+      posts: items,
       nextCursor,
     };
 

@@ -9,26 +9,32 @@ import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { randomInt } from "crypto";
 
-const generateUniqueUsername = async (baseUsername: string, prisma: any) => {
-  let username = baseUsername;
-  let isUnique = false;
+// Retries are bounded: this runs in the OAuth sign-up path, and the previous
+// `while (!isUnique)` had no exit condition other than finding a free name.
+// With only 9000 possible suffixes a sufficiently common base username could
+// spin indefinitely, holding the request open.
+const USERNAME_ATTEMPTS = 10;
 
-  while (!isUnique) {
-    const existingUser = await prisma.user.findUnique({
-      where: {
-        username,
-      },
-    });
+const generateUniqueUsername = async (
+  baseUsername: string,
+  db: typeof prisma,
+) => {
+  for (let attempt = 0; attempt < USERNAME_ATTEMPTS; attempt++) {
+    const username =
+      attempt === 0 ? baseUsername : `${baseUsername}${randomInt(1000, 9999)}`;
 
-    if (!existingUser) {
-      isUnique = true;
-    } else {
-      const randomSuffix = randomInt(1000, 9999);
-      username = `${baseUsername}${randomSuffix}`;
-    }
+    const existingUser = await db.user.findUnique({ where: { username } });
+    if (!existingUser) return username;
   }
 
-  return username;
+  // Fall back to a wider random space rather than looping forever. Still
+  // verified, so a collision here surfaces as an error instead of a hang.
+  const fallback = `${baseUsername}${randomInt(100000, 999999)}`;
+  const taken = await db.user.findUnique({ where: { username: fallback } });
+  if (taken) {
+    throw new Error("Could not generate a unique username");
+  }
+  return fallback;
 };
 
 export async function GET(req: NextRequest) {
