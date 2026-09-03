@@ -145,7 +145,7 @@ To support automated testing workflows and metrics specific to each team, a tagg
 
 ### Tagging Convention
 
-Team names are added within square brackets (e.g., `[TeamName]`) to the description strings of `describe`, `context`, or `it` blocks in test files (Vitest/Cypress). A test or group of tests can be associated with the team responsible for the corresponding feature.
+Team names are added within square brackets (e.g., `[TeamName]`) to the description strings of `describe`, `context`, or `it` blocks in test files (Vitest; E2E in learner lab repos). A test or group of tests can be associated with the team responsible for the corresponding feature.
 
 ### Example
 
