@@ -18,7 +18,7 @@ This document provides guidelines for contributing effectively.
   - [Commit Messages](#commit-messages)
   - [Unit Tests (Vitest)](#developer-tests-vitest)
   - [Submitting Changes](#submitting-changes)
-- [End-to-End Tests (Cypress)](#end-to-end-tests-cypress)
+- [End-to-End Tests (learner labs)](#end-to-end-tests-learner-labs)
 - [Reporting Bugs](#reporting-bugs)
 - [Suggesting Enhancements](#suggesting-enhancements)
 
@@ -111,11 +111,19 @@ Testing is crucial for maintaining application quality. This section focuses on 
   - **`npm run dev:test:all`**: **(Recommended for Developers)** Runs all developer-focused tests (`dev:test:unit` and `dev:test:seed`).
 - **Requirement:** New features and bug fixes should ideally include corresponding Vitest tests. Focus on testing logic, edge cases, and component behavior.
 
-### End-to-End Tests (Cypress)
+### End-to-End Tests (learner labs)
 
-End-to-End (E2E) tests simulate full user workflows using Cypress, and are primarily managed by the QA team.
+Browser E2E (Cypress and Playwright) is **not** maintained inside this application repo.
 
-- **Contribution Guidelines:** For detailed information on writing, structuring, debugging, and contributing to Cypress tests, please refer to the **[Cypress README](./cypress/README.md)**.
+Learners and QA practice against the deployed Decibel Tribe app from:
+
+- https://github.com/petermsouzajr/decibel-tribe-cypress-lab
+- https://github.com/petermsouzajr/decibel-tribe-playwright-lab
+
+Default SUT: `https://www.decibeltribe.com` (override with `CYPRESS_BASE_URL` / `PLAYWRIGHT_BASE_URL`).
+
+See [docs/E2E_LEARNER_LABS.md](./docs/E2E_LEARNER_LABS.md).
+
 
 ## Submitting Changes
 
