@@ -378,7 +378,7 @@ The Phase A sweep found dead files. This one found dead exports inside live file
 `model Report` exists in the schema and always has. **All 20 casts were removed with zero type errors** — they were never needed.
 
 - [x] `src/app/api/reports/route.ts` (12), `reports/[reportId]` (1), `users/[userId]/blocks` (3), `admin/page.tsx` (1), `admin/reports/page.tsx` (2), `admin/reports/[reportId]/page.tsx` (1)
-- [ ] 74 narrower `any` uses remain (callback parameters, dynamically-built `where` clauses). Lower value and more entangled — worth a dedicated pass, not a sweep
+- [x] Superseded by E4.17: the API layer is now `any`-free (~35 → 6). 53 remain, concentrated in components — see E4.17
 
 ### E3. Remaining response-shape drift — **[x] done**
 
@@ -593,7 +593,6 @@ Now only the intended cases stay idempotent: `P2002` (already blocked) on POST a
 #### Still open under E4
 
 - [ ] Component-level `any` cleanup (53 remaining, mostly `TrendsSidebar`)
-- [ ] `events/[eventId]` (12 awaits), `events/route.ts` (11), `reports/route.ts` (10) have the most sequential queries; check which are independent and could be `$transaction` / `Promise.all`
 - [ ] Bring `openapi.yaml` back in line with the API (E4.8)
 
 | # | Feature | Files | Dead | DRY | Impl | Test | Notes |
