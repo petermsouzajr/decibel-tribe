@@ -1,7 +1,7 @@
 import { login } from "@/app/(auth)/login/actions";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: any) {
+export async function POST(req: NextRequest) {
   const { username, password } = await req.json();
 
   const formData = new FormData();
@@ -14,8 +14,5 @@ export async function POST(req: any) {
     return NextResponse.json({ error: result.error }, { status: 401 });
   }
 
-  return NextResponse.json(
-    { success: true },
-    { status: 200 },
-  );
+  return NextResponse.json({ success: true }, { status: 200 });
 }

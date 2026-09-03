@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { forbidden, serverError, unauthorized } from "@/lib/api/responses";
 import { validateRequestWithCookieMutation } from "@/auth";
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { getEventDataInclude } from "@/lib/types";
 import { replaceEventSchema, updateEventSchema } from "@/lib/validation";
 import { geocodeZipCode } from "@/lib/server/geocodeZipCode";
@@ -23,12 +24,10 @@ export async function GET(
       where: {
         id: eventId,
       },
-      include: {
-        ...getEventDataInclude(loggedInUser?.id ?? ""),
-        helpWantedSkills: {
-          select: { skill: { select: { name: true } } },
-        },
-      } as any,
+      // getEventDataInclude already selects helpWantedSkills with the skill's
+      // id and name. Re-declaring a narrower select here was what forced the
+      // `as any`, which then cascaded into casts on every read below.
+      include: getEventDataInclude(loggedInUser?.id ?? ""),
     });
 
     if (!event) {
@@ -39,23 +38,21 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const helpWanted = Array.isArray((event as any).helpWantedSkills)
-      ? (event as any).helpWantedSkills
-          .map((h: any) => h?.skill?.name)
-          .filter(Boolean)
-      : [];
+    const helpWanted = event.helpWantedSkills
+      .map((h) => h.skill?.name)
+      .filter(Boolean);
 
     const isOwner = event.createdById === loggedInUser.id;
-    const safeEvent: any = {
-      ...event,
+
+    // Strip location data by destructuring rather than deleting off an `any`,
+    // so the response shape stays checked. Only the owner's editor receives the
+    // zip, and raw coordinates are never exposed.
+    const { zipCode, latitude, longitude, ...rest } = event;
+    const safeEvent = {
+      ...rest,
       helpWantedSkills: helpWanted,
-      // Only the event owner (editing) receives zip data; it is never displayed publicly.
-      eventZipCode: isOwner ? ((event as any).zipCode ?? "") : undefined,
+      eventZipCode: isOwner ? (zipCode ?? "") : undefined,
     };
-    // Never expose raw zip/coords on the event payload (only pass eventZipCode to owner editor)
-    delete safeEvent.zipCode;
-    delete safeEvent.latitude;
-    delete safeEvent.longitude;
 
     return NextResponse.json(safeEvent, { status: 200 });
   } catch (error) {
@@ -139,7 +136,10 @@ export async function PATCH(
         // Prisma throws P2025 if record to delete is not found.
         // Consider if this should be a 404 or just success/ignored.
         // For now, let's treat as success if delete fails likely due to not found.
-        if ((delError as any)?.code === "P2025") {
+        if (
+          delError instanceof Prisma.PrismaClientKnownRequestError &&
+          delError.code === "P2025"
+        ) {
           console.warn(
             `Attempted to unattend, but attendee not found: user=${loggedInUser.id}, event=${eventId}`,
           );

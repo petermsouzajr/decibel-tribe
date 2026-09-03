@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
     const { items, nextCursor } = paginate(events, pageSize);
 
     const data: EventsPage = {
-      events: items.map((e: any) => ({
+      events: items.map((e) => ({
         ...e,
         zipCode: null,
         latitude: null,

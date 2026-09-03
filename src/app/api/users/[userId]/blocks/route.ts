@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { serverError } from "@/lib/api/responses";
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { validateRequest } from "@/auth";
 
 export async function POST(
@@ -22,9 +23,18 @@ export async function POST(
       data: { blockerId: user.id, blockedId: userId },
     });
     return NextResponse.json({ success: true });
-  } catch (e: any) {
-    // idempotent: ignore duplicate
-    return NextResponse.json({ success: true });
+  } catch (error) {
+    // Already blocked is the desired end state, so stay idempotent — but only
+    // for that. This previously swallowed every error and reported success, so
+    // a database failure looked like a successful block.
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return NextResponse.json({ success: true });
+    }
+    console.error("Error blocking user:", error);
+    return serverError();
   }
 }
 
@@ -47,9 +57,16 @@ export async function DELETE(
       where: { blockerId_blockedId: { blockerId: user.id, blockedId: userId } },
     });
     return NextResponse.json({ success: true });
-  } catch (e: any) {
-    // idempotent
-    return NextResponse.json({ success: true });
+  } catch (error) {
+    // Not blocked in the first place is also the desired end state.
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      return NextResponse.json({ success: true });
+    }
+    console.error("Error unblocking user:", error);
+    return serverError();
   }
 }
 
@@ -80,7 +97,7 @@ export async function GET(
       orderBy: { createdAt: "desc" },
       take: 50,
     });
-    return NextResponse.json({ items: blocks.map((b: any) => b.blocked) });
+    return NextResponse.json({ items: blocks.map((b) => b.blocked) });
   } catch (e) {
     return serverError();
   }

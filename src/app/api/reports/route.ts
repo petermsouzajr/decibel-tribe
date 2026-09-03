@@ -3,7 +3,7 @@ import { serverError } from "@/lib/api/responses";
 import prisma from "@/lib/prisma";
 import { validateRequest } from "@/auth";
 import { requireAdmin } from "@/lib/admin";
-import { ReportStatus } from "@prisma/client";
+import { Prisma, ReportStatus } from "@prisma/client";
 
 export async function POST(req: NextRequest) {
   try {
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const data: any = {
+    const data: Prisma.ReportUncheckedCreateInput = {
       reporterId: user.id,
       reason,
       description: description ?? null,
@@ -159,83 +159,50 @@ export async function POST(req: NextRequest) {
     }
 
     // Duplicate detection: same reporter + same target already reported and still open
-    const duplicateWhere: any = { reporterId: user.id, OR: [] };
-    if (data.postId) duplicateWhere.OR.push({ postId: data.postId });
-    if (data.commentId) duplicateWhere.OR.push({ commentId: data.commentId });
-    if (data.reportedId)
-      duplicateWhere.OR.push({ reportedId: data.reportedId });
-    if (data.groupId) duplicateWhere.OR.push({ groupId: data.groupId });
-    if (data.eventId) duplicateWhere.OR.push({ eventId: data.eventId });
-    if (data.messageId) duplicateWhere.OR.push({ messageId: data.messageId });
+    const targetFilters: Prisma.ReportWhereInput[] = [];
+    if (data.postId) targetFilters.push({ postId: data.postId });
+    if (data.commentId) targetFilters.push({ commentId: data.commentId });
+    if (data.reportedId) targetFilters.push({ reportedId: data.reportedId });
+    if (data.groupId) targetFilters.push({ groupId: data.groupId });
+    if (data.eventId) targetFilters.push({ eventId: data.eventId });
+    if (data.messageId) targetFilters.push({ messageId: data.messageId });
 
     // If none pushed, it's invalid (should not happen due to switch above)
-    if (duplicateWhere.OR.length > 0) {
-      duplicateWhere.status = {
-        in: [ReportStatus.PENDING, ReportStatus.INVESTIGATING],
-      } as any;
-      try {
-        const existing = await prisma.report.findFirst({
-          where: duplicateWhere,
-          select: { id: true, createdAt: true },
-        });
-        if (existing) {
-          return NextResponse.json(
-            {
-              error:
-                "You have already reported this item and it is being reviewed.",
-            },
-            { status: 409 },
-          );
-        }
-      } catch (e: any) {
-        // Fallback for environments where Prisma Client hasn't been regenerated yet
-        const msg = String(e?.message || e);
-        if (
-          msg.includes("Unknown argument`)") ||
-          msg.includes("Unknown argument `commentId")
-        ) {
-          console.warn(
-            "Duplicate-check fallback: Prisma Client not updated; continuing without commentId filter",
-          );
-        } else {
-          throw e;
-        }
+    if (targetFilters.length > 0) {
+      const existing = await prisma.report.findFirst({
+        where: {
+          reporterId: user.id,
+          OR: targetFilters,
+          status: {
+            in: [ReportStatus.PENDING, ReportStatus.INVESTIGATING],
+          },
+        },
+        select: { id: true, createdAt: true },
+      });
+      if (existing) {
+        return NextResponse.json(
+          {
+            error:
+              "You have already reported this item and it is being reviewed.",
+          },
+          { status: 409 },
+        );
       }
     }
 
-    try {
-      const created = await prisma.report.create({ data });
-      return NextResponse.json(created, { status: 201 });
-    } catch (e: any) {
-      const msg = String(e?.message || e);
-      // Fallback path for environments where Prisma Client hasn't been regenerated to include commentId
-      if (msg.includes("Unknown argument `commentId")) {
-        console.warn(
-          "Create-report fallback: Prisma Client not updated; inserting with messageId instead of commentId",
-        );
-        const fallbackData = { ...data };
-        if (fallbackData.commentId) {
-          fallbackData.messageId = fallbackData.commentId;
-          delete fallbackData.commentId;
-          // Make it explicit in notes if available
-          fallbackData.adminNotes =
-            (fallbackData.adminNotes ? fallbackData.adminNotes + " | " : "") +
-            "fallback: original commentId stored in messageId";
-        }
-        const created = await prisma.report.create({
-          data: fallbackData,
-        });
-        return NextResponse.json(created, { status: 201 });
-      }
-      throw e;
-    }
-  } catch (error: any) {
+    const created = await prisma.report.create({ data });
+    return NextResponse.json(created, { status: 201 });
+  } catch (error) {
     console.error("Error creating report:", error);
     const isDev = process.env.NODE_ENV !== "production";
     return NextResponse.json(
       {
         error: "Internal server error",
-        details: isDev ? String(error?.message ?? error) : undefined,
+        details: isDev
+          ? error instanceof Error
+            ? error.message
+            : String(error)
+          : undefined,
       },
       { status: 500 },
     );
@@ -251,8 +218,8 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "10");
     const skip = (page - 1) * limit;
 
-    const where: any = {};
-    if (status) where.status = status as any;
+    const where: Prisma.ReportWhereInput = {};
+    if (status) where.status = status as ReportStatus;
 
     const [items, total] = await Promise.all([
       prisma.report.findMany({

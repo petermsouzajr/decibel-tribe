@@ -542,9 +542,57 @@ This is the "in a plan and not yet finished" case, not dead code — the schema,
 
 Removed 53 stale `// Direct session validation` / `// --- End direct session validation` markers across 23 routes; they had bracketed the inlined auth blocks that C1 replaced and no longer described anything. One route (`messages/unread-count`) also still had an unreachable second `if (!user)` guard with the comment *"Should technically be covered by !session, but double-check"* — removed.
 
+#### E4.15 Sequential-query review — **[x] done, little to fix**
+
+Checked the three heaviest routes. The multi-`await` counts were misleading: `events/[eventId]` already batches its attend/unattend work in `$transaction`, and event cancellation builds an array of `notification.upsert` calls and runs them as **one** `$transaction` rather than looping round-trips. `reports/route.ts`'s existence checks sit in a switch, so only one runs per request. The two rate-limit queries there are independent and could be `Promise.all`'d, but they guard an endpoint capped at 5 requests/day — not worth the churn.
+
+No N+1 patterns found in non-dating code.
+
+#### E4.16 The reports route carried a fallback that wrote corrupt data — **[x] removed**
+
+`POST /api/reports` wrapped both its duplicate check and its create in `try/catch` blocks that string-matched Prisma errors for *"Unknown argument `commentId`"*, described as a *"fallback for environments where Prisma Client hasn't been regenerated yet"*.
+
+The create fallback did this:
+
+```ts
+fallbackData.messageId = fallbackData.commentId;   // comment id -> message column
+delete fallbackData.commentId;
+fallbackData.adminNotes = "... fallback: original commentId stored in messageId";
+```
+
+That deliberately writes a **comment** id into the `messageId` column and annotates the record to say so — silently producing corrupt reports that moderation tooling would misread.
+
+It also cannot trigger. `commentId` has been on `model Report` since the **init** migration, `postinstall` runs `prisma generate`, and `build` runs `prisma migrate deploy`. Both fallbacks removed (**−37 lines**), and the duplicate check no longer swallows real database errors on its way past.
+
+#### E4.17 `any` cleanup — **[x] API layer done**
+
+74 → **53** overall; inside `src/app/api` (non-dating), **~35 → 6**.
+
+- `reports/route.ts` is now `any`-free: `Prisma.ReportUncheckedCreateInput`, `Prisma.ReportWhereInput`, and a narrowed `catch (error)` replace six `any`s
+- **`POST(req: any)` on the login route** — an auth route handler with an untyped request. Now `NextRequest`
+- `events/[eventId]` GET re-declared a narrower `helpWantedSkills` select on top of `getEventDataInclude`, which forced `as any` on the include and then cascaded casts onto every read below it. `getEventDataInclude` already selects that relation, so dropping the override removed five `any`s at once. The response now strips `zipCode`/`latitude`/`longitude` by destructuring rather than `delete` on an `any`, so the payload shape stays checked
+- Prisma error codes are now matched via `error instanceof Prisma.PrismaClientKnownRequestError` in the events and blocks routes
+
+- [ ] 53 remain, concentrated in components: `TrendsSidebar.tsx` (13), `events/Event.tsx` (5), `custom.d.ts` (5, ambient and legitimate)
+
+#### E4.18 Blocking reported success even when it failed — **[x] fixed**
+
+Both handlers in `/api/users/[userId]/blocks` ended with:
+
+```ts
+} catch (e: any) {
+  // idempotent: ignore duplicate
+  return NextResponse.json({ success: true });
+}
+```
+
+That catches **every** exception — a connection failure, a constraint error, anything — and tells the client the block succeeded. The user sees a confirmed block that does not exist.
+
+Now only the intended cases stay idempotent: `P2002` (already blocked) on POST and `P2025` (not blocked) on DELETE. Anything else logs and returns a 500.
+
 #### Still open under E4
 
-- [ ] Sequential-query review: `events/[eventId]` (12 awaits), `events/route.ts` (11), `reports/route.ts` (10)
+- [ ] Component-level `any` cleanup (53 remaining, mostly `TrendsSidebar`)
 - [ ] `events/[eventId]` (12 awaits), `events/route.ts` (11), `reports/route.ts` (10) have the most sequential queries; check which are independent and could be `$transaction` / `Promise.all`
 - [ ] Bring `openapi.yaml` back in line with the API (E4.8)
 
