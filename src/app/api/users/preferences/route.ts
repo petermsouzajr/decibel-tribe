@@ -7,13 +7,11 @@ import { geocodeZipCode } from "@/lib/server/geocodeZipCode";
 
 export async function GET() {
   try {
-    // Direct session validation (required)
     const { user: loggedInUser } = await validateRequestWithCookieMutation();
     if (!loggedInUser) {
       return unauthorized();
     }
 
-    // --- End direct session validation
     if (!loggedInUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -41,13 +39,11 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
   try {
-    // Direct session validation (required)
     const { user: loggedInUser } = await validateRequestWithCookieMutation();
     if (!loggedInUser) {
       return unauthorized();
     }
 
-    // --- End direct session validation
     if (!loggedInUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

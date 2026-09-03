@@ -100,13 +100,11 @@ export async function POST(
   const { postId } = params;
 
   try {
-    // Direct session validation (required for posting comments)
     const { user } = await validateRequestWithCookieMutation();
     if (!user) {
       return unauthorized();
     }
 
-    // --- End direct session validation
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

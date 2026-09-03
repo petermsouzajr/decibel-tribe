@@ -11,13 +11,11 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
-    // Direct session validation
     const { user: loggedInUser } = await validateRequestWithCookieMutation();
     if (!loggedInUser) {
       return unauthorized();
     }
 
-    // --- End direct session validation
     if (!loggedInUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

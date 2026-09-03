@@ -14,13 +14,11 @@ export async function GET(req: NextRequest) {
 
     const pageSize = DEFAULT_PAGE_SIZE;
 
-    // Direct session validation
     const { user } = await validateRequestWithCookieMutation();
     if (!user) {
       return unauthorized();
     }
 
-    // --- End direct session validation
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

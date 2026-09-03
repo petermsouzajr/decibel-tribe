@@ -13,7 +13,6 @@ export async function GET(req: NextRequest) {
     const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
     const pageSize = DEFAULT_PAGE_SIZE;
 
-    // Direct session validation
     const { user } = await validateRequestWithCookieMutation();
     if (!user) {
       return unauthorized();

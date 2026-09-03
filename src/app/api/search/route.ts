@@ -169,13 +169,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Query is required" }, { status: 400 });
     }
 
-    // Direct session validation
     const { user } = await validateRequestWithCookieMutation();
     if (!user) {
       return unauthorized();
     }
-
-    // --- End direct session validation
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -203,6 +200,10 @@ export async function GET(req: NextRequest) {
         ],
         user: {
           deletedAt: null, // Filter out posts from deleted users
+          // Search was the only feed-shaped query that did not honour blocks:
+          // for-you, following, users/[userId]/posts and post comments all
+          // filter this way, so a blocked user's posts stayed searchable.
+          blocksReceived: { none: { blockerId: user.id } },
         },
       },
       // Ensure include uses the logged-in user ID
@@ -218,6 +219,7 @@ export async function GET(req: NextRequest) {
           { displayName: { contains: searchQuery, mode: "insensitive" } },
         ],
         deletedAt: null, // Filter out deleted users
+        blocksReceived: { none: { blockerId: user.id } }, // and blocked users
       },
       // Ensure include uses the logged-in user ID
       select: getUserDataSelect(user.id),

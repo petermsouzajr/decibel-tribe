@@ -500,9 +500,51 @@ The route now requires `acceptedInvite`. **Zero UI impact** — the group page a
 
 **Deliberately not changed:** `/api/groups/[groupId]` GET uses the same row-exists check, but it returns group *name and description*, which a pending invitee genuinely needs in order to decide whether to accept — the page renders exactly that alongside the accept button. Applying the same filter there would have broken the invite flow.
 
+#### E4.11 Search ignored blocking — **[x] fixed**
+
+Every feed-shaped query filters out users the viewer has blocked: `posts/for-you`, `posts/following`, `users/[userId]/posts` and `posts/[postId]/comments` all carry `blocksReceived: { none: { blockerId: user.id } }`. **Search carried none.** It filtered `deletedAt: null` only.
+
+So blocking someone hid them from your feeds but left their posts *and* their profile fully searchable — which defeats the feature on the one surface people use to look someone up. Fixed on both the post and user queries.
+
+**Block filtering is still inconsistent elsewhere** — flagged rather than changed, because unlike search these involve product judgement:
+
+| Route | Honours blocks |
+|---|---|
+| `posts/for-you`, `posts/following`, `users/[userId]/posts`, `posts/[postId]/comments`, `search` | yes |
+| `notifications` | **no** — a blocked user's likes/comments still notify you, which is the strongest case for filtering |
+| `groups/[groupId]/posts`, `posts/group-activity` | **no** |
+| `posts/bookmarked` | no — arguably correct, these are your own saved items |
+
+- [ ] Decide whether blocks should apply to notifications and group feeds (and whether retroactively)
+
+#### E4.12 Notifications: a documented feature was never wired up — **[ ] your call**
+
+`NotificationType` declares `LIKE` and `DISLIKE`. `Notification.tsx` has complete render branches for both — icon, message (*"liked your post"*), and href. `docs/USER_FEATURES.md` lists them as shipped:
+
+> - Like on own post.
+> - Dislike on own post.
+
+**No code creates them.** `posts/[postId]/likes` and `posts/[postId]/dislikes` contain zero notification code, so liking a post has never notified its author.
+
+This is the "in a plan and not yet finished" case, not dead code — the schema, the UI and the docs are all ready and only the producer is missing. **Left untouched**: implementing it means deciding dedupe behaviour and what happens on unlike, and the neighbouring `COMMENT` and `EVENT_ATTENDEE` producers already show the intended pattern (guard against self-notification, check for an existing notification first).
+
+- [ ] Either wire up LIKE/DISLIKE notifications, or drop them from the enum, the UI and `USER_FEATURES.md`
+
+#### E4.13 Checked and clean
+
+- **Notification producers** — all five creation sites correctly skip self-notification (`parentComment.userId !== user.id`, `postAuthor.userId !== user.id`, etc.), and two also dedupe against an existing notification.
+- **Comment deletion** — `deleteComment` is a server action with a proper ownership check and soft-deletes rather than hard-deletes.
+- **Reports** — 5/day rate limit, a cooldown between reports, and duplicate-report detection all present.
+- **Stream token** (`get-token`) — scoped to `user.id` with a 1-hour expiry.
+- **Admin settings** — `requireAdmin()` on every handler.
+
+#### E4.14 Leftover comments from the C1 refactor — **[x] cleaned**
+
+Removed 53 stale `// Direct session validation` / `// --- End direct session validation` markers across 23 routes; they had bracketed the inlined auth blocks that C1 replaced and no longer described anything. One route (`messages/unread-count`) also still had an unreachable second `if (!user)` guard with the comment *"Should technically be covered by !session, but double-check"* — removed.
+
 #### Still open under E4
 
-- [ ] Read the per-feature business logic for the remaining features — notifications, search, reports, admin, messages
+- [ ] Sequential-query review: `events/[eventId]` (12 awaits), `events/route.ts` (11), `reports/route.ts` (10)
 - [ ] `events/[eventId]` (12 awaits), `events/route.ts` (11), `reports/route.ts` (10) have the most sequential queries; check which are independent and could be `$transaction` / `Promise.all`
 - [ ] Bring `openapi.yaml` back in line with the API (E4.8)
 
@@ -593,7 +635,7 @@ Net result: `vitest` (fast, integrated) + `playwright` (critical path, integrate
 | B — Dependencies | non-dating | **done** — 4 packages removed **and committed**, privacy policy corrected; `jest` deferred |
 | C — DRY | C1 auth + C2 pagination + C3 types | **done** — ~2,500 LOC removed. C4 deferred (dating) |
 | D — Bugs | pagination | **done** — 7 broken routes fixed. D4 (crons) needs your call |
-| E — Per-feature | 13 non-dating features | **cross-cutting sweeps done** (E1–E3); per-feature logic review open (E4) |
+| E — Per-feature | 13 non-dating features | **E1–E3 sweeps done; E4 logic review done** for posts, comments, groups, events, notifications, search, reports, admin, messages |
 | F — Testing | — | deferred to its own audit |
 
 ### Build fixed and dependency removals committed — **[x] done**

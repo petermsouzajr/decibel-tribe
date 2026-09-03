@@ -57,13 +57,10 @@ export async function DELETE(
 ) {
   const params = await props.params;
   try {
-    // Direct session validation
     const { user } = await validateRequestWithCookieMutation();
     if (!user) {
       return unauthorized();
     }
-
-    // --- End direct session validation
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -106,13 +103,10 @@ export async function PUT(
 ) {
   const params = await props.params;
   try {
-    // Direct session validation
     const { user } = await validateRequestWithCookieMutation();
     if (!user) {
       return unauthorized();
     }
-
-    // --- End direct session validation
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

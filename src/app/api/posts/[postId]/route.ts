@@ -47,13 +47,11 @@ export async function PATCH(
   const { postId } = params;
 
   try {
-    // Direct session validation (required)
     const { user } = await validateRequestWithCookieMutation();
     if (!user) {
       return unauthorized();
     }
 
-    // --- End direct session validation
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -94,13 +92,11 @@ export async function DELETE(
   const { postId } = params;
 
   try {
-    // Direct session validation (required)
     const { user } = await validateRequestWithCookieMutation();
     if (!user) {
       return unauthorized();
     }
 
-    // --- End direct session validation
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

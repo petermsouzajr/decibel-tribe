@@ -17,13 +17,11 @@ export async function GET(
   }
 
   try {
-    // Direct session validation
     const { user } = await validateRequestWithCookieMutation();
     if (!user) {
       return unauthorized();
     }
 
-    // --- End direct session validation
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -64,13 +62,11 @@ export async function POST(
 ) {
   const params = await props.params;
   try {
-    // Direct session validation (apply here)
     const { user } = await validateRequestWithCookieMutation();
     if (!user) {
       return unauthorized();
     }
 
-    // --- End direct session validation
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -144,13 +140,11 @@ export async function DELETE(
 ) {
   const params = await props.params;
   try {
-    // Direct session validation (apply here)
     const { user } = await validateRequestWithCookieMutation();
     if (!user) {
       return unauthorized();
     }
 
-    // --- End direct session validation
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

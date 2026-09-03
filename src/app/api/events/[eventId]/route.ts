@@ -70,7 +70,6 @@ export async function PATCH(
 ) {
   const params = await props.params;
   try {
-    // Direct session validation (required)
     const { user: loggedInUser } = await validateRequestWithCookieMutation();
     if (!loggedInUser) {
       return unauthorized();

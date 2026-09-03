@@ -5,13 +5,10 @@ import prisma from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
-    // Direct session validation
     const { user: loggedInUser } = await validateRequestWithCookieMutation();
     if (!loggedInUser) {
       return unauthorized();
     }
-
-    // --- End direct session validation
 
     if (!loggedInUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

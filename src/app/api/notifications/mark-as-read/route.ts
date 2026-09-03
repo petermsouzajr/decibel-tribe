@@ -5,13 +5,10 @@ import { NextRequest, NextResponse } from "next/server"; // Import NextResponse
 
 export async function PATCH(req: NextRequest) {
   try {
-    // Direct session validation
     const { user } = await validateRequestWithCookieMutation();
     if (!user) {
       return unauthorized();
     }
-
-    // --- End direct session validation
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
