@@ -362,6 +362,6 @@ To add a new seed module:
 ## Related Documentation
 
 - `docs/MODULAR_SEEDING_PLAN.md` - Original plan for modular seeding
-- `docs/TEAM_STRUCTURE.md` - Team responsibilities
+- `../TEAM_STRUCTURE.md` - Team responsibilities
 - `cypress.env.json` - Test user configuration
 

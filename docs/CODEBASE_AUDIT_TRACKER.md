@@ -621,7 +621,10 @@ Now only the intended cases stay idempotent: `P2002` (already blocked) on POST a
 
 **Before deleting anything in a feature**, check that feature's plan doc in `docs/` — several describe partially-built work. Docs to consult: `COMMENT_IMPROVEMENT_PLAN`, `REPORT_IMPLEMENTATION_PLAN`, `MODULAR_SEEDING_PLAN`, `public-view-only-strategy`, `verified-users-bot-prevention`, `MISSING_BEST_PRACTICES`.
 
-- [ ] **Doc hygiene pass:** 25 files in `docs/` + 4 more at repo root. At least one pair actively contradicts (`DATING_MASTER_PLAN.md` says "no native app"; `DATING_EXPO_MIGRATION_PLAN.md` supersedes it and says so). Several are status snapshots (`DATING_FEATURE_COMPLETE.md`, `PROJECT_COMPLETION_STATUS.md`) that are now historical. Move finished ones to `docs/archive/` so a search for current intent returns only current intent.
+- [x] **Doc hygiene — done.** `docs/` now holds only current guidance (16 files); 10 point-in-time records moved to `docs/archive/`, with inbound links rewritten. Added `docs/README.md` as an index separating current direction, reference, *proposals not yet built*, and archive — the last distinction matters, since several plan docs read as descriptions of shipped behaviour.
+  - `archive/DATING_MASTER_PLAN.md` carries a banner: it says the dating product will have no native app, which `DATING_EXPO_MIGRATION_PLAN.md` reversed.
+  - Fixed a broken link in `SEED_DOCUMENTATION.md` that pointed at `docs/TEAM_STRUCTURE.md`; that file lives at the repo root.
+  - One dangling reference left deliberately: the migration plan cites `docs/datingtribe-testflight-safe-deploy.md`, which does not exist here — the surrounding text suggests it lives with the Hermes/`datingtribe` material, so guessing would be worse than recording it.
 
 ---
 

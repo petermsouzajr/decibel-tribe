@@ -1,3 +1,9 @@
+> **ARCHIVED — superseded for UI decisions.**
+> This document states the dating product will have no native app. That was
+> reversed by `docs/DATING_EXPO_MIGRATION_PLAN.md`, which moves the dating UI to
+> a separate Expo repo. Backend and API guidance below may still apply; anything
+> about the UI does not. Kept for history.
+
 # Dating Feature Master Plan
 ## Decibel Tribe - Musicians Social Network Dating Feature
 
