@@ -28,7 +28,14 @@ export async function GET(
       where: {
         postId,
         parentId: null, // Only fetch top-level comments (not replies)
-        isDeleted: false, // Filter out deleted comments
+        // Replies are only reachable nested under their parent, and there is no
+        // separate replies endpoint — so filtering out every deleted top-level
+        // comment also silently removed its entire reply thread, including
+        // other people's replies. Keep a deleted comment when it still has
+        // replies; Comment.tsx already renders it as a "this comment has been
+        // deleted" tombstone, which is how deleted *replies* have always
+        // behaved (getCommentDataInclude never filtered them).
+        OR: [{ isDeleted: false }, { replies: { some: {} } }],
         user: {
           deletedAt: null,
           ...(loggedInUserId

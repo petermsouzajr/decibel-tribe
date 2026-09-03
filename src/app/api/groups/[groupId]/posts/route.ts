@@ -21,16 +21,23 @@ export async function GET(
 
     const groupId = params.groupId;
 
-    const isMember = await prisma.groupMember.findUnique({
+    // An invite creates a GroupMember row with acceptedInvite: false, so the
+    // row existing is not the same as being a member. Without this filter a
+    // pending invitee could read every post in the group before accepting.
+    // my-groups and posts/group-activity already filter on acceptedInvite, and
+    // the group page derives `isMember` from it too — this route was the
+    // outlier.
+    const membership = await prisma.groupMember.findUnique({
       where: {
         userId_groupId: {
           userId: user.id,
           groupId,
         },
       },
+      select: { acceptedInvite: true },
     });
 
-    if (!isMember) {
+    if (!membership?.acceptedInvite) {
       return NextResponse.json(
         { error: "Access denied. You are not a member of this group." },
         { status: 403 },

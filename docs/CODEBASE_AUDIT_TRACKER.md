@@ -474,9 +474,35 @@ With it parsing, the drift is measurable: **56 non-dating routes exist, 27 are d
 
 Not fixed here — writing 31 accurate entries needs per-endpoint intent, and guessing would make the spec confidently wrong rather than merely incomplete.
 
+#### E4.9 Comments: deleting a comment silently deleted everyone else's replies — **[x] fixed**
+
+`/api/posts/[postId]/comments` fetched top-level comments with `isDeleted: false`, and replies come back **nested inside their parent** via `getCommentDataInclude`. There is no separate replies endpoint, so a reply is only reachable through its parent.
+
+The result: deleting one top-level comment removed its entire thread from the UI. Ten replies by ten other people vanished — still in the database, just unreachable.
+
+The inconsistency was already visible in the code. `getCommentDataInclude`'s `replies` block has **no** `isDeleted` filter, so deleted *replies* are returned, and `Comment.tsx` renders them as *"This comment has been deleted"*. That tombstone branch could never run for a top-level comment, because the API filtered those out before they reached it.
+
+Fixed by keeping a deleted top-level comment **only when it still has replies**:
+
+```ts
+OR: [{ isDeleted: false }, { replies: { some: {} } }],
+```
+
+A deleted comment with no replies still disappears entirely, so the common case is unchanged; a deleted comment holding a thread now renders as the tombstone the component already supports.
+
+#### E4.10 Groups: a pending invitee could read every post in the group — **[x] fixed**
+
+`/api/groups/[groupId]/posts` gated on whether a `GroupMember` row existed. But `add-user` creates that row with `acceptedInvite: false` (and the schema defaults it to `false`), so **being invited was enough to read the group's posts** — accepting was not required.
+
+Every other consumer already got this right: `my-groups` filters `acceptedInvite: true`, `posts/group-activity` filters `acceptedInvite: true`, and the group page derives `const isMember = userMembershipData?.acceptedInvite`. This route was the only outlier.
+
+The route now requires `acceptedInvite`. **Zero UI impact** — the group page already wraps its post list in `{isMember && (...)}` and shows the accept-invite prompt otherwise, so a pending invitee never saw these posts in the app. The gap was only reachable by calling the API directly.
+
+**Deliberately not changed:** `/api/groups/[groupId]` GET uses the same row-exists check, but it returns group *name and description*, which a pending invitee genuinely needs in order to decide whether to accept — the page renders exactly that alongside the accept button. Applying the same filter there would have broken the invite flow.
+
 #### Still open under E4
 
-- [ ] Read the per-feature business logic for the 13 features in the grid below — comments, groups, notifications, search, reports, admin, messages
+- [ ] Read the per-feature business logic for the remaining features — notifications, search, reports, admin, messages
 - [ ] `events/[eventId]` (12 awaits), `events/route.ts` (11), `reports/route.ts` (10) have the most sequential queries; check which are independent and could be `$transaction` / `Promise.all`
 - [ ] Bring `openapi.yaml` back in line with the API (E4.8)
 
