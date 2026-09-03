@@ -433,10 +433,52 @@ const followingUserIds = await prisma.follow.findMany({
 
 Now bounded to 10 attempts with a wider-random fallback that is still verified, so exhaustion surfaces as an error rather than a hang. Parameter typed as `typeof prisma`.
 
+#### E4.5 Events: the live update endpoint had no input validation — **[x] fixed**
+
+`/api/events/[eventId]` exports both PATCH and PUT. **PATCH validated** with `updateEventSchema.safeParse`; **PUT did not** — it destructured `await req.json()` straight into a geocode call, a skill upsert loop and a `$transaction`. PUT is the endpoint the edit form actually uses (`events/edit/page.tsx` → `calendar/mutations.ts`), so the one path users exercise was the unvalidated one.
+
+The obvious fix was wrong: `updateEventSchema` **`.omit()`s `helpWantedSkills` and `eventZipCode`**, both of which PUT accepts and writes. Reusing it would have silently stopped those two fields from saving.
+
+Added `replaceEventSchema` (`baseEventObject.partial()` plus the same title-not-empty refinement) covering the fields PUT actually accepts, and wired it in ahead of the geocoding and the transaction. `.partial()` means nothing becomes newly required, so valid payloads are unaffected; malformed ones now get a 400 instead of reaching Prisma and returning a 500.
+
+#### E4.6 A second duplicate API surface — **[ ] your call, not deleted**
+
+`/api/events` exports DELETE, PATCH and PUT taking `?eventId=`, duplicating `/api/events/[eventId]`. No client calls the query-param form.
+
+They are **not** identical, though: the collection `DELETE` is overloaded — creator deletes the event, non-creator is un-attended from it. That "leave" branch duplicates `/api/events/[eventId]/attendees` DELETE, which *is* what the UI calls.
+
+**Left in place deliberately.** Unlike the follow duplicate, `openapi.yaml` documents `/events` with `delete`, `patch` and `put` at the path level, so removing them is an API deprecation affecting any documented consumer, not an internal cleanup.
+
+- [ ] Decide whether to deprecate `DELETE|PATCH|PUT /api/events?eventId=` in favour of the path-param route, and remove them from the spec at the same time
+
+#### E4.7 `openapi.yaml` did not parse at all — **[x] fixed**
+
+The 66KB API contract failed YAML parsing entirely, so every consumer of it — codegen, validators, Swagger UI — was broken:
+
+```yaml
+description: Authentication cookie obtained via login or OAuth callback. Send requests with `credentials: 'include'` on the client.
+```
+
+The unquoted `credentials: 'include'` inside the string made YAML read `: ` as a nested mapping. Quoting the description fixes it. Confirmed pre-existing — the identical error is in `HEAD`.
+
+Also removed a 65-line `follow:` block that sat as a sibling of `get:` under `/users/{userId}`. That is not valid OpenAPI (not an HTTP method), and it documented the endpoint deleted in E4.2 — while describing behaviour (`creates a notification`) that only the surviving `/followers` route has.
+
+The spec now parses: **27 paths, 28 schemas, no structural errors.**
+
+#### E4.8 The spec has drifted badly from the API — **[ ] open**
+
+With it parsing, the drift is measurable: **56 non-dating routes exist, 27 are documented.**
+
+- **31 undocumented (55%)** — including whole features: all of `/reports`, `/comments/*`, most of `/groups/*`, `/posts/{postId}/likes|dislikes|bookmark|comments`, and account management (`delete-account`, `export-data`, `update-email`, `update-password`).
+- **2 documented but nonexistent:** `/users/{userId}` has no `route.ts` (the real profile endpoint is `/users/username/{username}`, which is undocumented), and `/auth/logout` is a **server action** in `(auth)/actions.ts`, not a REST route.
+
+Not fixed here — writing 31 accurate entries needs per-endpoint intent, and guessing would make the spec confidently wrong rather than merely incomplete.
+
 #### Still open under E4
 
-- [ ] Read the per-feature business logic for the 13 features in the grid below — comments, groups, events, notifications, search, reports, admin, messages
+- [ ] Read the per-feature business logic for the 13 features in the grid below — comments, groups, notifications, search, reports, admin, messages
 - [ ] `events/[eventId]` (12 awaits), `events/route.ts` (11), `reports/route.ts` (10) have the most sequential queries; check which are independent and could be `$transaction` / `Promise.all`
+- [ ] Bring `openapi.yaml` back in line with the API (E4.8)
 
 | # | Feature | Files | Dead | DRY | Impl | Test | Notes |
 |---|---------|-------|:----:|:---:|:----:|:----:|-------|

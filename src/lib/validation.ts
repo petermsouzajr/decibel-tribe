@@ -212,6 +212,17 @@ export const updateEventSchema = baseEventObject
     },
   );
 
+// PUT /api/events/[eventId] replaces the whole event, so unlike
+// updateEventSchema it must accept helpWantedSkills and eventZipCode — that
+// route was previously destructuring the request body with no validation at
+// all while its sibling PATCH validated.
+export const replaceEventSchema = baseEventObject
+  .partial()
+  .refine((data) => data.title === undefined || data.title.trim().length > 0, {
+    message: "Title cannot be empty",
+    path: ["title"],
+  });
+
 // --- Comment Schema ---
 
 export const createCommentSchema = z.object({

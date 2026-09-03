@@ -979,71 +979,6 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-    # Follow sub-resource
-    follow:
-      post:
-        summary: Follow a user
-        description: Creates a follow relationship where the authenticated user follows the user specified by `{userId}`. Creates a notification for the followed user.
-        tags:
-          - Users
-          - Followers
-        security:
-          - cookieAuth: []
-        responses:
-          "200":
-            description: Follow operation successful. Returns the created follow record.
-            content:
-              application/json:
-                schema:
-                  $ref: "#/components/schemas/FollowRecord" # Define this
-          "400":
-            description: Bad request (e.g., trying to follow self, already following).
-            content:
-              application/json:
-                schema:
-                  $ref: "#/components/schemas/Error"
-          "401":
-            $ref: "#/components/responses/UnauthorizedError"
-          "404":
-            description: Target user not found.
-            content:
-              application/json:
-                schema:
-                  $ref: "#/components/schemas/Error"
-          "500":
-            $ref: "#/components/responses/InternalServerError"
-      delete:
-        summary: Unfollow a user
-        description: Removes a follow relationship where the authenticated user follows the user specified by `{userId}`.
-        tags:
-          - Users
-          - Followers
-        security:
-          - cookieAuth: []
-        responses:
-          "200":
-            description: Unfollow operation successful. Returns the deleted follow record.
-            content:
-              application/json:
-                schema:
-                  $ref: "#/components/schemas/FollowRecord"
-          "400":
-            description: Bad request (e.g., trying to unfollow self, not following).
-            content:
-              application/json:
-                schema:
-                  $ref: "#/components/schemas/Error"
-          "401":
-            $ref: "#/components/responses/UnauthorizedError"
-          "404":
-            description: Target user not found.
-            content:
-              application/json:
-                schema:
-                  $ref: "#/components/schemas/Error"
-          "500":
-            $ref: "#/components/responses/InternalServerError"
-
   /users/preferences:
     get:
       summary: Get user preferences
@@ -1976,7 +1911,7 @@ components:
       type: apiKey
       in: cookie
       name: auth_session # Use the actual session cookie name from lucia config
-      description: Authentication cookie obtained via login or OAuth callback. Send requests with `credentials: 'include'` on the client.
+      description: "Authentication cookie obtained via login or OAuth callback. Send requests with `credentials: 'include'` on the client."
     cronAuth: # New scheme for cron job Bearer token
       type: http
       scheme: bearer

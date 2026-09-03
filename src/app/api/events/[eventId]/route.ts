@@ -3,7 +3,7 @@ import { forbidden, serverError, unauthorized } from "@/lib/api/responses";
 import { validateRequestWithCookieMutation } from "@/auth";
 import prisma from "@/lib/prisma";
 import { getEventDataInclude } from "@/lib/types";
-import { updateEventSchema } from "@/lib/validation";
+import { replaceEventSchema, updateEventSchema } from "@/lib/validation";
 import { geocodeZipCode } from "@/lib/server/geocodeZipCode";
 
 export async function GET(
@@ -229,6 +229,21 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
+    let rawBody;
+    try {
+      rawBody = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    const validation = replaceEventSchema.safeParse(rawBody);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error.errors },
+        { status: 400 },
+      );
+    }
+
     const {
       title,
       location,
@@ -243,7 +258,7 @@ export async function PUT(
       status,
       visibility,
       isCancelled,
-    } = await req.json();
+    } = validation.data;
 
     const wasCancelled = event.isCancelled;
     const isNowCancelled = isCancelled;
