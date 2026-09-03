@@ -723,33 +723,6 @@ paths:
           $ref: "#/components/responses/InternalServerError"
     # POST removed - handled by PATCH /events/{eventId} with action=attend
 
-  /auth/logout:
-    post:
-      summary: Log out the current user
-      description: Invalidates the user's current session, clears the session cookie, and redirects the user to the login page. This is typically triggered by a user action (e.g., clicking a logout button) that invokes the corresponding server action.
-      tags:
-        - Authentication
-      security:
-        - cookieAuth: [] # Requires an active session to invalidate
-      responses:
-        "302": # Server actions often result in redirects
-          description: Redirects to the login page upon successful logout.
-          headers:
-            Location:
-              schema:
-                type: string
-              description: Contains the URL to redirect to (`/login`).
-        "401":
-          description: Unauthorized - No active session found to invalidate.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                error: Unauthorized
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
   /notifications:
     get:
       summary: Get user notifications
@@ -827,35 +800,6 @@ paths:
                   - message
         "401":
           $ref: "#/components/responses/UnauthorizedError"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /users/{userId}:
-    parameters:
-      - name: userId
-        in: path
-        required: true
-        description: The ID of the target user.
-        schema:
-          type: string
-    get:
-      summary: Get user profile data
-      description: Retrieves public profile data for a user, including follower status relative to the authenticated user. Requires authentication.
-      tags:
-        - Users
-      security:
-        - cookieAuth: []
-      responses:
-        "200":
-          description: User profile data.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserWithFollowerStatus" # Based on getUserDataSelect
-        "401":
-          $ref: "#/components/responses/UnauthorizedError"
-        "404":
-          $ref: "#/components/responses/NotFoundError"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -1143,6 +1087,1091 @@ paths:
                 $ref: "#/components/schemas/MessageCountInfo"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+
+  # ---------- Posts: interactions ----------
+  /posts/{postId}/likes:
+    parameters:
+      - name: postId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get like state for a post
+      description: Returns the post's like count and whether the authenticated user has liked it.
+      tags: [Posts]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Like info.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  likes:
+                    type: integer
+                  isLikedByUser:
+                    type: boolean
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      summary: Like a post
+      description: >-
+        Idempotent. Clears any existing dislike from the same user, notifies the
+        post author with a LIKE notification (skipped for self-likes, and not
+        duplicated on a repeat like), and withdraws any DISLIKE notification.
+      tags: [Posts]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Post liked.
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      summary: Remove a like
+      description: Also withdraws the LIKE notification sent to the author.
+      tags: [Posts]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Like removed.
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /posts/{postId}/dislikes:
+    parameters:
+      - name: postId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get dislike state for a post
+      tags: [Posts]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Dislike info.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dislikes:
+                    type: integer
+                  isDislikedByUser:
+                    type: boolean
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      summary: Dislike a post
+      description: >-
+        Idempotent. Mirrors the like endpoint: clears any existing like, notifies
+        the author with a DISLIKE notification (skipped for self, not duplicated),
+        and withdraws any LIKE notification.
+      tags: [Posts]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Post disliked.
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      summary: Remove a dislike
+      tags: [Posts]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Dislike removed.
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /posts/{postId}/bookmark:
+    parameters:
+      - name: postId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get bookmark state for a post
+      tags: [Posts]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Bookmark info.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  isBookmarkedByUser:
+                    type: boolean
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      summary: Bookmark a post
+      description: Idempotent.
+      tags: [Posts]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Post bookmarked.
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      summary: Remove a bookmark
+      tags: [Posts]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Bookmark removed.
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /posts/{postId}/comments:
+    parameters:
+      - name: postId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: List comments on a post
+      description: >-
+        Optional auth — an anonymous reader gets the public shape. Pages
+        **backwards** (oldest last) using `previousCursor`, unlike the forward
+        cursor used by feed endpoints. Excludes comments from users the viewer
+        has blocked. A deleted comment is returned only when it still has
+        replies, so a deleted parent does not remove its thread; clients should
+        render those as a tombstone.
+      tags: [Posts]
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: A page of comments.
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      summary: Add a comment to a post
+      description: Notifies the post author unless they are the commenter.
+      tags: [Posts]
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+      responses:
+        "201":
+          description: Comment created.
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /posts/bookmarked:
+    get:
+      summary: List the authenticated user's bookmarked posts
+      description: >-
+        Cursor-paginated. Note this feed deliberately does **not** filter blocked
+        users — these are the viewer's own saved items.
+      tags: [Posts]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: A page of bookmarked posts.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostsPage"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /posts/group-activity:
+    get:
+      summary: Feed of posts from the authenticated user's groups
+      description: >-
+        Cursor-paginated. Covers groups where the user's invite is accepted, and
+        excludes authors the viewer has blocked.
+      tags: [Posts, Groups]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: A page of group posts.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostsPage"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # ---------- Comments ----------
+  /comments/{commentId}:
+    parameters:
+      - name: commentId
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      summary: Edit a comment
+      description: Author only. Rejects edits to an already-deleted comment.
+      tags: [Posts]
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+      responses:
+        "200":
+          description: Updated comment.
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /comments/{commentId}/like:
+    parameters:
+      - name: commentId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Like a comment
+      tags: [Posts]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Comment liked.
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      summary: Remove a like from a comment
+      tags: [Posts]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Like removed.
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /comments/{commentId}/reply:
+    parameters:
+      - name: commentId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Reply to a comment
+      description: Notifies the parent comment's author unless they are the replier.
+      tags: [Posts]
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+      responses:
+        "201":
+          description: Reply created.
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # ---------- Groups ----------
+  /groups/{groupId}/posts:
+    parameters:
+      - name: groupId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: List posts in a group
+      description: >-
+        Requires an **accepted** membership — an outstanding invite is not
+        sufficient. Cursor-paginated; excludes authors the viewer has blocked.
+      tags: [Groups, Posts]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: A page of group posts.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostsPage"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /groups/{groupId}/member:
+    parameters:
+      - name: groupId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get the authenticated user's membership record for a group
+      description: >-
+        Returns role, `acceptedInvite` and join date, or null when the user has
+        no membership row. Clients use `acceptedInvite` to distinguish a member
+        from someone holding an unaccepted invite.
+      tags: [Groups]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Membership record, or null.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupMember"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /groups/{groupId}/accept-invite:
+    parameters:
+      - name: groupId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Accept a pending group invite
+      tags: [Groups]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Invite accepted.
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /groups/{groupId}/leave:
+    parameters:
+      - name: groupId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Leave a group
+      description: The owner cannot leave their own group.
+      tags: [Groups]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Left the group.
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # ---------- Users ----------
+  /users/username/{username}:
+    parameters:
+      - name: username
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get a user profile by username
+      description: >-
+        Optional auth — an anonymous viewer receives the public shape, and
+        follower status is resolved relative to the authenticated user when
+        there is one. This is the live profile endpoint; the documented
+        `/users/{userId}` path does not exist in the codebase.
+      tags: [Users]
+      responses:
+        "200":
+          description: User profile.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserWithFollowerStatus"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /users/{userId}/posts:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: List a user's posts
+      description: Cursor-paginated. Excludes authors the viewer has blocked.
+      tags: [Users, Posts]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: A page of posts.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostsPage"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /users/{userId}/followers:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: List a user's followers
+      description: Cursor-paginated.
+      tags: [Users, Followers]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: A page of followers.
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      summary: Follow a user
+      description: >-
+        The authenticated user follows `{userId}`. Idempotent, and creates a
+        FOLLOW notification. Self-follow is rejected.
+      tags: [Users, Followers]
+      security:
+        - cookieAuth: []
+      responses:
+        "201":
+          description: Follow created.
+        "400":
+          description: Cannot follow yourself.
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      summary: Unfollow a user
+      tags: [Users, Followers]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Unfollowed.
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /users/following:
+    get:
+      summary: List users the given user follows
+      description: Cursor-paginated.
+      tags: [Users, Followers]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: A page of followed users.
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /users/followed-by:
+    get:
+      summary: List users following the given user
+      description: Cursor-paginated.
+      tags: [Users, Followers]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: A page of followers.
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /users/{userId}/blocks:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: List blocked users
+      description: Returns up to 50 users the authenticated user has blocked.
+      tags: [Users]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Blocked users.
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      summary: Block a user
+      description: >-
+        Idempotent — blocking someone already blocked succeeds. Blocking hides
+        that user from the viewer's feeds, comments, search results,
+        notifications and group feeds. It does **not** affect the viewer's own
+        bookmarks.
+      tags: [Users]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: User blocked.
+        "400":
+          description: Invalid target (missing, or the user themselves).
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      summary: Unblock a user
+      description: Idempotent — unblocking someone not blocked succeeds.
+      tags: [Users]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: User unblocked.
+        "400":
+          description: Invalid target.
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # ---------- Account management ----------
+  # NOTE: these five routes delegate authentication to a server action rather
+  # than checking the session themselves. When the action throws "Unauthorized"
+  # the route's catch turns it into a 500, so an unauthenticated caller sees
+  # 500 rather than 401. Documented as the behaviour actually is.
+  /users/update-password:
+    post:
+      summary: Change or set the authenticated user's password
+      description: >-
+        `isSettingPassword: true` sets an initial password for an account that
+        has none (OAuth sign-ups); otherwise `currentPassword` is verified.
+        Auth is enforced inside the server action, so an unauthenticated call
+        returns **500**, not 401.
+      tags: [Users, Authentication]
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [newPassword]
+              properties:
+                currentPassword:
+                  type: string
+                newPassword:
+                  type: string
+                isSettingPassword:
+                  type: boolean
+      responses:
+        "200":
+          description: Password updated.
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /users/update-email:
+    post:
+      summary: Request an email change for the authenticated user
+      description: >-
+        Stores a pending email and sends a verification message. Same auth
+        caveat as `/users/update-password`.
+      tags: [Users]
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [newEmail]
+              properties:
+                newEmail:
+                  type: string
+                  format: email
+      responses:
+        "200":
+          description: Verification email sent.
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /users/delete-account:
+    post:
+      summary: Soft-delete the authenticated user's account
+      description: >-
+        Requires the account password and an explicit confirmation flag. Marks
+        the account deleted rather than removing rows; a scheduled cleanup is
+        expected to purge it after the retention window. Same auth caveat as
+        `/users/update-password`.
+      tags: [Users]
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password, confirmDeletion]
+              properties:
+                password:
+                  type: string
+                confirmDeletion:
+                  type: boolean
+      responses:
+        "200":
+          description: Account deleted.
+        "400":
+          description: Missing password/confirmation, or the password did not match.
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /users/reactivate-account:
+    post:
+      summary: Reactivate a soft-deleted account
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Account reactivated.
+        "400":
+          description: Invalid credentials, or the account is not reactivatable.
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /users/export-data:
+    get:
+      summary: Export the authenticated user's data
+      description: >-
+        Returns the account's stored data for portability. Same auth caveat as
+        `/users/update-password`.
+      tags: [Users]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Exported data.
+        "400":
+          description: Export could not be produced.
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /verify-email:
+    get:
+      summary: Verify an email address from a token
+      description: >-
+        Consumes the token sent by email and marks the address verified. Used
+        for both sign-up verification and email changes.
+      tags: [Authentication]
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Email verified.
+        "400":
+          description: Missing, invalid or expired token.
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/session:
+    post:
+      summary: Refresh the session cookie
+      description: >-
+        Validates the current session and refreshes or clears the cookie.
+        Returns 204 with no body.
+      tags: [Authentication]
+      security:
+        - cookieAuth: []
+      responses:
+        "204":
+          description: Session checked; cookie refreshed or cleared.
+
+  # ---------- Moderation ----------
+  /reports:
+    post:
+      summary: Submit a report
+      description: >-
+        Reports a post, comment, user, group or event. Rate limited to 5 per day
+        per reporter with a 1-minute cooldown between reports, and rejects a
+        duplicate report of the same target while an earlier one is still
+        PENDING or INVESTIGATING.
+      tags: [Reports]
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                description:
+                  type: string
+                postId:
+                  type: string
+                commentId:
+                  type: string
+                reportedId:
+                  type: string
+                groupId:
+                  type: string
+                eventId:
+                  type: string
+      responses:
+        "201":
+          description: Report created.
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "409":
+          description: You have already reported this item and it is under review.
+        "429":
+          description: Daily report limit reached, or cooldown not elapsed.
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    get:
+      summary: List reports (admin)
+      tags: [Reports]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: A page of reports with a total count.
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /reports/{reportId}:
+    parameters:
+      - name: reportId
+        in: path
+        required: true
+        schema:
+          type: string
+    patch:
+      summary: Update a report's status or admin notes (admin)
+      tags: [Reports]
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                adminNotes:
+                  type: string
+      responses:
+        "200":
+          description: Report updated.
+        "400":
+          description: Nothing to update.
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      summary: Update a report from an HTML form (admin)
+      description: >-
+        Form-encoded wrapper around PATCH, for the admin UI's non-JS form
+        submission. Any other content type returns 405.
+      tags: [Reports]
+      security:
+        - cookieAuth: []
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                adminNotes:
+                  type: string
+      responses:
+        "200":
+          description: Report updated.
+        "405":
+          description: Unsupported content type.
+
+  /admin/settings:
+    get:
+      summary: Read admin settings
+      tags: [Admin]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Current settings.
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      summary: Update admin settings
+      tags: [Admin]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Settings updated.
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # ---------- Infrastructure ----------
+  /uploadthing:
+    get:
+      summary: UploadThing route handler
+      description: >-
+        Generated by the UploadThing SDK — it exposes its own GET/POST contract
+        rather than a hand-written one. Listed so the surface is complete.
+      tags: [Infrastructure]
+      responses:
+        "200":
+          description: Handled by the UploadThing SDK.
+    post:
+      summary: UploadThing route handler
+      tags: [Infrastructure]
+      responses:
+        "200":
+          description: Handled by the UploadThing SDK.
+
+  /clear-expired-deleted-users:
+    post:
+      summary: Purge soft-deleted accounts past their retention window
+      description: >-
+        Cleanup job. **Not currently scheduled** — `vercel.json` registers only
+        `clear-uploads` and `clear-unverified-users`, because the hosting plan
+        caps the number of cron jobs. Until it is scheduled or invoked manually,
+        soft-deleted accounts are retained indefinitely.
+      tags: [Cron]
+      responses:
+        "200":
+          description: Cleanup completed.
         "500":
           $ref: "#/components/responses/InternalServerError"
 

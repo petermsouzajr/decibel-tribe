@@ -466,135 +466,25 @@ Also removed a 65-line `follow:` block that sat as a sibling of `get:` under `/u
 
 The spec now parses: **27 paths, 28 schemas, no structural errors.**
 
-#### E4.8 The spec has drifted badly from the API — **[ ] open**
+#### E4.8 The spec has drifted badly from the API — **[x] closed**
 
-With it parsing, the drift is measurable: **56 non-dating routes exist, 27 are documented.**
+Once the file parsed (E4.7), the drift was measurable: 56 non-dating routes existed and 27 were documented.
 
-- **31 undocumented (55%)** — including whole features: all of `/reports`, `/comments/*`, most of `/groups/*`, `/posts/{postId}/likes|dislikes|bookmark|comments`, and account management (`delete-account`, `export-data`, `update-email`, `update-password`).
-- **2 documented but nonexistent:** `/users/{userId}` has no `route.ts` (the real profile endpoint is `/users/username/{username}`, which is undocumented), and `/auth/logout` is a **server action** in `(auth)/actions.ts`, not a REST route.
+**Now: 56 documented, 56 actual, zero drift in either direction** — 81 operations across 56 paths.
 
-Not fixed here — writing 31 accurate entries needs per-endpoint intent, and guessing would make the spec confidently wrong rather than merely incomplete.
+- [x] Drafted entries for all **31** undocumented routes, written from what each route actually does — methods, auth style, real status codes, cursor semantics — rather than from its name
+- [x] Removed the two paths documented but absent from the code: `/auth/logout` (logout is a **server action** in `(auth)/actions.ts`, not a route) and `/users/{userId}` (no `route.ts`; the live profile endpoint is `/users/username/{username}`, which is now documented)
+- [x] Spec parses, no dangling `$ref`s, no non-method keys under any path
 
-#### E4.9 Comments: deleting a comment silently deleted everyone else's replies — **[x] fixed**
+⚠️ **These entries need your eye.** They are accurate about mechanics — I read each handler — but summaries and descriptions are my reading of *intent*. Worth a skim, particularly the account-management group.
 
-`/api/posts/[postId]/comments` fetched top-level comments with `isDeleted: false`, and replies come back **nested inside their parent** via `getCommentDataInclude`. There is no separate replies endpoint, so a reply is only reachable through its parent.
+**Behaviour the drafting surfaced, recorded rather than changed:**
 
-The result: deleting one top-level comment removed its entire thread from the UI. Ten replies by ten other people vanished — still in the database, just unreachable.
+Five account routes — `update-password`, `update-email`, `delete-account`, `reactivate-account`, `export-data` — do not check the session themselves. They delegate to a server action which calls `validateRequest()` and **throws** `"Unauthorized"`. The route's `catch` turns any throw into `serverError()`, so **an unauthenticated caller receives 500, not 401**, and it is logged as a server error.
 
-The inconsistency was already visible in the code. `getCommentDataInclude`'s `replies` block has **no** `isDeleted` filter, so deleted *replies* are returned, and `Comment.tsx` renders them as *"This comment has been deleted"*. That tombstone branch could never run for a top-level comment, because the API filtered those out before they reached it.
+Not a security hole — the action does authenticate, and the request is refused. But the status code is wrong on five account-management endpoints, and real failures are indistinguishable from auth failures in the logs. The spec documents the behaviour as it is, with the caveat called out.
 
-Fixed by keeping a deleted top-level comment **only when it still has replies**:
-
-```ts
-OR: [{ isDeleted: false }, { replies: { some: {} } }],
-```
-
-A deleted comment with no replies still disappears entirely, so the common case is unchanged; a deleted comment holding a thread now renders as the tombstone the component already supports.
-
-#### E4.10 Groups: a pending invitee could read every post in the group — **[x] fixed**
-
-`/api/groups/[groupId]/posts` gated on whether a `GroupMember` row existed. But `add-user` creates that row with `acceptedInvite: false` (and the schema defaults it to `false`), so **being invited was enough to read the group's posts** — accepting was not required.
-
-Every other consumer already got this right: `my-groups` filters `acceptedInvite: true`, `posts/group-activity` filters `acceptedInvite: true`, and the group page derives `const isMember = userMembershipData?.acceptedInvite`. This route was the only outlier.
-
-The route now requires `acceptedInvite`. **Zero UI impact** — the group page already wraps its post list in `{isMember && (...)}` and shows the accept-invite prompt otherwise, so a pending invitee never saw these posts in the app. The gap was only reachable by calling the API directly.
-
-**Deliberately not changed:** `/api/groups/[groupId]` GET uses the same row-exists check, but it returns group *name and description*, which a pending invitee genuinely needs in order to decide whether to accept — the page renders exactly that alongside the accept button. Applying the same filter there would have broken the invite flow.
-
-#### E4.11 Search ignored blocking — **[x] fixed**
-
-Every feed-shaped query filters out users the viewer has blocked: `posts/for-you`, `posts/following`, `users/[userId]/posts` and `posts/[postId]/comments` all carry `blocksReceived: { none: { blockerId: user.id } }`. **Search carried none.** It filtered `deletedAt: null` only.
-
-So blocking someone hid them from your feeds but left their posts *and* their profile fully searchable — which defeats the feature on the one surface people use to look someone up. Fixed on both the post and user queries.
-
-**Block filtering is still inconsistent elsewhere** — flagged rather than changed, because unlike search these involve product judgement:
-
-| Route | Honours blocks |
-|---|---|
-| `posts/for-you`, `posts/following`, `users/[userId]/posts`, `posts/[postId]/comments`, `search` | yes |
-| `notifications` | **no** — a blocked user's likes/comments still notify you, which is the strongest case for filtering |
-| `groups/[groupId]/posts`, `posts/group-activity` | **no** |
-| `posts/bookmarked` | no — arguably correct, these are your own saved items |
-
-- [x] **Resolved: blocks now apply everywhere they should, retroactively.** Filtering happens at read time, so it covers rows created before the block. Added to `notifications`, `groups/[groupId]/posts` and `posts/group-activity`.
-  - `notifications/unread-count` had to be filtered with the *same* predicate — otherwise the badge counts notifications the list refuses to show, and the count never clears.
-  - `posts/bookmarked` deliberately still ignores blocks: those are your own saved items.
-
-#### E4.12 Notifications: a documented feature was never wired up — **[ ] your call**
-
-`NotificationType` declares `LIKE` and `DISLIKE`. `Notification.tsx` has complete render branches for both — icon, message (*"liked your post"*), and href. `docs/USER_FEATURES.md` lists them as shipped:
-
-> - Like on own post.
-> - Dislike on own post.
-
-**No code creates them.** `posts/[postId]/likes` and `posts/[postId]/dislikes` contain zero notification code, so liking a post has never notified its author.
-
-This is the "in a plan and not yet finished" case, not dead code — the schema, the UI and the docs are all ready and only the producer is missing. **Left untouched**: implementing it means deciding dedupe behaviour and what happens on unlike, and the neighbouring `COMMENT` and `EVENT_ATTENDEE` producers already show the intended pattern (guard against self-notification, check for an existing notification first).
-
-- [x] **Resolved: wired up.** `posts/[postId]/likes` and `posts/[postId]/dislikes` now create the notification the schema, UI and docs already expected. Follows the existing `COMMENT` producer: self-likes are skipped, and a repeat like does not create a second notification.
-  - Liking withdraws any `DISLIKE` notification (and vice versa), matching the existing behaviour where liking clears a dislike.
-  - Un-liking deletes the notification, so an author is not left with a notification for something that no longer exists.
-  - Both routes' `DELETE` handlers now run their two deletes in one `$transaction`.
-
-#### E4.13 Checked and clean
-
-- **Notification producers** — all five creation sites correctly skip self-notification (`parentComment.userId !== user.id`, `postAuthor.userId !== user.id`, etc.), and two also dedupe against an existing notification.
-- **Comment deletion** — `deleteComment` is a server action with a proper ownership check and soft-deletes rather than hard-deletes.
-- **Reports** — 5/day rate limit, a cooldown between reports, and duplicate-report detection all present.
-- **Stream token** (`get-token`) — scoped to `user.id` with a 1-hour expiry.
-- **Admin settings** — `requireAdmin()` on every handler.
-
-#### E4.14 Leftover comments from the C1 refactor — **[x] cleaned**
-
-Removed 53 stale `// Direct session validation` / `// --- End direct session validation` markers across 23 routes; they had bracketed the inlined auth blocks that C1 replaced and no longer described anything. One route (`messages/unread-count`) also still had an unreachable second `if (!user)` guard with the comment *"Should technically be covered by !session, but double-check"* — removed.
-
-#### E4.15 Sequential-query review — **[x] done, little to fix**
-
-Checked the three heaviest routes. The multi-`await` counts were misleading: `events/[eventId]` already batches its attend/unattend work in `$transaction`, and event cancellation builds an array of `notification.upsert` calls and runs them as **one** `$transaction` rather than looping round-trips. `reports/route.ts`'s existence checks sit in a switch, so only one runs per request. The two rate-limit queries there are independent and could be `Promise.all`'d, but they guard an endpoint capped at 5 requests/day — not worth the churn.
-
-No N+1 patterns found in non-dating code.
-
-#### E4.16 The reports route carried a fallback that wrote corrupt data — **[x] removed**
-
-`POST /api/reports` wrapped both its duplicate check and its create in `try/catch` blocks that string-matched Prisma errors for *"Unknown argument `commentId`"*, described as a *"fallback for environments where Prisma Client hasn't been regenerated yet"*.
-
-The create fallback did this:
-
-```ts
-fallbackData.messageId = fallbackData.commentId;   // comment id -> message column
-delete fallbackData.commentId;
-fallbackData.adminNotes = "... fallback: original commentId stored in messageId";
-```
-
-That deliberately writes a **comment** id into the `messageId` column and annotates the record to say so — silently producing corrupt reports that moderation tooling would misread.
-
-It also cannot trigger. `commentId` has been on `model Report` since the **init** migration, `postinstall` runs `prisma generate`, and `build` runs `prisma migrate deploy`. Both fallbacks removed (**−37 lines**), and the duplicate check no longer swallows real database errors on its way past.
-
-#### E4.17 `any` cleanup — **[x] API layer done**
-
-74 → **53** overall; inside `src/app/api` (non-dating), **~35 → 6**.
-
-- `reports/route.ts` is now `any`-free: `Prisma.ReportUncheckedCreateInput`, `Prisma.ReportWhereInput`, and a narrowed `catch (error)` replace six `any`s
-- **`POST(req: any)` on the login route** — an auth route handler with an untyped request. Now `NextRequest`
-- `events/[eventId]` GET re-declared a narrower `helpWantedSkills` select on top of `getEventDataInclude`, which forced `as any` on the include and then cascaded casts onto every read below it. `getEventDataInclude` already selects that relation, so dropping the override removed five `any`s at once. The response now strips `zipCode`/`latitude`/`longitude` by destructuring rather than `delete` on an `any`, so the payload shape stays checked
-- Prisma error codes are now matched via `error instanceof Prisma.PrismaClientKnownRequestError` in the events and blocks routes
-
-- [ ] 53 remain, concentrated in components: `TrendsSidebar.tsx` (13), `events/Event.tsx` (5), `custom.d.ts` (5, ambient and legitimate)
-
-#### E4.18 Blocking reported success even when it failed — **[x] fixed**
-
-Both handlers in `/api/users/[userId]/blocks` ended with:
-
-```ts
-} catch (e: any) {
-  // idempotent: ignore duplicate
-  return NextResponse.json({ success: true });
-}
-```
-
-That catches **every** exception — a connection failure, a constraint error, anything — and tells the client the block succeeded. The user sees a confirmed block that does not exist.
-
-Now only the intended cases stay idempotent: `P2002` (already blocked) on POST and `P2025` (not blocked) on DELETE. Anything else logs and returns a 500.
+- [ ] Consider having these five routes call `validateRequest()` up front and return `unauthorized()`, so the status matches the cause
 
 #### Still open under E4
 
