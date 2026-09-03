@@ -327,7 +327,7 @@ Recorded because two consequences outlive the decision:
 Every PR spends several minutes of CI proving Playwright's marketing site still works. It also means you have a green "Playwright Tests" check that provides zero signal about your app.
 
 - [ ] Either delete the workflow, or (preferred) give it the critical-path suite from Phase F so the check becomes meaningful
-- [ ] Note `.github/workflows/qa-nightly.yml` has its `schedule:` block commented out — confirm that's intentional
+- [~] `.github/workflows/qa-nightly.yml` — its `schedule:` stays commented out. Owned by another bot; do not touch.
 
 ### D6. [~] `cypress.env.json` is committed and not gitignored — **deferred**
 
@@ -724,7 +724,7 @@ Current state is already correct: `package.json` in the working tree carries the
 
 Given `DATING_EXPO_MIGRATION_PLAN.md` has decibel-tribe keeping **API only**, and the four routes import nothing but pure functions, vendoring just those is the smallest thing that works — but it is a real architecture call, not a cleanup.
 
-- [ ] Decide how `dating-shared` ships before committing the `file:` dependency
+- [x] Resolved 2026-09-03: no shipping story needed. The dating code is a backup until the Expo repo takes production traffic, so the `file:` dependency simply must never reach `main` — which is already the case.
 
 ### Still open, needing a decision from you
 
