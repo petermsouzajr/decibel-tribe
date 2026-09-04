@@ -1811,18 +1811,16 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
   # ---------- Account management ----------
-  # NOTE: these five routes delegate authentication to a server action rather
-  # than checking the session themselves. When the action throws "Unauthorized"
-  # the route's catch turns it into a 500, so an unauthenticated caller sees
-  # 500 rather than 401. Documented as the behaviour actually is.
+  # These routes validate the session up front and return 401 when absent.
+  # (They previously delegated auth to a server action whose "Unauthorized"
+  # throw became a 500.) /users/reactivate-account is the exception and is
+  # unauthenticated by design — see its description.
   /users/update-password:
     post:
       summary: Change or set the authenticated user's password
       description: >-
         `isSettingPassword: true` sets an initial password for an account that
         has none (OAuth sign-ups); otherwise `currentPassword` is verified.
-        Auth is enforced inside the server action, so an unauthenticated call
-        returns **500**, not 401.
       tags: [Users, Authentication]
       security:
         - cookieAuth: []
@@ -1843,6 +1841,8 @@ paths:
       responses:
         "200":
           description: Password updated.
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -1850,8 +1850,7 @@ paths:
     post:
       summary: Request an email change for the authenticated user
       description: >-
-        Stores a pending email and sends a verification message. Same auth
-        caveat as `/users/update-password`.
+        Stores a pending email and sends a verification message.
       tags: [Users]
       security:
         - cookieAuth: []
@@ -1869,6 +1868,8 @@ paths:
       responses:
         "200":
           description: Verification email sent.
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -1878,8 +1879,7 @@ paths:
       description: >-
         Requires the account password and an explicit confirmation flag. Marks
         the account deleted rather than removing rows; a scheduled cleanup is
-        expected to purge it after the retention window. Same auth caveat as
-        `/users/update-password`.
+        expected to purge it after the retention window.
       tags: [Users]
       security:
         - cookieAuth: []
@@ -1900,12 +1900,19 @@ paths:
           description: Account deleted.
         "400":
           description: Missing password/confirmation, or the password did not match.
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
   /users/reactivate-account:
     post:
       summary: Reactivate a soft-deleted account
+      description: >-
+        Deliberately unauthenticated: the account is deleted, so there is no
+        session to validate. Ownership is proved with the account password
+        instead. `userId` comes from the login response, which only returns it
+        once the password has been verified.
       tags: [Users]
       requestBody:
         required: true
@@ -1913,8 +1920,9 @@ paths:
           application/json:
             schema:
               type: object
+              required: [userId, password]
               properties:
-                username:
+                userId:
                   type: string
                 password:
                   type: string
@@ -1922,7 +1930,9 @@ paths:
         "200":
           description: Account reactivated.
         "400":
-          description: Invalid credentials, or the account is not reactivatable.
+          description: >-
+            Missing userId/password, invalid credentials, the account is not
+            deleted, or the 90-day reactivation window has expired.
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -1930,8 +1940,7 @@ paths:
     get:
       summary: Export the authenticated user's data
       description: >-
-        Returns the account's stored data for portability. Same auth caveat as
-        `/users/update-password`.
+        Returns the account's stored data for portability.
       tags: [Users]
       security:
         - cookieAuth: []
@@ -1940,6 +1949,8 @@ paths:
           description: Exported data.
         "400":
           description: Export could not be produced.
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
         "500":
           $ref: "#/components/responses/InternalServerError"
 

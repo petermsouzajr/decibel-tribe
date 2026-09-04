@@ -68,6 +68,9 @@ describe("login with deleted accounts", () => {
     };
 
     vi.mocked(prisma.user.findFirst).mockResolvedValue(deletedUser);
+    // The password is now verified before the deleted-account branch runs,
+    // so reaching it requires valid credentials.
+    vi.mocked(bcrypt.compare).mockResolvedValue(true);
 
     const formData = new FormData();
     formData.append("username", "testuser");
@@ -88,6 +91,9 @@ describe("login with deleted accounts", () => {
     };
 
     vi.mocked(prisma.user.findFirst).mockResolvedValue(oldDeletedUser);
+    // The password is now verified before the deleted-account branch runs,
+    // so reaching it requires valid credentials.
+    vi.mocked(bcrypt.compare).mockResolvedValue(true);
 
     const formData = new FormData();
     formData.append("username", "testuser");
@@ -103,7 +109,9 @@ describe("login with deleted accounts", () => {
   it("should allow login for non-deleted account", async () => {
     vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser);
     vi.mocked(bcrypt.compare).mockResolvedValue(true);
-    vi.mocked(lucia.createSession).mockResolvedValue({ id: "session123" } as any);
+    vi.mocked(lucia.createSession).mockResolvedValue({
+      id: "session123",
+    } as any);
     vi.mocked(lucia.createSessionCookie).mockReturnValue({
       name: "session",
       value: "sessionvalue",
@@ -169,4 +177,4 @@ describe("login with deleted accounts", () => {
 
     expect(result.error).toBe("Invalid username or password");
   });
-}); 
+});

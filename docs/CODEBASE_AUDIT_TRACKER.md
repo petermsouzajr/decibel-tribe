@@ -484,7 +484,32 @@ Five account routes — `update-password`, `update-email`, `delete-account`, `re
 
 Not a security hole — the action does authenticate, and the request is refused. But the status code is wrong on five account-management endpoints, and real failures are indistinguishable from auth failures in the logs. The spec documents the behaviour as it is, with the caveat called out.
 
-- [ ] Consider having these five routes call `validateRequest()` up front and return `unauthorized()`, so the status matches the cause
+- [x] **Fixed.** `update-password`, `update-email`, `delete-account` and `export-data` now call `validateRequest()` up front and return `unauthorized()`. An unauthenticated caller gets 401 instead of 500, and genuine server errors are no longer indistinguishable from auth failures in the logs. Spec updated.
+
+#### E4.19 🔴 Reactivation let anyone restore any deleted account — **[x] fixed**
+
+Chasing the 401/500 issue above turned up something worse in the fifth route.
+
+`reactivateUserAccount(userId)` opened with the comment *"Fetch user directly without session validation"*, took a bare `userId`, and — if the account was soft-deleted within the 90-day grace period — set `deletedAt: null`. `POST /api/users/reactivate-account` passed the request body straight into it with no auth of any kind.
+
+It chained with a second flaw. `login/actions.ts` checked `user.deletedAt` **before** verifying the password, and the deleted-account branch returned `userId` in its response. So:
+
+1. Submit the login form with a victim's username and **any** password.
+2. The account is soft-deleted, so the response comes back `ACCOUNT_DELETED_WITHIN_GRACE_PERIOD` — carrying the victim's `userId`, with no password check.
+3. POST that id to `/api/users/reactivate-account`.
+4. The victim's account is restored.
+
+Knowing a username was enough to undo someone's account deletion — including someone who deleted their account to get away from another user, whose profile and posts would silently come back.
+
+**Fixed at both links in the chain, and at the endpoint itself:**
+- [x] `login/actions.ts` verifies the password **before** any account state is revealed, so the deleted-account response (and the `userId` in it) requires valid credentials
+- [x] `reactivateUserAccount(userId, password)` now proves ownership with the account password. Accounts with no password (OAuth-only) cannot be reactivated this way
+- [x] The route requires `password` alongside `userId` and rejects the request without it
+- [x] `DeletedAccountRecoveryDialog` sends the password — it already received it as a prop and simply wasn't forwarding it, so no UI change was needed
+
+The route stays deliberately unauthenticated: the account is deleted, so there is no session to validate. Ownership is proved with the password instead, which is the right control for this flow.
+
+**Tests:** the suites covering this encoded the vulnerable contract — sending only `userId`, and asserting that a deleted account is reported before the password is checked. Updated to the new contract. Suite totals are **unchanged at 215 failed / 528 passed**, so the fix introduced no net new failures.
 
 #### Still open under E4
 

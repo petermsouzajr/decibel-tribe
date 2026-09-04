@@ -11,10 +11,17 @@ export interface DeleteAccountFormData {
   confirmDeletion: boolean;
 }
 
-export async function deleteUserAccount(formData: DeleteAccountFormData, userId?: string) {
+export async function deleteUserAccount(
+  formData: DeleteAccountFormData,
+  userId?: string,
+) {
   try {
-    let user: { id: string; passwordHash: string | null; deletedAt: Date | null } | null;
-    
+    let user: {
+      id: string;
+      passwordHash: string | null;
+      deletedAt: Date | null;
+    } | null;
+
     if (userId) {
       // If userId is provided, fetch user directly (for reactivation flow)
       user = await prisma.user.findUnique({
@@ -23,14 +30,18 @@ export async function deleteUserAccount(formData: DeleteAccountFormData, userId?
           id: true,
           passwordHash: true,
           deletedAt: true,
-        }
+        },
       });
     } else {
       // Otherwise use session validation
       const { user: sessionUser } = await validateRequest();
-      user = sessionUser as { id: string; passwordHash: string | null; deletedAt: Date | null } | null;
+      user = sessionUser as {
+        id: string;
+        passwordHash: string | null;
+        deletedAt: Date | null;
+      } | null;
     }
-    
+
     if (!user) {
       throw new Error("Unauthorized");
     }
@@ -46,7 +57,10 @@ export async function deleteUserAccount(formData: DeleteAccountFormData, userId?
 
     // Verify password
     if (user.passwordHash) {
-      const isValidPassword = await bcrypt.compare(formData.password, user.passwordHash);
+      const isValidPassword = await bcrypt.compare(
+        formData.password,
+        user.passwordHash,
+      );
       if (!isValidPassword) {
         throw new Error("Invalid password");
       }
@@ -60,7 +74,7 @@ export async function deleteUserAccount(formData: DeleteAccountFormData, userId?
     // Perform soft delete - just mark as deleted
     await prisma.user.update({
       where: { id: user.id },
-      data: { deletedAt: new Date() }
+      data: { deletedAt: new Date() },
     });
 
     // Note: StreamChat user is NOT deleted immediately
@@ -76,22 +90,40 @@ export async function deleteUserAccount(formData: DeleteAccountFormData, userId?
     return { success: true, message: "Account deleted successfully" };
   } catch (error) {
     console.error("Error deleting user account:", error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "Failed to delete account" 
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to delete account",
     };
   }
 }
 
-export async function reactivateUserAccount(userId: string) {
+/**
+ * Reactivates a soft-deleted account.
+ *
+ * Runs for a logged-out caller by design — the account is deleted, so there is
+ * no session to validate. Ownership is therefore proved with the account
+ * password. Without that check this function would restore any account from a
+ * bare id, and the id was obtainable from the login form.
+ */
+export async function reactivateUserAccount(userId: string, password: string) {
   try {
-    // Fetch user directly without session validation
     const user = await prisma.user.findUnique({
-      where: { id: userId }
+      where: { id: userId },
     });
-    
+
     if (!user) {
       throw new Error("User not found");
+    }
+
+    // No password set (OAuth-only account) cannot be reactivated this way.
+    if (!user.passwordHash) {
+      throw new Error("Invalid credentials");
+    }
+
+    const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+    if (!isValidPassword) {
+      throw new Error("Invalid credentials");
     }
 
     if (!user.deletedAt) {
@@ -101,7 +133,7 @@ export async function reactivateUserAccount(userId: string) {
     // Check if within grace period (90 days)
     const gracePeriod = 90 * 24 * 60 * 60 * 1000; // 90 days in milliseconds
     const timeSinceDeletion = Date.now() - user.deletedAt.getTime();
-    
+
     if (timeSinceDeletion > gracePeriod) {
       throw new Error("Account reactivation period has expired");
     }
@@ -109,7 +141,7 @@ export async function reactivateUserAccount(userId: string) {
     // Reactivate account
     await prisma.user.update({
       where: { id: user.id },
-      data: { deletedAt: null }
+      data: { deletedAt: null },
     });
 
     // Note: StreamChat user should still exist since we don't delete it immediately
@@ -122,9 +154,10 @@ export async function reactivateUserAccount(userId: string) {
     return { success: true, message: "Account reactivated successfully" };
   } catch (error) {
     console.error("Error reactivating user account:", error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "Failed to reactivate account" 
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to reactivate account",
     };
   }
 }
@@ -132,7 +165,7 @@ export async function reactivateUserAccount(userId: string) {
 export async function exportUserData() {
   try {
     const { user } = await validateRequest();
-    
+
     if (!user) {
       throw new Error("Unauthorized");
     }
@@ -147,18 +180,18 @@ export async function exportUserData() {
             comments: true,
             likes: true,
             dislikes: true,
-            bookmarks: true
-          }
+            bookmarks: true,
+          },
         },
         events: {
           include: {
-            attendees: true
-          }
+            attendees: true,
+          },
         },
         groups: {
           include: {
-            group: true
-          }
+            group: true,
+          },
         },
         following: {
           include: {
@@ -166,10 +199,10 @@ export async function exportUserData() {
               select: {
                 id: true,
                 username: true,
-                displayName: true
-              }
-            }
-          }
+                displayName: true,
+              },
+            },
+          },
         },
         followers: {
           include: {
@@ -177,20 +210,20 @@ export async function exportUserData() {
               select: {
                 id: true,
                 username: true,
-                displayName: true
-              }
-            }
-          }
+                displayName: true,
+              },
+            },
+          },
         },
         userInstruments: {
           include: {
-            instrument: true
-          }
+            instrument: true,
+          },
         },
         userSkills: {
           include: {
-            skill: true
-          }
+            skill: true,
+          },
         },
         userPreferences: true,
         receivedNotifications: true,
@@ -203,14 +236,14 @@ export async function exportUserData() {
                   select: {
                     id: true,
                     username: true,
-                    displayName: true
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                    displayName: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!userData) {
@@ -222,19 +255,19 @@ export async function exportUserData() {
       ...userData,
       passwordHash: undefined,
       sessions: undefined,
-      EmailVerification: undefined
+      EmailVerification: undefined,
     };
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       data: exportData,
-      message: "Data exported successfully" 
+      message: "Data exported successfully",
     };
   } catch (error) {
     console.error("Error exporting user data:", error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "Failed to export data" 
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to export data",
     };
   }
-} 
+}

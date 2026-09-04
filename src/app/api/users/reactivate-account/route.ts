@@ -4,16 +4,19 @@ import { reactivateUserAccount } from "@/app/(auth)/deleteAccount";
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await request.json();
+    const { userId, password } = await request.json();
 
-    if (!userId) {
+    // Deliberately unauthenticated: the account is deleted, so there is no
+    // session. Ownership is proved with the password instead — previously a
+    // bare userId was enough to restore anyone's account.
+    if (!userId || !password) {
       return NextResponse.json(
-        { error: "User ID is required" },
+        { error: "User ID and password are required" },
         { status: 400 },
       );
     }
 
-    const result = await reactivateUserAccount(userId);
+    const result = await reactivateUserAccount(userId, password);
 
     if (result.success) {
       return NextResponse.json({ message: result.message }, { status: 200 });

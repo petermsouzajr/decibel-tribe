@@ -8,6 +8,15 @@ vi.mock("@/app/(main)/users/[username]/actions", () => ({
   updateUserPassword: vi.fn(),
 }));
 
+// The route now validates the session itself and returns 401 when absent,
+// instead of letting the action's "Unauthorized" throw become a 500.
+vi.mock("@/auth", () => ({
+  validateRequest: vi.fn(async () => ({
+    user: { id: "user123" },
+    session: { id: "session123" },
+  })),
+}));
+
 describe("API Route: /api/users/update-password", () => {
   let request: NextRequest;
   const mockCurrentPassword = "oldPassword123";

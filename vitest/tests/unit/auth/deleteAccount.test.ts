@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { deleteUserAccount, reactivateUserAccount, exportUserData } from "@/app/(auth)/deleteAccount";
+import {
+  deleteUserAccount,
+  reactivateUserAccount,
+  exportUserData,
+} from "@/app/(auth)/deleteAccount";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import streamServerClient from "@/lib/stream";
@@ -125,7 +129,9 @@ describe("deleteUserAccount", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("You must confirm that you want to delete your account");
+      expect(result.error).toBe(
+        "You must confirm that you want to delete your account",
+      );
     });
 
     it("should fail if password is missing", async () => {
@@ -180,6 +186,9 @@ describe("reactivateUserAccount", () => {
     username: "testuser",
     displayName: "Test User",
     email: "test@example.com",
+    // Reactivation now proves ownership with the account password, so the
+    // fixture needs a hash for bcrypt.compare to be reached.
+    passwordHash: "hashedPassword",
     deletedAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // Deleted 1 day ago
     createdAt: new Date(),
   };
@@ -190,9 +199,10 @@ describe("reactivateUserAccount", () => {
 
   it("should successfully reactivate user account within grace period", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
+    vi.mocked(bcrypt.compare).mockResolvedValue(true);
     vi.mocked(prisma.user.update).mockResolvedValue(mockUser as any);
 
-    const result = await reactivateUserAccount("user123");
+    const result = await reactivateUserAccount("user123", "correct-password");
 
     expect(result.success).toBe(true);
     expect(result.message).toBe("Account reactivated successfully");
@@ -205,7 +215,10 @@ describe("reactivateUserAccount", () => {
   it("should fail if user not found", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
 
-    const result = await reactivateUserAccount("nonexistent");
+    const result = await reactivateUserAccount(
+      "nonexistent",
+      "correct-password",
+    );
 
     expect(result.success).toBe(false);
     expect(result.error).toBe("User not found");
@@ -214,21 +227,23 @@ describe("reactivateUserAccount", () => {
   it("should fail if account is not deleted", async () => {
     const activeUser = { ...mockUser, deletedAt: null };
     vi.mocked(prisma.user.findUnique).mockResolvedValue(activeUser as any);
+    vi.mocked(bcrypt.compare).mockResolvedValue(true);
 
-    const result = await reactivateUserAccount("user123");
+    const result = await reactivateUserAccount("user123", "correct-password");
 
     expect(result.success).toBe(false);
     expect(result.error).toBe("Account is not deleted");
   });
 
   it("should fail if grace period has expired", async () => {
-    const oldDeletedUser = { 
-      ...mockUser, 
-      deletedAt: new Date(Date.now() - 100 * 24 * 60 * 60 * 1000) // Deleted 100 days ago
+    const oldDeletedUser = {
+      ...mockUser,
+      deletedAt: new Date(Date.now() - 100 * 24 * 60 * 60 * 1000), // Deleted 100 days ago
     };
     vi.mocked(prisma.user.findUnique).mockResolvedValue(oldDeletedUser as any);
+    vi.mocked(bcrypt.compare).mockResolvedValue(true);
 
-    const result = await reactivateUserAccount("user123");
+    const result = await reactivateUserAccount("user123", "correct-password");
 
     expect(result.success).toBe(false);
     expect(result.error).toBe("Account reactivation period has expired");
@@ -236,10 +251,13 @@ describe("reactivateUserAccount", () => {
 
   it("should handle StreamChat errors gracefully", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
+    vi.mocked(bcrypt.compare).mockResolvedValue(true);
     vi.mocked(prisma.user.update).mockResolvedValue(mockUser as any);
-    vi.mocked(streamServerClient.upsertUser).mockRejectedValue(new Error("StreamChat error"));
+    vi.mocked(streamServerClient.upsertUser).mockRejectedValue(
+      new Error("StreamChat error"),
+    );
 
-    const result = await reactivateUserAccount("user123");
+    const result = await reactivateUserAccount("user123", "correct-password");
 
     expect(result.success).toBe(true);
     expect(result.message).toBe("Account reactivated successfully");
@@ -311,7 +329,9 @@ describe("exportUserData", () => {
       session: { id: "session123" } as any,
     });
 
-    vi.mocked(prisma.user.findUnique).mockRejectedValue(new Error("Database error"));
+    vi.mocked(prisma.user.findUnique).mockRejectedValue(
+      new Error("Database error"),
+    );
 
     const result = await exportUserData();
 
@@ -340,7 +360,7 @@ describe("exportUserData", () => {
       ...mockUser,
     } as any);
 
-    const result = await reactivateUserAccount(mockUser.id);
+    const result = await reactivateUserAccount(mockUser.id, "correct-password");
     expect(result.success).toBe(true);
   });
-}); 
+});
