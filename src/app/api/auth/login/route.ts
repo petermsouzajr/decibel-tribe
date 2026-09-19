@@ -4,14 +4,15 @@ import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 export async function POST(req: any) {
   const body = await req.json();
-  const { username, email, password } = body;
+  const { identifier, username, email, password } = body;
 
-  // Accept either username or email field
-  const usernameOrEmail = email || username;
+  // Accept identifier (mobile app), username, or email
+  // Mobile app sends identifier (lowercased), web/legacy may send username/email
+  const usernameOrEmail = identifier || email || username;
 
   if (!usernameOrEmail || !password) {
     return NextResponse.json(
-      { error: "Username/email and password are required" },
+      { error: "Identifier/username/email and password are required" },
       { status: 400 }
     );
   }
