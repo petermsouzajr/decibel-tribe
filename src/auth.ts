@@ -1,9 +1,24 @@
 import { PrismaAdapter } from "@lucia-auth/adapter-prisma";
 import { Google } from "arctic";
 import { Lucia, Session, User } from "lucia";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { cache } from "react";
 import prisma from "./lib/prisma";
+
+/** Lucia session from cookie, or Dating Tribe Bearer token (session id). */
+async function getIncomingSessionId(): Promise<string | null> {
+  const cookieId =
+    (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
+  if (cookieId) return cookieId;
+
+  const authorization = (await headers()).get("authorization");
+  if (!authorization) return null;
+  const [scheme, token] = authorization.split(" ");
+  if (!scheme || !token) return null;
+  if (scheme.toLowerCase() !== "bearer") return null;
+  const trimmed = token.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
 
 const adapter = new PrismaAdapter(prisma.session, prisma.user);
 
@@ -54,7 +69,7 @@ export const validateRequest = cache(
   async (): Promise<
     { user: User; session: Session } | { user: null; session: null }
   > => {
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
+    const sessionId = await getIncomingSessionId();
 
     if (!sessionId) {
       return {
@@ -94,7 +109,7 @@ export const validateRequest = cache(
 export async function validateRequestWithCookieMutation(): Promise<
   { user: User; session: Session } | { user: null; session: null }
 > {
-  const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
+  const sessionId = await getIncomingSessionId();
 
   if (!sessionId) {
     return { user: null, session: null };
