@@ -6,10 +6,8 @@ import {
   cypressEnv,
   streamChatClient,
   passwordHash,
-  // USER_PASSWORD, // Removed - Not exported from seedUtils
-  // generateRandomFullName, // Removed - Not exported from seedUtils
-  // TEAM_MEMBER_IDS, // Removed - Not exported from seedUtils
-} from "../../seedUtils.js"; // Add .js extension
+  upsertStreamUsersInBatches,
+} from "../../seedUtils.js";
 
 // Remove the CreatedUser interface if no longer needed externally
 // interface CreatedUser { ... }
@@ -171,7 +169,7 @@ export async function seedUsers(
 
     if (streamClient) {
       try {
-        await streamClient.upsertUsers(streamChatUsers);
+        await upsertStreamUsersInBatches(streamClient, streamChatUsers);
         console.log(
           `...${streamChatUsers.length} users upserted to StreamChat.`,
         );

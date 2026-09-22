@@ -4,6 +4,42 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { normalizeBodyTypeValue, normalizeJobValue, normalizePetsArray } from "@/lib/dating/profileOptions";
 
+const MIN_AGE = 18;
+const MAX_AGE = 130;
+
+function toInt(value: unknown): number | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null || value === "") return null;
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n)) return null;
+  return Math.round(n);
+}
+
+function parseDateOfBirth(value: unknown): Date | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null || value === "") return null;
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}/.test(value)) return null;
+  const parsed = new Date(`${value.slice(0, 10)}T12:00:00.000Z`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function ageFromDate(date: Date): number {
+  const now = new Date();
+  let age = now.getUTCFullYear() - date.getUTCFullYear();
+  const month = now.getUTCMonth() - date.getUTCMonth();
+  if (month < 0 || (month === 0 && now.getUTCDate() < date.getUTCDate())) age -= 1;
+  return age;
+}
+
+function toBool(value: unknown): boolean | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null || value === "") return null;
+  if (typeof value === "boolean") return value;
+  if (value === "yes" || value === "Yes" || value === "true") return true;
+  if (value === "no" || value === "No" || value === "false") return false;
+  return null;
+}
+
 // Geocode zip code to lat/lon/city using OpenStreetMap Nominatim API
 async function geocodeZipCode(zipCode: string): Promise<{ lat: number; lon: number; city?: string } | null> {
   try {
@@ -169,7 +205,22 @@ export async function PUT(request: NextRequest) {
       job,
       pets,
       interests,
+      dateOfBirth,
     } = await request.json();
+
+    const parsedDob = parseDateOfBirth(dateOfBirth);
+    if (parsedDob instanceof Date) {
+      const derived = ageFromDate(parsedDob);
+      if (derived < MIN_AGE || derived > MAX_AGE) {
+        return NextResponse.json(
+          { error: "Birthday must make you between 18 and 130." },
+          { status: 400 },
+        );
+      }
+    }
+    const ageValue = parsedDob instanceof Date ? ageFromDate(parsedDob) : toInt(age);
+    const heightValue = toInt(height);
+    const hasKidsValue = toBool(hasKids);
 
     const toNullIfBlank = (v: unknown): string | null | undefined => {
       if (v === undefined) return undefined;
@@ -240,6 +291,7 @@ export async function PUT(request: NextRequest) {
       job !== undefined ||
       pets !== undefined ||
       interests !== undefined ||
+      dateOfBirth !== undefined ||
       city !== null ||
       latitude !== null ||
       longitude !== null
@@ -248,8 +300,9 @@ export async function PUT(request: NextRequest) {
         where: { userId: user.id },
         update: {
           ...(bio !== undefined && { bio }),
-          ...(age !== undefined && { age }),
-          ...(height !== undefined && { height: Math.round(height) }), // Round to integer
+          ...(parsedDob !== undefined && { dateOfBirth: parsedDob }),
+          ...(ageValue !== undefined && { age: ageValue }),
+          ...(heightValue !== undefined && { height: heightValue }),
           ...(gender !== undefined && { gender: toNullIfBlank(gender) }),
           ...(zipCode !== undefined && { zipCode: normalizedZip }),
           ...(city !== null && { city }),
@@ -263,7 +316,7 @@ export async function PUT(request: NextRequest) {
             bodyType: normalizedBodyType ? normalizedBodyType : null,
           }),
           ...(sexualOrientation !== undefined && { sexualOrientation: toNullIfBlank(sexualOrientation) }),
-          ...(hasKids !== undefined && { hasKids }),
+          ...(hasKidsValue !== undefined && { hasKids: hasKidsValue }),
           ...(smokes !== undefined && { smokes: toNullIfBlank(smokes) }),
           ...(drinks !== undefined && { drinks: toNullIfBlank(drinks) }),
           ...(activity !== undefined && { activity: toNullIfBlank(activity) }),
@@ -277,8 +330,9 @@ export async function PUT(request: NextRequest) {
           id: crypto.randomUUID(),
           userId: user.id,
           bio: bio || null,
-          age: age || null,
-          height: height ? Math.round(height) : null, // Round to integer
+          dateOfBirth: parsedDob ?? null,
+          age: ageValue ?? null,
+          height: heightValue ?? null,
           gender: toNullIfBlank(gender) || null,
           zipCode: normalizedZip || null,
           city: city,
@@ -288,7 +342,7 @@ export async function PUT(request: NextRequest) {
           religion: toNullIfBlank(religion) || null,
           bodyType: normalizedBodyType ? normalizedBodyType : null,
           sexualOrientation: toNullIfBlank(sexualOrientation) || null,
-          hasKids: hasKids ?? null,
+          hasKids: hasKidsValue ?? null,
           smokes: toNullIfBlank(smokes) || null,
           drinks: toNullIfBlank(drinks) || null,
           activity: toNullIfBlank(activity) || null,
