@@ -5,6 +5,7 @@ import {
   passwordHash,
   streamChatClient,
   cypressEnv,
+  upsertStreamUsersInBatches,
 } from "../../seedUtils.js";
 import {
   JOB_OPTIONS as JOB_OPTIONS_UI,
@@ -1368,7 +1369,7 @@ export async function seedDatingProfiles(
             name: (u.displayName as string) || (u.username as string),
             image: u.avatarUrl ?? undefined,
           }));
-        await streamClient.upsertUsers(streamChatUsers);
+        await upsertStreamUsersInBatches(streamClient, streamChatUsers);
         console.log(`...${streamChatUsers.length} dating users upserted to StreamChat.`);
       } catch (error) {
         console.error("Failed to upsert dating users to StreamChat:", (error as Error).message);
