@@ -52,6 +52,33 @@ if (streamKey && streamSecret) {
 }
 export const streamChatClient = streamChatClientInstance;
 
+/** Stream Chat rejects more than 100 users per upsertUsers call. */
+export const STREAM_UPSERT_BATCH_SIZE = 100;
+
+export async function upsertStreamUsersInBatches(
+  streamClient: StreamChat,
+  users: Array<{
+    id: string;
+    name?: string;
+    image?: string | null;
+    email?: string | null;
+  }>,
+  batchSize = STREAM_UPSERT_BATCH_SIZE,
+): Promise<void> {
+  for (let i = 0; i < users.length; i += batchSize) {
+    const batch = users.slice(i, i + batchSize).map((u) => ({
+      id: u.id,
+      name: u.name,
+      image: u.image ?? undefined,
+      email: u.email ?? undefined,
+    }));
+    await streamClient.upsertUsers(batch);
+    console.log(
+      `...Stream Chat upserted ${Math.min(i + batch.length, users.length)}/${users.length}`,
+    );
+  }
+}
+
 // Lucia ID generation
 export const generateIdFromEntropySize = luciaGenerateId;
 
