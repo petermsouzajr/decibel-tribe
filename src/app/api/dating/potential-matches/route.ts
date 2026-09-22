@@ -7,7 +7,8 @@ import {
   calculateProfileCompleteness,
   calculateActivityLevel,
   calculateDistanceScore,
-} from "@/lib/dating/compatibility";
+} from "dating-shared";
+import { profileFitsPreferences, type FitPreferences } from "@/lib/dating/searchFit";
 
 // Increase timeout for this route (default is 10s, increase to 60s)
 export const maxDuration = 60;
@@ -152,6 +153,9 @@ export async function GET(request: NextRequest) {
       console.log(`[Potential Matches] Got preferences in ${Date.now() - prefStart}ms`);
     }
 
+    const { searchParams } = new URL(request.url);
+    const mode = searchParams.get("mode") === "into-you" ? "into-you" : "discover";
+
     if (!preferences) {
       return NextResponse.json(
         { error: "Dating preferences not set. Please complete your dating profile setup." },
@@ -159,8 +163,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Validate required preference fields
-    if (!preferences.preferredMinAge || !preferences.preferredMaxAge) {
+    // Discover requires the viewer's own search. Into You ignores it.
+    if (mode === "discover" && (!preferences.preferredMinAge || !preferences.preferredMaxAge)) {
       return NextResponse.json(
         { error: "Age preferences not set. Please update your dating preferences." },
         { status: 400 }
@@ -203,8 +207,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Validate that we have at least one gender preference with at least one orientation
-    if (preferredGenders.length === 0 || !preferredGenders.some(p => p.sexualOrientation && p.sexualOrientation.length > 0)) {
+    // Discover requires a gender search. Into You uses each candidate's search instead.
+    if (mode === "discover" && (preferredGenders.length === 0 || !preferredGenders.some(p => p.sexualOrientation && p.sexualOrientation.length > 0))) {
       return NextResponse.json(
         { error: "No gender preferences set. Please update your dating preferences." },
         { status: 400 }
@@ -349,10 +353,10 @@ export async function GET(request: NextRequest) {
       console.log(`[Potential Matches] Location processing completed in ${Date.now() - locationStart}ms`);
     }
 
-    // Get cursor for pagination
-    const { searchParams } = new URL(request.url);
+    // Cursor was parsed with mode above. Read the rest of the page params here.
     const cursor = searchParams.get("cursor");
     const limit = parseInt(searchParams.get("limit") || "10");
+    const scanSize = mode === "into-you" ? Math.max(limit, 40) : limit;
 
     // Get users the current user has already swiped on
     const excludeStart = Date.now();
@@ -423,8 +427,8 @@ export async function GET(request: NextRequest) {
         isDatingActive: true,
         // Only show users who currently have at least one dating photo
         userDatingPhotos: { some: {} },
-        ...idVerificationWhere,
-        userDatingProfile: {
+        ...(mode === "discover" ? idVerificationWhere : {}),
+        ...(mode === "discover" ? { userDatingProfile: {
           // Match gender preference - check if their gender matches any of our preferred genders
           // Skip this filter if gender is in variabilityFilters (allow any gender)
           ...(preferredGenders.length > 0 && preferredGenders.some(p => p.gender) && (!hasVariability || !variabilityFilters.includes("gender")) ? {
@@ -544,17 +548,9 @@ export async function GET(request: NextRequest) {
                 pets: { hasSome: preferences.preferredPets },
               }
             : {}),
-        },
-        // Reciprocal preference check: they must also prefer the current user
-        // This is handled in post-processing since we need to parse their preferredGender JSON
-        userDatingPreferences: {
-          ...(profile.age ? {
-            preferredMinAge: { lte: profile.age },
-            preferredMaxAge: { gte: profile.age },
-          } : {}),
-        },
-        // Music filter: use preferences
-        ...((preferences.preferredInstruments || []).length > 0
+        } } : {}),
+        // Music filters belong to the viewer's search, so they apply on Discover only.
+        ...(mode === "discover" && (preferences.preferredInstruments || []).length > 0
           ? {
               userInstruments: {
                 some: {
@@ -567,7 +563,7 @@ export async function GET(request: NextRequest) {
               },
             }
           : {}),
-        ...((preferences.preferredSkills || []).length > 0
+        ...(mode === "discover" && (preferences.preferredSkills || []).length > 0
           ? {
               userSkills: {
                 some: {
@@ -598,7 +594,7 @@ export async function GET(request: NextRequest) {
           include: { skill: true },
         },
       },
-      take: limit + 1, // Fetch one extra to determine if there's a next page
+      take: scanSize + 1, // Fetch one extra to determine if there's a next page
       ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
       orderBy: { createdAt: "desc" }, // Simple ordering for now
     });
@@ -606,8 +602,8 @@ export async function GET(request: NextRequest) {
       console.log(`[Potential Matches] Main query completed in ${Date.now() - queryStart}ms, found ${potentialMatches.length} potential matches`);
     }
 
-    const hasNextPage = potentialMatches.length > limit;
-    const matches = hasNextPage ? potentialMatches.slice(0, limit) : potentialMatches;
+    const hasNextPage = potentialMatches.length > scanSize;
+    const matches = hasNextPage ? potentialMatches.slice(0, scanSize) : potentialMatches;
     const nextCursor = hasNextPage ? matches[matches.length - 1].id : null;
 
     // Get current user's music data for compatibility calculation
@@ -625,135 +621,102 @@ export async function GET(request: NextRequest) {
     const currentUserSkills =
       currentUserMusic?.userSkills.map((us) => us.skill.name) || [];
 
-    // Filter matches by reciprocal preferences (they must also want us)
-    // Also filter by distance and photo requirements
+    const viewerVerification = await prisma.userDatingIdentityVerification.findUnique({
+      where: { userId: user.id },
+      select: { isIDVerified: true },
+    });
+    const viewerIsIDVerified = viewerVerification?.isIDVerified ?? false;
+
+    // Discover: candidate must fit the viewer's filters. Their filters are ignored.
+    // Into You: the viewer must fit the candidate's filters. The viewer's filters are ignored.
     const reciprocalMatches = matches.filter((match) => {
-      if (!match.userDatingPreferences) return false;
-      
-      // REQUIREMENT: Users must be verified AND have at least 1 dating photo
-      // Note: isEmailVerified is already filtered in DB query, but we check photos here as a safety measure
-      // (in case a verified user deletes all photos, or if verification doesn't strictly enforce photos)
       if (!match.userDatingPhotos || match.userDatingPhotos.length === 0) {
-        if (isDev) {
-          console.log(`[Potential Matches] Filtering out match ${match.id}: No dating photos (verified users should have photos)`);
-        }
         return false;
       }
-      
-      // REQUIREMENT: Filter by distance using SEARCHER's preference (unidirectional filter)
-      // User A with 100 mile preference will see User B at 80 miles, even if User B has 10 mile preference
-      // The filter is based on the searcher's preference, not mutual agreement
-      // Apply variability if distance is in variabilityFilters
-      if (
-        userLatitude && 
-        userLongitude && 
-        match.userDatingProfile?.latitude && 
-        match.userDatingProfile?.longitude &&
-        preferences.preferredMaxDistanceKm
-      ) {
-        const matchLatitude = match.userDatingProfile.latitude;
-        const matchLongitude = match.userDatingProfile.longitude;
-        const distanceKm = calculateDistance(
-          userLatitude, 
-          userLongitude, 
-          matchLatitude, 
-          matchLongitude
+
+      const distanceKm =
+        userLatitude &&
+        userLongitude &&
+        match.userDatingProfile?.latitude &&
+        match.userDatingProfile?.longitude
+          ? calculateDistance(
+              userLatitude,
+              userLongitude,
+              match.userDatingProfile.latitude,
+              match.userDatingProfile.longitude,
+            )
+          : null;
+
+      if (mode === "into-you") {
+        if (!match.userDatingPreferences || !match.userDatingProfile) return false;
+        const their = match.userDatingPreferences;
+        const theirPrefs: FitPreferences = {
+          preferredGender: their.preferredGender,
+          preferredSexualOrientation: their.preferredSexualOrientation,
+          preferredMinAge: their.preferredMinAge,
+          preferredMaxAge: their.preferredMaxAge,
+          preferredMinHeight: their.preferredMinHeight,
+          preferredMaxHeight: their.preferredMaxHeight,
+          preferredMaxDistanceKm: their.preferredMaxDistanceKm,
+          preferredCoronavirusVaccinated: their.preferredCoronavirusVaccinated,
+          preferredReligions: their.preferredReligions || [],
+          preferredHasKids: their.preferredHasKids,
+          preferredWantsKids: their.preferredWantsKids,
+          preferredSmokes: their.preferredSmokes,
+          preferredDrinks: their.preferredDrinks,
+          preferredActivity: their.preferredActivity || [],
+          preferredRelationshipType: their.preferredRelationshipType || [],
+          preferredDiet: their.preferredDiet || [],
+          preferredPoliticalViews: their.preferredPoliticalViews || [],
+          preferredEducation: their.preferredEducation || [],
+          preferredBodyType: their.preferredBodyType,
+          preferredPets: their.preferredPets || [],
+          preferredInstruments: their.preferredInstruments || [],
+          preferredSkills: their.preferredSkills || [],
+          idVerificationFilter: their.idVerificationFilter,
+        };
+        return profileFitsPreferences(
+          {
+            age: profile.age,
+            height: profile.height,
+            gender: profile.gender,
+            sexualOrientation: profile.sexualOrientation,
+            coronavirusVaccinated: profile.coronavirusVaccinated,
+            religion: profile.religion,
+            hasKids: profile.hasKids,
+            wantsKids: profile.wantsKids,
+            smokes: profile.smokes,
+            drinks: profile.drinks,
+            activity: profile.activity,
+            relationshipType: profile.relationshipType,
+            diet: profile.diet,
+            politicalViews: profile.politicalViews,
+            education: profile.education,
+            bodyType: profile.bodyType,
+            pets: profile.pets || [],
+            instruments: currentUserInstruments,
+            skills: currentUserSkills,
+            isIDVerified: viewerIsIDVerified,
+          },
+          theirPrefs,
+          distanceKm,
         );
-        
-        // Calculate max distance with variability
+      }
+
+      if (distanceKm != null && preferences.preferredMaxDistanceKm) {
         let maxDistanceKm = preferences.preferredMaxDistanceKm;
         if (hasVariability && variabilityFilters.includes("distance")) {
           const expansion = Math.round((maxDistanceKm * variabilityLevel) / 100);
           maxDistanceKm = maxDistanceKm + expansion;
         }
-        
-        // Filter out matches beyond the SEARCHER's max distance preference (with variability)
-        if (distanceKm > maxDistanceKm) {
-          if (isDev) {
-            console.log(`[Potential Matches] Filtering out match ${match.id}: Distance ${distanceKm.toFixed(2)}km exceeds searcher's max ${maxDistanceKm.toFixed(2)}km`);
-          }
-          return false;
-        }
+        if (distanceKm > maxDistanceKm) return false;
       }
-      
-      // Parse their preferredGender (support both formats)
-      // New format: sexualOrientation is an array of strings
-      let theirPreferredGenders: Array<{ gender: string; sexualOrientation: string[] }> = [];
-      try {
-        if (match.userDatingPreferences.preferredGender) {
-          const parsed = JSON.parse(match.userDatingPreferences.preferredGender);
-          if (Array.isArray(parsed)) {
-            // New format: array of gender preferences
-            theirPreferredGenders = parsed.filter(p => p && p.gender).map(p => ({
-              gender: p.gender,
-              sexualOrientation: Array.isArray(p.sexualOrientation) ? p.sexualOrientation : (p.sexualOrientation ? [p.sexualOrientation] : [])
-            }));
-          } else if (typeof parsed === 'string') {
-            // JSON string containing a single gender string
-            theirPreferredGenders = [{
-              gender: parsed,
-              sexualOrientation: match.userDatingPreferences.preferredSexualOrientation ? [match.userDatingPreferences.preferredSexualOrientation] : []
-            }];
-          } else {
-            // Parsed object but not an array (shouldn't happen, but handle gracefully)
-            theirPreferredGenders = [{
-              gender: match.userDatingPreferences.preferredGender,
-              sexualOrientation: match.userDatingPreferences.preferredSexualOrientation ? [match.userDatingPreferences.preferredSexualOrientation] : []
-            }];
-          }
-        }
-      } catch {
-        // Not JSON, use as single value (old format)
-        if (match.userDatingPreferences.preferredGender) {
-          theirPreferredGenders = [{
-            gender: match.userDatingPreferences.preferredGender,
-            sexualOrientation: match.userDatingPreferences.preferredSexualOrientation ? [match.userDatingPreferences.preferredSexualOrientation] : []
-          }];
-        }
-      }
-      
-      // Check if they want our gender with matching orientation
-      const ourGender = profile.gender;
-      const ourOrientation = profile.sexualOrientation;
-      
-      if (!ourGender || !ourOrientation) {
-        if (isDev) {
-          console.log(`[Potential Matches] Filtering out match ${match.id}: Missing our gender or orientation (gender: ${ourGender}, orientation: ${ourOrientation})`);
-        }
-        return false;
-      }
-      
-      // Check reciprocal gender preference with probabilistic variability
-      const genderMatches = theirPreferredGenders.some(pref => {
-        const genderMatch = pref.gender?.toLowerCase() === ourGender.toLowerCase();
-        const orientationMatch = Array.isArray(pref.sexualOrientation) 
-          ? pref.sexualOrientation.some(orientation => orientation.toLowerCase() === ourOrientation.toLowerCase())
-          : false;
-        return genderMatch && orientationMatch;
-      });
-      
-      // Apply probabilistic variability to gender matching
-      if (hasVariability && variabilityFilters.includes("gender") && !genderMatches) {
-        // With variability: X% chance to allow this match even if gender doesn't match
-        const random = Math.random() * 100;
-        if (random < variabilityLevel) {
-          // Variability allows this match (outside preference)
-          return true;
-        }
-        // Variability didn't allow it, so require normal match
-        return false;
-      }
-      
-      if (!genderMatches && isDev) {
-        console.log(`[Potential Matches] Filtering out match ${match.id}: No reciprocal preference match. Our: ${ourGender}/${ourOrientation}, Their preferences:`, theirPreferredGenders);
-      }
-      
-      return genderMatches;
+
+      return true;
     });
 
-    // Apply probabilistic variability filtering to categorical filters in post-processing
-    // This allows matches outside preferences X% of the time based on variabilityLevel
-    const variabilityFilteredMatches = reciprocalMatches.filter((match) => {
+    // Mix-it-up applies to the viewer's Discover search only.
+    const variabilityFilteredMatches = mode === "into-you" ? reciprocalMatches : reciprocalMatches.filter((match) => {
       if (!match.userDatingProfile) return true;
 
       const profile = match.userDatingProfile;
@@ -950,7 +913,7 @@ export async function GET(request: NextRequest) {
     if (variabilityFilteredMatches.length === 0) {
       return NextResponse.json({
         matches: [],
-        nextCursor: null,
+        nextCursor,
       });
     }
 
