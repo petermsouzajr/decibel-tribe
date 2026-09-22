@@ -486,6 +486,7 @@ model UserDatingProfile {
   id                    String    @id
   userId                String    @unique
   age                   Int?
+  dateOfBirth           DateTime? @db.Date // Source of truth for age. Matching still reads age.
   height                Int? // Height in inches (no decimals)
   gender                String?
   sexualOrientation     String?
