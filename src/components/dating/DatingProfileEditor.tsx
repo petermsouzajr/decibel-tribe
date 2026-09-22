@@ -12,8 +12,37 @@ import DatingHeader from "./DatingHeader";
 import datingInterests from "@/data/datingInterests.json";
 import HeightSelector from "./HeightSelector";
 import DropdownSelector from "./DropdownSelector";
-import AgeSelector from "./AgeSelector";
 import { BODY_TYPE_OPTIONS, JOB_OPTIONS, PETS_OPTIONS, normalizeBodyTypeValue, normalizeJobValue, normalizePetsArray } from "@/lib/dating/profileOptions";
+
+function birthDateFromAge(age: number): string {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - age);
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function ageFromBirthDate(value: string): number {
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return 0;
+  const now = new Date();
+  let age = now.getFullYear() - year;
+  const monthDelta = now.getMonth() + 1 - month;
+  if (monthDelta < 0 || (monthDelta === 0 && now.getDate() < day)) age -= 1;
+  return age;
+}
+
+function birthBounds() {
+  const now = new Date();
+  const max = new Date(now.getFullYear() - 18, now.getMonth(), now.getDate());
+  const min = new Date(now.getFullYear() - 130, now.getMonth(), now.getDate());
+  const iso = (date: Date) => {
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${date.getFullYear()}-${month}-${day}`;
+  };
+  return { min: iso(min), max: iso(max) };
+}
 
 export default function DatingProfileEditor() {
   const router = useRouter();
@@ -25,6 +54,7 @@ export default function DatingProfileEditor() {
   const [formData, setFormData] = useState({
     bio: "",
     age: 0,
+    dateOfBirth: "",
     height: 0,
     gender: "",
     zipCode: "",
@@ -60,6 +90,11 @@ export default function DatingProfileEditor() {
         setFormData({
           bio: response.bio || "",
           age: response.profile.age || 0,
+          dateOfBirth: typeof response.profile.dateOfBirth === "string"
+            ? response.profile.dateOfBirth.slice(0, 10)
+            : response.profile.age
+              ? birthDateFromAge(response.profile.age)
+              : "",
           height: response.profile.height || 0,
           gender: response.profile.gender || "",
           zipCode: response.profile.zipCode || "",
@@ -169,13 +204,29 @@ export default function DatingProfileEditor() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <AgeSelector
-                  value={formData.age}
-                  onChange={(age) => setFormData({ ...formData, age })}
-                  label="Age"
-                  min={18}
-                  max={130}
-                />
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Birthday
+                  </label>
+                  <input
+                    type="date"
+                    min={birthBounds().min}
+                    max={birthBounds().max}
+                    value={formData.dateOfBirth}
+                    onChange={(e) => {
+                      const dateOfBirth = e.target.value;
+                      setFormData({
+                        ...formData,
+                        dateOfBirth,
+                        age: dateOfBirth ? ageFromBirthDate(dateOfBirth) : 0,
+                      });
+                    }}
+                    className="w-full h-11 px-3 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {formData.dateOfBirth ? `Age ${ageFromBirthDate(formData.dateOfBirth)}` : "Must be 18 or older"}
+                  </p>
+                </div>
 
                 <HeightSelector
                   value={formData.height}
