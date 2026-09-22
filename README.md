@@ -70,7 +70,14 @@ The application should be accessible at `http://localhost:3000` (or the port spe
 
 ## Testing
 
-This project uses [Vitest](https://vitest.dev/) for unit, integration, and seed tests, and [Cypress](https://www.cypress.io/) for End-to-End (E2E) tests.
+This project uses [Vitest](https://vitest.dev/) for unit, integration, and seed tests.
+
+**E2E practice labs** (Cypress / Playwright) live in separate learner repos so testers can update specs without touching this app:
+
+- [decibel-tribe-cypress-lab](https://github.com/petermsouzajr/decibel-tribe-cypress-lab)
+- [decibel-tribe-playwright-lab](https://github.com/petermsouzajr/decibel-tribe-playwright-lab)
+
+See [docs/E2E_LEARNER_LABS.md](./docs/E2E_LEARNER_LABS.md).
 
 - **Run all developer-focused tests (Vitest - Unit, Integration, Seed):**
   ```bash
@@ -82,7 +89,7 @@ This project uses [Vitest](https://vitest.dev/) for unit, integration, and seed 
   npm run dev:check:all
   ```
 
-For more detailed information on specific testing commands (watch mode, UI, coverage, Cypress tests), please see the [CONTRIBUTING.md](./CONTRIBUTING.md) guide.
+For unit/integration commands (watch mode, UI, coverage), see [CONTRIBUTING.md](./CONTRIBUTING.md). For browser E2E, use the learner lab repos above.
 
 ## Contributing
 
