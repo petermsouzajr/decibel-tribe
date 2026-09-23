@@ -10,6 +10,7 @@ import {
 } from "@/lib/dating/compatibility";
 import { profileFitsPreferences, type FitPreferences } from "@/lib/dating/searchFit";
 import { hasPersonOrIdAccess, PERSON_OR_ID_REQUIRED } from "@/lib/dating/verificationTier";
+import { filterMatchesByAppearance } from "@/lib/dating/appearanceQuery";
 
 // Increase timeout for this route (default is 10s, increase to 60s)
 export const maxDuration = 60;
@@ -894,8 +895,14 @@ export async function GET(request: NextRequest) {
       console.log(`[Potential Matches] Filtered to ${variabilityFilteredMatches.length} matches after variability filtering (from ${reciprocalMatches.length} reciprocal matches)`);
     }
 
+    const appearanceFilteredMatches = await filterMatchesByAppearance(
+      variabilityFilteredMatches,
+      preferences,
+      viewerIsIDVerified,
+    );
+
     // Early return if no matches after filtering
-    if (variabilityFilteredMatches.length === 0) {
+    if (appearanceFilteredMatches.length === 0) {
       return NextResponse.json({
         matches: [],
         nextCursor,
@@ -904,7 +911,7 @@ export async function GET(request: NextRequest) {
 
     // Batch fetch post counts for all matches to reduce database queries
     const formatStart = Date.now();
-    const matchIds = variabilityFilteredMatches.map(m => m.id);
+    const matchIds = appearanceFilteredMatches.map(m => m.id);
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     
     // Get post counts for all matches in one query
@@ -927,7 +934,7 @@ export async function GET(request: NextRequest) {
 
     // Format response with compatibility scores
     const formattedMatches = await Promise.all(
-      variabilityFilteredMatches.map(async (match) => {
+      appearanceFilteredMatches.map(async (match) => {
         // Find primary photo (or use first photo if no primary set)
         const primaryPhoto =
           match.userDatingPhotos.find((p: { isPrimary: boolean }) => p.isPrimary) ||

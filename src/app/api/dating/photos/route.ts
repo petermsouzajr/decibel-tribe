@@ -2,6 +2,7 @@ import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import { scheduleAppearanceEvaluation } from "@/lib/dating/appearanceEvaluate";
 
 const MAX_PHOTOS = 5;
 const MIN_PHOTOS = 0;
@@ -289,6 +290,8 @@ export async function DELETE(request: NextRequest) {
 
       return { remainingPhotos, datingDeactivated, verificationCleared };
     });
+
+    scheduleAppearanceEvaluation(user.id);
 
     return NextResponse.json({ success: true, ...result });
   } catch (error) {

@@ -4,6 +4,7 @@ import streamServerClient from "@/lib/stream";
 import { createUploadthing, FileRouter } from "uploadthing/next";
 import { UploadThingError, UTApi } from "uploadthing/server";
 import crypto from "crypto";
+import { scheduleAppearanceEvaluation } from "@/lib/dating/appearanceEvaluate";
 
 // UploadThing v7 uses UPLOADTHING_TOKEN, but support UPLOADTHING_SECRET for backward compatibility
 if (!process.env.UPLOADTHING_TOKEN && process.env.UPLOADTHING_SECRET) {
@@ -182,6 +183,8 @@ export const fileRouter = {
 
         return { photo: createdPhoto, needsReverification: requiresReverification };
       });
+
+      scheduleAppearanceEvaluation(metadata.user.id);
 
       return {
         photoId: photo.id,
