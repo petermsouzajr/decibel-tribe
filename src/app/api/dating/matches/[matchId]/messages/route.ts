@@ -1,5 +1,6 @@
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
+import { isHiddenFromDating } from "@/lib/dating/visibility";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 
@@ -40,6 +41,11 @@ export async function GET(request: NextRequest, props: { params: Promise<{ match
         { error: "Unauthorized access to this match" },
         { status: 403 }
       );
+    }
+
+    const otherUserId = match.user1Id === user.id ? match.user2Id : match.user1Id;
+    if (await isHiddenFromDating(otherUserId)) {
+      return NextResponse.json({ error: "This person is not available." }, { status: 404 });
     }
 
     // Get pagination params
@@ -150,6 +156,11 @@ export async function POST(request: NextRequest, props: { params: Promise<{ matc
         { error: "Unauthorized access to this match" },
         { status: 403 }
       );
+    }
+
+    const otherUserId = match.user1Id === user.id ? match.user2Id : match.user1Id;
+    if (await isHiddenFromDating(otherUserId)) {
+      return NextResponse.json({ error: "This person is not available." }, { status: 404 });
     }
 
     // Create message

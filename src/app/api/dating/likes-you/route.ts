@@ -73,6 +73,8 @@ export async function GET(request: NextRequest) {
         // Apply ID verification filter on the liker
         fromUser: {
           isEmailVerified: true, // likers must at minimum be email-verified
+          deletedAt: null,
+          datingPausedAt: null,
           ...fromUserVerificationWhere,
         },
       },

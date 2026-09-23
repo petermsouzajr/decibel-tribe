@@ -423,6 +423,7 @@ export async function GET(request: NextRequest) {
       where: {
         id: { notIn: excludeIds },
         deletedAt: null,
+        datingPausedAt: null,
         isEmailVerified: true, // Only email-verified users appear in decks
         isDatingActive: true,
         // Only show users who currently have at least one dating photo

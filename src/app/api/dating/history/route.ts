@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
     // Build where clause based on type
     const whereClause: any = {
       fromUserId: user.id,
+      toUser: { datingPausedAt: null, deletedAt: null },
     };
 
     if (type === "liked") {

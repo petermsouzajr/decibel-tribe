@@ -26,7 +26,10 @@ export async function GET(request: NextRequest) {
     // Get all matches for the current user
     const matches = await prisma.match.findMany({
       where: {
-        OR: [{ user1Id: user.id }, { user2Id: user.id }],
+        OR: [
+          { user1Id: user.id, user2: { datingPausedAt: null, deletedAt: null } },
+          { user2Id: user.id, user1: { datingPausedAt: null, deletedAt: null } },
+        ],
       },
       include: {
         user1: {

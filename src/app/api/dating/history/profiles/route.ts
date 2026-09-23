@@ -28,7 +28,10 @@ export async function GET(request: NextRequest) {
 
     // Get swipe history
     const swipes = await prisma.swipe.findMany({
-      where: { fromUserId: user.id },
+      where: {
+        fromUserId: user.id,
+        toUser: { datingPausedAt: null, deletedAt: null },
+      },
       include: {
         toUser: {
           include: {
