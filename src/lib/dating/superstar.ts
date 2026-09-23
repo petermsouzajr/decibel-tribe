@@ -7,10 +7,10 @@ export type SuperstarState = {
 };
 
 /**
- * One Superstar accrues each week, up to 3 banked.
- * A brand-new balance starts at 1. The next star is one week after the
- * preference row was created, then one week after each star that is granted.
- * While the bank is full, no further stars accrue.
+ * Unused Superstars roll over and accumulate, up to 3.
+ * A new star is granted one week after the previous grant.
+ * While the bank is full, nothing accrues.
+ * Spending the last star in a full bank starts the next week from that use.
  */
 export function refreshSuperstars(
   balance: number,
@@ -38,8 +38,14 @@ export function spendSuperstar(
   nextAt: Date | null,
   createdAt: Date,
   now = new Date(),
+  replenish = true,
 ): { ok: true; balance: number; nextAt: Date } | { ok: false; balance: number; nextAt: Date } {
-  const refreshed = refreshSuperstars(balance, nextAt, createdAt, now);
+  const refreshed = replenish
+    ? refreshSuperstars(balance, nextAt, createdAt, now)
+    : {
+        balance,
+        nextAt: nextAt ? new Date(nextAt) : new Date(createdAt.getTime() + SUPERSTAR_WEEK_MS),
+      };
   if (refreshed.balance < 1) {
     return { ok: false, balance: 0, nextAt: refreshed.nextAt };
   }
