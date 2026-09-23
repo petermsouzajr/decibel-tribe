@@ -914,7 +914,6 @@ export async function GET(request: NextRequest) {
       variabilityFilteredMatches,
       preferences,
       viewerIsIDVerified,
-      viewerIsPersonVerified,
     );
 
     // Early return if no matches after filtering
