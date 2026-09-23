@@ -561,33 +561,6 @@ export async function GET(request: NextRequest) {
               }
             : {}),
         } } : {}),
-        // Music filters belong to the viewer's search, so they apply on Discover only.
-        ...(mode === "discover" && (preferences.preferredInstruments || []).length > 0
-          ? {
-              userInstruments: {
-                some: {
-                  instrument: {
-                    name: {
-                      in: preferences.preferredInstruments || [],
-                    },
-                  },
-                },
-              },
-            }
-          : {}),
-        ...(mode === "discover" && (preferences.preferredSkills || []).length > 0
-          ? {
-              userSkills: {
-                some: {
-                  skill: {
-                    name: {
-                      in: preferences.preferredSkills || [],
-                    },
-                  },
-                },
-              },
-            }
-          : {}),
       },
       include: {
         userDatingProfile: true,
@@ -1062,11 +1035,6 @@ export async function GET(request: NextRequest) {
     );
     if (isDev) {
       console.log(`[Potential Matches] Formatting matches took ${Date.now() - formatStart}ms`);
-    }
-
-    // Sort by compatibility score if music matching is enabled
-    if (preferences.matchMusicTastes ?? true) {
-      formattedMatches.sort((a, b) => b.compatibility.overall - a.compatibility.overall);
     }
 
     const totalTime = Date.now() - startTime;
