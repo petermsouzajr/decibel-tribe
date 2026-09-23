@@ -33,6 +33,9 @@ export async function GET(
       where: { id: userId },
       include: {
         userDatingProfile: true,
+        userDatingIdentityVerification: {
+          select: { isIDVerified: true, isPersonVerified: true },
+        },
         userDatingPhotos: {
           orderBy: { isPrimary: "desc" },
         },
@@ -49,7 +52,12 @@ export async function GET(
       },
     });
 
-    if (!targetUser || !targetUser.userDatingProfile) {
+    if (
+      !targetUser ||
+      !targetUser.userDatingProfile ||
+      targetUser.deletedAt ||
+      (targetUser.id !== user.id && targetUser.datingPausedAt)
+    ) {
       return NextResponse.json(
         { error: "User not found or profile not available" },
         { status: 404 }
@@ -141,6 +149,8 @@ export async function GET(
         targetUser.userDatingProfile.city ||
         targetUser.userDatingProfile.zipCode ||
         null,
+      isIDVerified: targetUser.userDatingIdentityVerification?.isIDVerified ?? false,
+      isPersonVerified: targetUser.userDatingIdentityVerification?.isPersonVerified ?? false,
       musicInfo: {
         instruments: targetUser.userInstruments.map((ui) => ui.instrument.name),
         skills: targetUser.userSkills.map((us) => us.skill.name),

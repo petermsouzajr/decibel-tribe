@@ -9,6 +9,8 @@ import {
   calculateDistanceScore,
 } from "@/lib/dating/compatibility";
 import { profileFitsPreferences, type FitPreferences } from "@/lib/dating/searchFit";
+import { hasPersonOrIdAccess, PERSON_OR_ID_REQUIRED } from "@/lib/dating/verificationTier";
+import { filterMatchesByAppearance } from "@/lib/dating/appearanceQuery";
 
 // Increase timeout for this route (default is 10s, increase to 60s)
 export const maxDuration = 60;
@@ -155,6 +157,16 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const mode = searchParams.get("mode") === "into-you" ? "into-you" : "discover";
+
+    if (mode === "into-you") {
+      const identity = await prisma.userDatingIdentityVerification.findUnique({
+        where: { userId: user.id },
+        select: { isPersonVerified: true, isIDVerified: true },
+      });
+      if (!hasPersonOrIdAccess(identity ?? {})) {
+        return NextResponse.json({ error: PERSON_OR_ID_REQUIRED }, { status: 403 });
+      }
+    }
 
     if (!preferences) {
       return NextResponse.json(
@@ -423,6 +435,7 @@ export async function GET(request: NextRequest) {
       where: {
         id: { notIn: excludeIds },
         deletedAt: null,
+        datingPausedAt: null,
         isEmailVerified: true, // Only email-verified users appear in decks
         isDatingActive: true,
         // Only show users who currently have at least one dating photo
@@ -549,33 +562,6 @@ export async function GET(request: NextRequest) {
               }
             : {}),
         } } : {}),
-        // Music filters belong to the viewer's search, so they apply on Discover only.
-        ...(mode === "discover" && (preferences.preferredInstruments || []).length > 0
-          ? {
-              userInstruments: {
-                some: {
-                  instrument: {
-                    name: {
-                      in: preferences.preferredInstruments || [],
-                    },
-                  },
-                },
-              },
-            }
-          : {}),
-        ...(mode === "discover" && (preferences.preferredSkills || []).length > 0
-          ? {
-              userSkills: {
-                some: {
-                  skill: {
-                    name: {
-                      in: preferences.preferredSkills || [],
-                    },
-                  },
-                },
-              },
-            }
-          : {}),
       },
       include: {
         userDatingProfile: true,
@@ -583,6 +569,7 @@ export async function GET(request: NextRequest) {
         userDatingIdentityVerification: {
           select: { 
             isIDVerified: true,
+            isPersonVerified: true,
             hasPersonPerks: true,
             hasIdPerks: true,
           },
@@ -629,11 +616,13 @@ export async function GET(request: NextRequest) {
       where: { userId: user.id },
       select: { 
         isIDVerified: true,
+        isPersonVerified: true,
         hasPersonPerks: true,
         hasIdPerks: true,
       },
     });
     const viewerIsIDVerified = viewerVerification?.isIDVerified ?? false;
+    const viewerIsPersonVerified = viewerVerification?.isPersonVerified ?? false;
     const viewerHasPersonPerks = viewerVerification?.hasPersonPerks ?? false;
     const viewerHasIdPerks = viewerVerification?.hasIdPerks ?? false;
 
@@ -921,8 +910,15 @@ export async function GET(request: NextRequest) {
       console.log(`[Potential Matches] Filtered to ${variabilityFilteredMatches.length} matches after variability filtering (from ${reciprocalMatches.length} reciprocal matches)`);
     }
 
+    const appearanceFilteredMatches = await filterMatchesByAppearance(
+      variabilityFilteredMatches,
+      preferences,
+      viewerIsIDVerified,
+      viewerIsPersonVerified,
+    );
+
     // Early return if no matches after filtering
-    if (variabilityFilteredMatches.length === 0) {
+    if (appearanceFilteredMatches.length === 0) {
       return NextResponse.json({
         matches: [],
         nextCursor,
@@ -931,7 +927,7 @@ export async function GET(request: NextRequest) {
 
     // Batch fetch post counts for all matches to reduce database queries
     const formatStart = Date.now();
-    const matchIds = variabilityFilteredMatches.map(m => m.id);
+    const matchIds = appearanceFilteredMatches.map(m => m.id);
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     
     // Get post counts for all matches in one query
@@ -954,7 +950,7 @@ export async function GET(request: NextRequest) {
 
     // Format response with compatibility scores
     const formattedMatches = await Promise.all(
-      variabilityFilteredMatches.map(async (match) => {
+      appearanceFilteredMatches.map(async (match) => {
         // Find primary photo (or use first photo if no primary set)
         const primaryPhoto =
           match.userDatingPhotos.find((p: { isPrimary: boolean }) => p.isPrimary) ||
@@ -1046,6 +1042,7 @@ export async function GET(request: NextRequest) {
           distance: distance,
           location: cityName || match.userDatingProfile?.zipCode || null,
           isIDVerified: match.userDatingIdentityVerification?.isIDVerified ?? false,
+          isPersonVerified: match.userDatingIdentityVerification?.isPersonVerified ?? false,
           hasPersonPerks: match.userDatingIdentityVerification?.hasPersonPerks ?? false,
           hasIdPerks: match.userDatingIdentityVerification?.hasIdPerks ?? false,
           musicInfo: {
@@ -1063,11 +1060,6 @@ export async function GET(request: NextRequest) {
     );
     if (isDev) {
       console.log(`[Potential Matches] Formatting matches took ${Date.now() - formatStart}ms`);
-    }
-
-    // Sort by compatibility score if music matching is enabled
-    if (preferences.matchMusicTastes ?? true) {
-      formattedMatches.sort((a, b) => b.compatibility.overall - a.compatibility.overall);
     }
 
     const totalTime = Date.now() - startTime;

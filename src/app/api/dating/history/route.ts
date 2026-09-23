@@ -1,5 +1,6 @@
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
+import { hasPersonOrIdAccess, PERSON_OR_ID_REQUIRED } from "@/lib/dating/verificationTier";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -26,9 +27,18 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get("type") || "all"; // "liked", "disliked", "all"
     const light = searchParams.get("light") === "true"; // Lightweight mode for undo list
 
+    const identity = await prisma.userDatingIdentityVerification.findUnique({
+      where: { userId: user.id },
+      select: { isPersonVerified: true, isIDVerified: true },
+    });
+    if (!hasPersonOrIdAccess(identity ?? {})) {
+      return NextResponse.json({ error: PERSON_OR_ID_REQUIRED }, { status: 403 });
+    }
+
     // Build where clause based on type
     const whereClause: any = {
       fromUserId: user.id,
+      toUser: { datingPausedAt: null, deletedAt: null },
     };
 
     if (type === "liked") {

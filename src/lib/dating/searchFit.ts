@@ -228,15 +228,5 @@ export function profileFitsPreferences(
     if (!hasPet) return false;
   }
 
-  if (prefs.preferredInstruments.length > 0) {
-    const wanted = new Set(prefs.preferredInstruments.map(norm));
-    if (!person.instruments.some((name) => wanted.has(norm(name)))) return false;
-  }
-
-  if (prefs.preferredSkills.length > 0) {
-    const wanted = new Set(prefs.preferredSkills.map(norm));
-    if (!person.skills.some((name) => wanted.has(norm(name)))) return false;
-  }
-
   return true;
 }

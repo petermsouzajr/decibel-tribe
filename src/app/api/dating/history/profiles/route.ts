@@ -1,5 +1,6 @@
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
+import { rewindLimit, verificationTier } from "@/lib/dating/verificationTier";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -24,11 +25,23 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const takeParam = searchParams.get("take");
-    const takeLimit = takeParam ? parseInt(takeParam, 10) : 5;
+    const identity = await prisma.userDatingIdentityVerification.findUnique({
+      where: { userId: user.id },
+      select: { isPersonVerified: true, isIDVerified: true },
+    });
+    const maxTake = rewindLimit(verificationTier({
+      isPersonVerified: identity?.isPersonVerified,
+      isIDVerified: identity?.isIDVerified,
+    }));
+    const requested = takeParam ? parseInt(takeParam, 10) : maxTake;
+    const takeLimit = Math.min(Number.isFinite(requested) ? requested : maxTake, maxTake);
 
     // Get swipe history
     const swipes = await prisma.swipe.findMany({
-      where: { fromUserId: user.id },
+      where: {
+        fromUserId: user.id,
+        toUser: { datingPausedAt: null, deletedAt: null },
+      },
       include: {
         toUser: {
           include: {

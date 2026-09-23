@@ -96,6 +96,7 @@ export async function POST(req: NextRequest) {
           email: user.email ?? "",
           avatarUrl: user.avatarUrl,
           isDatingActive: user.isDatingActive,
+          datingPaused: user.datingPausedAt !== null,
           isEmailVerified: user.isEmailVerified,
           createdAt: user.createdAt,
         },

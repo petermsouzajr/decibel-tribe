@@ -101,17 +101,10 @@ describe("profileFitsPreferences", () => {
     ).toBe(true);
   });
 
-  it("requires a published instrument when that filter is set", () => {
+  it("ignores a saved instrument filter", () => {
     expect(
       profileFitsPreferences(
         person({ instruments: ["Piano"] }),
-        prefs({ preferredInstruments: ["Guitar"] }),
-        null,
-      ),
-    ).toBe(false);
-    expect(
-      profileFitsPreferences(
-        person({ instruments: ["Guitar"] }),
         prefs({ preferredInstruments: ["Guitar"] }),
         null,
       ),
