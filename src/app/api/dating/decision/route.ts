@@ -133,10 +133,6 @@ export async function POST(request: NextRequest) {
           { status: 429 }
         );
       }
-      await prisma.userDatingPreferences.update({
-        where: { userId: user.id },
-        data: { superstarBalance: spent.balance, superstarNextAt: spent.nextAt },
-      });
       superstarStatus = { balance: spent.balance, nextAt: spent.nextAt.toISOString() };
     }
 
@@ -186,6 +182,16 @@ export async function POST(request: NextRequest) {
           isSuperstar: wantsSuperstar,
           superstarAt: wantsSuperstar ? new Date() : null,
           createdAt: new Date(),
+        },
+      });
+    }
+
+    if (superstarStatus) {
+      await prisma.userDatingPreferences.update({
+        where: { userId: user.id },
+        data: {
+          superstarBalance: superstarStatus.balance,
+          superstarNextAt: new Date(superstarStatus.nextAt),
         },
       });
     }
