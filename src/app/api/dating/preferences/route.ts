@@ -12,6 +12,12 @@ import {
 } from "@/lib/dating/valueNormalization";
 import { normalizeBodyTypeValue, normalizePetsArray } from "@/lib/dating/profileOptions";
 
+function appearanceSlugs(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const slugs = value.filter((item): item is string => typeof item === "string");
+  return [...new Set(slugs.map((slug) => slug.trim().toLowerCase()).filter((slug) => /^[a-z0-9-]{1,40}$/.test(slug)))];
+}
+
 // Geocode zip code to lat/lon/city using OpenStreetMap Nominatim API
 async function geocodeZipCode(zipCode: string): Promise<{ lat: number; lon: number; city?: string } | null> {
   try {
@@ -159,6 +165,11 @@ export async function POST(request: NextRequest) {
       variabilityLevel,
       variabilityFilters,
       idVerificationFilter,
+      preferredEyeColors,
+      preferredHairColors,
+      preferredHairStyles,
+      preferredFacialHair,
+      preferredAppearances,
     } = await request.json();
 
     const normalizedPets = pets === undefined ? undefined : normalizePetsArray(pets);
@@ -320,6 +331,20 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const viewerIdentity = await prisma.userDatingIdentityVerification.findUnique({
+      where: { userId: user.id },
+      select: { isIDVerified: true },
+    });
+    const advancedFields = viewerIdentity?.isIDVerified
+      ? {
+          ...(preferredEyeColors !== undefined && { preferredEyeColors: appearanceSlugs(preferredEyeColors) }),
+          ...(preferredHairColors !== undefined && { preferredHairColors: appearanceSlugs(preferredHairColors) }),
+          ...(preferredHairStyles !== undefined && { preferredHairStyles: appearanceSlugs(preferredHairStyles) }),
+          ...(preferredFacialHair !== undefined && { preferredFacialHair: appearanceSlugs(preferredFacialHair) }),
+          ...(preferredAppearances !== undefined && { preferredAppearances: appearanceSlugs(preferredAppearances) }),
+        }
+      : {};
+
     // Create or update user dating preferences
     const datingPreferences = await prisma.userDatingPreferences.upsert({
       where: {
@@ -385,6 +410,7 @@ export async function POST(request: NextRequest) {
         ...(variabilityLevel !== undefined && { variabilityLevel }),
         ...(variabilityFilters !== undefined && { variabilityFilters }),
         ...(idVerificationFilter !== undefined && { idVerificationFilter }),
+        ...advancedFields,
         updatedAt: new Date(),
       },
       create: {
@@ -429,6 +455,7 @@ export async function POST(request: NextRequest) {
         variabilityLevel: variabilityLevel !== undefined ? variabilityLevel : 0,
         variabilityFilters: variabilityFilters || [],
         idVerificationFilter: idVerificationFilter || "show_id_verified_only",
+        ...advancedFields,
         updatedAt: new Date(),
       },
     });

@@ -52,6 +52,14 @@ model User {
   userDatingProfile              UserDatingProfile?
   userDatingIdentityVerification UserDatingIdentityVerification?
   userDatingPhotos               UserDatingPhoto[]
+  userEyeColor                   UserEyeColor?
+  userHairColors                 UserHairColor[]
+  userHairStyles                 UserHairStyle[]
+  userFacialHair                 UserFacialHair?
+  userAppearances                UserAppearance[]
+  userClothing                   UserClothing[]
+  userSettings                   UserSetting[]
+  appearanceRuns                 AppearanceRun[]
   userPreferences                UserPreferences?
   sentMessages                   Message[]                       @relation("MessageSender")
 
@@ -582,6 +590,11 @@ model UserDatingPreferences {
   variabilityLevel               Int      @default(0) // 0-100% variability slider
   variabilityFilters             String[] // Array of filter names to include in variability (e.g., ["gender", "age", "distance", "height", "hasKids", "wantsKids", "smokes", "drinks", "vaccination", "relationshipType", "activity", "diet", "politicalViews", "education", "religion"])
   idVerificationFilter           String   @default("show_id_verified_only") // "show_id_verified_only" | "show_all" | "show_unverified_only"
+  preferredEyeColors             String[] @default([])
+  preferredHairColors            String[] @default([])
+  preferredHairStyles            String[] @default([])
+  preferredFacialHair            String[] @default([])
+  preferredAppearances           String[] @default([])
   superstarBalance               Int      @default(1)
   superstarNextAt                DateTime?
   user                           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -601,6 +614,182 @@ model UserDatingPhoto {
   @@index([userId])
   @@index([userId, isPrimary])
   @@map("user_photos")
+}
+
+model EyeColor {
+  id     String        @id
+  slug   String        @unique
+  label  String
+  source String        @default("seed")
+  users  UserEyeColor[]
+
+  @@map("eye_color")
+}
+
+model UserEyeColor {
+  userId     String   @id
+  eyeColorId String
+  confidence Float
+  photoIds   String[]
+  eyeColor   EyeColor @relation(fields: [eyeColorId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_eye_color")
+}
+
+model HairColor {
+  id     String         @id
+  slug   String         @unique
+  label  String
+  source String         @default("seed")
+  users  UserHairColor[]
+
+  @@map("hair_color")
+}
+
+model UserHairColor {
+  userId      String
+  hairColorId String
+  confidence  Float
+  photoIds    String[]
+  hairColor   HairColor @relation(fields: [hairColorId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, hairColorId])
+  @@map("user_hair_color")
+}
+
+model HairStyle {
+  id     String         @id
+  slug   String         @unique
+  label  String
+  source String         @default("seed")
+  users  UserHairStyle[]
+
+  @@map("hair_style")
+}
+
+model UserHairStyle {
+  userId      String
+  hairStyleId String
+  confidence  Float
+  photoIds    String[]
+  hairStyle   HairStyle @relation(fields: [hairStyleId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, hairStyleId])
+  @@map("user_hair_style")
+}
+
+model FacialHair {
+  id     String          @id
+  slug   String          @unique
+  label  String
+  source String          @default("seed")
+  users  UserFacialHair[]
+
+  @@map("facial_hair")
+}
+
+model UserFacialHair {
+  userId       String     @id
+  facialHairId String
+  confidence   Float
+  photoIds     String[]
+  facialHair   FacialHair @relation(fields: [facialHairId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_facial_hair")
+}
+
+model AppearanceTag {
+  id     String           @id
+  slug   String           @unique
+  label  String
+  source String           @default("seed")
+  users  UserAppearance[]
+
+  @@map("appearance")
+}
+
+model UserAppearance {
+  userId      String
+  appearanceId String
+  confidence  Float
+  photoIds    String[]
+  appearance  AppearanceTag @relation(fields: [appearanceId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, appearanceId])
+  @@map("user_appearance")
+}
+
+model Clothing {
+  id     String        @id
+  slug   String        @unique
+  label  String
+  source String        @default("seed")
+  users  UserClothing[]
+
+  @@map("clothing")
+}
+
+model UserClothing {
+  userId     String
+  clothingId String
+  confidence Float
+  photoIds   String[]
+  clothing   Clothing @relation(fields: [clothingId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, clothingId])
+  @@map("user_clothing")
+}
+
+model Setting {
+  id     String      @id
+  slug   String      @unique
+  label  String
+  source String      @default("seed")
+  users  UserSetting[]
+
+  @@map("setting")
+}
+
+model UserSetting {
+  userId    String
+  settingId String
+  confidence Float
+  photoIds  String[]
+  setting   Setting @relation(fields: [settingId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, settingId])
+  @@map("user_setting")
+}
+
+model AppearanceRun {
+  id        String               @id
+  userId    String
+  model     String
+  photoIds  String[]
+  createdAt DateTime             @default(now())
+  groups    AppearanceRunGroup[]
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("appearance_run")
+}
+
+model AppearanceRunGroup {
+  id     String        @id
+  runId  String
+  kind   String
+  status String
+  run    AppearanceRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@map("appearance_run_group")
 }
 
 enum GroupRole {
