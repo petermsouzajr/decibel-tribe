@@ -5,6 +5,7 @@ import crypto from "crypto";
 import streamServerClient from "@/lib/stream";
 import { NotificationType } from "@prisma/client";
 import { formatSuperstarDate, spendSuperstar } from "@/lib/dating/superstar";
+import { isHiddenFromDating } from "@/lib/dating/visibility";
 
 // Rate limiting: Track likes per hour
 const likeCounts = new Map<string, { count: number; resetAt: number }>();
@@ -82,6 +83,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Cannot swipe on yourself" },
         { status: 400 }
+      );
+    }
+
+    if (await isHiddenFromDating(targetUserId)) {
+      return NextResponse.json(
+        { error: "This person is not available." },
+        { status: 404 }
       );
     }
 

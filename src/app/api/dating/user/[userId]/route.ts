@@ -49,7 +49,12 @@ export async function GET(
       },
     });
 
-    if (!targetUser || !targetUser.userDatingProfile) {
+    if (
+      !targetUser ||
+      !targetUser.userDatingProfile ||
+      targetUser.deletedAt ||
+      (targetUser.id !== user.id && targetUser.datingPausedAt)
+    ) {
       return NextResponse.json(
         { error: "User not found or profile not available" },
         { status: 404 }

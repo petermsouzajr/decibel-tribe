@@ -1,5 +1,6 @@
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
+import { isHiddenFromDating } from "@/lib/dating/visibility";
 import { NextRequest, NextResponse } from "next/server";
 import {
   calculateMusicCompatibility,
@@ -36,6 +37,9 @@ export async function GET(request: NextRequest, props: { params: Promise<{ match
     }
 
     const otherUserId = match.user1Id === user.id ? match.user2Id : match.user1Id;
+    if (await isHiddenFromDating(otherUserId)) {
+      return NextResponse.json({ error: "This person is not available." }, { status: 404 });
+    }
 
     // Get both users' data
     const [currentUser, otherUser] = await Promise.all([
