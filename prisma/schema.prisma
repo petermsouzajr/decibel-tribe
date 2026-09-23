@@ -239,6 +239,9 @@ model Post {
   content             String
   userId              String
   createdAt           DateTime       @default(now())
+  // @default(now()) so the column can be added to existing rows; @updatedAt
+  // keeps it current on every write. Matches how Comment and Group declare it.
+  updatedAt           DateTime       @default(now()) @updatedAt
   groupId             String?
   // Sharing
   sharedFromId        String?
@@ -455,6 +458,8 @@ model Swipe {
   toUserId      String
   direction     String
   message       String? // Optional message with like
+  isSuperstar   Boolean   @default(false)
+  superstarAt   DateTime?
   undoExpiresAt DateTime? // For undo functionality (3-hour window)
   createdAt     DateTime  @default(now())
   fromUser      User      @relation("swipes_fromUserIdTousers", fields: [fromUserId], references: [id], onDelete: Cascade)
@@ -486,7 +491,6 @@ model UserDatingProfile {
   id                    String    @id
   userId                String    @unique
   age                   Int?
-  dateOfBirth           DateTime? @db.Date // Source of truth for age. Matching still reads age.
   height                Int? // Height in inches (no decimals)
   gender                String?
   sexualOrientation     String?
@@ -571,6 +575,8 @@ model UserDatingPreferences {
   variabilityLevel               Int      @default(0) // 0-100% variability slider
   variabilityFilters             String[] // Array of filter names to include in variability (e.g., ["gender", "age", "distance", "height", "hasKids", "wantsKids", "smokes", "drinks", "vaccination", "relationshipType", "activity", "diet", "politicalViews", "education", "religion"])
   idVerificationFilter           String   @default("show_id_verified_only") // "show_id_verified_only" | "show_all" | "show_unverified_only"
+  superstarBalance               Int      @default(1)
+  superstarNextAt                DateTime?
   user                           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_dating_preferences")

@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import streamServerClient from "@/lib/stream";
 import { NotificationType } from "@prisma/client";
+import { formatSuperstarDate, spendSuperstar } from "@/lib/dating/superstar";
 
 // Rate limiting: Track likes per hour
 const likeCounts = new Map<string, { count: number; resetAt: number }>();
@@ -49,7 +50,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { targetUserId, decision, message } = await request.json();
+    const { targetUserId, decision, message, superstar } = await request.json();
+    const wantsSuperstar = superstar === true;
 
     if (!targetUserId || !decision) {
       return NextResponse.json(
@@ -61,6 +63,13 @@ export async function POST(request: NextRequest) {
     if (decision !== "LIKE" && decision !== "DISLIKE") {
       return NextResponse.json(
         { error: "decision must be 'LIKE' or 'DISLIKE'" },
+        { status: 400 }
+      );
+    }
+
+    if (wantsSuperstar && decision !== "LIKE") {
+      return NextResponse.json(
+        { error: "A Superstar is a like." },
         { status: 400 }
       );
     }
@@ -93,9 +102,47 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    let superstarStatus: { balance: number; nextAt: string } | null = null;
+    if (wantsSuperstar && existingSwipe?.isSuperstar) {
+      return NextResponse.json({
+        success: true,
+        isMatch: false,
+        matchId: null,
+        swipeId: existingSwipe.id,
+      });
+    }
+    if (wantsSuperstar) {
+      const prefs = await prisma.userDatingPreferences.findUnique({
+        where: { userId: user.id },
+        select: { superstarBalance: true, superstarNextAt: true, createdAt: true },
+      });
+      if (!prefs) {
+        return NextResponse.json(
+          { error: "Dating preferences are required." },
+          { status: 400 }
+        );
+      }
+      const spent = spendSuperstar(prefs.superstarBalance, prefs.superstarNextAt, prefs.createdAt);
+      if (!spent.ok) {
+        return NextResponse.json(
+          {
+            error: `You have used your Superstar this week. Superstar gets a new one on ${formatSuperstarDate(spent.nextAt)}.`,
+            balance: spent.balance,
+            nextAt: spent.nextAt.toISOString(),
+          },
+          { status: 429 }
+        );
+      }
+      await prisma.userDatingPreferences.update({
+        where: { userId: user.id },
+        data: { superstarBalance: spent.balance, superstarNextAt: spent.nextAt },
+      });
+      superstarStatus = { balance: spent.balance, nextAt: spent.nextAt.toISOString() };
+    }
+
     let swipe;
     if (existingSwipe) {
-      if (existingSwipe.direction === decision) {
+      if (existingSwipe.direction === decision && !wantsSuperstar) {
         // Decision hasn't changed, silently return success
         return NextResponse.json({
           success: true,
@@ -111,6 +158,8 @@ export async function POST(request: NextRequest) {
         data: {
           direction: decision,
           message: message || existingSwipe.message,
+          isSuperstar: wantsSuperstar,
+          ...(wantsSuperstar ? { superstarAt: new Date() } : {}),
         },
       });
 
@@ -134,6 +183,8 @@ export async function POST(request: NextRequest) {
           toUserId: targetUserId,
           direction: decision,
           message: message || null, // Store message if provided with like
+          isSuperstar: wantsSuperstar,
+          superstarAt: wantsSuperstar ? new Date() : null,
           createdAt: new Date(),
         },
       });
@@ -257,6 +308,7 @@ export async function POST(request: NextRequest) {
       isMatch,
       matchId,
       swipeId: swipe.id,
+      ...(superstarStatus ? { superstars: superstarStatus } : {}),
     });
   } catch (error: any) {
     console.error("Error recording decision:", error);
