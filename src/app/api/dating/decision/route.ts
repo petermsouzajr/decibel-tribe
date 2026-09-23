@@ -139,8 +139,13 @@ export async function POST(request: NextRequest) {
 
     let swipe;
     if (existingSwipe) {
-      if (existingSwipe.direction === decision && !wantsSuperstar) {
-        // Decision hasn't changed, silently return success
+      if (
+        existingSwipe.direction === decision &&
+        !wantsSuperstar &&
+        !(existingSwipe.isSuperstar && decision === "LIKE")
+      ) {
+        // Same decision, and not a Superstar being turned back into a plain like.
+        // A plain like does not refund the Superstar that was already spent.
         return NextResponse.json({
           success: true,
           isMatch: false,
