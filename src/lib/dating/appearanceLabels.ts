@@ -58,7 +58,7 @@ export function parseAppearanceResponse(text: string): Record<AppearanceKind, Ap
   return result;
 }
 
-export function acceptedProposals(items: AppearanceProposal[]): { slug: string; confidence: number }[] {
+export function acceptedProposals(items: AppearanceProposal[]): { slug: string; label: string; confidence: number }[] {
   const bySlug = new Map<string, { label: string; confidence: number }>();
   for (const item of items) {
     if (item.confidence < 0.6) continue;
