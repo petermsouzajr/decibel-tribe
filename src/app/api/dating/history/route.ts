@@ -112,6 +112,7 @@ export async function GET(request: NextRequest) {
           ? null 
           : ((targetUser as any).userDatingProfile?.city || (targetUser as any).userDatingProfile?.zipCode || null),
         direction: swipe.direction,
+        isSuperstar: Boolean(swipe.isSuperstar),
         message: swipe.message || null,
         createdAt: swipe.createdAt,
         canUnlike: swipe.direction === "LIKE" && !isMatched, // Can unlike any unmatched like at any time
@@ -181,7 +182,7 @@ export async function DELETE(request: NextRequest) {
     // For DISLIKES: No restrictions - can always be deleted to reverse decision
     // No time window restrictions - users can reverse decisions at any time
 
-    // Delete the swipe
+    // Delete the swipe. A spent Superstar is not refunded.
     await prisma.swipe.delete({
       where: { id: swipeId },
     });
