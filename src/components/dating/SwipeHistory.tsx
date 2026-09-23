@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import kyInstance from "@/lib/ky";
-import { Loader2, Heart, X, Trash2, ArrowLeft } from "lucide-react";
+import { Loader2, Heart, Star, X, Trash2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ interface SwipeHistoryItem {
   age: number | null;
   location: string | null;
   direction: "LIKE" | "DISLIKE";
+  isSuperstar?: boolean;
   message: string | null;
   createdAt: Date;
   canUnlike: boolean;
@@ -265,12 +266,16 @@ export default function SwipeHistory() {
                     />
                     <div
                       className={`absolute top-2 left-2 px-3 py-2 rounded-full ${
-                        swipe.direction === "LIKE"
+                        swipe.direction === "LIKE" && swipe.isSuperstar
+                          ? "bg-blue-600 text-white"
+                          : swipe.direction === "LIKE"
                           ? "bg-green-500 text-white"
                           : "bg-red-500 text-white"
                       }`}
                     >
-                      {swipe.direction === "LIKE" ? (
+                      {swipe.direction === "LIKE" && swipe.isSuperstar ? (
+                        <Star className="w-5 h-5" />
+                      ) : swipe.direction === "LIKE" ? (
                         <Heart className="w-5 h-5" />
                       ) : (
                         <X className="w-5 h-5" />
@@ -292,6 +297,7 @@ export default function SwipeHistory() {
                       </div>
                     )}
                     <p className="text-xs text-gray-500 mb-3">
+                      {swipe.isSuperstar ? "Superstarred · " : ""}
                       {formatRelativeDate(swipe.createdAt)}
                     </p>
                     {swipe.canUnlike && (

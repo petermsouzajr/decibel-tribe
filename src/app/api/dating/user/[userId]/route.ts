@@ -149,6 +149,7 @@ export async function GET(
         ? {
             id: existingSwipe.id,
             direction: existingSwipe.direction,
+            isSuperstar: Boolean(existingSwipe.isSuperstar),
             canUnlike:
               existingSwipe.direction === "LIKE" &&
               !isMatched, // Can unlike any unmatched like at any time

@@ -50,8 +50,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { targetUserId, decision, message, superstar } = await request.json();
+    const { targetUserId, decision, message, superstar, respend } = await request.json();
     const wantsSuperstar = superstar === true;
+    const spendAgain = respend === true;
 
     if (!targetUserId || !decision) {
       return NextResponse.json(
@@ -103,7 +104,7 @@ export async function POST(request: NextRequest) {
     });
 
     let superstarStatus: { balance: number; nextAt: string } | null = null;
-    if (wantsSuperstar && existingSwipe?.isSuperstar) {
+    if (wantsSuperstar && existingSwipe?.isSuperstar && !spendAgain) {
       return NextResponse.json({
         success: true,
         isMatch: false,
