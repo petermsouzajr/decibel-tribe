@@ -9,6 +9,7 @@ import {
   calculateDistanceScore,
 } from "@/lib/dating/compatibility";
 import { profileFitsPreferences, type FitPreferences } from "@/lib/dating/searchFit";
+import { hasPersonOrIdAccess, PERSON_OR_ID_REQUIRED } from "@/lib/dating/verificationTier";
 
 // Increase timeout for this route (default is 10s, increase to 60s)
 export const maxDuration = 60;
@@ -155,6 +156,16 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const mode = searchParams.get("mode") === "into-you" ? "into-you" : "discover";
+
+    if (mode === "into-you") {
+      const identity = await prisma.userDatingIdentityVerification.findUnique({
+        where: { userId: user.id },
+        select: { isPersonVerified: true, isIDVerified: true },
+      });
+      if (!hasPersonOrIdAccess(identity ?? {})) {
+        return NextResponse.json({ error: PERSON_OR_ID_REQUIRED }, { status: 403 });
+      }
+    }
 
     if (!preferences) {
       return NextResponse.json(
@@ -581,7 +592,7 @@ export async function GET(request: NextRequest) {
         userDatingProfile: true,
         userDatingPreferences: true,
         userDatingIdentityVerification: {
-          select: { isIDVerified: true },
+          select: { isIDVerified: true, isPersonVerified: true },
         },
         userDatingPhotos: {
           // Include all photos to check count requirement (at least 1 required)
@@ -1034,6 +1045,7 @@ export async function GET(request: NextRequest) {
           distance: distance,
           location: cityName || match.userDatingProfile?.zipCode || null,
           isIDVerified: match.userDatingIdentityVerification?.isIDVerified ?? false,
+          isPersonVerified: match.userDatingIdentityVerification?.isPersonVerified ?? false,
           musicInfo: {
             instruments,
             skills,

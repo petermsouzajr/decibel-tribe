@@ -1,6 +1,8 @@
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
 import { refreshSuperstars } from "@/lib/dating/superstar";
+import { grantIdSuperstarIfNeeded } from "@/lib/dating/idReward";
+import { superstarsReplenish, verificationTier } from "@/lib/dating/verificationTier";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -10,6 +12,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    await grantIdSuperstarIfNeeded(user.id);
     const prefs = await prisma.userDatingPreferences.findUnique({
       where: { userId: user.id },
       select: { superstarBalance: true, superstarNextAt: true, createdAt: true },
@@ -18,7 +21,20 @@ export async function GET() {
       return NextResponse.json({ error: "Dating preferences are required." }, { status: 400 });
     }
 
-    const refreshed = refreshSuperstars(prefs.superstarBalance, prefs.superstarNextAt, prefs.createdAt);
+    const identity = await prisma.userDatingIdentityVerification.findUnique({
+      where: { userId: user.id },
+      select: { isPersonVerified: true, isIDVerified: true },
+    });
+    const replenish = superstarsReplenish(verificationTier({
+      isPersonVerified: identity?.isPersonVerified,
+      isIDVerified: identity?.isIDVerified,
+    }));
+    const refreshed = replenish
+      ? refreshSuperstars(prefs.superstarBalance, prefs.superstarNextAt, prefs.createdAt)
+      : {
+          balance: prefs.superstarBalance,
+          nextAt: prefs.superstarNextAt ?? new Date(prefs.createdAt.getTime() + 7 * 24 * 60 * 60 * 1000),
+        };
     const changed =
       refreshed.balance !== prefs.superstarBalance ||
       prefs.superstarNextAt?.getTime() !== refreshed.nextAt.getTime();
