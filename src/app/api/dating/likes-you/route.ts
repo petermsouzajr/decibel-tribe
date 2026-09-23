@@ -39,13 +39,23 @@ export async function GET(request: NextRequest) {
     let fromUserVerificationWhere: object = {};
     if (activeFilter === "show_id_verified_only") {
       fromUserVerificationWhere = {
-        userDatingIdentityVerification: { isIDVerified: true },
+        userDatingIdentityVerification: {
+          OR: [
+            { isIDVerified: true },
+            { hasIdPerks: true },
+          ],
+        },
       };
     } else if (activeFilter === "show_unverified_only") {
       fromUserVerificationWhere = {
         OR: [
           { userDatingIdentityVerification: null },
-          { userDatingIdentityVerification: { isIDVerified: false } },
+          { 
+            userDatingIdentityVerification: { 
+              isIDVerified: false,
+              hasIdPerks: false,
+            } 
+          },
         ],
       };
     }
@@ -97,7 +107,11 @@ export async function GET(request: NextRequest) {
               take: 1,
             },
             userDatingIdentityVerification: {
-              select: { isIDVerified: true },
+              select: { 
+                isIDVerified: true,
+                hasPersonPerks: true,
+                hasIdPerks: true,
+              },
             },
           },
         },
@@ -122,6 +136,8 @@ export async function GET(request: NextRequest) {
         message: swipe.message || null,
         isSuperstar: swipe.isSuperstar,
         isIDVerified: liker.userDatingIdentityVerification?.isIDVerified ?? false,
+        hasPersonPerks: liker.userDatingIdentityVerification?.hasPersonPerks ?? false,
+        hasIdPerks: liker.userDatingIdentityVerification?.hasIdPerks ?? false,
       };
     });
 

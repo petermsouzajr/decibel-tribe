@@ -581,7 +581,11 @@ export async function GET(request: NextRequest) {
         userDatingProfile: true,
         userDatingPreferences: true,
         userDatingIdentityVerification: {
-          select: { isIDVerified: true },
+          select: { 
+            isIDVerified: true,
+            hasPersonPerks: true,
+            hasIdPerks: true,
+          },
         },
         userDatingPhotos: {
           // Include all photos to check count requirement (at least 1 required)
@@ -623,9 +627,15 @@ export async function GET(request: NextRequest) {
 
     const viewerVerification = await prisma.userDatingIdentityVerification.findUnique({
       where: { userId: user.id },
-      select: { isIDVerified: true },
+      select: { 
+        isIDVerified: true,
+        hasPersonPerks: true,
+        hasIdPerks: true,
+      },
     });
     const viewerIsIDVerified = viewerVerification?.isIDVerified ?? false;
+    const viewerHasPersonPerks = viewerVerification?.hasPersonPerks ?? false;
+    const viewerHasIdPerks = viewerVerification?.hasIdPerks ?? false;
 
     // Discover: candidate must fit the viewer's filters. Their filters are ignored.
     // Into You: the viewer must fit the candidate's filters. The viewer's filters are ignored.
@@ -697,6 +707,8 @@ export async function GET(request: NextRequest) {
             instruments: currentUserInstruments,
             skills: currentUserSkills,
             isIDVerified: viewerIsIDVerified,
+            hasPersonPerks: viewerHasPersonPerks,
+            hasIdPerks: viewerHasIdPerks,
           },
           theirPrefs,
           distanceKm,
@@ -1034,6 +1046,8 @@ export async function GET(request: NextRequest) {
           distance: distance,
           location: cityName || match.userDatingProfile?.zipCode || null,
           isIDVerified: match.userDatingIdentityVerification?.isIDVerified ?? false,
+          hasPersonPerks: match.userDatingIdentityVerification?.hasPersonPerks ?? false,
+          hasIdPerks: match.userDatingIdentityVerification?.hasIdPerks ?? false,
           musicInfo: {
             instruments,
             skills,

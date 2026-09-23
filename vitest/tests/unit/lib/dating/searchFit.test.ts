@@ -23,6 +23,8 @@ function person(overrides: Partial<FitProfile> = {}): FitProfile {
     instruments: [],
     skills: [],
     isIDVerified: false,
+    hasPersonPerks: false,
+    hasIdPerks: false,
     ...overrides,
   };
 }
