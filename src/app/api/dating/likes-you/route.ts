@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ isSuperstar: "desc" }, { createdAt: "desc" }],
     });
 
     // Format response — isIDVerified always included for badge display
@@ -120,6 +120,7 @@ export async function GET(request: NextRequest) {
         location: liker.userDatingProfile?.city || liker.userDatingProfile?.zipCode || null,
         likedAt: swipe.createdAt,
         message: swipe.message || null,
+        isSuperstar: swipe.isSuperstar,
         isIDVerified: liker.userDatingIdentityVerification?.isIDVerified ?? false,
       };
     });
