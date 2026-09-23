@@ -524,6 +524,14 @@ model UserDatingIdentityVerification {
   id                    String    @id @default(cuid())
   userId                String    @unique
   isIDVerified          Boolean   @default(false)
+  isPersonVerified      Boolean   @default(false)
+  personVerifiedAt      DateTime?
+  personVerifiedPhotoIds String[] @default([])
+  idSuperstarGranted    Boolean   @default(false)
+  poseSessionPoses      String[]  @default([])
+  poseSessionStartedAt  DateTime?
+  poseAttemptsOn        DateTime?
+  poseAttemptsCount     Int       @default(0)
   verificationStatus    String    @default("not_started") // "not_started" | "pending" | "verified" | "failed" | "requires_input"
   verificationMethod    String? // "stripe_identity" | "manual" | future methods
   stripeVerificationId  String?   @unique // Stripe Identity VerificationSession ID

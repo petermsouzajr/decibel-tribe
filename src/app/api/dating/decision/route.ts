@@ -6,6 +6,7 @@ import streamServerClient from "@/lib/stream";
 import { NotificationType } from "@prisma/client";
 import { formatSuperstarDate, spendSuperstar } from "@/lib/dating/superstar";
 import { isHiddenFromDating } from "@/lib/dating/visibility";
+import { dailyLikeCap, superstarsReplenish, verificationTier } from "@/lib/dating/verificationTier";
 
 // Rate limiting: Track likes per hour
 const likeCounts = new Map<string, { count: number; resetAt: number }>();
@@ -120,6 +121,30 @@ export async function POST(request: NextRequest) {
         swipeId: existingSwipe.id,
       });
     }
+    const identity = await prisma.userDatingIdentityVerification.findUnique({
+      where: { userId: user.id },
+      select: { isPersonVerified: true, isIDVerified: true },
+    });
+    const tier = verificationTier({
+      isPersonVerified: identity?.isPersonVerified,
+      isIDVerified: identity?.isIDVerified,
+    });
+    const likeCap = dailyLikeCap(tier);
+    const alreadyLiked = existingSwipe?.direction === "LIKE";
+    if (decision === "LIKE" && !alreadyLiked && likeCap != null) {
+      const start = new Date();
+      start.setUTCHours(0, 0, 0, 0);
+      const likesToday = await prisma.swipe.count({
+        where: { fromUserId: user.id, direction: "LIKE", createdAt: { gte: start } },
+      });
+      if (likesToday >= likeCap) {
+        const message = tier === "email"
+          ? "Verify it's you with three quick poses to raise your daily likes and unlock full rewind. Or unlock these rewards for $6.99 a month."
+          : "Verify your ID to remove the daily like cap and earn a Superstar. Or unlock the ID rewards for $12.99 a month.";
+        return NextResponse.json({ error: message }, { status: 429 });
+      }
+    }
+
     if (wantsSuperstar) {
       const prefs = await prisma.userDatingPreferences.findUnique({
         where: { userId: user.id },
@@ -131,7 +156,13 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-      const spent = spendSuperstar(prefs.superstarBalance, prefs.superstarNextAt, prefs.createdAt);
+      const spent = spendSuperstar(
+        prefs.superstarBalance,
+        prefs.superstarNextAt,
+        prefs.createdAt,
+        new Date(),
+        superstarsReplenish(tier),
+      );
       if (!spent.ok) {
         return NextResponse.json(
           {

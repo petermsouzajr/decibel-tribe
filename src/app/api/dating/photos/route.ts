@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      if (wasReactivated) {
+      if (currentPhotoCount + 1 >= 3) {
         await tx.user.update({
           where: { id: user.id },
           data: { isDatingActive: true },
@@ -194,13 +194,29 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    const photoCount = await prisma.userDatingPhoto.count({
+      where: { userId: user.id },
+    });
+    if (photoCount <= 3) {
+      return NextResponse.json(
+        { error: "Keep at least 3 profile photos." },
+        { status: 400 },
+      );
+    }
+
     const result = await prisma.$transaction(async (tx) => {
       // Use UserDatingIdentityVerification.verifiedAt as the source of truth (no per-photo verifiedAt)
       const identity = await tx.userDatingIdentityVerification.findUnique({
         where: { userId: user.id },
-        select: { isIDVerified: true, verifiedAt: true },
+        select: { isIDVerified: true, verifiedAt: true, isPersonVerified: true, personVerifiedPhotoIds: true },
       });
       const verifiedAt = identity?.isIDVerified ? identity.verifiedAt : null;
+      if (identity?.isPersonVerified && identity.personVerifiedPhotoIds.includes(photoId)) {
+        await tx.userDatingIdentityVerification.update({
+          where: { userId: user.id },
+          data: { isPersonVerified: false, personVerifiedAt: null, personVerifiedPhotoIds: [] },
+        });
+      }
 
       const deletingPrimary = photo.isPrimary === true;
 
