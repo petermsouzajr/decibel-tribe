@@ -3,9 +3,14 @@ import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-02-24.acacia",
-});
+function getStripe() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error("STRIPE_SECRET_KEY is not configured");
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2025-02-24.acacia",
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,6 +18,8 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const stripe = getStripe();
 
     const body = await request.json();
     const { tier } = body;
