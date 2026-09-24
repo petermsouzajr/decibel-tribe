@@ -79,9 +79,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://decibeltribe.com";
-    const successUrl = `${baseUrl}/dating/membership/success?tier=${tier}`;
-    const cancelUrl = `${baseUrl}/dating/membership/cancel`;
+    const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.decibeltribe.com")
+      .replace(/\/$/, "")
+      .replace("://decibeltribe.com", "://www.decibeltribe.com");
+    const successUrl = `${baseUrl}/api/dating/membership/return?result=success&tier=${tier}`;
+    const cancelUrl = `${baseUrl}/api/dating/membership/return?result=cancel`;
 
     const deepLinkSuccessUrl = `datingtribe://membership/success?tier=${tier}`;
     const deepLinkCancelUrl = `datingtribe://membership/cancel`;

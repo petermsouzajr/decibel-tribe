@@ -23,11 +23,18 @@ export async function GET() {
 
     const identity = await prisma.userDatingIdentityVerification.findUnique({
       where: { userId: user.id },
-      select: { isPersonVerified: true, isIDVerified: true },
+      select: {
+        isPersonVerified: true,
+        isIDVerified: true,
+        hasPersonPerks: true,
+        hasIdPerks: true,
+      },
     });
     const replenish = superstarsReplenish(verificationTier({
       isPersonVerified: identity?.isPersonVerified,
       isIDVerified: identity?.isIDVerified,
+      hasPersonPerks: identity?.hasPersonPerks,
+      hasIdPerks: identity?.hasIdPerks,
     }));
     const refreshed = replenish
       ? refreshSuperstars(prefs.superstarBalance, prefs.superstarNextAt, prefs.createdAt)

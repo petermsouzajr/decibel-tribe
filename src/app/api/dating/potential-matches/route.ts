@@ -161,7 +161,12 @@ export async function GET(request: NextRequest) {
     if (mode === "into-you") {
       const identity = await prisma.userDatingIdentityVerification.findUnique({
         where: { userId: user.id },
-        select: { isPersonVerified: true, isIDVerified: true },
+        select: {
+          isPersonVerified: true,
+          isIDVerified: true,
+          hasPersonPerks: true,
+          hasIdPerks: true,
+        },
       });
       if (!hasPersonOrIdAccess(identity ?? {})) {
         return NextResponse.json({ error: PERSON_OR_ID_REQUIRED }, { status: 403 });

@@ -101,6 +101,23 @@ describe("profileFitsPreferences", () => {
     ).toBe(true);
   });
 
+  it("does not treat paid ID rewards as an ID verified badge", () => {
+    expect(
+      profileFitsPreferences(
+        person({ hasIdPerks: true, isIDVerified: false }),
+        prefs({ idVerificationFilter: "show_id_verified_only" }),
+        null,
+      ),
+    ).toBe(false);
+    expect(
+      profileFitsPreferences(
+        person({ isIDVerified: true }),
+        prefs({ idVerificationFilter: "show_id_verified_only" }),
+        null,
+      ),
+    ).toBe(true);
+  });
+
   it("ignores a saved instrument filter", () => {
     expect(
       profileFitsPreferences(

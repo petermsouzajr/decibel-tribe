@@ -39,23 +39,13 @@ export async function GET(request: NextRequest) {
     let fromUserVerificationWhere: object = {};
     if (activeFilter === "show_id_verified_only") {
       fromUserVerificationWhere = {
-        userDatingIdentityVerification: {
-          OR: [
-            { isIDVerified: true },
-            { hasIdPerks: true },
-          ],
-        },
+        userDatingIdentityVerification: { isIDVerified: true },
       };
     } else if (activeFilter === "show_unverified_only") {
       fromUserVerificationWhere = {
         OR: [
           { userDatingIdentityVerification: null },
-          { 
-            userDatingIdentityVerification: { 
-              isIDVerified: false,
-              hasIdPerks: false,
-            } 
-          },
+          { userDatingIdentityVerification: { isIDVerified: false } },
         ],
       };
     }

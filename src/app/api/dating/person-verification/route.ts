@@ -24,15 +24,22 @@ function startOfUtcDay(now = new Date()): Date {
 async function flagsFor(userId: string) {
   const row = await prisma.userDatingIdentityVerification.findUnique({
     where: { userId },
-    select: { isPersonVerified: true, isIDVerified: true },
+    select: {
+      isPersonVerified: true,
+      isIDVerified: true,
+      hasPersonPerks: true,
+      hasIdPerks: true,
+    },
   });
-  const tier = verificationTier({
-    isPersonVerified: row?.isPersonVerified,
-    isIDVerified: row?.isIDVerified,
-  });
-  return {
+  const flags = {
     isPersonVerified: row?.isPersonVerified ?? false,
     isIDVerified: row?.isIDVerified ?? false,
+    hasPersonPerks: row?.hasPersonPerks ?? false,
+    hasIdPerks: row?.hasIdPerks ?? false,
+  };
+  const tier = verificationTier(flags);
+  return {
+    ...flags,
     tier,
     dailyLikeCap: dailyLikeCap(tier),
     rewindLimit: rewindLimit(tier),

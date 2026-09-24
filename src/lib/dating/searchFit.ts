@@ -1,5 +1,3 @@
-import { canAppearInIdVerifiedFilter } from "./verificationTiers";
-
 export type GenderPreference = {
   gender: string;
   sexualOrientation: string[];
@@ -183,13 +181,9 @@ export function profileFitsPreferences(
   }
 
   const idFilter = prefs.idVerificationFilter || "show_all";
-  const hasIdAccess = canAppearInIdVerifiedFilter({
-    isIDVerified: person.isIDVerified,
-    hasPersonPerks: person.hasPersonPerks,
-    hasIdPerks: person.hasIdPerks,
-  });
-  if (idFilter === "show_id_verified_only" && !hasIdAccess) return false;
-  if (idFilter === "show_unverified_only" && hasIdAccess) return false;
+  // Paid ID rewards are not an ID verified badge. This filter is the badge only.
+  if (idFilter === "show_id_verified_only" && !person.isIDVerified) return false;
+  if (idFilter === "show_unverified_only" && person.isIDVerified) return false;
 
   if (prefs.preferredCoronavirusVaccinated) {
     const wanted = norm(prefs.preferredCoronavirusVaccinated);

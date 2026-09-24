@@ -77,53 +77,34 @@ Stripe webhook handler for subscription events.
 Add to `.env` and Vercel Production:
 
 ```bash
-# Stripe for Dating Tribe membership perks
-STRIPE_SECRET_KEY=sk_live_...
-STRIPE_PRICE_PERSON_REWARDS=price_1UIzcwADmGkqFycosbwhrwu2
-STRIPE_PRICE_ID_REWARDS=price_1UIzeVADmGkqFycoEPdsC2qx
-STRIPE_MEMBERSHIP_WEBHOOK_SECRET=whsec_...
+# Names only. Values stay in Vercel Production, not in git.
+STRIPE_SECRET_KEY=
+STRIPE_PRICE_PERSON_REWARDS=
+STRIPE_PRICE_ID_REWARDS=
+STRIPE_MEMBERSHIP_WEBHOOK_SECRET=
 ```
 
-**Already created in Stripe:**
-- Person Rewards: `prod_VJcsHQczupbnYq` @ $6.99/mo
-- ID Rewards: `prod_VJcuNvhm4dHT1n` @ $12.99/mo
+Person Rewards is $6.99/mo. ID Rewards is $12.99/mo. Price ids are already on Decibel Production.
 
 ## Feature Access Logic
 
-The `verificationTiers.ts` helper defines tier access:
+Feature access lives in `verificationTier.ts`. Paid flags raise the tier for likes, rewind, History, Into You, and weekly Superstars. They do not set `isPersonVerified` or `isIDVerified`.
 
-```typescript
-// Person tier: hasPersonPerks OR isIDVerified OR hasIdPerks
-hasPersonTierAccess(status) 
-
-// ID tier: hasIdPerks OR isIDVerified
-hasIdTierAccess(status)
-
-// ID Verification Filter: paid perks grant access
-canAppearInIdVerifiedFilter(status)
-
-// Badge display: ONLY isIDVerified counts
-shouldShowIdVerifiedBadge(status)
-```
-
-**Key Rule:** Paid perks grant feature access, but NOT verification badges.
+The ID-verified search filter stays badge-only. A paid ID reward does not appear in "ID verified only."
 
 ## Updated Endpoints
 
 ### `/api/dating/potential-matches`
-- Now includes `hasPersonPerks` and `hasIdPerks` in response
-- ID verification filter treats paid ID perks as "verified" for filtering
-- Badge display still uses `isIDVerified` only
+- Now includes `hasPersonPerks` and `hasIdPerks` in the card payload
+- ID verification filter still uses `isIDVerified` only
 
 ### `/api/dating/likes-you`
-- ID verification filter includes users with `hasIdPerks`
 - Returns perk flags in user objects
-- Badge display uses `isIDVerified` only
+- ID verification filter uses `isIDVerified` only
 
 ### `searchFit.ts`
-- `FitProfile` type now includes perk flags
-- `canAppearInIdVerifiedFilter()` checks perks + verification
-- "Show ID Verified Only" filter includes paid ID perk holders
+- `FitProfile` still carries perk flags for callers
+- "Show ID Verified Only" uses `isIDVerified` only
 
 ## Deployment Steps
 
@@ -142,7 +123,7 @@ shouldShowIdVerifiedBadge(status)
 
 4. **Create Stripe Webhook**
    - Go to Stripe Dashboard → Webhooks
-   - Add endpoint: `https://decibeltribe.com/api/dating/membership/webhook`
+   - Add endpoint: `https://www.decibeltribe.com/api/dating/membership/webhook`
    - Select events:
      - `checkout.session.completed`
      - `customer.subscription.updated`
@@ -196,7 +177,7 @@ Decline: 4000 0000 0000 0002
 ## Notes
 
 - **Deep links** for Expo: `datingtribe://membership/success?tier=person`
-- **Web fallbacks**: `https://decibeltribe.com/dating/membership/...`
+- Stripe success and cancel URLs hit `https://www.decibeltribe.com/api/dating/membership/return`, which redirects to `datingtribe://membership/success` or `datingtribe://membership/cancel`.
 - Subscription metadata includes `userId` and `tier` for webhook processing
 - Customer ID is cached to avoid duplicate customer creation
 - Identity verification (`isIDVerified`) is completely separate from perks
