@@ -549,12 +549,18 @@ model UserDatingIdentityVerification {
   failureReason         String? // Reason if verification failed
   attemptsCount         Int       @default(0)
   lastAttemptAt         DateTime?
+  hasPersonPerks        Boolean   @default(false) // Paid Person Rewards tier perks (not verification)
+  hasIdPerks            Boolean   @default(false) // Paid ID Rewards tier perks (not verification)
+  stripeCustomerId      String? // Stripe customer ID for membership subscriptions
+  stripeSubscriptionId  String? // Active Stripe subscription ID for membership
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, isIDVerified])
   @@index([stripeVerificationId])
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
   @@map("user_dating_identity_verifications")
 }
 

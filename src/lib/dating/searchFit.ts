@@ -1,3 +1,5 @@
+import { canAppearInIdVerifiedFilter } from "./verificationTiers";
+
 export type GenderPreference = {
   gender: string;
   sexualOrientation: string[];
@@ -25,6 +27,8 @@ export type FitProfile = {
   instruments: string[];
   skills: string[];
   isIDVerified: boolean;
+  hasPersonPerks: boolean;
+  hasIdPerks: boolean;
 };
 
 /** Active search settings. Empty or "any" values do not exclude anyone. */
@@ -179,8 +183,13 @@ export function profileFitsPreferences(
   }
 
   const idFilter = prefs.idVerificationFilter || "show_all";
-  if (idFilter === "show_id_verified_only" && !person.isIDVerified) return false;
-  if (idFilter === "show_unverified_only" && person.isIDVerified) return false;
+  const hasIdAccess = canAppearInIdVerifiedFilter({
+    isIDVerified: person.isIDVerified,
+    hasPersonPerks: person.hasPersonPerks,
+    hasIdPerks: person.hasIdPerks,
+  });
+  if (idFilter === "show_id_verified_only" && !hasIdAccess) return false;
+  if (idFilter === "show_unverified_only" && hasIdAccess) return false;
 
   if (prefs.preferredCoronavirusVaccinated) {
     const wanted = norm(prefs.preferredCoronavirusVaccinated);
