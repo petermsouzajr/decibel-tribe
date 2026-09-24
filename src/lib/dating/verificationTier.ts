@@ -5,12 +5,18 @@ export const PERSON_DAILY_LIKES = 40;
 export const EMAIL_REWIND_LIMIT = 1;
 export const FULL_REWIND_LIMIT = 5;
 
-export function verificationTier(flags: {
+export type VerificationFlags = {
   isPersonVerified?: boolean;
   isIDVerified?: boolean;
-}): VerificationTier {
-  if (flags.isIDVerified) return "id";
-  if (flags.isPersonVerified) return "person";
+  /** Paid Person rewards. Not a verification badge. */
+  hasPersonPerks?: boolean;
+  /** Paid ID rewards. Not a verification badge. */
+  hasIdPerks?: boolean;
+};
+
+export function verificationTier(flags: VerificationFlags): VerificationTier {
+  if (flags.isIDVerified || flags.hasIdPerks) return "id";
+  if (flags.isPersonVerified || flags.hasPersonPerks) return "person";
   return "email";
 }
 
@@ -30,13 +36,12 @@ export function superstarsReplenish(tier: VerificationTier): boolean {
   return tier !== "email";
 }
 
-/** History and Into You. Email-only accounts do not get either. */
-export function hasPersonOrIdAccess(flags: {
-  isPersonVerified?: boolean;
-  isIDVerified?: boolean;
-}): boolean {
-  return Boolean(flags.isPersonVerified || flags.isIDVerified);
+/** History and Into You. Email-only accounts do not get either. Paid perks count; badges stay separate. */
+export function hasPersonOrIdAccess(flags: VerificationFlags): boolean {
+  return Boolean(
+    flags.isPersonVerified || flags.isIDVerified || flags.hasPersonPerks || flags.hasIdPerks,
+  );
 }
 
 export const PERSON_OR_ID_REQUIRED =
-  "Verify it’s you with three quick poses, or verify your ID, to open this.";
+  "Verify it’s you, verify your ID, or unlock rewards to open this.";

@@ -64,27 +64,35 @@ export async function POST(request: NextRequest) {
           break;
         }
 
-        const updateData: any = {
-          stripeSubscriptionId: subscriptionId || undefined,
-        };
-
-        if (tier === "person") {
-          updateData.hasPersonPerks = true;
-        } else if (tier === "id") {
-          updateData.hasIdPerks = true;
+        const paid =
+          session.payment_status === "paid" ||
+          session.payment_status === "no_payment_required";
+        if (!paid) {
+          console.log("Checkout completed before payment. Waiting for the subscription event.", {
+            sessionId: session.id,
+            payment_status: session.payment_status,
+          });
+          break;
         }
+
+        const customerId =
+          typeof session.customer === "string" ? session.customer : session.customer?.id;
 
         await prisma.userDatingIdentityVerification.upsert({
           where: { userId },
           create: {
             id: crypto.randomUUID(),
             userId,
-            stripeCustomerId: session.customer as string,
+            stripeCustomerId: customerId,
             stripeSubscriptionId: subscriptionId,
             hasPersonPerks: tier === "person",
             hasIdPerks: tier === "id",
           },
-          update: updateData,
+          update: {
+            ...(customerId ? { stripeCustomerId: customerId } : {}),
+            ...(subscriptionId ? { stripeSubscriptionId: subscriptionId } : {}),
+            ...(tier === "person" ? { hasPersonPerks: true } : { hasIdPerks: true }),
+          },
         });
 
         console.log(`Granted ${tier} perks to user ${userId}`);
@@ -112,26 +120,22 @@ export async function POST(request: NextRequest) {
         }
 
         const isActive = ["active", "trialing"].includes(subscription.status);
-
-        const updateData: any = {};
-
-        if (tier === "person") {
-          updateData.hasPersonPerks = isActive;
-        } else if (tier === "id") {
-          updateData.hasIdPerks = isActive;
-        }
-
-        if (!isActive) {
-          updateData.stripeSubscriptionId = null;
-        }
+        const perkUpdate =
+          tier === "person" ? { hasPersonPerks: isActive } : { hasIdPerks: isActive };
 
         await prisma.userDatingIdentityVerification.updateMany({
-          where: {
-            userId,
-            stripeSubscriptionId: subscription.id,
+          where: { userId },
+          data: {
+            ...perkUpdate,
+            ...(isActive ? { stripeSubscriptionId: subscription.id } : {}),
           },
-          data: updateData,
         });
+        if (!isActive) {
+          await prisma.userDatingIdentityVerification.updateMany({
+            where: { userId, stripeSubscriptionId: subscription.id },
+            data: { stripeSubscriptionId: null },
+          });
+        }
 
         console.log(
           `Updated ${tier} perks for user ${userId}, active: ${isActive}`
@@ -159,22 +163,16 @@ export async function POST(request: NextRequest) {
           break;
         }
 
-        const updateData: any = {
-          stripeSubscriptionId: null,
-        };
-
-        if (tier === "person") {
-          updateData.hasPersonPerks = false;
-        } else if (tier === "id") {
-          updateData.hasIdPerks = false;
-        }
+        const perkUpdate =
+          tier === "person" ? { hasPersonPerks: false } : { hasIdPerks: false };
 
         await prisma.userDatingIdentityVerification.updateMany({
-          where: {
-            userId,
-            stripeSubscriptionId: subscription.id,
-          },
-          data: updateData,
+          where: { userId },
+          data: perkUpdate,
+        });
+        await prisma.userDatingIdentityVerification.updateMany({
+          where: { userId, stripeSubscriptionId: subscription.id },
+          data: { stripeSubscriptionId: null },
         });
 
         console.log(`Removed ${tier} perks from user ${userId}`);

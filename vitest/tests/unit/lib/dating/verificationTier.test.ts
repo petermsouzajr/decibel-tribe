@@ -18,6 +18,15 @@ describe("verification tiers", () => {
     expect(hasPersonOrIdAccess({ isIDVerified: true })).toBe(true);
   });
 
+  it("treats paid rewards as feature access, not a badge input", () => {
+    expect(verificationTier({ hasPersonPerks: true })).toBe("person");
+    expect(verificationTier({ hasIdPerks: true })).toBe("id");
+    expect(hasPersonOrIdAccess({ hasPersonPerks: true })).toBe(true);
+    expect(hasPersonOrIdAccess({ hasIdPerks: true })).toBe(true);
+    expect(dailyLikeCap(verificationTier({ hasPersonPerks: true }))).toBe(40);
+    expect(dailyLikeCap(verificationTier({ hasIdPerks: true }))).toBeNull();
+  });
+
   it("gives ID verified accounts the highest tier even without a pose check", () => {
     expect(verificationTier({ isIDVerified: true })).toBe("id");
     expect(dailyLikeCap("id")).toBeNull();

@@ -27,11 +27,18 @@ export async function GET(request: NextRequest) {
     const takeParam = searchParams.get("take");
     const identity = await prisma.userDatingIdentityVerification.findUnique({
       where: { userId: user.id },
-      select: { isPersonVerified: true, isIDVerified: true },
+      select: {
+        isPersonVerified: true,
+        isIDVerified: true,
+        hasPersonPerks: true,
+        hasIdPerks: true,
+      },
     });
     const maxTake = rewindLimit(verificationTier({
       isPersonVerified: identity?.isPersonVerified,
       isIDVerified: identity?.isIDVerified,
+      hasPersonPerks: identity?.hasPersonPerks,
+      hasIdPerks: identity?.hasIdPerks,
     }));
     const requested = takeParam ? parseInt(takeParam, 10) : maxTake;
     const takeLimit = Math.min(Number.isFinite(requested) ? requested : maxTake, maxTake);
